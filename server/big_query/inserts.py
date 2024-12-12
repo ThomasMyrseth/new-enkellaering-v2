@@ -1,7 +1,5 @@
 from google.cloud import bigquery
-from typing import Optional
-from datetime import datetime
-from big_query.bq_types import teachers, students, classes, new_students, referrals
+from big_query.bq_types import Teachers, Students, Referrals, NewStudents, Classes
 from dotenv import load_dotenv
 import os
 
@@ -16,15 +14,38 @@ CLASSES_DATASET = os.getenv('CLASSES_DATASET')
 NEW_STUDENTS_DATASET = os.getenv('NEW_STUDENTS_DATASET')
 
 
-def insert_teacher(client: bigquery.Client, teacher: teachers):
+def insert_teacher(client: bigquery.Client, teacher: Teachers):
     query = f"""
         INSERT INTO `{PROJECT_ID}.{USER_DATASET}.TEACHERS` (
-            firstname, lastname, email, phone, address, postal_code, hourly_pay, resigned,
-            created_at, admin, your_teacher, is_active, deactivated_at
+            user_id,
+            firstname,
+            lastname,
+            email,
+            phone,
+            address,
+            postal_code,
+            hourly_pay,
+            additional_comments,
+            created_at,
+            admin,
+            resigned,
+            resigned_at,
+            password_hash
         )
         VALUES (
-            @firstname, @lastname, @email, @phone, @address, @postal_code, @hourly_pay, @resigned,
-            @created_at, @admin, @your_teacher, @is_active, @deactivated_at
+            @firstname
+            @lastname
+            @email
+            @phone
+            @address
+            @postal_code
+            @hourly_pay
+            @additional_comments
+            @created_at
+            @admin
+            @resigned
+            @resigned_at
+            @password_hash
         )
     """
     job_config = bigquery.QueryJobConfig(
@@ -36,18 +57,18 @@ def insert_teacher(client: bigquery.Client, teacher: teachers):
             bigquery.ScalarQueryParameter("address", "STRING", teacher.address),
             bigquery.ScalarQueryParameter("postal_code", "STRING", teacher.postal_code),
             bigquery.ScalarQueryParameter("hourly_pay", "STRING", teacher.hourly_pay),
-            bigquery.ScalarQueryParameter("resigned", "BOOL", teacher.resigned),
+            bigquery.ScalarQueryParameter("additional_comments", "STRING", teacher.additional_comments),    
             bigquery.ScalarQueryParameter("created_at", "TIMESTAMP", teacher.created_at),
             bigquery.ScalarQueryParameter("admin", "BOOL", teacher.admin),
-            bigquery.ScalarQueryParameter("your_teacher", "STRING", teacher.your_teacher),
-            bigquery.ScalarQueryParameter("is_active", "BOOL", teacher.is_active),
-            bigquery.ScalarQueryParameter("deactivated_at", "TIMESTAMP", teacher.deactivated_at),
+            bigquery.ScalarQueryParameter("resigned", "BOOL", teacher.resigned),
+            bigquery.ScalarQueryParameter("resigned_at", "TIMESTAMP", teacher.resigned_at),
+            bigquery.ScalarQueryParameter("password_hash", "STRING", teacher.password_hash),
         ]
     )
     client.query(query, job_config=job_config)
 
 
-def insert_student(client: bigquery.Client, student: students):
+def insert_student(client: bigquery.Client, student: Students):
     query = f"""
         INSERT INTO `{PROJECT_ID}.{USER_DATASET}.STUDENTS` (
             user_id, firstname_parent, lastname_parent, email_parent, phone_parent,
@@ -90,7 +111,7 @@ def insert_student(client: bigquery.Client, student: students):
         raise
 
 
-def insert_referral(client: bigquery.Client, referral: referrals):
+def insert_referral(client: bigquery.Client, referral: Referrals):
     # Check for matching student to populate referee_user_id
     referee_query = f"""
         SELECT user_id FROM `{PROJECT_ID}.{USER_DATASET}.STUDENTS`
@@ -133,7 +154,7 @@ def insert_referral(client: bigquery.Client, referral: referrals):
     client.query(query, job_config=job_config)
 
 
-def insert_new_student(client: bigquery.Client, new_student: new_students):
+def insert_new_student(client: bigquery.Client, new_student: Students):
     query = f"""
         INSERT INTO `{PROJECT_ID}.{NEW_STUDENTS_DATASET}.NEW_STUDENTS` (
             phone, has_called, called_at, has_answered, answered_at, has_signed_up, signed_up_at,
@@ -167,7 +188,7 @@ def insert_new_student(client: bigquery.Client, new_student: new_students):
     client.query(query, job_config=job_config)
 
 
-def insert_class(client: bigquery.Client, class_: classes):
+def insert_class(client: bigquery.Client, class_: Classes):
     # Validate teacher exists
     teacher_query = f"""
         SELECT user_id FROM `{PROJECT_ID}.{USER_DATASET}.TEACHERS`

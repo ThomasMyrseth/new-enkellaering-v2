@@ -4,7 +4,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 import os
 import uuid
-from big_query.bq_types import students
+from big_query.bq_types import Students, Teachers
 from flask_session import Session
 from redis import Redis
 from flask_cors import CORS
@@ -15,8 +15,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from auth.hash_password import hash_password, check_password
-from big_query.gets import get_student_by_email
-from big_query.inserts import insert_student
+from big_query.gets import get_student_by_email, get_teacher_by_email
+from big_query.inserts import insert_student, insert_teacher
 
 
 app = Flask(__name__)
@@ -85,7 +85,7 @@ def register():
         return jsonify({"error": "User with this email already exists."}), 400
     
      # Create a student object
-    new_student = students(
+    new_student = Students(
         user_id= user_id,
         firstname_parent=firstname_parent,
         lastname_parent=lastname_parent,
@@ -106,6 +106,67 @@ def register():
     # Insert the new student into the database
     try:
         insert_student(client=client, student=new_student)
+        return jsonify({"message": "User registered successfully."}), 201
+    except Exception as e:
+        return jsonify({"error": f"Error saving user: {str(e)}"}), 500
+    
+
+@app.route('/signup-teacher', methods=["POST"])
+def register_teacher():
+    data = request.json
+
+    user_id = str(uuid.uuid4())
+    firstname = data.get("firstname")
+    lastname = data.get("lastname")
+    email = data.get("email")
+    phone = data.get("phone")
+    address = data.get("address") or "N/A"
+    postal_code = data.get("postal_code") or "0000"
+    hourly_pay = data.get("hourly_pay") or "250"
+    resigned = False
+    password = data.get("password")
+    created_at = datetime.now()
+    admin = False
+    resigned_at = None
+    additional_comments = data.get("additional_comments") or ""
+
+
+    # Validate required fields
+    if not all([firstname, lastname, email, phone, password]):
+        return jsonify({"error": "All required fields must be filled."}), 400
+
+    password_hash = hash_password(password)
+
+
+
+    #check if user already exisst
+    existing_user = get_teacher_by_email(email=email)
+
+    if len(existing_user)>0:
+        return jsonify({"error": "User with this email already exists."}), 400
+    
+     # Create a student object
+    new_teacher = Teachers(
+        user_id=user_id,
+        firstname=firstname,
+        lastname=lastname,
+        email=email,
+        phone=phone,
+        address=address,
+        postal_code=postal_code,
+        hourly_pay=hourly_pay,
+        resigned=resigned,
+        password_hash=password_hash,
+        created_at=created_at,
+        admin=admin,
+        resigned_at=resigned_at,
+        additional_comments=additional_comments
+    )
+
+    # Insert the new student into the database
+    try:
+        insert_teacher(client=client, teacher=new_teacher)
+        print("inserted new teacher succesfully")
         return jsonify({"message": "User registered successfully."}), 201
     except Exception as e:
         return jsonify({"error": f"Error saving user: {str(e)}"}), 500
