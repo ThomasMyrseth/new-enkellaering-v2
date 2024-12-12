@@ -37,3 +37,5 @@ Thumbs.db
 
 # Python venv
 venv/
+
+google_service_account.json

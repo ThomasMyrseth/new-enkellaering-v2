@@ -3,18 +3,44 @@ from google.cloud import bigquery
 from datetime import datetime
 from dotenv import load_dotenv
 import os
+import uuid
+from big_query.bq_types import students
+from flask_session import Session
+from redis import Redis
+from flask_cors import CORS
+from dotenv import load_dotenv
+
 
 # Load environment variables from .env file
 load_dotenv()
 
 from auth.hash_password import hash_password, check_password
+from big_query.gets import get_student_by_email
+from big_query.inserts import insert_student
+
 
 app = Flask(__name__)
+
+app.secret_key = os.getenv("APP_SECRET")
+app.config['SESSION_TYPE'] = 'redis'
+app.config['SESSION_PERMANENT'] = False
+app.config['SESSION_USE_SIGNER'] = True
+app.config['SESSION_KEY_PREFIX'] = 'file-manager:'
+app.config['SESSION_REDIS'] = Redis(host='localhost', port=6379)
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SECURE'] = False #use TRUE for production
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+CORS(app, supports_credentials=True, resources={r"/*": {"origins": ["http://localhost:3000"]}})
+Session(app)
+
+
+
 PROJECT_ID = os.getenv('PROJECT_ID')
 USER_DATASET = os.getenv('USER_DATASET')
 CLASSES_DATASET = os.getenv('CLASSES_DATASET')
 NEW_STUDENTS_DATASET = os.getenv('NEW_STUDENTS_DATASET')
 
+client = bigquery.Client.from_service_account_json('google_service_account.json')
 
 
 
@@ -22,52 +48,68 @@ NEW_STUDENTS_DATASET = os.getenv('NEW_STUDENTS_DATASET')
 
 
 
-
-@app.route('/register', methods=['POST'])
+@app.route('/signup', methods=['POST'])
 def register():
     data = request.json
-    email = data.get('email')
-    password = data.get('password')
-    firstname = data.get('firstname')
-    lastname = data.get('lastname')
-    country = data.get('country')
 
-    if not all([email, password, firstname, lastname, country]):
-        return jsonify({"error": "All fields are required."}), 400
+    user_id = str(uuid.uuid4())
+    firstname_parent = data.get("firstname_parent")
+    lastname_parent = data.get("lastname_parent")
+    email_parent = data.get("email_parent")
+    phone_parent = data.get("phone_parent")
+    firstname_student = data.get("firstname_student")
+    lastname_student = data.get("lastname_student")
+    phone_student = data.get("phone_student")
+    created_at = datetime.now()
+    main_subjects = data.get("main_subjects")
+    additional_comments = data.get("additional_comments") or ""
+    address = data.get("address")
+    postal_code = data.get("postal_code")
+    has_physical_tutoring = data.get("has_physical_tutoring", False)  # Default to False if not provided
+    password = data.get("password")
+
+
+
+    # Validate required fields
+    if not all([firstname_parent, lastname_parent, email_parent, phone_parent, firstname_student, lastname_student, password]):
+        return jsonify({"error": "All required fields must be filled."}), 400
 
     password_hash = hash_password(password)
 
-    bq_client = bigquery.Client()
 
-    # Check if user already exists
-    query = f"SELECT * FROM `{USERS_TABLE}` WHERE email = @email"
-    job_config = bigquery.QueryJobConfig(
-        query_parameters=[bigquery.ScalarQueryParameter("email", "STRING", email)]
+
+    #check if user already exisst
+    existing_user = get_student_by_email(email=email_parent)
+
+    if len(existing_user)>0:
+        return jsonify({"error": "User with this email already exists."}), 400
+    
+     # Create a student object
+    new_student = students(
+        user_id= user_id,
+        firstname_parent=firstname_parent,
+        lastname_parent=lastname_parent,
+        email_parent=email_parent,
+        phone_parent=phone_parent,
+        firstname_student=firstname_student,
+        lastname_student=lastname_student,
+        phone_student=phone_student,
+        created_at=created_at,
+        main_subjects=main_subjects,
+        additional_comments=additional_comments,
+        password_hash=password_hash,
+        address=address,
+        postal_code=postal_code,
+        has_physical_tutoring=has_physical_tutoring
     )
-    results = list(bq_client.query(query, job_config=job_config))
 
-    if results:
-        return jsonify({"error": "User already exists."}), 400
-
-    # Insert new user
-    query = f"""
-        INSERT INTO `{USERS_TABLE}` (email, firstname, lastname, country, password_hash, created_at)
-        VALUES (@Email, @Firstname, @Lastname, @Country, @PasswordHash, CURRENT_TIMESTAMP())
-    """
-    job_config = bigquery.QueryJobConfig(
-        query_parameters=[
-            bigquery.ScalarQueryParameter("Email", "STRING", email),
-            bigquery.ScalarQueryParameter("Firstname", "STRING", firstname),
-            bigquery.ScalarQueryParameter("Lastname", "STRING", lastname),
-            bigquery.ScalarQueryParameter("Country", "STRING", country),
-            bigquery.ScalarQueryParameter("PasswordHash", "STRING", password_hash),
-        ]
-    )
-
-    bq_client.query(query, job_config=job_config)
-    return jsonify({"message": "User registered successfully."}), 201
-
-
+    # Insert the new student into the database
+    try:
+        insert_student(client=client, student=new_student)
+        return jsonify({"message": "User registered successfully."}), 201
+    except Exception as e:
+        return jsonify({"error": f"Error saving user: {str(e)}"}), 500
+    
 
 
 @app.route('/login', methods=['POST'])
@@ -82,7 +124,7 @@ def login():
     bq_client = bigquery.Client()
 
     # Fetch user data
-    query = f"SELECT user_id, email, password_hash FROM `{USERS_TABLE}` WHERE email = @Email"
+    query = f"SELECT user_id, email, password_hash FROM `{USER_DATASET}.students` WHERE email = @Email"
     job_config = bigquery.QueryJobConfig(
         query_parameters=[bigquery.ScalarQueryParameter("Email", "STRING", email)]
     )
@@ -104,3 +146,7 @@ def login():
 def logout():
     session.pop('user_id', None)
     return jsonify({"message": "Logged out successfully."}), 200
+
+
+if __name__ == "__main__":
+    app.run(debug=True, port=8080)
