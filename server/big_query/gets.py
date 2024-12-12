@@ -171,3 +171,15 @@ def get_student_by_email(email):
         return []
     
     return results
+
+def get_teacher_by_email(email):
+    query = f"SELECT * FROM `{USER_DATASET}.teachers` WHERE email = @Email"
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[bigquery.ScalarQueryParameter("Email", "STRING", email)]
+    )
+    results = list(client.query(query, job_config=job_config))
+
+    if len(results)==0:
+        return []
+    
+    return results
