@@ -50,18 +50,21 @@ def insert_teacher(client: bigquery.Client, teacher: teachers):
 def insert_student(client: bigquery.Client, student: students):
     query = f"""
         INSERT INTO `{PROJECT_ID}.{USER_DATASET}.STUDENTS` (
-            firstname_parent, lastname_parent, email_parent, phone_parent,
+            user_id, firstname_parent, lastname_parent, email_parent, phone_parent,
             firstname_student, lastname_student, phone_student, created_at,
-            main_subjects, additional_comments
+            main_subjects, additional_comments, address, postal_code,
+            has_physical_tutoring, password_hash
         )
         VALUES (
-            @firstname_parent, @lastname_parent, @email_parent, @phone_parent,
+            @user_id, @firstname_parent, @lastname_parent, @email_parent, @phone_parent,
             @firstname_student, @lastname_student, @phone_student, @created_at,
-            @main_subjects, @additional_comments
+            @main_subjects, @additional_comments, @address, @postal_code,
+            @has_physical_tutoring, @password_hash
         )
     """
     job_config = bigquery.QueryJobConfig(
         query_parameters=[
+            bigquery.ScalarQueryParameter("user_id", "STRING", student.user_id),
             bigquery.ScalarQueryParameter("firstname_parent", "STRING", student.firstname_parent),
             bigquery.ScalarQueryParameter("lastname_parent", "STRING", student.lastname_parent),
             bigquery.ScalarQueryParameter("email_parent", "STRING", student.email_parent),
@@ -72,9 +75,19 @@ def insert_student(client: bigquery.Client, student: students):
             bigquery.ScalarQueryParameter("created_at", "TIMESTAMP", student.created_at),
             bigquery.ScalarQueryParameter("main_subjects", "STRING", student.main_subjects),
             bigquery.ScalarQueryParameter("additional_comments", "STRING", student.additional_comments),
+            bigquery.ScalarQueryParameter("address", "STRING", student.address),
+            bigquery.ScalarQueryParameter("postal_code", "STRING", student.postal_code),
+            bigquery.ScalarQueryParameter("has_physical_tutoring", "BOOL", student.has_physical_tutoring),
+            bigquery.ScalarQueryParameter("password_hash", "STRING", student.password_hash),
         ]
     )
-    client.query(query, job_config=job_config)
+
+    try:
+        client.query(query, job_config=job_config)
+        print(f"Student {student.user_id} inserted successfully.")
+    except Exception as e:
+        print(f"Error inserting student {student.user_id}: {e}")
+        raise
 
 
 def insert_referral(client: bigquery.Client, referral: referrals):
