@@ -17,20 +17,47 @@ class teachers:
     your_teacher: Optional[str] = None
     is_active: Optional[bool] = None
     deactivated_at: Optional[datetime] = None
+    password_hash: str
 
 # STUDENTS table
+from typing import Optional
+from datetime import datetime
+
 class students:
-    user_id: str
-    firstname_parent: str
-    lastname_parent: str
-    email_parent: str
-    phone_parent: str
-    firstname_student: str
-    lastname_student: str
-    phone_student: str
-    created_at: datetime
-    main_subjects: str
-    additional_comments: Optional[str] = None
+    def __init__(
+        self,
+        user_id: str,
+        firstname_parent: str,
+        lastname_parent: str,
+        email_parent: str,
+        phone_parent: str,
+        firstname_student: str,
+        lastname_student: str,
+        phone_student: str,
+        created_at: datetime,
+        main_subjects: str,
+        additional_comments: Optional[str],
+        address: str,
+        postal_code: str,
+        has_physical_tutoring: bool,
+        password_hash: str,
+    ):
+        self.user_id = user_id
+        self.firstname_parent = firstname_parent
+        self.lastname_parent = lastname_parent
+        self.email_parent = email_parent
+        self.phone_parent = phone_parent
+        self.firstname_student = firstname_student
+        self.lastname_student = lastname_student
+        self.phone_student = phone_student
+        self.created_at = created_at
+        self.main_subjects = main_subjects
+        self.additional_comments = additional_comments
+        self.address = address
+        self.postal_code = postal_code
+        self.has_physical_tutoring = has_physical_tutoring
+        self.password_hash = password_hash
+
 
 # REFERRALS table
 class referrals:

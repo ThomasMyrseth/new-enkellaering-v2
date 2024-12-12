@@ -155,3 +155,19 @@ def get_class_by_teacher_and_student_id(admin_user_id: str, teacher_user_id: str
     ]
     job_config = bigquery.QueryJobConfig(query_parameters=query_params)
     return client.query(query, job_config=job_config).result()
+
+
+
+
+def get_student_by_email(email):
+    # Check if user already exists
+    query = f"SELECT * FROM `{USER_DATASET}.students` WHERE email_parent = @Email"
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[bigquery.ScalarQueryParameter("Email", "STRING", email)]
+    )
+    results = list(client.query(query, job_config=job_config))
+
+    if len(results)==0:
+        return []
+    
+    return results
