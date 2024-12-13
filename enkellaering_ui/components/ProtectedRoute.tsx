@@ -1,19 +1,26 @@
-// components/ProtectedRoute.tsx
 'use client';
 
-import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated } = useAuth();
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
 
-  if (!isAuthenticated) {
-    if (typeof window !== 'undefined') {
-      router.push('/login'); // Redirect to login page
+  useEffect(() => {
+    const authState = localStorage.getItem('isAuthenticated') === 'true';
+
+    if (!isAuthenticated && !authState) {
+      router.push('/login');
+    } else {
+      setLoading(false);
     }
-    return <p>Redirecting...</p>;
+  }, [isAuthenticated, router]);
+
+  if (loading) {
+    return <div>Loading...</div>;
   }
 
   return <>{children}</>;

@@ -16,7 +16,6 @@ class Teachers:
         postal_code: str,
         hourly_pay: str,
         resigned: bool,
-        password_hash: str,
         additional_comments: str,
         created_at: Optional[datetime] = None,
         admin: Optional[bool] = None,
@@ -31,7 +30,6 @@ class Teachers:
         self.postal_code = postal_code
         self.hourly_pay = hourly_pay
         self.resigned = resigned
-        self.password_hash = password_hash
         self.created_at = created_at or datetime.now()
         self.admin = admin
         self.resigned_at = resigned_at
@@ -52,7 +50,6 @@ class Students:
         main_subjects: str,
         address: str,
         postal_code: str,
-        password_hash: str,
         has_physical_tutoring: bool,
         created_at: Optional[datetime] = None,
         additional_comments: Optional[str] = None,
@@ -68,7 +65,6 @@ class Students:
         self.main_subjects = main_subjects
         self.address = address
         self.postal_code = postal_code
-        self.password_hash = password_hash
         self.has_physical_tutoring = has_physical_tutoring
         self.created_at = created_at or datetime.now()
         self.additional_comments = additional_comments or ""

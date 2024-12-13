@@ -29,7 +29,7 @@ export default function LoginForm() {
       console.log("Firebase ID Token:", idToken);
 
       // Send the token to the backend for further validation
-      const response = await fetch(`${BASE_URL}/login`, {
+      const response = await fetch(`${BASE_URL}/login-teacher`, {
         method: "POST",
         credentials: "include",
         headers: {
@@ -39,7 +39,7 @@ export default function LoginForm() {
       });
 
       if (response.ok) {
-        router.push("/min-side");
+        router.push("/min-side-laerer");
       } else {
         const errorData = await response.json();
         setErrorMessage(`Login failed: ${errorData.error}`);
@@ -49,7 +49,6 @@ export default function LoginForm() {
       setErrorMessage(error.message || "An unexpected error occurred.");
     }
   };
-
   return (
     <div className="max-w-md w-full mx-auto rounded-none md:rounded-2xl p-4 md:p-8 shadow-input bg-white dark:bg-black">
       <h2 className="font-bold text-xl text-neutral-800 dark:text-neutral-200">Logg Inn</h2>

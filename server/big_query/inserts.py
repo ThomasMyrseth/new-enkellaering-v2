@@ -16,7 +16,7 @@ NEW_STUDENTS_DATASET = os.getenv('NEW_STUDENTS_DATASET')
 
 def insert_teacher(client: bigquery.Client, teacher: Teachers):
     query = f"""
-        INSERT INTO `{PROJECT_ID}.{USER_DATASET}.TEACHERS` (
+        INSERT INTO `{USER_DATASET}.teachers` (
             user_id,
             firstname,
             lastname,
@@ -30,26 +30,26 @@ def insert_teacher(client: bigquery.Client, teacher: Teachers):
             admin,
             resigned,
             resigned_at,
-            password_hash
         )
         VALUES (
-            @firstname
-            @lastname
-            @email
-            @phone
-            @address
-            @postal_code
-            @hourly_pay
-            @additional_comments
-            @created_at
-            @admin
-            @resigned
-            @resigned_at
-            @password_hash
+            @user_id,
+            @firstname,
+            @lastname,
+            @email,
+            @phone,
+            @address,
+            @postal_code,
+            @hourly_pay,
+            @additional_comments,
+            @created_at,
+            @admin,
+            @resigned,
+            @resigned_at,
         )
     """
     job_config = bigquery.QueryJobConfig(
         query_parameters=[
+            bigquery.ScalarQueryParameter("user_id", "STRING", teacher.user_id),
             bigquery.ScalarQueryParameter("firstname", "STRING", teacher.firstname),
             bigquery.ScalarQueryParameter("lastname", "STRING", teacher.lastname),
             bigquery.ScalarQueryParameter("email", "STRING", teacher.email),
@@ -62,10 +62,10 @@ def insert_teacher(client: bigquery.Client, teacher: Teachers):
             bigquery.ScalarQueryParameter("admin", "BOOL", teacher.admin),
             bigquery.ScalarQueryParameter("resigned", "BOOL", teacher.resigned),
             bigquery.ScalarQueryParameter("resigned_at", "TIMESTAMP", teacher.resigned_at),
-            bigquery.ScalarQueryParameter("password_hash", "STRING", teacher.password_hash),
         ]
     )
-    client.query(query, job_config=job_config)
+    response =  client.query(query, job_config=job_config, location='EU')
+    print(response.result())
 
 
 def insert_student(client: bigquery.Client, student: Students):
@@ -73,13 +73,13 @@ def insert_student(client: bigquery.Client, student: Students):
         INSERT INTO `{USER_DATASET}.students` (
             user_id, firstname_parent, lastname_parent, email_parent, phone_parent,
             firstname_student, lastname_student, phone_student, created_at,
-            main_subjects, additional_comments, password_hash, address, has_physical_tutoring,
+            main_subjects, additional_comments, address, has_physical_tutoring,
             postal_code
         )
         VALUES (
             @user_id, @firstname_parent, @lastname_parent, @email_parent, @phone_parent,
             @firstname_student, @lastname_student, @phone_student, @created_at,
-            @main_subjects, @additional_comments,  @password_hash, @address, @has_physical_tutoring,
+            @main_subjects, @additional_comments, @address, @has_physical_tutoring,
             @postal_code
         )
     """
@@ -99,7 +99,6 @@ def insert_student(client: bigquery.Client, student: Students):
             bigquery.ScalarQueryParameter("address", "STRING", student.address),
             bigquery.ScalarQueryParameter("postal_code", "STRING", student.postal_code),
             bigquery.ScalarQueryParameter("has_physical_tutoring", "BOOL", student.has_physical_tutoring),
-            bigquery.ScalarQueryParameter("password_hash", "STRING", student.password_hash),
         ]
     )
 
