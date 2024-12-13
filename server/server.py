@@ -212,7 +212,7 @@ def register_teacher():
         )
 
         # Insert the new teacher into the database
-        logging.info(f"Inserting teacher {user_id} into the database.")
+        print(f"Inserting teacher {user_id} into the database.")
         insert_teacher(client=bq_client, teacher=new_teacher)
 
         # Save minimal user data in session
