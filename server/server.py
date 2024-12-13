@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from auth.hash_password import hash_password, check_password
-from big_query.gets import get_student_by_email, get_teacher_by_email
+from big_query.gets import get_student_by_email, get_teacher_by_email, get_teacher_by_user_id
 from big_query.inserts import insert_student, insert_teacher
 
 
@@ -44,7 +44,19 @@ client = bigquery.Client.from_service_account_json('google_service_account.json'
 
 
 
+@app.route('/get-teacher', methods=['GET'])
+def get_current_teacher():
+    user_id = session['user_id']
 
+    if not user_id:
+        return jsonify({"error": "User not logged in."}), 401
+
+    teacher :Teachers = get_teacher_by_user_id(client=client, user_id=user_id)
+
+    if not teacher:
+        return jsonify({"error": "Teacher not found."}), 404
+
+    return jsonify({"teacher": teacher.to_dict()}), 200
 
 
 
@@ -185,7 +197,45 @@ def login():
     bq_client = bigquery.Client()
 
     # Fetch user data
-    query = f"SELECT user_id, email, password_hash FROM `{USER_DATASET}.students` WHERE email = @Email"
+    query = f"SELECT user_id, firstname_parent, lastname_parent, firstname_student, lastname_student, email_parent, password_hash FROM `{USER_DATASET}.students` WHERE email_parent = @Email"
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[bigquery.ScalarQueryParameter("Email", "STRING", email)]
+    )
+    results = list(bq_client.query(query, job_config=job_config))
+
+    print(results)
+    
+    if not results:
+        return jsonify({"error": "Invalid email or password."}), 401
+
+    user = results[0]
+    if not check_password(password, user["password_hash"]):
+        return jsonify({"error": "Invalid email or password."}), 401
+
+    # Save user session
+    session['user_id'] = user['user_id']
+    session['firstname_parent'] = user['firstname_parent']
+    session['lastname_parent'] = user['lastname_parent']
+    session['firstname_student'] = user['firstname_student']
+    session['lastname_student'] = user['lastname_student']
+    session['email_parent'] = user['email_parent']
+
+    return jsonify({"message": "Login successful."}), 200
+
+
+@app.route('/login-teacher', methods=['POST'])
+def login_teacher():
+    data = request.json
+    email = data.get('email')
+    password = data.get('password')
+
+    if not all([email, password]):
+        return jsonify({"error": "Email and password are required."}), 400
+
+    bq_client = bigquery.Client()
+
+    # Fetch user data
+    query = f"SELECT user_id, email, password_hash FROM `{USER_DATASET}.teachers` WHERE email = @Email"
     job_config = bigquery.QueryJobConfig(
         query_parameters=[bigquery.ScalarQueryParameter("Email", "STRING", email)]
     )
@@ -201,7 +251,6 @@ def login():
     # Save user session
     session['user_id'] = user['user_id']
     return jsonify({"message": "Login successful."}), 200
-
 
 @app.route('/logout', methods=['POST'])
 def logout():

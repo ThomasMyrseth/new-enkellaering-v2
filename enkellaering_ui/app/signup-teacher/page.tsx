@@ -77,7 +77,7 @@ export default function SignupForm() {
       console.log(response)
 
       if (response.ok) {
-        router.push("/min-side-lærer");
+        router.push("/min-side-laerer");
       } else {
         const errorData = await response.json();
         alert(`Signup failed: ${errorData.error}`);
