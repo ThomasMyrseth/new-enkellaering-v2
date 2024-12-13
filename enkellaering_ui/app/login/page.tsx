@@ -39,7 +39,15 @@ export default function LoginForm() {
       });
 
       if (response.ok) {
-        router.push("/min-side");
+        response.json().then(data => {
+            const userId = data.user_id; // Extract user_id from the response
+            localStorage.setItem('isAuthenticated', 'true');
+            localStorage.setItem('user_id', userId);
+            localStorage.setItem('role', 'student');
+            router.push(`/min-side/${userId}`);
+        }).catch(err => {
+            console.error("Failed to parse response JSON:", err);
+        });
       } else {
         const errorData = await response.json();
         setErrorMessage(`Login failed: ${errorData.error}`);

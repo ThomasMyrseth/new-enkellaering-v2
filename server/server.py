@@ -20,7 +20,7 @@ from datetime import timedelta
 load_dotenv()
 
 from auth.hash_password import hash_password, check_password
-from big_query.gets import get_student_by_email, get_teacher_by_email, get_teacher_by_user_id
+from big_query.gets import get_student_by_email, get_teacher_by_email, get_teacher_by_user_id, get_classes_by_teacher, get_student_for_teacher
 from big_query.inserts import insert_student, insert_teacher
 
 
@@ -72,19 +72,29 @@ def protected_route():
 
 
 
-@app.route('/get-teacher', methods=['GET'])
+@app.route('/get-teacher', methods=['POST'])
 def get_current_teacher():
-    user_id = session['user_id']
+    data = request.get_json()
+    user_id = data.get('user_id')  # Use .get() to avoid KeyError
 
     if not user_id:
-        return jsonify({"error": "User not logged in."}), 401
+        print("user id not found in request payload!")
+        return jsonify({"error": "User ID is required."}), 400
 
-    teacher :Teachers = get_teacher_by_user_id(client=bq_client, user_id=user_id)
+    # Fetch teacher data
+    teacher = get_teacher_by_user_id(client=bq_client, user_id=user_id)
 
     if not teacher:
         return jsonify({"error": "Teacher not found."}), 404
 
-    return jsonify({"teacher": teacher.to_dict()}), 200
+    # Convert RowIterator to a serializable dictionary
+    teacher_data = [dict(row) for row in teacher]  # Assuming multiple rows, adjust as needed
+
+    if len(teacher_data) == 0:
+        return jsonify({"error": "Teacher not found."}), 404
+
+    # If there's only one teacher, return the first one
+    return jsonify({"teacher": teacher_data[0]}), 200
 
 
 
@@ -219,7 +229,10 @@ def register_teacher():
         session['user_id'] = user_id
 
         logging.info(f"Teacher {user_id} successfully registered.")
-        return jsonify({"message": "User registered successfully."}), 201
+        return jsonify({
+            "message": "User registered successfully.",
+            "user_id": user_id    
+        }), 200
 
     except Exception as e:
         logging.error(f"Error saving teacher: {str(e)}")
@@ -273,7 +286,7 @@ def login():
         session['firstname_student'] = user['firstname_student']
         session['lastname_student'] = user['lastname_student']
 
-        logging.info(f"User {user_id} successfully logged in.")
+        print(f"User {user_id} successfully logged in.")
 
         return jsonify({"message": "Login successful", "userId": user_id}), 200
 
@@ -328,7 +341,7 @@ def login_teacher():
         session['lastname'] = user['lastname']
         session['email'] = email
 
-        logging.info(f"User {user_id} successfully logged in.")
+        print(f"User {user_id} successfully logged in.")
 
         return jsonify({"message": "Login successful", "userId": user_id}), 200
 
@@ -338,7 +351,6 @@ def login_teacher():
     except Exception as e:
         logging.error(f"Unexpected error during login: {str(e)}")
         return jsonify({"error": "Authentication failed", "details": str(e)}), 500
-
 
 
 @app.route('/logout', methods=['POST'])
@@ -351,6 +363,45 @@ def logout():
     except Exception as e:
         logging.error(f"Error during logout: {str(e)}")
         return jsonify({"error": "Logout failed", "details": str(e)}), 500
+
+
+
+
+@app.route('/fetch-classes-for-teacher', methods=["POST"])
+def fetch_classes_for_teacher():
+    data = request.json
+    user_id = data.get('user_id')
+
+    if not user_id:
+        print("user id not found")
+        raise Exception("user id not found")
+
+
+    classes = get_classes_by_teacher(cliet=bq_client, user_id=user_id)
+    
+    classes_data = [dict(row) for row in classes]  # Assuming multiple rows, adjust as needed
+    if len(classes_data)==0:
+        return jsonify({"classes": []}), 200
+
+
+    return jsonify({
+        "classes": classes_data
+    }), 200
+
+@app.route('/get-students', methods=["POST"])
+def get_students():
+    data = request.get_json()
+    user_id = data.get('user_id')
+
+    students = get_student_for_teacher(client=bq_client, teacher_user_id=user_id)
+    students_data = [dict(row) for row in students]  # Assuming multiple rows, adjust as needed
+
+    print(students_data)
+    return jsonify({
+        "students" : students_data
+    }), 200
+
+
 
 
 if __name__ == "__main__":
