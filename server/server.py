@@ -20,7 +20,7 @@ from datetime import timedelta
 load_dotenv()
 
 from auth.hash_password import hash_password, check_password
-from big_query.gets import get_student_by_email, get_teacher_by_email, get_teacher_by_user_id, get_classes_by_teacher, get_student_for_teacher
+from big_query.gets import get_student_by_email, get_teacher_by_email, get_teacher_by_user_id, get_classes_by_teacher, get_student_for_teacher, get_student_by_user_id, get_teacher_for_student
 from big_query.inserts import insert_student, insert_teacher, insert_class
 from big_query.bq_types import Classes
 
@@ -132,7 +132,7 @@ def register():
 
         # Check for existing user
         print(f"Checking if email {email_parent} exists in the database.")
-        existing_user = get_student_by_email(email=email_parent)
+        existing_user = get_student_by_email(email=email_parent, client=bq_client)
         if existing_user:
             return jsonify({"error": "User with this email already exists."}), 400
 
@@ -441,6 +441,44 @@ def upload_new_class():
         return jsonify({"message": f"Error inserting new class {e}"}), 500
 
 
+@app.route('/get-student', methods=["POST"])
+def get_student():
+    data = request.get_json()
+    user_id = data.get('user_id')
+
+    res = get_student_by_user_id(client=bq_client, user_id=user_id)
+
+    if not res or res.errors:
+        return jsonify({"message": "failed to fetch student"}), 400
+    
+    students = [dict(row) for row in res]  # Assuming multiple rows, adjust as needed
+
+    return {
+        "student": students[0]
+    }, 200
+
+@app.route('/get-teacher-for-student', methods=["POST"])
+def get_teacher_for_student_route():
+    data = request.get_json()
+    user_id = data.get('user_id')
+
+    res = get_teacher_for_student(client=bq_client, student_user_id=user_id)
+
+    if not res or res.errors:
+        print(res.errors)
+        return jsonify({"message": "failed to fetch teacher"}), 400
+    
+    data = res.result()
+    teacher_data = [dict(row) for row in data]  # Assuming multiple rows, adjust as needed
+
+    if len(teacher_data)==0:
+        return jsonify({
+            "teacher": []
+        }), 200
+
+    return jsonify({
+        "teacher": teacher_data[0]
+    }), 200
 
 
 if __name__ == "__main__":
