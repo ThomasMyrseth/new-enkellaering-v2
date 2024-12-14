@@ -1,13 +1,10 @@
 "use client"
-import React, { use } from "react";
-import { EvervaultCard, Icon } from "@/components/ui/evervault-card";
 import { BackgroundBeamsWithCollision } from "@/components/ui/background-beams-with-collision";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { LampContainer } from "@/components/ui/lamp";
-import { fetchExternalImage } from "next/dist/server/image-optimizer";
-import { TrendingUp } from "lucide-react";
+import { Terminal, TrendingUp } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
 import {
   Card,
@@ -25,7 +22,6 @@ import {
 } from "@/components/ui/chart";
 
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
@@ -40,7 +36,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogFooter,AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 type Class = {
     comment: string; // Optional comment for the session
@@ -81,11 +78,11 @@ type Teacher = {
 }
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
-const pathname = usePathname(); // Get the current pathname
-const segments = pathname.split('/'); // Split the pathname into segments
-const userId = segments[2]; // Extract the 'user_id' from the correct position
 
 export default function LaererPage() {
+    const pathname = usePathname(); // Get the current pathname
+    const segments = pathname.split('/'); // Split the pathname into segments
+    const userId :string= segments[2].toString(); // Extract the 'user_id' from the correct position
     const [teacher, setTeacher] = useState<Teacher>()
 
     useEffect(() => {
@@ -119,11 +116,11 @@ export default function LaererPage() {
     }
 
     return (<>
-        <TeacherName />
-        <BackgroundBeamsWithCollision className="flex flex-col h-full space-y-4">
-            <DailyRevenueChart teacher={teacher}/>
+        <TeacherName teacher={teacher}/>
+        <BackgroundBeamsWithCollision className="flex flex-col h-full items-center justify-center space-y-8">
+            <DailyRevenueChart teacher={teacher} userId={userId}/>
             <br />
-            <AddNewClass/>
+            <AddNewClass teacher={teacher}/>
         </BackgroundBeamsWithCollision>
     </>)
 
@@ -173,7 +170,7 @@ function calculatePayment(classSession: Class, hourlyPay: number): number {
     return Math.round(payment); // Optional: Round to the nearest integer
 }
 
-function DailyRevenueChart({ teacher }: { teacher: Teacher }) {
+function DailyRevenueChart({ teacher, userId }: { teacher: Teacher, userId: string }) {
     const [chartData, setChartData] = useState<Class[]>()
     const [formattedChartData, setFormattedChartdata] = useState<FormattedClass[]>()
     const [totalPayment, setTotalPayment] = useState<number>(0); // Use state for totalPayment
@@ -307,11 +304,13 @@ function DailyRevenueChart({ teacher }: { teacher: Teacher }) {
 
 
 function AddNewClass({teacher}: {teacher: Teacher}) {
-    const [date, setDate] = React.useState<Date>()
-    const [selectedStudentUserId, setSelectedStudentUserId] = useState<string>('')
+    const [date, setDate] = useState<Date>()
+    const [selectedStudentUserId, setSelectedStudentUserId] = useState<string>()
     const [startedAt, setStartedAt] = useState<Date>()
     const [endedAt, setEndedAt] = useState<Date>()
-    const [comment, setComment] = useState<string>('')
+    const [comment, setComment] = useState<string>()
+    const [success, setSuccess] = useState<boolean>()
+    const [enableButton, setEnanleButton] = useState<boolean>(false)
 
     const handleStudentSelect = (userId: string) => {
         setSelectedStudentUserId(userId);
@@ -327,14 +326,64 @@ function AddNewClass({teacher}: {teacher: Teacher}) {
     const handleSetComment = (comment :string) => {
         setComment(comment)
     }
-    
-    
-    return (<div className="my-4 w-3/4">
 
-        <SelectStudent teacher={teacher} onStudentSelect={handleStudentSelect} />
-        <DateTimePicker onStartDateSelected={handleStartDateSelect} onEndDateSelected={handleEndDateSelect}/>
-        <AddComment onAddComment={handleSetComment}/>
-        <SendButton />
+    const handleSetSucces = (s :boolean) => {
+        setSuccess(s)
+        setSelectedStudentUserId('')
+        setStartedAt(undefined)
+        setEndedAt(undefined)
+        setComment(undefined)
+        setEnanleButton(false)
+    }
+
+    //enable succesbutton once all fields are full
+    useEffect( () => {
+        if (selectedStudentUserId && startedAt && endedAt && comment) {
+            setEnanleButton(true)
+        }
+        else {
+            setEnanleButton(false)
+        }
+    },[selectedStudentUserId, startedAt, endedAt, comment])
+
+    if (!teacher) {
+        return (<p>Loading...</p>)
+    }
+    
+    
+    return (<div className="w-3/4 h-full p-4 bg-white dark:bg-black rounded-lg">
+         {success && (
+            <AlertDialog open={success}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Timen er lastet opp!</AlertDialogTitle>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogAction 
+                            onClick={() => handleSetSucces(false)} // Close the dialog
+                        >
+                            Lukk
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        )}
+        <div className="flex flex-col space-y-4 items-strech">
+            <SelectStudent teacher={teacher} onStudentSelect={handleStudentSelect} />
+            <br />
+            <DateTimePicker onStartDateSelected={handleStartDateSelect} onEndDateSelected={handleEndDateSelect}/>
+            <br />
+            <AddComment onAddComment={handleSetComment}/>
+            <br />
+            <SendButton 
+                teacher={teacher}
+                started_at={startedAt}
+                ended_at={endedAt}
+                comment={comment}
+                selectedStudentUserId={selectedStudentUserId}
+                setUploadSuccessfull={handleSetSucces}
+            />
+        </div>
     </div>)
 
 }
@@ -378,7 +427,8 @@ function SelectStudent({teacher, onStudentSelect} : {teacher: Teacher; onStudent
         }
       };
     
-    return (<>
+    return (<div className="w-full h-full flex flex-col  items-center">
+    <h3 className="pb-4">Hvem hadde du i dag?</h3>
     <RadioGroup defaultValue="option-0" onValueChange={handleValueChange}>
         {students.map( (student :Student, index :number) => {
             return( 
@@ -391,7 +441,7 @@ function SelectStudent({teacher, onStudentSelect} : {teacher: Teacher; onStudent
                 </div>);
         })}
     </RadioGroup>
-    </>);
+    </div>);
 }
 
 const LabelInputContainer = ({ children }: { children: React.ReactNode }) => {
@@ -410,11 +460,18 @@ function AddComment({onAddComment} : {onAddComment: (comment: string) => void   
 
 
     return(<>
-        <div className="max-w-md w-full mx-auto md:rounded-2xl m-4 p-4 rounded-lg shadow-input bg-white dark:bg-black">
-
-            <LabelInputContainer>
-              <Label htmlFor="comment" className="">Hvordan var timen?</Label>
-              <Textarea value={comment} onChange={(e) => handleAddComment(e.target.value)} id="comment" placeholder="I dag jobbet vi med trigonometri!"/>
+        <div className=" w-full mx-auto m-4 p-4 shadow-input flex flex-col justify-center text-center">
+            <h3>Hvordan var timen?</h3>
+            <LabelInputContainer >
+              <Textarea  
+                rows={6} 
+                className="w-full" 
+                value={comment} 
+                onChange={(e) => handleAddComment(e.target.value)} 
+                id="comment" 
+                placeholder="I dag jobbet vi med trigonometri!
+                Vi startet med å se på sinussetningen og arealsetningen før vi gikk videre på noen eksamensoppgaver.
+                Dette fikk Andreas svært bra til, etter litt hjelp. Gleder meg masse til neste uke!"/>
             </LabelInputContainer>
 
         </div>
@@ -424,10 +481,10 @@ function AddComment({onAddComment} : {onAddComment: (comment: string) => void   
 
  
 function DateTimePicker({onStartDateSelected, onEndDateSelected} : {onStartDateSelected: (date: Date) => void; onEndDateSelected: (date: Date) => void}) {
-  const [startDate, setStartDate] = React.useState<Date>();
-  const [endDate, setEndDate] = React.useState<Date>();
-  const [isOpen, setIsOpen] = React.useState(false);
-  const [isEndTimePickerOpen, setIsEndTimePickerOpen] = React.useState(false);
+  const [startDate, setStartDate] = useState<Date>();
+  const [endDate, setEndDate] = useState<Date>();
+  const [isOpen, setIsOpen] = useState(false);
+  const [isEndTimePickerOpen, setIsEndTimePickerOpen] = useState(false);
 
   const hours = Array.from({ length: 24 }, (_, i) => i);
 
@@ -464,7 +521,7 @@ function DateTimePicker({onStartDateSelected, onEndDateSelected} : {onStartDateS
     }
   };
 
-  const Calendar = (picker: "start" | "end") => (
+  const MyCalendar = (picker: "start" | "end") => (
     <Popover
       open={picker === "start" ? isOpen : isEndTimePickerOpen}
       onOpenChange={picker === "start" ? setIsOpen : setIsEndTimePickerOpen}
@@ -492,7 +549,8 @@ function DateTimePicker({onStartDateSelected, onEndDateSelected} : {onStartDateS
           <Calendar
             mode="single"
             selected={picker === "start" ? startDate : endDate}
-            onSelect={(date) => handleDateSelect(date, picker)}
+            onSelect={(date :Date) => handleDateSelect(date, picker)}
+            required={true}
             initialFocus
           />
           <div className="flex flex-col sm:flex-row sm:h-[300px] divide-y sm:divide-y-0 sm:divide-x">
@@ -544,14 +602,74 @@ function DateTimePicker({onStartDateSelected, onEndDateSelected} : {onStartDateS
 
   return (
     <div className="space-y-4">
-      <div>
-        <h3>Start Time</h3>
-        {Calendar("start")}
+      <div className="flex flex-col space-y-2 items-center">
+        <h3>Når startet dere?</h3>
+        {MyCalendar("start")}
       </div>
-      <div>
-        <h3>End Time</h3>
-        {Calendar("end")}
+      <div className="flex flex-col space-y-2 items-center">
+        <h3>Når avsluttet dere?</h3>
+        {MyCalendar("end")}
       </div>
     </div>
   );
+}
+
+
+function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUserId, setUploadSuccessfull} : {teacher: Teacher; started_at?: Date; ended_at?: Date; comment?: string, selectedStudentUserId?: string, setUploadSuccessfull: (success: boolean) => void}) {
+    const [allValid, setAllValid] = useState<boolean>(false)
+
+    useEffect( () => {
+        if (teacher && started_at && ended_at && comment && selectedStudentUserId) {
+            setAllValid(true)
+        }
+        else {
+            setAllValid(false)
+        }
+    },[teacher, started_at, ended_at, comment, selectedStudentUserId])
+
+    const handleSendClick = async () => {
+        if (!teacher || !started_at || !ended_at || !comment || !selectedStudentUserId) {
+            alert("All fields must be filled in.");
+            setUploadSuccessfull(false);
+            return;
+        }
+    
+        try {
+            const response = await fetch(`${BASEURL}/upload-new-class`, {
+            method: "POST",
+            credentials: "include",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                teacher_user_id: teacher.user_id,
+                student_user_id: selectedStudentUserId,
+                started_at: started_at.toISOString(),
+                ended_at: ended_at.toISOString(),
+                comment: comment,
+            }),
+            });
+    
+            if (!response.ok) {
+                alert("An error occurred. Please try again.");
+                setUploadSuccessfull(false);
+            } else {
+                setUploadSuccessfull(true);
+            }
+        } catch (error) {
+            console.error("Error uploading class:", error);
+            alert("An error occurred. Please try again.");
+            setUploadSuccessfull(false);
+        }
+    };
+
+    
+    return(<>
+        <Button 
+            onClick={handleSendClick} 
+            variant={"outline"}
+            disabled={!allValid}
+        >
+        Last opp ny time</Button>
+    </>)
 }

@@ -2,6 +2,7 @@ from google.cloud import bigquery
 from big_query.bq_types import Teachers, Students, Referrals, NewStudents, Classes
 from dotenv import load_dotenv
 import os
+from datetime import datetime, timezone
 
 # Load environment variables from .env file
 load_dotenv()
@@ -188,44 +189,62 @@ def insert_new_student(client: bigquery.Client, new_student: Students):
     client.query(query, job_config=job_config)
 
 
-def insert_class(client: bigquery.Client, class_: Classes):
+def insert_class(client: bigquery.Client, class_obj: Classes):
     # Validate teacher exists
     teacher_query = f"""
-        SELECT user_id FROM `{PROJECT_ID}.{USER_DATASET}.TEACHERS`
+        SELECT user_id FROM `{PROJECT_ID}.{USER_DATASET}.teachers`
         WHERE user_id = @teacher_user_id
     """
     teacher_job = client.query(
         teacher_query,
         job_config=bigquery.QueryJobConfig(
             query_parameters=[
-                bigquery.ScalarQueryParameter("teacher_user_id", "STRING", class_.teacher_user_id)
+                bigquery.ScalarQueryParameter("teacher_user_id", "STRING", class_obj.teacher_user_id)
             ]
         ),
     )
     teacher_result = list(teacher_job.result())
+
     if not teacher_result:
         raise ValueError("Teacher does not exist")
 
     query = f"""
-        INSERT INTO `{PROJECT_ID}.{USER_DATASET}.CLASSES` (
-            teacher_user_id, student_user_id, created_at, started_at, ended_at,
+        INSERT INTO `{PROJECT_ID}.{CLASSES_DATASET}.classes` (
+            class_id, teacher_user_id, student_user_id, created_at, started_at, ended_at,
             comment, paid_teacher, invoiced_student
         )
         VALUES (
-            @teacher_user_id, @student_user_id, @created_at, @started_at, @ended_at,
+            @class_id, @teacher_user_id, @student_user_id, @created_at, @started_at, @ended_at,
             @comment, @paid_teacher, @invoiced_student
         )
     """
     job_config = bigquery.QueryJobConfig(
         query_parameters=[
-            bigquery.ScalarQueryParameter("teacher_user_id", "STRING", class_.teacher_user_id),
-            bigquery.ScalarQueryParameter("student_user_id", "STRING", class_.student_user_id),
-            bigquery.ScalarQueryParameter("created_at", "TIMESTAMP", class_.created_at),
-            bigquery.ScalarQueryParameter("started_at", "TIMESTAMP", class_.started_at),
-            bigquery.ScalarQueryParameter("ended_at", "TIMESTAMP", class_.ended_at),
-            bigquery.ScalarQueryParameter("comment", "STRING", class_.comment),
-            bigquery.ScalarQueryParameter("paid_teacher", "BOOL", class_.paid_teacher),
-            bigquery.ScalarQueryParameter("invoiced_student", "BOOL", class_.invoiced_student),
+            bigquery.ScalarQueryParameter("class_id", "STRING", class_obj.class_id),
+            bigquery.ScalarQueryParameter("teacher_user_id", "STRING", class_obj.teacher_user_id),
+            bigquery.ScalarQueryParameter("student_user_id", "STRING", class_obj.student_user_id),
+            bigquery.ScalarQueryParameter("created_at", "TIMESTAMP", datetime.fromisoformat(class_obj.created_at.replace("Z", "")).replace(tzinfo=timezone.utc)),
+            bigquery.ScalarQueryParameter("started_at", "TIMESTAMP", datetime.fromisoformat(class_obj.started_at.replace("Z", "")).replace(tzinfo=timezone.utc)),
+            bigquery.ScalarQueryParameter("ended_at", "TIMESTAMP", datetime.fromisoformat(class_obj.ended_at.replace("Z", "")).replace(tzinfo=timezone.utc)),
+            bigquery.ScalarQueryParameter("comment", "STRING", class_obj.comment),
+            bigquery.ScalarQueryParameter("paid_teacher", "BOOL", class_obj.paid_teacher),
+            bigquery.ScalarQueryParameter("invoiced_student", "BOOL", class_obj.invoiced_student),
         ]
     )
-    client.query(query, job_config=job_config)
+
+    try:
+        response = client.query(query, job_config=job_config, location="EU")
+        response.result()  # Ensure the query completes
+
+        # Debug response
+        print("Query executed successfully.")
+        if response.errors:
+            print("BigQuery errors:")
+            for error in response.errors:
+                print(error)
+            raise Exception("Error inserting new class into BigQuery")
+        
+        return True
+    except Exception as e:
+        print(f"Error executing query: {e}")
+        raise Exception(f"Error executing query: {e}")

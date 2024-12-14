@@ -132,6 +132,7 @@ class NewStudents:
 class Classes:
     def __init__(
         self,
+        class_id: str,
         teacher_user_id: str,
         student_user_id: str,
         created_at: datetime,
@@ -139,8 +140,11 @@ class Classes:
         ended_at: datetime,
         comment: Optional[str] = None,
         paid_teacher: Optional[bool] = None,
+        paid_teacher_at: Optional[str] = None,
         invoiced_student: Optional[bool] = None,
+        invoiced_student_at: Optional[str] = None,
     ):
+        self.class_id = class_id,
         self.teacher_user_id = teacher_user_id
         self.student_user_id = student_user_id
         self.created_at = created_at
@@ -149,3 +153,5 @@ class Classes:
         self.comment = comment
         self.paid_teacher = paid_teacher
         self.invoiced_student = invoiced_student
+        self.invoiced_student_at = invoiced_student_at
+        self.paid_teacher_at = paid_teacher_at

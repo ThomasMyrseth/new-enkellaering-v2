@@ -21,7 +21,8 @@ load_dotenv()
 
 from auth.hash_password import hash_password, check_password
 from big_query.gets import get_student_by_email, get_teacher_by_email, get_teacher_by_user_id, get_classes_by_teacher, get_student_for_teacher
-from big_query.inserts import insert_student, insert_teacher
+from big_query.inserts import insert_student, insert_teacher, insert_class
+from big_query.bq_types import Classes
 
 
 app = Flask(__name__)
@@ -396,10 +397,48 @@ def get_students():
     students = get_student_for_teacher(client=bq_client, teacher_user_id=user_id)
     students_data = [dict(row) for row in students]  # Assuming multiple rows, adjust as needed
 
-    print(students_data)
     return jsonify({
         "students" : students_data
     }), 200
+
+@app.route('/upload-new-class', methods=["POST"])
+def upload_new_class():
+    data = request.get_json()
+    teacher_user_id = data.get('teacher_user_id')
+    student_user_id = data.get('student_user_id')
+    started_at = data.get("started_at")
+    ended_at = data.get("ended_at")
+    comment = data.get("comment")
+    invoiced_student = False
+    paid_teacher = False
+    paid_teacher_at = None
+    invoiced_student_at = None
+
+    if not(teacher_user_id and student_user_id and started_at and ended_at):
+        return jsonify({"message": "Missing required fields"}), 400
+    
+    new_class = Classes(
+        class_id=str(uuid.uuid4()),
+        teacher_user_id=teacher_user_id,
+        student_user_id=student_user_id,
+        created_at=datetime.now().isoformat(),
+        started_at=started_at,
+        ended_at=ended_at,
+        comment=comment,
+        paid_teacher=paid_teacher,
+        invoiced_student=invoiced_student,
+        paid_teacher_at=paid_teacher_at,
+        invoiced_student_at=invoiced_student_at
+    )
+
+    try:
+        response = insert_class(client=bq_client, class_obj=new_class)
+        if response:
+            print("inserted new class successfully")
+            return jsonify({"message": "Class inserted successfully"}), 200
+    except Exception as e:
+        print(f"error {e}")
+        return jsonify({"message": f"Error inserting new class {e}"}), 500
 
 
 
