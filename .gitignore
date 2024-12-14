@@ -39,3 +39,8 @@ Thumbs.db
 venv/
 
 google_service_account.json
+
+
+# Ignore Python cache files
+__pycache__/
+*.pyc
