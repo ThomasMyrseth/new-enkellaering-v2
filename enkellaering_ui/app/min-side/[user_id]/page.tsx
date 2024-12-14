@@ -3,6 +3,8 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CardBody, CardContainer, CardItem } from "@/components/ui/3d-card";
 import Image from "next/image";
+import { BackgroundLines } from "@/components/ui/background-lines";
+import { BackgroundGradientAnimation } from "@/components/ui/background-gradient-animation";
 
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
@@ -43,6 +45,15 @@ type Teacher = {
     resigned_at: string | null;
 }
 
+type Classes = {
+    comment: string; // Optional comment for the session
+    created_at: string; // Timestamp when the record was created (ISO format)
+    started_at: string; // Timestamp for when the session started (ISO format)
+    ended_at: string; // Timestamp for when the session ended (ISO format)
+    invoiced_student: boolean; // Indicates if the student was invoiced
+    paid_teacher: boolean; // Indicates if the teacher was paid
+};
+
 export default function MinSideStudentPage() {
     const pathname = usePathname(); // Get the current pathname
     const segments = pathname.split('/'); // Split the pathname into segments
@@ -79,9 +90,44 @@ export default function MinSideStudentPage() {
             <p>Loading...</p>
         </>)
     }
-    return(<>
-        <MyTeacher user_id={student.user_id}/>
-        <PreviousClasses user_id={student.user_id}/>
+    return(<div className="flex flex-col items-center justify-center w-full min-h-screen">
+        <StudentName student={student} />
+        <BackgroundLines>
+            <div className="flex flex-col items-center justify-center w-full h-fit gap-6 bg-white dark:bg-black">
+                <MyTeacher user_id={student.user_id} />
+                <PreviousClasses user_id={student.user_id} />
+            </div>
+        </BackgroundLines>
+    </div>)
+}
+
+import { motion } from "framer-motion";
+import { LampContainer } from "@/components/ui/lamp";
+
+function StudentName({student} : {student: Student}) {
+    const firstname_parent :string = student.firstname_parent
+    const lastname_parent :string = student.lastname_parent
+    const firstname_student :string = student.firstname_student
+    const lastname_student :string = student.lastname_student
+
+
+    return (<>
+        <LampContainer>
+            <motion.h1
+                initial={{ opacity: 0.5, y: 100 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{
+                delay: 0.3,
+                duration: 0.8,
+                ease: "easeInOut",
+                }}
+                className="mt-8 bg-gradient-to-br from-slate-300 to-slate-500 py-4 bg-clip-text text-center text-4xl font-medium tracking-tight text-transparent md:text-7xl"
+            >
+                {firstname_parent} {lastname_parent}
+                <br />
+                & {firstname_student} {lastname_student}
+            </motion.h1>
+        </LampContainer>
     </>)
 }
 
@@ -188,7 +234,6 @@ function MyTeacher({user_id} : {user_id: string}) {
 }
 
 
-
 import {
     Table,
     TableBody,
@@ -207,15 +252,6 @@ import {
     AccordionTrigger,
 } from "@/components/ui/accordion";
 
-  
-type Classes = {
-    comment: string; // Optional comment for the session
-    created_at: string; // Timestamp when the record was created (ISO format)
-    started_at: string; // Timestamp for when the session started (ISO format)
-    ended_at: string; // Timestamp for when the session ended (ISO format)
-    invoiced_student: boolean; // Indicates if the student was invoiced
-    paid_teacher: boolean; // Indicates if the teacher was paid
-};
 
 function PreviousClasses({user_id}: {user_id: string}) {      
     const [classes, setClasses] = useState<Classes[]>();
@@ -225,6 +261,7 @@ function PreviousClasses({user_id}: {user_id: string}) {
     const [loading, setLoading] = useState<boolean>(true)
     let totalAmount :number = 0
 
+    //get classes for student
     useEffect( () => {
         async function fetchClasses() {
             const response = await fetch(`${BASEURL}/get-classes-for-student`, {
@@ -267,12 +304,26 @@ function PreviousClasses({user_id}: {user_id: string}) {
             const dateB = new Date(b.started_at);
             return dateA.getTime() - dateB.getTime();
         });
+
+        classes.forEach(c => {
+            const durationHours = (new Date(c.ended_at).getTime() - new Date(c.started_at).getTime()) / (1000 * 60 * 60)
+            if (!c.invoiced_student) {
+                totalAmount += durationHours*540;
+            }
+        })
+
+        //round of to an integer NOK
+        totalAmount = Math.round(totalAmount)
     }
 
-    if (classes) {
-        setFirstTenclasses(classes.slice(0, 10))
-        setRemainingClasses(classes.slice(10))
-    }
+    //split classes
+    useEffect(() => {
+        if (classes) {
+            setFirstTenclasses(classes.slice(0, 10));
+            setRemainingClasses(classes.slice(10));
+        }
+        
+    }, [classes]); // Only run when `classes` changes
 
 
     if (loading) {
@@ -302,10 +353,6 @@ function PreviousClasses({user_id}: {user_id: string}) {
                 const durationHours: number = Math.floor(totalDurationMillis / (1000 * 60 * 60)); // Whole hours
                 const durationMinutes: number = Math.round((totalDurationMillis % (1000 * 60 * 60)) / (1000 * 60)); // Remaining minutes
                 const amount: number = durationHours * 540 + (durationMinutes / 60) * 540; // Adding fractional hours
-                
-                if (!c.invoiced_student) {
-                    totalAmount += amount;
-                }
 
                 return(
                     <TableRow key={index}>
