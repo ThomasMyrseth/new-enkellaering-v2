@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/popover"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogFooter,AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { BackgroundLines } from "@/components/ui/background-lines";
 
 type Class = {
     comment: string; // Optional comment for the session
@@ -115,16 +116,19 @@ export default function LaererPage() {
         return (<p>Loading...</p>)
     }
 
-    return (<>
-        <TeacherName teacher={teacher}/>
-        <BackgroundBeamsWithCollision className="flex flex-col h-full items-center justify-center space-y-8">
+    return (<div className="flex flex-col width-full h-full items-center justify-center">
+            <TeacherName teacher={teacher}/>
+
             <DailyRevenueChart teacher={teacher} userId={userId}/>
             <br />
             <AddNewClass teacher={teacher}/>
             <br/>
             <YourStudent teacher={teacher}/>
-        </BackgroundBeamsWithCollision>
-    </>)
+
+        <div className="p-4 m-4">
+        </div>
+
+    </div>)
 
 }
 
@@ -434,8 +438,8 @@ function SelectStudent({teacher, onStudentSelect} : {teacher: Teacher; onStudent
     <RadioGroup defaultValue="option-0" onValueChange={handleValueChange}>
         {students.map( (student :Student, index :number) => {
             return( 
-                <div className="flex items-center space-x-2">
-                    <RadioGroupItem value={`option-${index}`} id="option-two" />
+                <div key={index} className="flex items-center space-x-2">
+                    <RadioGroupItem value={`option-${index}`} id={`option-${index}`} />
                     <Label htmlFor="option-two">
                         <p>{student.firstname_parent} {student.lastname_parent}</p>
                         <p className="text-sm text-neutral-600"> & {student.firstname_student} {student.lastname_student}</p>

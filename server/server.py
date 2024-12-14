@@ -20,7 +20,7 @@ from datetime import timedelta
 load_dotenv()
 
 from auth.hash_password import hash_password, check_password
-from big_query.gets import get_student_by_email, get_teacher_by_email, get_teacher_by_user_id, get_classes_by_teacher, get_student_for_teacher
+from big_query.gets import get_student_by_email, get_teacher_by_email, get_teacher_by_user_id, get_classes_by_teacher, get_student_for_teacher, get_student_by_user_id, get_teacher_for_student, get_classes_for_student
 from big_query.inserts import insert_student, insert_teacher, insert_class
 from big_query.bq_types import Classes
 
@@ -132,7 +132,7 @@ def register():
 
         # Check for existing user
         print(f"Checking if email {email_parent} exists in the database.")
-        existing_user = get_student_by_email(email=email_parent)
+        existing_user = get_student_by_email(email=email_parent, client=bq_client)
         if existing_user:
             return jsonify({"error": "User with this email already exists."}), 400
 
@@ -165,7 +165,7 @@ def register():
         session['email'] = email_parent
         logging.info(f"Student {user_id} successfully registered.")
 
-        return jsonify({"message": "User registered successfully."}), 201
+        return jsonify({"message": "User registered successfully.", "user_id": user_id}), 200
 
     except auth.InvalidIdTokenError:
         logging.error("Invalid Firebase ID token.")
@@ -245,7 +245,7 @@ def register_teacher():
 def login():
     try:
         # Get the Firebase ID token from the request
-        data = request.json()
+        data = request.get_json()
         id_token = data.get('id_token')
         if not id_token:
             logging.error("Missing ID token in request.")
@@ -289,7 +289,7 @@ def login():
 
         print(f"User {user_id} successfully logged in.")
 
-        return jsonify({"message": "Login successful", "userId": user_id}), 200
+        return jsonify({"message": "Login successful", "user_id": user_id}), 200
 
     except auth.InvalidIdTokenError:
         logging.error("Invalid Firebase ID token.")
@@ -378,7 +378,7 @@ def fetch_classes_for_teacher():
         raise Exception("user id not found")
 
 
-    classes = get_classes_by_teacher(cliet=bq_client, user_id=user_id)
+    classes = get_classes_by_teacher(client=bq_client, user_id=user_id)
     
     classes_data = [dict(row) for row in classes]  # Assuming multiple rows, adjust as needed
     if len(classes_data)==0:
@@ -440,6 +440,69 @@ def upload_new_class():
         print(f"error {e}")
         return jsonify({"message": f"Error inserting new class {e}"}), 500
 
+
+@app.route('/get-student', methods=["POST"])
+def get_student():
+    data = request.get_json()
+    user_id = data.get('user_id')
+
+    res = get_student_by_user_id(client=bq_client, user_id=user_id)
+
+    if not res or res.errors:
+        return jsonify({"message": "failed to fetch student"}), 400
+    
+    students = [dict(row) for row in res]  # Assuming multiple rows, adjust as needed
+
+    return {
+        "student": students[0]
+    }, 200
+
+@app.route('/get-teacher-for-student', methods=["POST"])
+def get_teacher_for_student_route():
+    data = request.get_json()
+    user_id = data.get('user_id')
+
+    res = get_teacher_for_student(client=bq_client, student_user_id=user_id)
+
+    if not res or res.errors:
+        print(res.errors)
+        return jsonify({"message": "failed to fetch teacher"}), 400
+    
+    data = res.result()
+    teacher_data = [dict(row) for row in data]  # Assuming multiple rows, adjust as needed
+
+    if len(teacher_data)==0:
+        return jsonify({
+            "teacher": []
+        }), 200
+
+    return jsonify({
+        "teacher": teacher_data[0]
+    }), 200
+
+@app.route('/get-classes-for-student', methods=["POST"])
+def get_classes_for_student_route():
+    data = request.get_json(force=True)
+    user_id = data.get('user_id')
+
+    res = get_classes_for_student(client=bq_client, student_user_id=user_id)
+
+    if not res or res.errors:
+        return jsonify({
+            "message": f"An error happened while fetching classes: {res.errors}"
+        }), 500
+    
+    data = res.result()
+    classes = [dict(row) for row in data] 
+
+    if len(classes)==0:
+        return jsonify({
+            "classes": []
+        }), 200
+
+    return jsonify({
+        "classes": classes
+    }), 200
 
 
 
