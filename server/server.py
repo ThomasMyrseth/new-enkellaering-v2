@@ -165,7 +165,7 @@ def register():
         session['email'] = email_parent
         logging.info(f"Student {user_id} successfully registered.")
 
-        return jsonify({"message": "User registered successfully."}), 201
+        return jsonify({"message": "User registered successfully.", "user_id": user_id}), 200
 
     except auth.InvalidIdTokenError:
         logging.error("Invalid Firebase ID token.")
@@ -245,7 +245,7 @@ def register_teacher():
 def login():
     try:
         # Get the Firebase ID token from the request
-        data = request.json()
+        data = request.get_json()
         id_token = data.get('id_token')
         if not id_token:
             logging.error("Missing ID token in request.")
@@ -289,7 +289,7 @@ def login():
 
         print(f"User {user_id} successfully logged in.")
 
-        return jsonify({"message": "Login successful", "userId": user_id}), 200
+        return jsonify({"message": "Login successful", "user_id": user_id}), 200
 
     except auth.InvalidIdTokenError:
         logging.error("Invalid Firebase ID token.")

@@ -35,7 +35,7 @@ export default function LoginForm() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ id_token: idToken }),
+        body: JSON.stringify({ "id_token": idToken }),
       });
 
       if (response.ok) {
