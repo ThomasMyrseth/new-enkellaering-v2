@@ -81,6 +81,7 @@ export default function MinSideStudentPage() {
     }
     return(<>
         <MyTeacher user_id={student.user_id}/>
+        <PreviousClasses user_id={student.user_id}/>
     </>)
 }
 
@@ -151,7 +152,7 @@ function MyTeacher({user_id} : {user_id: string}) {
                     className="text-neutral-500 text-sm max-w-sm mt-2 dark:text-neutral-300"
                 >
                     { hasTeacher?
-                    <p>
+                    <span>
                         <span className="font-light">Telefon: </span><span className="font-bold">{teacher?.phone}  </span>
                         <br />
                         <span className="font-light">Epost: </span><span className="font-bold">{teacher?.email}  </span>
@@ -159,12 +160,12 @@ function MyTeacher({user_id} : {user_id: string}) {
                         <span className="font-light">Adresse: </span><span className="font-bold">{teacher?.address}</span>
                         <br />
                         <span className="font-light">Postnummer: </span><span className="font-bold">{teacher?.postal_code}</span>
-                    </p>
+                    </span>
                     :
-                    <p>Dersom dette vedvarer mer enn noen dager kan dere kontakte: 
+                    <span>Dersom dette vedvarer mer enn noen dager kan dere kontakte: 
                         <br/>
                         <span className="font-bold">Thomas Myrseth tlf: <span className="text-underline">47184744</span></span>
-                    </p>
+                    </span>
                     }
                 </CardItem>
                 <CardItem
@@ -183,5 +184,185 @@ function MyTeacher({user_id} : {user_id: string}) {
                 </CardItem>
             </CardBody>
     </CardContainer>
+  );
+}
+
+
+
+import {
+    Table,
+    TableBody,
+    TableCaption,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+    TableFooter
+} from "@/components/ui/table"
+
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+} from "@/components/ui/accordion";
+
+  
+type Classes = {
+    comment: string; // Optional comment for the session
+    created_at: string; // Timestamp when the record was created (ISO format)
+    started_at: string; // Timestamp for when the session started (ISO format)
+    ended_at: string; // Timestamp for when the session ended (ISO format)
+    invoiced_student: boolean; // Indicates if the student was invoiced
+    paid_teacher: boolean; // Indicates if the teacher was paid
+};
+
+function PreviousClasses({user_id}: {user_id: string}) {      
+    const [classes, setClasses] = useState<Classes[]>();
+    const [firstTenClasses, setFirstTenclasses] = useState<Classes[]>()
+    const [remainingClasses, setRemainingClasses] = useState<Classes[]>()
+    const [hasClasses, setHasClasses] = useState<boolean>(false)
+    const [loading, setLoading] = useState<boolean>(true)
+    let totalAmount :number = 0
+
+    useEffect( () => {
+        async function fetchClasses() {
+            const response = await fetch(`${BASEURL}/get-classes-for-student`, {
+                method: "POST",
+                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    "user_id": user_id
+                })
+            })
+
+            if(!response.ok) {
+                alert("En feil har skjedd, prøv igjen")
+                return null;
+            }
+
+            const data = await response.json()
+            const classes = data.classes
+
+            if (classes.length === 0) {
+                setHasClasses(false)
+                setLoading(false)
+            }
+            else {
+                setHasClasses(true)
+                setClasses(classes)
+                setLoading(false)
+            }
+        }
+        fetchClasses()
+    
+    },[user_id])
+
+    //sort classes cronologically by started at
+    if (classes) {
+        classes.sort((a, b) => {
+            const dateA = new Date(a.started_at);
+            const dateB = new Date(b.started_at);
+            return dateA.getTime() - dateB.getTime();
+        });
+    }
+
+    if (classes) {
+        setFirstTenclasses(classes.slice(0, 10))
+        setRemainingClasses(classes.slice(10))
+    }
+
+
+    if (loading) {
+        return <p>Loading...</p>
+    }
+
+      
+    return (<div className="flex flex-col justify-center items-center w-3/4">
+        <h2>En oversikt over tidligere timer</h2>
+        <Table>
+        <TableCaption>*At en time er fakturert vil si at faktura for timen er sendt ut, det betyr ikke at timen er betalt</TableCaption>
+        <TableHeader>
+            <TableRow>
+                <TableHead className="w-[100px]">Dato</TableHead>
+                <TableHead>Varighet</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Beløp</TableHead>
+                <TableHead>Kommentar</TableHead>
+            </TableRow>
+        </TableHeader>
+        <TableBody>
+            {firstTenClasses && firstTenClasses.map((c, index) => {
+                const startedAt :Date = new Date(c.started_at); // Convert started_at to a Date object
+                const endedAt :Date = new Date(c.ended_at);     // Convert ended_at to a Date object
+                
+                const totalDurationMillis: number = endedAt.getTime() - startedAt.getTime();
+                const durationHours: number = Math.floor(totalDurationMillis / (1000 * 60 * 60)); // Whole hours
+                const durationMinutes: number = Math.round((totalDurationMillis % (1000 * 60 * 60)) / (1000 * 60)); // Remaining minutes
+                const amount: number = durationHours * 540 + (durationMinutes / 60) * 540; // Adding fractional hours
+                
+                if (!c.invoiced_student) {
+                    totalAmount += amount;
+                }
+
+                return(
+                    <TableRow key={index}>
+                        <TableCell className="font-medium">{c.started_at}</TableCell>
+                        <TableCell>{`${durationHours}t ${Math.round(durationMinutes % 60)}min`}</TableCell>
+                        <TableCell>{c.invoiced_student ? <p className="text-green-400">Fakturert</p> : <p className="text-red-400">Ufakturert</p>}</TableCell>
+                        <TableCell className="text-right">{amount}</TableCell>
+                        <TableCell>{c.comment}</TableCell>
+                    </TableRow>
+                )
+            })}
+        </TableBody>
+        <TableFooter>
+            <TableRow>
+            <TableCell colSpan={3}>Totalt ufakturert</TableCell>
+            <TableCell className="text-right">{totalAmount}kr.</TableCell>
+            </TableRow>
+        </TableFooter>
+        </Table>
+
+        {remainingClasses && (
+        <Accordion type="single" collapsible className="w-full mt-4">
+          <AccordionItem value="remaining-classes">
+            <AccordionTrigger>Vis flere timer</AccordionTrigger>
+            <AccordionContent>
+              <Table>
+                <TableBody>
+                  {remainingClasses.map((c, index) => {
+                    const startedAt: Date = new Date(c.started_at);
+                    const endedAt: Date = new Date(c.ended_at);
+                    const totalDurationMillis: number = endedAt.getTime() - startedAt.getTime();
+                    const durationHours: number = Math.floor(totalDurationMillis / (1000 * 60 * 60));
+                    const durationMinutes: number = Math.round((totalDurationMillis % (1000 * 60 * 60)) / (1000 * 60));
+                    const amount: number = durationHours * 540 + (durationMinutes / 60) * 540;
+
+                    return (
+                      <TableRow key={index}>
+                        <TableCell className="font-medium">{c.started_at}</TableCell>
+                        <TableCell>{`${durationHours}t ${durationMinutes}min`}</TableCell>
+                        <TableCell>
+                          {c.invoiced_student ? (
+                            <p className="text-green-400">Fakturert</p>
+                          ) : (
+                            <p className="text-red-400">Ufakturert</p>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">{amount}kr</TableCell>
+                        <TableCell>{c.comment}</TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      )}
+    </div>
   );
 }

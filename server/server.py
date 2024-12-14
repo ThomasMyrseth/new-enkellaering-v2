@@ -20,7 +20,7 @@ from datetime import timedelta
 load_dotenv()
 
 from auth.hash_password import hash_password, check_password
-from big_query.gets import get_student_by_email, get_teacher_by_email, get_teacher_by_user_id, get_classes_by_teacher, get_student_for_teacher, get_student_by_user_id, get_teacher_for_student
+from big_query.gets import get_student_by_email, get_teacher_by_email, get_teacher_by_user_id, get_classes_by_teacher, get_student_for_teacher, get_student_by_user_id, get_teacher_for_student, get_classes_for_student
 from big_query.inserts import insert_student, insert_teacher, insert_class
 from big_query.bq_types import Classes
 
@@ -479,6 +479,31 @@ def get_teacher_for_student_route():
     return jsonify({
         "teacher": teacher_data[0]
     }), 200
+
+@app.route('/get-classes-for-student', methods=["POST"])
+def get_classes_for_student_route():
+    data = request.get_json(force=True)
+    user_id = data.get('user_id')
+
+    res = get_classes_for_student(client=bq_client, student_user_id=user_id)
+
+    if not res or res.errors:
+        return jsonify({
+            "message": f"An error happened while fetching classes: {res.errors}"
+        }), 500
+    
+    data = res.result()
+    classes = [dict(row) for row in data] 
+
+    if len(classes)==0:
+        return jsonify({
+            "classes": []
+        }), 200
+
+    return jsonify({
+        "classes": classes
+    }), 200
+
 
 
 if __name__ == "__main__":

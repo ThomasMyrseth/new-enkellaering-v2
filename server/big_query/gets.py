@@ -212,4 +212,16 @@ def get_teacher_for_student(client: bigquery.Client, student_user_id):
     )
 
     return client.query(query, job_config=job_config)
-    
+
+def get_classes_for_student(client: bigquery.Client, student_user_id):
+    query = f"""
+        SELECT *
+        FROM {CLASSES_DATASET}.classes
+        WHERE student_user_id = @student_user_id
+    """
+
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[bigquery.ScalarQueryParameter("student_user_id", "STRING", student_user_id)]
+    )
+
+    return client.query(query, job_config=job_config)
