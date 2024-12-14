@@ -378,7 +378,7 @@ def fetch_classes_for_teacher():
         raise Exception("user id not found")
 
 
-    classes = get_classes_by_teacher(cliet=bq_client, user_id=user_id)
+    classes = get_classes_by_teacher(client=bq_client, user_id=user_id)
     
     classes_data = [dict(row) for row in classes]  # Assuming multiple rows, adjust as needed
     if len(classes_data)==0:
