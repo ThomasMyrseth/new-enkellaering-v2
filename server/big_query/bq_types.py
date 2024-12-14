@@ -53,6 +53,7 @@ class Students:
         has_physical_tutoring: bool,
         created_at: Optional[datetime] = None,
         additional_comments: Optional[str] = None,
+        is_active: Optional[bool] = None,
     ):
         self.user_id = user_id
         self.firstname_parent = firstname_parent
@@ -68,6 +69,7 @@ class Students:
         self.has_physical_tutoring = has_physical_tutoring
         self.created_at = created_at or datetime.now()
         self.additional_comments = additional_comments or ""
+        self.is_active = is_active or True
 
 
 # REFERRALS table

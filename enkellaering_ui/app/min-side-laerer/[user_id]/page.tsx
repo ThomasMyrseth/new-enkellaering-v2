@@ -121,6 +121,8 @@ export default function LaererPage() {
             <DailyRevenueChart teacher={teacher} userId={userId}/>
             <br />
             <AddNewClass teacher={teacher}/>
+            <br/>
+            <YourStudent teacher={teacher}/>
         </BackgroundBeamsWithCollision>
     </>)
 
@@ -672,4 +674,117 @@ function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUse
         >
         Last opp ny time</Button>
     </>)
+}
+
+
+
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+} from "@/components/ui/accordion"
+
+
+type FullStudent = {
+    user_id: string,
+    firstname_parent: string,
+    lastname_parent: string,
+    email_parent: string,
+    phone_parent: string,
+
+    firstname_student: string,
+    lastname_student: string,
+    phone_student: string,
+
+    main_subjects: string,
+    address: string,
+    postal_code: string,
+    has_physical_tutoring: boolean,
+    created_at: string,
+    additional_comments: string,
+    your_teacher: string
+}
+
+function YourStudent( {teacher} : {teacher: Teacher}) {
+    const [students, setStudents] = useState<FullStudent[]>([])
+    const [currentStudent, setCurrentStudent] = useState<FullStudent>()
+    const [openAccordion, setOpenAccordion] = useState<boolean>(false)
+
+    useEffect( () => {
+        async function fetchStudents() {
+            const response = await fetch(`${BASEURL}/get-students`, {
+                method: "POST",
+                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    "user_id": teacher.user_id
+                })
+            })
+
+            const r = await response.json()
+            console.log(r)
+
+            const students = r.students
+            console.log(students)
+            setCurrentStudent(students[0])
+            setStudents(students)
+        }
+        fetchStudents()
+        },[])
+
+    if (!teacher || !students || !currentStudent) {
+        return (<p>Loading...</p>)
+    }
+
+    return(<div className="w-3/4 bg-white dark:bg-black rounded-lg p-4 flex flex-col justify-center items-center">
+        <h2 className="text-xl font-semibold mb-4 text-neutral-800 dark:text-neutral-200">Dine elever</h2>
+        <Accordion type="single" collapsible className="w-full">
+            {students.map( (student, index) => (
+                <AccordionItem value={index.toString()} key={index}>
+                    <AccordionTrigger>
+                        <p>{student.firstname_parent} {student.lastname_parent}
+                            <br/>
+                            & {student.firstname_student} {student.lastname_student}
+                        </p>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                        <p>
+                            <h4 className="mb-1 font-semibold">Forelder</h4>
+                            {student.firstname_parent} {student.lastname_parent}
+                            <br/>
+                            Tlf: {student.phone_parent}
+                            <br/>
+                            Epost: {student.email_parent}
+                        </p>
+                        <br/>
+                        <p>
+                            <h4 className="mb-1 font-semibold">Elev</h4>
+                            {currentStudent.firstname_student} {currentStudent.lastname_student}
+                            <br/>
+                            Tlf: {currentStudent.phone_student}
+                        </p>
+                        <br/>
+                        <p>
+                            <h4 className="mb-1 font-semibold">Info</h4>
+                            Hovedfag: {currentStudent.main_subjects}
+                            <br/>
+                            Spesielle forhold: {currentStudent.additional_comments}
+                            <br/>
+                            Hjemmeadresse: {currentStudent.address}
+                            <br/>
+                            Postnummer: {currentStudent.postal_code}
+                            <br/>
+                            {`${currentStudent.has_physical_tutoring? 'fysisk undervisning' : 'digital undervisning'}`}
+                        </p>
+                    </AccordionContent>
+                </AccordionItem>
+            ))}
+        </Accordion>
+
+
+    </div>)
+
 }
