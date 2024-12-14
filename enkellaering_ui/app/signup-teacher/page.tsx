@@ -7,7 +7,13 @@ import { Textarea } from "@/components/ui/textarea"; // Assuming Textarea compon
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../auth/firebase";
+import { useAuth } from "@/context/AuthContext";
+
+
 export default function SignupForm() {
+  const { login } = useAuth()
   const [validPhone, setValidPhone] = useState(true);
   const [validPostalCode, setValidPostalCode] = useState(true);
   const [passwordsMatch, setPasswordsMatch] = useState(true);
@@ -53,6 +59,15 @@ export default function SignupForm() {
     try {
       const form = e.target as HTMLFormElement;
 
+      const email = form["email"].value;
+      const password = form["password"].value
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      console.log("created user in firebase!")
+
+      const idToken = await userCredential.user.getIdToken();
+      console.log("Firebase ID Token:", idToken);
+
+
       const response = await fetch(`${BASE_URL}/signup-teacher`, {
         method: "POST",
         credentials: "include",
@@ -60,6 +75,7 @@ export default function SignupForm() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          id_token: idToken,
           firstname: form["firstname"].value,
           lastname: form["lastname"].value,
           email: form["email"].value,
@@ -77,7 +93,16 @@ export default function SignupForm() {
       console.log(response)
 
       if (response.ok) {
-        router.push("/min-side-lærer");
+        response.json().then(data => {
+            const userId = data.user_id; // Extract user_id from the response
+            localStorage.setItem('isAuthenticated', 'true');
+            localStorage.setItem('user_id', userId);
+            localStorage.setItem('role', 'teacher');
+            router.push(`/min-side-laerer/${userId}`);
+        }).catch(err => {
+            console.error("Failed to parse response JSON:", err);
+        });
+        
       } else {
         const errorData = await response.json();
         alert(`Signup failed: ${errorData.error}`);
