@@ -27,21 +27,20 @@ def get_all_teachers(admin_user_id: str):
     job_config = bigquery.QueryJobConfig(query_parameters=query_params)
     return client.query(query, job_config=job_config).result()
 
-def get_teacher_by_user_id(admin_user_id: str, target_user_id: str):
+def get_teacher_by_user_id(client: bigquery.Client, user_id: str):
     query = f"""
     SELECT * FROM `{PROJECT_ID}.{USER_DATASET}.teachers`
-    WHERE admin_user_id = @target_user_id
-      AND EXISTS (
-          SELECT 1 FROM `{PROJECT_ID}.{USER_DATASET}.teachers`
-          WHERE admin_user_id = @admin_user_id AND admin = TRUE
-      )
+    WHERE user_id = @user_id
     """
     query_params = [
-        bigquery.ScalarQueryParameter("admin_user_id", "STRING", admin_user_id),
-        bigquery.ScalarQueryParameter("target_user_id", "STRING", target_user_id),
+        bigquery.ScalarQueryParameter("user_id", "STRING", user_id),
     ]
     job_config = bigquery.QueryJobConfig(query_parameters=query_params)
-    return client.query(query, job_config=job_config).result()
+
+    response = client.query(query, job_config=job_config)
+
+    return response.result()
+
 
 def get_all_students(admin_user_id: str):
     query = f"""
@@ -156,8 +155,28 @@ def get_class_by_teacher_and_student_id(admin_user_id: str, teacher_user_id: str
     job_config = bigquery.QueryJobConfig(query_parameters=query_params)
     return client.query(query, job_config=job_config).result()
 
+def get_classes_by_teacher(cliet: bigquery.Client, user_id: str):
+    query = f"""
+        SELECT *
+        FROM {CLASSES_DATASET}.classes
+        WHERE teacher_user_id = @user_id
+    """
+
+    query_params = [bigquery.ScalarQueryParameter("user_id", "STRING", user_id)]
+    job_config = bigquery.QueryJobConfig(query_parameters=query_params)
+    return client.query(query, job_config=job_config).result()
 
 
+def get_student_for_teacher(client :bigquery.Client, teacher_user_id: str):
+    query = f"""
+            SELECT *
+            FROM {USER_DATASET}.students
+            WHERE your_teacher=@teacher_user_id
+        """
+    
+    query_params = [bigquery.ScalarQueryParameter("teacher_user_id", "STRING", teacher_user_id)]
+    job_config = bigquery.QueryJobConfig(query_parameters=query_params)
+    return client.query(query, job_config=job_config, location='EU').result()
 
 def get_student_by_email(email):
     # Check if user already exists
@@ -177,7 +196,7 @@ def get_teacher_by_email(email):
     job_config = bigquery.QueryJobConfig(
         query_parameters=[bigquery.ScalarQueryParameter("Email", "STRING", email)]
     )
-    results = list(client.query(query, job_config=job_config))
+    results = list(client.query(query, job_config=job_config, location='EU'))
 
     if len(results)==0:
         return []

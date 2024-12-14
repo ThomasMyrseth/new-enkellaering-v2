@@ -2,10 +2,11 @@ from google.cloud import bigquery
 from big_query.bq_types import Teachers, Students, Referrals, NewStudents, Classes
 from dotenv import load_dotenv
 import os
+from datetime import datetime, timezone
 
 # Load environment variables from .env file
 load_dotenv()
-client = bigquery.Client()
+client = bigquery.Client.from_service_account_json('google_service_account.json')
 
 
 PROJECT_ID = os.getenv('PROJECT_ID')
@@ -16,7 +17,7 @@ NEW_STUDENTS_DATASET = os.getenv('NEW_STUDENTS_DATASET')
 
 def insert_teacher(client: bigquery.Client, teacher: Teachers):
     query = f"""
-        INSERT INTO `{PROJECT_ID}.{USER_DATASET}.TEACHERS` (
+        INSERT INTO `{USER_DATASET}.teachers` (
             user_id,
             firstname,
             lastname,
@@ -29,27 +30,27 @@ def insert_teacher(client: bigquery.Client, teacher: Teachers):
             created_at,
             admin,
             resigned,
-            resigned_at,
-            password_hash
+            resigned_at
         )
         VALUES (
-            @firstname
-            @lastname
-            @email
-            @phone
-            @address
-            @postal_code
-            @hourly_pay
-            @additional_comments
-            @created_at
-            @admin
-            @resigned
+            @user_id,
+            @firstname,
+            @lastname,
+            @email,
+            @phone,
+            @address,
+            @postal_code,
+            @hourly_pay,
+            @additional_comments,
+            @created_at,
+            @admin,
+            @resigned,
             @resigned_at
-            @password_hash
         )
     """
     job_config = bigquery.QueryJobConfig(
         query_parameters=[
+            bigquery.ScalarQueryParameter("user_id", "STRING", teacher.user_id),
             bigquery.ScalarQueryParameter("firstname", "STRING", teacher.firstname),
             bigquery.ScalarQueryParameter("lastname", "STRING", teacher.lastname),
             bigquery.ScalarQueryParameter("email", "STRING", teacher.email),
@@ -62,25 +63,25 @@ def insert_teacher(client: bigquery.Client, teacher: Teachers):
             bigquery.ScalarQueryParameter("admin", "BOOL", teacher.admin),
             bigquery.ScalarQueryParameter("resigned", "BOOL", teacher.resigned),
             bigquery.ScalarQueryParameter("resigned_at", "TIMESTAMP", teacher.resigned_at),
-            bigquery.ScalarQueryParameter("password_hash", "STRING", teacher.password_hash),
         ]
     )
-    client.query(query, job_config=job_config)
+    response =  client.query(query, job_config=job_config, location='EU')
+    print(response.result())
 
 
 def insert_student(client: bigquery.Client, student: Students):
     query = f"""
-        INSERT INTO `{PROJECT_ID}.{USER_DATASET}.STUDENTS` (
+        INSERT INTO `{USER_DATASET}.students` (
             user_id, firstname_parent, lastname_parent, email_parent, phone_parent,
             firstname_student, lastname_student, phone_student, created_at,
-            main_subjects, additional_comments, address, postal_code,
-            has_physical_tutoring, password_hash
+            main_subjects, additional_comments, address, has_physical_tutoring,
+            postal_code
         )
         VALUES (
             @user_id, @firstname_parent, @lastname_parent, @email_parent, @phone_parent,
             @firstname_student, @lastname_student, @phone_student, @created_at,
-            @main_subjects, @additional_comments, @address, @postal_code,
-            @has_physical_tutoring, @password_hash
+            @main_subjects, @additional_comments, @address, @has_physical_tutoring,
+            @postal_code
         )
     """
     job_config = bigquery.QueryJobConfig(
@@ -94,21 +95,21 @@ def insert_student(client: bigquery.Client, student: Students):
             bigquery.ScalarQueryParameter("lastname_student", "STRING", student.lastname_student),
             bigquery.ScalarQueryParameter("phone_student", "STRING", student.phone_student),
             bigquery.ScalarQueryParameter("created_at", "TIMESTAMP", student.created_at),
-            bigquery.ScalarQueryParameter("main_subjects", "STRING", student.main_subjects),
-            bigquery.ScalarQueryParameter("additional_comments", "STRING", student.additional_comments),
+            bigquery.ScalarQueryParameter("main_subjects", "STRING", student.main_subjects or ''),
+            bigquery.ScalarQueryParameter("additional_comments", "STRING", student.additional_comments or '' ),
             bigquery.ScalarQueryParameter("address", "STRING", student.address),
             bigquery.ScalarQueryParameter("postal_code", "STRING", student.postal_code),
             bigquery.ScalarQueryParameter("has_physical_tutoring", "BOOL", student.has_physical_tutoring),
-            bigquery.ScalarQueryParameter("password_hash", "STRING", student.password_hash),
         ]
     )
 
     try:
-        client.query(query, job_config=job_config)
+        response = client.query(query, job_config=job_config, location='EU')
+        print("response: ", response.result())
         print(f"Student {student.user_id} inserted successfully.")
     except Exception as e:
         print(f"Error inserting student {student.user_id}: {e}")
-        raise
+        raise e
 
 
 def insert_referral(client: bigquery.Client, referral: Referrals):
@@ -188,44 +189,62 @@ def insert_new_student(client: bigquery.Client, new_student: Students):
     client.query(query, job_config=job_config)
 
 
-def insert_class(client: bigquery.Client, class_: Classes):
+def insert_class(client: bigquery.Client, class_obj: Classes):
     # Validate teacher exists
     teacher_query = f"""
-        SELECT user_id FROM `{PROJECT_ID}.{USER_DATASET}.TEACHERS`
+        SELECT user_id FROM `{PROJECT_ID}.{USER_DATASET}.teachers`
         WHERE user_id = @teacher_user_id
     """
     teacher_job = client.query(
         teacher_query,
         job_config=bigquery.QueryJobConfig(
             query_parameters=[
-                bigquery.ScalarQueryParameter("teacher_user_id", "STRING", class_.teacher_user_id)
+                bigquery.ScalarQueryParameter("teacher_user_id", "STRING", class_obj.teacher_user_id)
             ]
         ),
     )
     teacher_result = list(teacher_job.result())
+
     if not teacher_result:
         raise ValueError("Teacher does not exist")
 
     query = f"""
-        INSERT INTO `{PROJECT_ID}.{USER_DATASET}.CLASSES` (
-            teacher_user_id, student_user_id, created_at, started_at, ended_at,
+        INSERT INTO `{PROJECT_ID}.{CLASSES_DATASET}.classes` (
+            class_id, teacher_user_id, student_user_id, created_at, started_at, ended_at,
             comment, paid_teacher, invoiced_student
         )
         VALUES (
-            @teacher_user_id, @student_user_id, @created_at, @started_at, @ended_at,
+            @class_id, @teacher_user_id, @student_user_id, @created_at, @started_at, @ended_at,
             @comment, @paid_teacher, @invoiced_student
         )
     """
     job_config = bigquery.QueryJobConfig(
         query_parameters=[
-            bigquery.ScalarQueryParameter("teacher_user_id", "STRING", class_.teacher_user_id),
-            bigquery.ScalarQueryParameter("student_user_id", "STRING", class_.student_user_id),
-            bigquery.ScalarQueryParameter("created_at", "TIMESTAMP", class_.created_at),
-            bigquery.ScalarQueryParameter("started_at", "TIMESTAMP", class_.started_at),
-            bigquery.ScalarQueryParameter("ended_at", "TIMESTAMP", class_.ended_at),
-            bigquery.ScalarQueryParameter("comment", "STRING", class_.comment),
-            bigquery.ScalarQueryParameter("paid_teacher", "BOOL", class_.paid_teacher),
-            bigquery.ScalarQueryParameter("invoiced_student", "BOOL", class_.invoiced_student),
+            bigquery.ScalarQueryParameter("class_id", "STRING", class_obj.class_id),
+            bigquery.ScalarQueryParameter("teacher_user_id", "STRING", class_obj.teacher_user_id),
+            bigquery.ScalarQueryParameter("student_user_id", "STRING", class_obj.student_user_id),
+            bigquery.ScalarQueryParameter("created_at", "TIMESTAMP", datetime.fromisoformat(class_obj.created_at.replace("Z", "")).replace(tzinfo=timezone.utc)),
+            bigquery.ScalarQueryParameter("started_at", "TIMESTAMP", datetime.fromisoformat(class_obj.started_at.replace("Z", "")).replace(tzinfo=timezone.utc)),
+            bigquery.ScalarQueryParameter("ended_at", "TIMESTAMP", datetime.fromisoformat(class_obj.ended_at.replace("Z", "")).replace(tzinfo=timezone.utc)),
+            bigquery.ScalarQueryParameter("comment", "STRING", class_obj.comment),
+            bigquery.ScalarQueryParameter("paid_teacher", "BOOL", class_obj.paid_teacher),
+            bigquery.ScalarQueryParameter("invoiced_student", "BOOL", class_obj.invoiced_student),
         ]
     )
-    client.query(query, job_config=job_config)
+
+    try:
+        response = client.query(query, job_config=job_config, location="EU")
+        response.result()  # Ensure the query completes
+
+        # Debug response
+        print("Query executed successfully.")
+        if response.errors:
+            print("BigQuery errors:")
+            for error in response.errors:
+                print(error)
+            raise Exception("Error inserting new class into BigQuery")
+        
+        return True
+    except Exception as e:
+        print(f"Error executing query: {e}")
+        raise Exception(f"Error executing query: {e}")

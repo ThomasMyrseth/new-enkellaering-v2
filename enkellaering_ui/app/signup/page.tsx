@@ -6,11 +6,18 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../auth/firebase";
+import { useAuth } from "@/context/AuthContext";
+
+
 export default function SignupForm() {
+  const { login } = useAuth()
   const [validParentPhone, setValidParentPhone] = useState(true);
   const [validStudentPhone, setValidStudentPhone] = useState(true);
   const [validPostalCode, setValidPostalCode] = useState(true);
   const [passwordsMatch, setPasswordsMatch] = useState(true);
+  const [validPassword, setValidPassword] = useState(true)
 
   const router = useRouter();
   const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
@@ -18,6 +25,12 @@ export default function SignupForm() {
   function validateField(value: string, expectedLength: number, setValid: (valid: boolean) => void) {
     const isValid = value.length === expectedLength;
     setValid(isValid);
+    return isValid;
+  }
+
+  function validatePassword(value: string) {
+    const isValid = value.length >= 8;
+    setValidPassword(isValid);
     return isValid;
   }
 
@@ -29,9 +42,11 @@ export default function SignupForm() {
     allValid = validateField(form["parent-phone"].value, 8, setValidParentPhone) && allValid;
     allValid = validateField(form["student-phone"].value, 8, setValidStudentPhone) && allValid;
     allValid = validateField(form["postal-code"].value, 4, setValidPostalCode) && allValid;
+    allValid = validatePassword(form["password"].value)
 
     // Validate password match
     const password = form["password"].value;
+    console.log("password, ", password)
     const repeatPassword = form["repeat-password"].value;
     if (password !== repeatPassword) {
       setPasswordsMatch(false);
@@ -50,6 +65,16 @@ export default function SignupForm() {
 
     try {
       const form = e.target as HTMLFormElement;
+      
+      const email = form["parent-email"].value;
+      const password = form["password"].value
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      console.log("created user in firebase!")
+
+      const idToken = await userCredential.user.getIdToken();
+      console.log("Firebase ID Token:", idToken);
+
+
 
       const response = await fetch(`${BASE_URL}/signup`, {
         method: "POST",
@@ -58,6 +83,7 @@ export default function SignupForm() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          id_token: idToken,
           firstname_parent: form["parent-firstname"].value,
           lastname_parent: form["parent-lastname"].value,
           email_parent: form["parent-email"].value,
@@ -69,12 +95,19 @@ export default function SignupForm() {
           postal_code: form["postal-code"].value,
           main_subjects: form["desired-subjects"].value,
           additional_comments: form["additional-comments"].value,
-          password: form["password"].value,
         }),
       });
 
       if (response.ok) {
-        router.push("/min-side");
+        response.json().then(data => {
+            const userId = data.user_id; // Extract user_id from the response
+            localStorage.setItem('isAuthenticated', 'true');
+            localStorage.setItem('user_id', userId);
+            localStorage.setItem('role', 'student');
+            router.push(`/min-side/${userId}`);
+        }).catch(err => {
+            console.error("Failed to parse response JSON:", err);
+        });
       } else {
         const errorData = await response.json();
         alert(`Signup failed: ${errorData.error}`);
@@ -172,14 +205,16 @@ export default function SignupForm() {
           <Label htmlFor="repeat-password">Gjenta passordet</Label>
           <Input id="repeat-password" placeholder="••••••••" type="password" className={cn(passwordsMatch ? "" : "border-red-500")} />
           {!passwordsMatch && <p className="text-red-500 text-sm">Passordene må være like</p>}
+          {!validPassword && <p className="text-red-500 text-sm">Passordet må være minst 8 tegn lang</p>}
         </LabelInputContainer>
 
-        <button type="submit" className="bg-gradient-to-br from-black to-gray-800 text-white w-full py-2 rounded-md mt-4">
+        <button type="submit" className="bg-gradient-to-br from-black to-gray-800 text-white w-full py-2 rounded-md mt-4" >
           Opprett bruker
         </button>
       </form>
     </div>
   );
+
 }
 
 const LabelInputContainer = ({ children }: { children: React.ReactNode }) => {

@@ -16,7 +16,6 @@ class Teachers:
         postal_code: str,
         hourly_pay: str,
         resigned: bool,
-        password_hash: str,
         additional_comments: str,
         created_at: Optional[datetime] = None,
         admin: Optional[bool] = None,
@@ -31,7 +30,6 @@ class Teachers:
         self.postal_code = postal_code
         self.hourly_pay = hourly_pay
         self.resigned = resigned
-        self.password_hash = password_hash
         self.created_at = created_at or datetime.now()
         self.admin = admin
         self.resigned_at = resigned_at
@@ -52,10 +50,10 @@ class Students:
         main_subjects: str,
         address: str,
         postal_code: str,
-        password_hash: str,
         has_physical_tutoring: bool,
         created_at: Optional[datetime] = None,
         additional_comments: Optional[str] = None,
+        is_active: Optional[bool] = None,
     ):
         self.user_id = user_id
         self.firstname_parent = firstname_parent
@@ -68,10 +66,10 @@ class Students:
         self.main_subjects = main_subjects
         self.address = address
         self.postal_code = postal_code
-        self.password_hash = password_hash
         self.has_physical_tutoring = has_physical_tutoring
         self.created_at = created_at or datetime.now()
         self.additional_comments = additional_comments or ""
+        self.is_active = is_active or True
 
 
 # REFERRALS table
@@ -136,6 +134,7 @@ class NewStudents:
 class Classes:
     def __init__(
         self,
+        class_id: str,
         teacher_user_id: str,
         student_user_id: str,
         created_at: datetime,
@@ -143,8 +142,11 @@ class Classes:
         ended_at: datetime,
         comment: Optional[str] = None,
         paid_teacher: Optional[bool] = None,
+        paid_teacher_at: Optional[str] = None,
         invoiced_student: Optional[bool] = None,
+        invoiced_student_at: Optional[str] = None,
     ):
+        self.class_id = class_id,
         self.teacher_user_id = teacher_user_id
         self.student_user_id = student_user_id
         self.created_at = created_at
@@ -153,3 +155,5 @@ class Classes:
         self.comment = comment
         self.paid_teacher = paid_teacher
         self.invoiced_student = invoiced_student
+        self.invoiced_student_at = invoiced_student_at
+        self.paid_teacher_at = paid_teacher_at
