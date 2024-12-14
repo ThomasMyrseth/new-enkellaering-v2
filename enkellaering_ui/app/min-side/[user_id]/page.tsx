@@ -1,7 +1,8 @@
 "use client"
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { PinContainer } from "@/components/ui/3d-pin";
+import { CardBody, CardContainer, CardItem } from "@/components/ui/3d-card";
+import Image from "next/image";
 
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
@@ -130,39 +131,57 @@ function MyTeacher({user_id} : {user_id: string}) {
 
 
     return(
-        <div className="h-[40rem] w-full flex items-center justify-center ">
-      <PinContainer
-        title={hasTeacher ? `Deres lærer er ${teacher?.firstname} ${teacher?.lastname}` : 'Ingen lærer tildelt'}
-    >
-        <div className="flex basis-full flex-col p-4 tracking-tight text-slate-100/50 sm:basis-1/2 w-[20rem] h-[20rem] ">
-          <h3 className="max-w-xs !pb-2 !m-0 font-bold  text-base text-slate-100">
-            {teacher?.firstname} {teacher?.lastname}
-          </h3>
-          <div className="text-base !m-0 !p-0 font-normal">
-            { hasTeacher && (
-            <p>
-                <span className="font-extralight">Telefon:</span> <span className="font-semibold">{teacher?.phone}</span>
-                <br/>
-                <span className="font-extralight">Epost: </span> <span className="font-semibold">{teacher?.email}</span>
-                <br/>
-                <span className="font-extralight">Adresse:</span> <span className="font-semibold"> {teacher?.address}</span>
-                <br/>
-                <span className="font-extralight">Postnummer: </span> <span className="font-semibold">{teacher?.postal_code}</span>
-            </p>
-            )}
-            {!hasTeacher && (
-                <p>
-                    Deres lærer er ikke blitt oppsatt enda.
-                    <br/>
-                    Dersom dette vedvarer i flere dager kan du ringe 
-                    <br/>
-                    <span className="text-semibold">Thomas Myrseth på 47 18 47 44</span>
-                </p>
-            )}
-          </div>
-          <div className="flex flex-1 w-full rounded-lg mt-4 bg-gradient-to-br from-violet-500 via-purple-500 to-blue-500" />
-        </div>
-      </PinContainer>
-    </div>
-    )
+        <CardContainer className="inter-var">
+            <CardBody className="bg-gray-50 relative group/card  dark:hover:shadow-2xl dark:hover:shadow-emerald-500/[0.1] dark:bg-black dark:border-white/[0.2] border-black/[0.1] w-auto sm:w-[30rem] h-auto rounded-xl p-6 border  ">
+                <CardItem
+                    translateZ="50"
+                    className="text-xl font-bold text-neutral-600 dark:text-white"
+                >
+                {hasTeacher ? (
+                    <>
+                        <span className="font-light">Deres lærer er</span> {teacher?.firstname} {teacher?.lastname}
+                    </>
+                ) : (
+                    <span>Dere har ikke fått oppsatt en lærer enda.</span>
+                )}
+                </CardItem>
+                <CardItem
+                    as="p"
+                    translateZ="60"
+                    className="text-neutral-500 text-sm max-w-sm mt-2 dark:text-neutral-300"
+                >
+                    { hasTeacher?
+                    <p>
+                        <span className="font-light">Telefon: </span><span className="font-bold">{teacher?.phone}  </span>
+                        <br />
+                        <span className="font-light">Epost: </span><span className="font-bold">{teacher?.email}  </span>
+                        <br />
+                        <span className="font-light">Adresse: </span><span className="font-bold">{teacher?.address}</span>
+                        <br />
+                        <span className="font-light">Postnummer: </span><span className="font-bold">{teacher?.postal_code}</span>
+                    </p>
+                    :
+                    <p>Dersom dette vedvarer mer enn noen dager kan dere kontakte: 
+                        <br/>
+                        <span className="font-bold">Thomas Myrseth tlf: <span className="text-underline">47184744</span></span>
+                    </p>
+                    }
+                </CardItem>
+                <CardItem
+                translateZ="100"
+                rotateX={20}
+                rotateZ={-10}
+                className="w-full mt-4"
+                >
+                <Image
+                    src="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=2560&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+                    height="1000"
+                    width="1000"
+                    className="h-60 w-full object-cover rounded-xl group-hover/card:shadow-xl"
+                    alt="thumbnail"
+                />
+                </CardItem>
+            </CardBody>
+    </CardContainer>
+  );
 }
