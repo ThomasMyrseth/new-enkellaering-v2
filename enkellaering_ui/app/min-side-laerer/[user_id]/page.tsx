@@ -1,10 +1,8 @@
 "use client"
-import { BackgroundBeamsWithCollision } from "@/components/ui/background-beams-with-collision";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { LampContainer } from "@/components/ui/lamp";
-import { Terminal, TrendingUp } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
 import {
   Card,

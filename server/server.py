@@ -20,7 +20,7 @@ from datetime import timedelta
 load_dotenv()
 
 from auth.hash_password import hash_password, check_password
-from big_query.gets import get_student_by_email, get_teacher_by_email, get_teacher_by_user_id, get_classes_by_teacher, get_student_for_teacher, get_student_by_user_id, get_teacher_for_student, get_classes_for_student
+from big_query.gets import get_student_by_email, get_teacher_by_email, get_teacher_by_user_id, get_classes_by_teacher, get_student_for_teacher, get_student_by_user_id, get_teacher_for_student, get_classes_for_student, get_all_classes
 from big_query.inserts import insert_student, insert_teacher, insert_class
 from big_query.bq_types import Classes
 
@@ -503,6 +503,34 @@ def get_classes_for_student_route():
     return jsonify({
         "classes": classes
     }), 200
+
+
+@app.route('/get-all-classes', methods=["POST"])
+def get_all_classes_route():
+    data = request.get_json()
+    admin_user_id = data.get('admin_user_id')
+
+    res = get_all_classes(client=bq_client, admin_user_id=admin_user_id)
+
+    if not res or res.errors:
+        print(f"Error fetching classes for admin {res.errors}")
+        return jsonify({
+            "message": "Error while fetching admin classes"
+        }), 400
+    
+    result = res.result()
+    classes = [dict(row) for row in result]
+
+    if len(classes)==0:
+        return jsonify({
+            "classes": []
+        }), 200
+    
+    return jsonify({
+        "classes": classes
+    }), 200
+
+
 
 
 
