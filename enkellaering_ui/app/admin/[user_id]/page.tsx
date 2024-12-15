@@ -104,6 +104,7 @@ export default function AdminPage() {
         <TeacherName teacher={teacher}/>
         <DailyRevenueChart admin_user_id={userId}/>
         <PreviousClassesForEachStudent user_id={userId}/>
+        <CheckboxReactHookFormMultiple/>
 
     </div>)
 }
@@ -583,4 +584,208 @@ function PreviousClassesForEachStudent({user_id}: {user_id: string}) {
         })}
     </div>
   );
+}
+
+type NewStudent = {
+    phone :string;
+    has_called :boolean;
+    called_at :string;
+    has_answered: boolean;
+    answered_at: string;
+    has_signed_up: boolean;
+    signed_up_at: string;
+    from_referal: boolean;
+    referee_phone: string;
+    has_assigned_teacher: boolean;
+    assigned_teacher_at: string;
+    has_finished_onboarding: boolean;
+    finished_onboarding_at: string;
+    comments: string;
+    paid_referee: boolean;
+    paid_referee_at: string;
+    new_student_id: string;
+}
+
+function newStudentsWorkflow({user_id}: {user_id: string}) {
+    const [loading, setLoading] = useState<boolean>(true)
+    const [newStudents, setNewStudents] = useState<NewStudent[]>()
+
+    useEffect( () => {
+        async function getNewStudents() {
+            const response = await fetch(`${BASEURL}/get-new-students`, {
+                method: "POST",
+                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    "admin_user_id": user_id
+                })
+            })
+
+            if (!response.ok) {
+                alert("Error fetching new students " + response.statusText)
+                return null
+            }
+
+            const data = await response.json()
+            const newStudents :NewStudent[] = data.newStudents
+
+            if (newStudents.length===0) {
+                alert("No new students found")
+                console.log("No new students found")
+                setLoading(false)
+                return null
+            }
+
+            else {
+                setNewStudents(newStudents)
+                setLoading(false)
+            }
+        }
+
+        getNewStudents()
+    },[user_id, BASEURL])
+
+    if (loading) {
+        return <p>Loading...</p>
+    }
+
+
+    
+
+}
+
+import { Label } from "@/components/ui/label"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+
+
+function newStudentTable(newStudents :NewStudent[]) {
+    
+    const handleSetCalled = async (new_student_id :string, callStatus :boolean) => {
+        const res = await fetch(`${BASEURL}/update-new-student`, {
+            method: "POST",
+            credentials: "include",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                "new_student_id": new_student_id,
+                "has_called": callStatus || true,
+        })
+        })
+
+        if (!res.ok) {
+            alert("Failed to update called at. Refresh the page")
+            return null
+        }
+
+        else {
+
+        }
+    }
+
+    const handleSetAnswered = (new_student_id :string) => {
+
+    }
+
+    const handleSetSignedUp = (new_student_id :string) => {
+
+    }
+
+    const handleAssignteacher = (new_student_id :string, teacher_user_id :string) => {
+
+    }
+
+    return (<>
+        <Table>
+                <TableCaption>Arbeidsoversikt for ny elev</TableCaption>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Telefonnummer</TableHead>
+                            <TableHead>Jeg har ringt</TableHead>
+                            <TableHead>Ny elev har svart</TableHead>
+                            <TableHead>Ny elev har opprettet konto</TableHead>
+                            <TableHead>Ny elev har fått lærer</TableHead>
+                            <TableHead>Ny elev er en referanse</TableHead>
+                            <TableHead>Referansen er betalt</TableHead>
+                            <TableHead>Ny elev har fullført oppstart</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                    {newStudents.map( (ns :NewStudent, index) => {
+
+                        const [hasCalled, setHasCalled] = useState<boolean>(ns.has_called)
+                        const [calledAt, setCalledAt] = useState<Date>(new Date(ns.called_at))
+                        const [hasAnswered, setHasAnswered] = useState<boolean>(ns.has_answered)
+                        const [answeredAt, setAnsweredAt] = useState<Date>(new Date(ns.answered_at))
+                        const [hasSignedUp, setHasSignedUp] = useState<boolean>(ns.has_signed_up)
+                        const [signedUpAt, setSignedUpAt] = useState<Date>(new Date(ns.signed_up_at))
+                        const [fromReferal, setFromReferal] = useState<boolean>(ns.from_referal)
+                        const [refereePhone, setRefereePhone] = useState<string>(ns.referee_phone)
+                        const [hasAssignedTeacher, setHasAssignedTeacher] = useState<boolean>(ns.has_assigned_teacher)
+                        const [assignedTeacherAt, setAssignedTeacherAt] = useState<Date>(new Date(ns.assigned_teacher_at))
+                        const [paidReferee, setPaidReferee] = useState<boolean>(ns.paid_referee)
+                        const [paidRefereeAt, setPaidRefereeAt] = useState<Date>(new Date(ns.paid_referee_at))
+                        const [hasFinishedOnboarding, setHasFinishedOnboarding] = useState<boolean>(ns.has_finished_onboarding)
+                        const [finishedOnboardingAt, setFinishedOnboardingAt] = useState<Date>(new Date(ns.finished_onboarding_at))
+                        const [comments, setComments] = useState<string>(ns.comments)
+
+
+
+                        return(
+                        <TableRow key={index}>
+                            <TableCell className="font-medium">{ns.phone}</TableCell>
+
+                            <TableCell>
+                                <RadioGroup defaultValue={ns.has_called} onChange={ }>
+                                    <RadioGroupItem value="Ja" className="text-green-400">Ja, den {ns.called_at}</RadioGroupItem>
+                                    <RadioGroupItem value="Nei" className="text-red-400">Nei</RadioGroupItem>
+                                </RadioGroup>
+                            </TableCell>
+
+                            <TableCell>
+                                <RadioGroup defaultValue="Nei">
+                                    <RadioGroupItem value="Ja" className="text-green-400">Ja, den {ns.answered_at}</RadioGroupItem>
+                                    <RadioGroupItem value="Nei" className="text-red-400">Nei</RadioGroupItem>
+                                </RadioGroup>
+                            </TableCell>
+
+                            <TableCell>
+                                {ns.has_signed_up ? (
+                                    <span className="text-green-400">Ja, den {ns.signed_up_at}</span>
+                                ) : (
+                                    <span className="text-red-400">Nei</span>
+                                )}
+                            </TableCell>
+
+                            <TableCell>
+                                {ns.from_referal ? (
+                                    <span className="text-gray-400">Ja, fra {ns.referee_phone}</span>
+                                ) : (
+                                    <span className="text-gray-400">Nei</span>
+
+                                )}
+                            </TableCell>
+
+                            <TableCell>
+                                {ns.paid_referee ? (
+                                    <span className="text-green-400">Ja, den {ns.paid_referee_at}</span>
+                                ) : (
+                                    <span className="text-red-400">Nei</span>
+                                )}
+                            </TableCell>
+
+                            <TableCell>
+                                {ns.has_finished_onboarding ? (
+                                    <span className="text-green-400">Ja, den {ns.finished_onboarding_at}</span>
+                                    ) : (
+                                    <span className="text-red-400">Nei</span>
+                                )}
+                            </TableCell>
+                        </TableRow>
+                    )})}
+                    </TableBody>
+                </Table>   
+    </>)
 }

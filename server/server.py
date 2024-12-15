@@ -20,7 +20,7 @@ from datetime import timedelta
 load_dotenv()
 
 from auth.hash_password import hash_password, check_password
-from big_query.gets import get_student_by_email, get_teacher_by_email, get_teacher_by_user_id, get_classes_by_teacher, get_student_for_teacher, get_student_by_user_id, get_teacher_for_student, get_classes_for_student, get_all_classes, get_all_teachers
+from big_query.gets import get_student_by_email, get_all_new_students, get_teacher_by_user_id, get_classes_by_teacher, get_student_for_teacher, get_student_by_user_id, get_teacher_for_student, get_classes_for_student, get_all_classes, get_all_teachers
 from big_query.inserts import insert_student, insert_teacher, insert_class
 from big_query.bq_types import Classes
 
@@ -557,6 +557,61 @@ def get_all_teachers_route():
     }), 200
 
 
+@app.route('/get-new-students', methods=["POST"])
+def get_new_students_route():
+    data = request.get_json()
+    admin_user_id = data.get('admin_user_id')
+
+    if not admin_user_id:
+        return jsonify({
+            "message": "Missing admin user id"
+        }), 400
+
+    res = get_all_new_students(client=bq_client, admin_user_id=admin_user_id)
+
+    if not res or res.errors:
+        print("Error fetching new students")
+        return jsonify({
+            "message": "Error fetching new students"
+        }), 500
+    
+    result = res.result()
+    new_students = [dict(row) for row in result]
+
+    if len(new_students)==0:
+        return jsonify({
+            "new_students": []
+        }), 200
+    
+    return jsonify({
+        "new_students": new_students
+    }), 200
+
+
+from datetime import timezone
+
+@app.route('/update-new-student', methods=["POST"])
+def update_new_student_workflow():
+    data = request.get_json()
+    update = data.get("update")
+    new_student_id = data.get("new_student_id")
+    created_at = datetime.now(tz=timezone.utc).isoformat()
+
+    if update == 'set_called':
+        # Perform set_called action
+        return jsonify({"status": "called updated"})
+    
+    elif update == 'set_answered':
+        # Perform set_answered action
+        return jsonify({"status": "answered updated"})
+        
+    elif update == 'assign_teacher':
+        teacher_user_id = data.get('teacher_user_id')
+        # Perform assign_teacher action
+        return jsonify({"status": "teacher assigned"})
+    
+    else:
+        return jsonify({"error": "Invalid case"}), 400
 
 if __name__ == "__main__":
     app.run(debug=True, port=8080)
