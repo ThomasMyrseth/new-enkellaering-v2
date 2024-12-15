@@ -24,7 +24,7 @@ def get_all_teachers(client: bigquery.Client, admin_user_id: str):
     """
     query_params = [bigquery.ScalarQueryParameter("admin_user_id", "STRING", admin_user_id)]
     job_config = bigquery.QueryJobConfig(query_parameters=query_params)
-    return client.query(query, job_config=job_config).result()
+    return client.query(query, job_config=job_config)
 
 def get_teacher_by_user_id(client: bigquery.Client, user_id: str):
     query = f"""

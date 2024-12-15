@@ -20,7 +20,7 @@ from datetime import timedelta
 load_dotenv()
 
 from auth.hash_password import hash_password, check_password
-from big_query.gets import get_student_by_email, get_teacher_by_email, get_teacher_by_user_id, get_classes_by_teacher, get_student_for_teacher, get_student_by_user_id, get_teacher_for_student, get_classes_for_student, get_all_classes
+from big_query.gets import get_student_by_email, get_teacher_by_email, get_teacher_by_user_id, get_classes_by_teacher, get_student_for_teacher, get_student_by_user_id, get_teacher_for_student, get_classes_for_student, get_all_classes, get_all_teachers
 from big_query.inserts import insert_student, insert_teacher, insert_class
 from big_query.bq_types import Classes
 
@@ -530,7 +530,31 @@ def get_all_classes_route():
         "classes": classes
     }), 200
 
+@app.route('/get-all-teachers', methods=["POST"])
+def get_all_teachers_route():
+    data = request.get_json()
+    admin_user_id = data.get('admin_user_id')
 
+    if not admin_user_id:
+        return jsonify({"message": "Missing admin user id"}), 400
+    
+    res = get_all_teachers(client=bq_client, admin_user_id=admin_user_id)
+
+    if not res or res.errors:
+        print("Error fetching teachers")
+        return jsonify({"message": "Error fetching teachers"}), 500
+    
+    result = res.result()
+    teachers = [dict(row) for row in result]
+
+    if len(teachers)==0:
+        return jsonify({
+            "teachers": []
+        }), 200
+    
+    return jsonify({
+        "teachers": teachers
+    }), 200
 
 
 
