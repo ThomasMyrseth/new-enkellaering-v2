@@ -589,6 +589,7 @@ function PreviousClassesForEachStudent({user_id}: {user_id: string}) {
 
 type NewStudent = {
     phone :string;
+    created_at: string
     has_called :boolean;
     called_at :string;
     has_answered: boolean;
@@ -598,6 +599,7 @@ type NewStudent = {
     from_referal: boolean;
     referee_phone: string;
     has_assigned_teacher: boolean;
+    assigned_teacher_user_id: string | null;
     assigned_teacher_at: string;
     has_finished_onboarding: boolean;
     finished_onboarding_at: string;
@@ -631,7 +633,6 @@ function NewStudentsWorkflow({user_id}: {user_id: string}) {
             }
 
             const data = await response.json()
-            console.log("data: ", data)
             const newStudents :NewStudent[] = data.new_students
 
             if (newStudents.length===0) {
@@ -658,7 +659,6 @@ function NewStudentsWorkflow({user_id}: {user_id: string}) {
         return <p>No new students found</p>
     }
 
-    console.log("newStudents: ", newStudents)
 
     return NewStudentTable(newStudents, user_id)
     
@@ -707,17 +707,23 @@ function NewStudentRow({ ns, admin_user_id }: { ns: NewStudent; admin_user_id: s
     const [answeredAt, setAnsweredAt] = useState<Date>(new Date(ns.answered_at))
     const [hasSignedUp, setHasSignedUp] = useState<boolean>(ns.has_signed_up)
     const [signedUpAt, setSignedUpAt] = useState<Date>(new Date(ns.signed_up_at))
+    
     const [fromReferal, setFromReferal] = useState<boolean>(ns.from_referal)
     const [refereePhone, setRefereePhone] = useState<string>(ns.referee_phone)
+   
     const [hasAssignedTeacher, setHasAssignedTeacher] = useState<boolean>(ns.has_assigned_teacher)
     const [assignedTeacherAt, setAssignedTeacherAt] = useState<Date>(new Date(ns.assigned_teacher_at))
+    const [assingedTeacherUserId, setAssignedTeacherUserId] = useState<string | null> (ns.assigned_teacher_user_id || null)
+    
     const [paidReferee, setPaidReferee] = useState<boolean>(ns.paid_referee)
     const [paidRefereeAt, setPaidRefereeAt] = useState<Date>(new Date(ns.paid_referee_at))
+    
     const [hasFinishedOnboarding, setHasFinishedOnboarding] = useState<boolean>(ns.has_finished_onboarding)
     const [finishedOnboardingAt, setFinishedOnboardingAt] = useState<Date>(new Date(ns.finished_onboarding_at))
     const [comments, setComments] = useState<string>(ns.comments)
-    const [assignedTeacher, setAssignedTeacher] = useState<string | null>(null)
 
+
+    console.log("NS teacher", assingedTeacherUserId)
     //get all the teachers
     useEffect( () => {
         async function getAllTeachers() {
@@ -775,7 +781,8 @@ function NewStudentRow({ ns, admin_user_id }: { ns: NewStudent; admin_user_id: s
     const handleAssignTeacher = (teacherUserId :string) => {
         setHasAssignedTeacher(true)
         setAssignedTeacherAt(new Date())
-        setAssignedTeacher(teacherUserId)
+        setAssignedTeacherUserId(teacherUserId)
+        console.log("assigning", teacherUserId)
     }
 
     const handleSetFinishedOnboarding = (value :string) => {
@@ -791,6 +798,7 @@ function NewStudentRow({ ns, admin_user_id }: { ns: NewStudent; admin_user_id: s
     }
 
     const handleSaveClick = async () => {
+        console.log("saving teacher ", assingedTeacherUserId)
 
         const response = await fetch(`${BASEURL}/update-new-student`, {
             method: "POST",
@@ -809,7 +817,7 @@ function NewStudentRow({ ns, admin_user_id }: { ns: NewStudent; admin_user_id: s
                 "from_referal": fromReferal,
                 "referee_phone": refereePhone || null,
                 "has_assigned_teacher": hasAssignedTeacher,
-                "teacher_user_id": hasAssignedTeacher ? assignedTeacher : null,
+                "teacher_user_id":  assingedTeacherUserId || null,
                 "assigned_teacher_at": assignedTeacherAt || null,
                 "has_finished_onboarding": hasFinishedOnboarding,
                 "finished_onboarding_at": finishedOnboardingAt || null,
@@ -832,25 +840,25 @@ function NewStudentRow({ ns, admin_user_id }: { ns: NewStudent; admin_user_id: s
 
     return(
     <TableRow>
-        <TableCell className="font-medium">{ns.phone}</TableCell>
+        <TableCell className="font-medium">tlf: {ns.phone} <br/> Opprettet: {ns.created_at}</TableCell>
 
         <TableCell>
             <RadioGroup onValueChange={handleSetCalled} defaultValue={ns.has_called? "Ja" : "Nei"} value={hasCalled? "Ja" : "Nei"}>
-                <RadioGroupItem value="Ja" className="text-green-400">Ja, den {ns.called_at}</RadioGroupItem>
-                <RadioGroupItem value="Nei" className="text-red-400">Nei</RadioGroupItem>
+                <RadioGroupItem value="Ja" className="text-green-400"></RadioGroupItem>
+                <RadioGroupItem value="Nei" className="text-red-400"></RadioGroupItem>
             </RadioGroup>
         </TableCell>
 
         <TableCell>
             <RadioGroup defaultValue={ns.has_answered? "Ja" : "Nei"} value={hasAnswered? "Ja" : "Nei"} onValueChange={handleSetAnswered}>
-                <RadioGroupItem value="Ja" className="text-green-400">Ja, den {ns.answered_at}</RadioGroupItem>
-                <RadioGroupItem value="Nei" className="text-red-400">Nei</RadioGroupItem>
+                <RadioGroupItem value="Ja" className="text-green-400"></RadioGroupItem>
+                <RadioGroupItem value="Nei" className="text-red-400"></RadioGroupItem>
             </RadioGroup>
         </TableCell>
 
         <TableCell>
             {hasSignedUp ? (
-                <span className="text-green-400">Ja, den {ns.signed_up_at}</span>
+                <span className="text-green-400">Ja</span>
             ) : (
                 <span className="text-red-400">Nei</span>
             )}
@@ -858,7 +866,7 @@ function NewStudentRow({ ns, admin_user_id }: { ns: NewStudent; admin_user_id: s
 
         <TableCell>
             {fromReferal ? (
-                <span className="text-gray-400">Ja, fra {ns.referee_phone}</span>
+                <span className="text-gray-400">Ja, fra {refereePhone}</span>
             ) : (
                 <span className="text-gray-400">Nei</span>
 
@@ -867,19 +875,19 @@ function NewStudentRow({ ns, admin_user_id }: { ns: NewStudent; admin_user_id: s
 
         <TableCell>
             <RadioGroup defaultValue={ns.paid_referee? "Ja" : "Nei"} value={paidReferee? "Ja" : "Nei"} onValueChange={handleSetPaidReferee}>
-                <RadioGroupItem value="Ja" className="text-green-400">Ja, den {ns.paid_referee_at}</RadioGroupItem>
-                <RadioGroup value="Nei" className="text-red-400">Nei</RadioGroup>
+                <RadioGroupItem value="Ja" className="text-green-400"></RadioGroupItem>
+                <RadioGroup value="Nei" className="text-red-400"></RadioGroup>
             </RadioGroup>
         </TableCell>
 
         <TableCell>
-            <SetTeacherCombobox teachers={teachers} passSelectedTeacher={handleAssignTeacher}/>
+            <SetTeacherCombobox teachers={teachers} passSelectedTeacher={handleAssignTeacher} ns={ns}/>
         </TableCell>
 
         <TableCell>
         <RadioGroup defaultValue={ns.has_finished_onboarding? "Ja" : "Nei"} value={hasFinishedOnboarding? "Ja" : "Nei"} onValueChange={handleSetFinishedOnboarding}>
-                <RadioGroupItem value="Ja" className="text-green-400">Ja, den {ns.paid_referee_at}</RadioGroupItem>
-                <RadioGroup value="Nei" className="text-red-400">Nei</RadioGroup>
+                <RadioGroupItem value="Ja" className="text-green-400"></RadioGroupItem>
+                <RadioGroup value="Nei" className="text-red-400"></RadioGroup>
             </RadioGroup>
         </TableCell>
 
@@ -896,7 +904,7 @@ function NewStudentRow({ ns, admin_user_id }: { ns: NewStudent; admin_user_id: s
 
 
 import { cn } from "@/lib/utils"
-import { Check, ChevronsUpDown } from "lucide-react"
+import { Check, ChevronsUpDown, Newspaper } from "lucide-react"
 
 import {
   Command,
@@ -912,8 +920,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 
-const SetTeacherCombobox = ({ teachers, passSelectedTeacher } : { teachers : Teacher[], passSelectedTeacher : (userId :string) => void }) => {
-    const [teacherUserId, setTeacherUserId] = useState<string | null>(null)
+const SetTeacherCombobox = ({ ns, teachers, passSelectedTeacher } : { ns :NewStudent, teachers : Teacher[], passSelectedTeacher : (userId :string) => void }) => {
+    const [teacherUserId, setTeacherUserId] = useState<string | null>(ns.assigned_teacher_user_id ||null)
     const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null)
     const [open, setOpen] = useState<boolean>(false)
 
@@ -922,13 +930,19 @@ const SetTeacherCombobox = ({ teachers, passSelectedTeacher } : { teachers : Tea
         return teachers.find((teacher) => teacher.user_id === userId);
     };
 
-    // Example usage
     const handleSelectTeacher = (userId: string) => {
+        console.log("selected: ", userId)
         setTeacherUserId(userId);
         const selectedTeacher = findTeacherById(userId) || null;
         setSelectedTeacher(selectedTeacher)
         passSelectedTeacher(userId)
     };
+
+    useEffect( () => {
+        const selectedTeacher = findTeacherById(teacherUserId) || null;
+        setSelectedTeacher(selectedTeacher)
+        console.log(selectedTeacher?.firstname)
+    }, [teacherUserId, teachers])
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
