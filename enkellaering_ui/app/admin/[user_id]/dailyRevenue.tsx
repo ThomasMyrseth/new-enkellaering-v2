@@ -139,7 +139,7 @@ export function DailyRevenueChart({ admin_user_id }: { admin_user_id :string }) 
     }
 
 
-    return(<div className="w-3/4 h-full p-4">
+    return(<div className="w-full h-full">
         <Card>
         <CardHeader>
             <CardTitle>Ufakturerte timer for alle lærere</CardTitle>

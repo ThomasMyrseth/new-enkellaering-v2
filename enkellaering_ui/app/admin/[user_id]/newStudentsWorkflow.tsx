@@ -80,7 +80,7 @@ export function NewStudentsWorkflow({user_id}: {user_id: string}) {
 
 }
 
-import { Label } from "@/components/ui/label"
+
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
@@ -96,7 +96,7 @@ function NewStudentTable(newStudents :NewStudent[], user_id :string) {
     });
 
 
-    return (<>
+    return (<div className="w-full bg-white dark:bg-black rounded-sm shadow-lg flex flex-col items-center justify-center">
         <Table>
                 <TableCaption>Arbeidsoversikt for ny elev</TableCaption>
                     <TableHeader>
@@ -122,7 +122,7 @@ function NewStudentTable(newStudents :NewStudent[], user_id :string) {
                         })}
                     </TableBody>
                 </Table>   
-    </>)
+    </div>)
 }
 
 

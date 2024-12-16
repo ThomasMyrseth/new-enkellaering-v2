@@ -6,60 +6,14 @@ import { usePathname, useRouter } from "next/navigation";
 import { DailyRevenueChart } from "./dailyRevenue";
 import { TeacherName } from "./teacherName";
 import { NewStudentsWorkflow } from "./newStudentsWorkflow";
-import { PreviousClassesForEachTeacher } from "./previousClassesForEachTeacher";
+import { PreviousClassesForEachTeacher } from "./previousClassesForEachTeacher copy";
+import { PreviousClassesForEachStudent } from "./previousClassesForEachStudent";
+
+import { Teacher } from "./types";
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
 
 
-type Student = {
-    user_id: string,
-    firstname_parent: string,
-    lastname_parent: string,
-    email_parent: string,
-    phone_parent: string,
-
-    firstname_student: string,
-    lastname_student: string,
-    phone_student: string,
-
-    main_subjects: string,
-    address: string,
-    postal_code: string,
-    has_physical_tutoring: boolean,
-    created_at: string,
-    additional_comments: string,
-    your_teacher: string
-}
-
-type Teacher = {
-    user_id: string;
-    firstname: string;
-    lastname: string;
-    email: string;
-    phone: string;
-    address: string;
-    postal_code: string;
-    hourly_pay: string;
-    resgined: boolean;
-    additional_comments: string | null;
-    created_at: string;
-    admin: boolean;
-    resigned_at: string | null;
-}
-
-type Classes = {
-    teacher_user_id :string;
-    student_user_id :string;
-    created_at: string;
-    started_at: string;
-    ended_at: string;
-    comment: string;
-    paid_teacher: boolean;
-    invoiced_student: boolean;
-    paid_teacher_at :string;
-    invoiced_student_at :string;
-    class_id :string;
-};
 
 
 export default function AdminPage() {
@@ -85,12 +39,15 @@ export default function AdminPage() {
         router.push("/login-teacher")
     }
 
-    return(<div>
+    return(<div className="flex flex-col items-center justify-center bg-slate-100 dark:bg-slate-950">
         <TeacherName teacher={teacher}/>
-        <DailyRevenueChart admin_user_id={userId}/>
-        <PreviousClassesForEachTeacher user_id={userId}/>
-        <br/>
-        <NewStudentsWorkflow user_id={userId}/>
+        <div className="flex flex-col items-center justify-center w-3/4 space-y-10">
+            <DailyRevenueChart admin_user_id={userId}/>
+            <PreviousClassesForEachTeacher user_id={userId}/>
+            <PreviousClassesForEachStudent user_id={userId}/>
+            <NewStudentsWorkflow user_id={userId}/>
+        </div>
+        <div className="h-10"> </div>
 
     </div>)
 }

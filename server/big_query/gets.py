@@ -26,6 +26,20 @@ def get_all_teachers(client: bigquery.Client, admin_user_id: str):
     job_config = bigquery.QueryJobConfig(query_parameters=query_params)
     return client.query(query, job_config=job_config)
 
+
+def get_all_students(client: bigquery.Client, admin_user_id: str):
+    query = f"""
+    SELECT * FROM `{PROJECT_ID}.{USER_DATASET}.students`
+    WHERE EXISTS (
+        SELECT 1 FROM `{PROJECT_ID}.{USER_DATASET}.teachers`
+        WHERE user_id = @admin_user_id AND admin = TRUE
+    )
+    """
+    query_params = [bigquery.ScalarQueryParameter("admin_user_id", "STRING", admin_user_id)]
+    job_config = bigquery.QueryJobConfig(query_parameters=query_params)
+    return client.query(query, job_config=job_config)
+
+
 def get_teacher_by_user_id(client: bigquery.Client, user_id: str):
     query = f"""
     SELECT * FROM `{PROJECT_ID}.{USER_DATASET}.teachers`
@@ -46,12 +60,12 @@ def get_all_students(client: bigquery.Client, admin_user_id: str):
     SELECT * FROM `{PROJECT_ID}.{USER_DATASET}.students`
     WHERE EXISTS (
         SELECT 1 FROM `{PROJECT_ID}.{USER_DATASET}.teachers`
-        WHERE admin_user_id = @admin_user_id AND admin = TRUE
+        WHERE user_id = @admin_user_id AND admin = TRUE
     )
     """
     query_params = [bigquery.ScalarQueryParameter("admin_user_id", "STRING", admin_user_id)]
     job_config = bigquery.QueryJobConfig(query_parameters=query_params)
-    return client.query(query, job_config=job_config).result()
+    return client.query(query, job_config=job_config)
 
 def get_student_by_user_id(client: bigquery.Client, user_id: str):
     query = f"""

@@ -17,7 +17,7 @@ import {
     AccordionTrigger,
 } from "@/components/ui/accordion";
 
-import { Classes, Teacher } from "./types";
+import { Classes, Student } from "./types";
 
 import { useEffect, useState } from "react"
 
@@ -26,16 +26,16 @@ const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
 
 
 
-type classesJoinTeacher = {
+type ClassesJoinStudent = {
     classes: Classes[];
-    teacher: Teacher;
+    student: Student;
 }
 
-export function PreviousClassesForEachTeacher({user_id}: {user_id: string}) {      
+export function PreviousClassesForEachStudent({user_id}: {user_id: string}) {      
 
     const [classes, setClasses] = useState<Classes[]>([]);
-    const [teachers, setTeachers] = useState<Teacher[]>([]);
-    const [classesByTeacher, setClassesByTeacher] = useState<classesJoinTeacher[]>([]);
+    const [students, setStudents] = useState<Student[]>([]);
+    const [classesByStudents, setClassesByStudents] = useState<ClassesJoinStudent[]>([]);
 
     const [loading, setLoading] = useState<boolean>(true)
     let totalAmount :number = 0
@@ -75,11 +75,11 @@ export function PreviousClassesForEachTeacher({user_id}: {user_id: string}) {
     
     },[user_id])
 
-    //get all the teachers
+    //get all the students
     useEffect( () => {
-        async function getAllTeachers() {
+        async function getAllStudents() {
 
-            const response = await fetch(`${BASEURL}/get-all-teachers`, {
+            const response = await fetch(`${BASEURL}/get-all-students`, {
                 method: "POST",
                 credentials: "include",
                 headers: {
@@ -91,66 +91,69 @@ export function PreviousClassesForEachTeacher({user_id}: {user_id: string}) {
             })
 
             if (!response.ok) {
-                alert("Error fetching teachers " + response.statusText)
-                setTeachers([])
+                alert("Error fetching students " + response.statusText)
+                setStudents([])
                 return null
             }
 
             const data = await response.json()
-            const teachers :Teacher[] = data.teachers
+            console.log("data", data)
+            const students :Student[] = data.students
 
-            if (teachers.length===0) {
-                alert("No teachers found")
-                console.log("No teachers found")
-                setTeachers([])
+            if (students.length===0) {
+                alert("No students found")
+                console.log("No students found")
+                setStudents([])
                 return null
             }
 
+
             else {
-                setTeachers(teachers)
+                setStudents(students)
+                setLoading(false)
             }
         }
 
-        getAllTeachers()
+        getAllStudents()
     },[BASEURL, user_id])
 
 
-    //map each teacher to his classes
+    //map each student to his classes
     useEffect( () => {
         
-        if (!classes || !teachers) {
+        if (!classes || !students) {
             alert("Teachers or classes not found")
         }
 
-        const classesByTeacher :classesJoinTeacher[] = []
+        const classesByStudent :ClassesJoinStudent[] = []
         //for each teacher go through every class
-        teachers.forEach(t => {
-            const classesForTeacher :Classes[] = []
+        students.forEach(s => {
+            const classesForStudent :Classes[] = []
             classes.forEach(c => {
-                if (c.teacher_user_id === t.user_id) {
-                    classesForTeacher.push(c)
+                if (c.student_user_id === s.user_id) {
+                    classesForStudent.push(c)
                 }
             })
-            classesByTeacher.push({
-                classes: classesForTeacher,
-                teacher: t
+            classesByStudent.push({
+                classes: classesForStudent,
+                student: s
             })
         })
 
-        setClassesByTeacher(classesByTeacher)
-
-    },[classes, teachers])
+        setClassesByStudents(classesByStudent)
+        setLoading(false)
+    },[classes, students])
 
     if (loading) {
         return <p>Loading...</p>
     }
 
       
-    return (<div className="flex flex-col justify-center items-center w-3/4">
+    return (<div className="flex flex-col justify-center items-center w-full">
         <h2>En oversikt over tidligere timer</h2>
 
-        {classesByTeacher.map((ct :classesJoinTeacher, index) => {
-            const classes :Classes[] = ct.classes
+        {classesByStudents.map((cs :ClassesJoinStudent, index) => {
+            const classes :Classes[] = cs.classes
 
             //sortng classes by startedAt
             classes.sort((a, b) => {
@@ -160,25 +163,31 @@ export function PreviousClassesForEachTeacher({user_id}: {user_id: string}) {
             });
 
 
-            const teacherHourlyPay :number = parseInt(ct.teacher.hourly_pay)
-            let totalUnpaidToTeacher :number = 0
-            let totalUnpaidHoursToTeacher :number = 0
-            let totalPaidToTeacher :number = 0
-            let totalPaidHoursToTeacher :number = 0
-
-            let totalUninvoicedByTeacher :number =0
-            let totalUninvoicedHoursByTeacher :number =0
-            let totalInvoicedByTeacher :number =0
-            let totalInvoicedHoursByTeacher :number =0
+            let totalUninvoicedStudent :number = 0
+            let totalUninvoicedHoursStudent :number = 0
+            let totalInvoicedStudent :number = 0
+            let totalInvoicedHoursStudent :number = 0
 
 
-        return (<div key={index}>
+        return (<div key={index} className="bg-white dark:bg-black shadow-lg w-full p-4 rounded-lg">
             <Accordion type="single" collapsible className="w-full mt-4">
             <AccordionItem value="remaining-classes">
-                <AccordionTrigger>{ct.teacher.firstname} {ct.teacher.lastname}</AccordionTrigger>
+                <AccordionTrigger>
+                    <div>
+                        {cs.student.firstname_parent} {cs.student.lastname_parent} <br/>
+                        & {cs.student.firstname_student} {cs.student.lastname_student}
+                    </div>
+                </AccordionTrigger>
                 <AccordionContent>
+
+                <p>Totalt ufakturerte timer fra {cs.student.firstname_parent}: <span className="text-red-400">{totalUninvoicedHoursStudent}h, {totalUninvoicedStudent}kr.</span></p>
+                <br/>
+                <p>Total fakturerte timer fra {cs.student.firstname_parent}: <span className="text-green-400">{totalInvoicedHoursStudent}h, {totalInvoicedStudent}kr.</span></p>
+                <br/>
+
+
                 <Table>
-                    <TableCaption>Kronologisk oversikt over alle timer til {ct.teacher.firstname}</TableCaption>
+                    <TableCaption>Kronologisk oversikt over alle timer til {cs.student.firstname_parent}</TableCaption>
                     <TableHeader>
                         <TableRow>
                             <TableHead className="w-[100px]">Dato</TableHead>
@@ -186,7 +195,6 @@ export function PreviousClassesForEachTeacher({user_id}: {user_id: string}) {
                             <TableHead>Fakturert elev</TableHead>
                             <TableHead className="text-right">Fakturert beløp</TableHead>
                             <TableHead>Betalt lærer</TableHead>
-                            <TableHead>Beløp til lærer</TableHead>
                             <TableHead>Kommentar fra timen</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -198,24 +206,15 @@ export function PreviousClassesForEachTeacher({user_id}: {user_id: string}) {
                         const durationHours: number = Math.floor(totalDurationMillis / (1000 * 60 * 60));
                         const durationMinutes: number = Math.round((totalDurationMillis % (1000 * 60 * 60)) / (1000 * 60));
                         const invoiceAmount: number = durationHours * 540 + (durationMinutes / 60) * 540;
-                        const toTeacherAmmount :number = durationHours * teacherHourlyPay + (durationMinutes / 60) * teacherHourlyPay;
 
                         if (!c.invoiced_student) {
-                            totalUninvoicedHoursByTeacher += durationHours + Math.round(durationMinutes/60)
-                            totalUninvoicedByTeacher += invoiceAmount
+                            totalUninvoicedHoursStudent += durationHours + Math.round(durationMinutes/60)
+                            totalUninvoicedStudent += invoiceAmount
+                            totalAmount += invoiceAmount
                         }
                         else {
-                            totalInvoicedHoursByTeacher += durationHours + Math.round(durationMinutes/60)
-                            totalInvoicedByTeacher += invoiceAmount
-                        }
-
-                        if (!c.paid_teacher) {
-                            totalUnpaidToTeacher += toTeacherAmmount
-                            totalUnpaidHoursToTeacher += durationHours + Math.round(durationMinutes/60)
-                        }
-                        else {
-                            totalPaidHoursToTeacher += durationHours + Math.round(durationMinutes/60)
-                            totalPaidToTeacher += toTeacherAmmount
+                            totalInvoicedHoursStudent += durationHours + Math.round(durationMinutes/60)
+                            totalInvoicedStudent += invoiceAmount
                         }
                         
                         return (
@@ -238,19 +237,12 @@ export function PreviousClassesForEachTeacher({user_id}: {user_id: string}) {
                                 <p className="text-red-400">Ikke betalt</p>
                             )}
                             </TableCell>
-                            <TableCell className="text-right">{toTeacherAmmount}kr</TableCell>
                             <TableCell>{c.comment}</TableCell>
                         </TableRow>
                         );
                     })}
                     </TableBody>
                 </Table>
-                <br/>
-                <p>Totalt ufakturerte timer fra {ct.teacher.firstname}: <span className="text-red-400">{totalUninvoicedHoursByTeacher}h, {totalUninvoicedByTeacher}kr.</span></p>
-                <p>Totalt ikke betalt til {ct.teacher.firstname}: <span className="text-red-400">{totalUnpaidHoursToTeacher}h, {totalUnpaidToTeacher}kr.</span></p>
-                <br/>
-                <p>Total fakturerte timer fra {ct.teacher.firstname}: <span className="text-green-400">{totalInvoicedHoursByTeacher}h, {totalInvoicedByTeacher}kr.</span></p>
-                <p>Totalt betalt til {ct.teacher.firstname}: <span className="text-green-400">{totalPaidHoursToTeacher}h, {totalPaidToTeacher}kr.</span></p>
                 </AccordionContent>
             </AccordionItem>
             </Accordion>
