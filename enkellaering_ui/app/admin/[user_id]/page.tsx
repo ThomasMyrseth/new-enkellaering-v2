@@ -673,12 +673,20 @@ import { Button } from "@/components/ui/button"
 
 function NewStudentTable(newStudents :NewStudent[], user_id :string) {
 
+    //order newStudents by created_at
+    newStudents.sort((a, b) => {
+        const dateA = new Date(a.created_at);
+        const dateB = new Date(b.created_at);
+        return dateB.getTime() - dateA.getTime();
+    });
+
+
     return (<>
         <Table>
                 <TableCaption>Arbeidsoversikt for ny elev</TableCaption>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Telefonnummer</TableHead>
+                            <TableHead>Telefonnummer & dato opprettet</TableHead>
                             <TableHead>Jeg har ringt</TableHead>
                             <TableHead>Ny elev har svart</TableHead>
 
@@ -844,8 +852,22 @@ function NewStudentRow({ ns, admin_user_id }: { ns: NewStudent; admin_user_id: s
     }
 
     return(
-    <TableRow>
-        <TableCell className="font-medium min-w-80">tlf: {ns.phone} <br/> Opprettet: <br/> {ns.created_at}</TableCell>
+    <TableRow className={`${ns.has_finished_onboarding ? "text-gray-400" : ""}`}>
+        <TableCell className="font-medium min-w-80">{ns.phone.slice(0, 3)} {ns.phone.slice(3, 5)} {ns.phone.slice(7, 10)} {ns.phone.slice(10, 13)} 
+                <br/>
+                {new Intl.DateTimeFormat("nb-NO", {
+                    day: "2-digit",
+                    month: "long",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    timeZone: "Europe/Oslo"
+                }).format(new Date(ns.created_at))}
+                <br />
+                <span>
+                    {Math.floor((Date.now() - new Date(ns.created_at).getTime()) / (1000 * 60 * 60 * 24))} dager siden
+                </span>
+        </TableCell>
 
         <TableCell className="min-w-40">
             <RadioGroup onValueChange={handleSetCalled} defaultValue={ns.has_called? "Ja" : "Nei"} value={hasCalled? "Ja" : "Nei"}>
