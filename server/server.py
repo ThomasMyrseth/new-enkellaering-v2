@@ -589,29 +589,130 @@ def get_new_students_route():
 
 
 from datetime import timezone
+from big_query.bq_types import NewStudents
+from big_query.alters import alterNewStudent
 
 @app.route('/update-new-student', methods=["POST"])
 def update_new_student_workflow():
     data = request.get_json()
-    update = data.get("update")
-    new_student_id = data.get("new_student_id")
-    created_at = datetime.now(tz=timezone.utc).isoformat()
 
-    if update == 'set_called':
-        # Perform set_called action
-        return jsonify({"status": "called updated"})
+    # Validate incoming data
+    is_valid, error_message = validate_new_student_data(data)
+    if not is_valid:
+        print("Validation error:", error_message)
+        return jsonify({"message": f"Validation error: {error_message}"}), 400
+
+    # Extract fields
+    newStudentId = data["new_student_id"]
+    admin_user_id = data["admin_user_id"]
+
+    # Build the updates dictionary
+    update = {
+        "has_called": data.get("has_called"),
+        "called_at": data.get("called_at"),
+        "has_answered": data.get("has_answered"),
+        "answered_at": data.get("answered_at"),
+        "has_signed_up": data.get("has_signed_up"),
+        "signed_up_at": data.get("signed_up_at"),
+        "from_referal": data.get("from_referal"),
+        "referee_phone": data.get("referee_phone"),
+        "has_assigned_teacher": data.get("has_assigned_teacher"),
+        "assigned_teacher_at": data.get("assigned_teacher_at"),
+        "assigned_teacher_user_id": data.get("teacher_user_id"),
+        "has_finished_onboarding": data.get("has_finished_onboarding"),
+        "finished_onboarding_at": data.get("finished_onboarding_at"),
+        "comments": data.get("comments"),
+        "paid_referee": data.get("paid_referee"),
+        "paid_referee_at": data.get("paid_referee_at"),
+    }
+
+    # Clean the updates dictionary
+    update = clean_updates(update)
+
+    # Perform the update
+    try:
+        res = alterNewStudent(client=bq_client, new_student_id=newStudentId, admin_user_id=admin_user_id, updates=update)
+        res.result()  # Force query execution to detect any errors
+    except Exception as e:
+        print("BigQuery error:", e)
+        return jsonify({"message": "Error while setting updates for new student"}), 500
+
+    return jsonify({"message": "Updated new student successfully"}), 200
+
+def clean_updates(updates: dict):
+    """Ensure all fields have valid default values."""
+    boolean_fields = [
+        "has_called", "has_answered", "has_signed_up", "from_referal",
+        "has_assigned_teacher", "has_finished_onboarding", "paid_referee"
+    ]
     
-    elif update == 'set_answered':
-        # Perform set_answered action
-        return jsonify({"status": "answered updated"})
-        
-    elif update == 'assign_teacher':
-        teacher_user_id = data.get('teacher_user_id')
-        # Perform assign_teacher action
-        return jsonify({"status": "teacher assigned"})
+    timestamp_fields = [
+        "called_at", "answered_at", "signed_up_at", "assigned_teacher_at",
+        "finished_onboarding_at", "paid_referee_at"
+    ]
     
-    else:
-        return jsonify({"error": "Invalid case"}), 400
+    string_fields = [
+        "referee_phone", "assigned_teacher_user_id", "comments"
+    ]
+    
+    # Set default values for missing or `None` fields
+    for field in boolean_fields:
+        updates[field] = updates.get(field, False)
+    
+    for field in timestamp_fields:
+        updates[field] = updates.get(field) or None  # Keep as `None` if not provided
+    
+    for field in string_fields:
+        updates[field] = updates.get(field) or ""  # Default to ''
+    
+    return updates
+
+def validate_new_student_data(data: dict) -> tuple[bool, str]:
+    """
+    Validate the incoming data for updating a new student.
+
+    :param data: Dictionary containing new student data.
+    :return: Tuple (is_valid, error_message). If valid, error_message is None.
+    """
+    required_fields = {
+        "new_student_id": str,
+        "has_called": bool,
+        "has_answered": bool,
+        "has_signed_up": bool,
+        "from_referal": bool,
+        "admin_user_id": str,
+        "has_assigned_teacher": bool,
+    }
+
+    optional_fields = {
+        "called_at": str,
+        "answered_at": str,
+        "signed_up_at": str,
+        "referee_phone": str,
+        "assigned_teacher_at": str,
+        "teacher_user_id": str,
+        "has_finished_onboarding": bool,
+        "finished_onboarding_at": str,
+        "comments": str,
+        "paid_referee": bool,
+        "paid_referee_at": str,
+    }
+
+    # Check required fields
+    for field, field_type in required_fields.items():
+        if field not in data:
+            return False, f"Missing required field: {field}"
+        if not isinstance(data[field], field_type):
+            return False, f"Invalid type for field '{field}': Expected {field_type}, got {type(data[field])}"
+
+    # Check optional fields (if provided)
+    for field, field_type in optional_fields.items():
+        if field in data and data[field] is not None:
+            if not isinstance(data[field], field_type):
+                return False, f"Invalid type for field '{field}': Expected {field_type}, got {type(data[field])}"
+
+    return True, None
+
 
 if __name__ == "__main__":
     app.run(debug=True, port=8080)
