@@ -94,40 +94,50 @@ class Referrals:
         self.paid_referee_at = paid_referee_at
         self.success_at = success_at
 
+from typing import Optional
+from datetime import datetime
 
-# NEW STUDENTS table
 class NewStudents:
     def __init__(
         self,
+        new_student_id: str,
         phone: str,
         has_called: bool,
         has_answered: bool,
         has_signed_up: bool,
         from_referral: bool,
+        has_finished_onboarding: bool,
+        has_assigned_teacher: bool,
+
         called_at: Optional[datetime] = None,
         answered_at: Optional[datetime] = None,
         signed_up_at: Optional[datetime] = None,
-        referee_phone: Optional[str] = None,
-        has_assigned_teacher: Optional[bool] = None,
         assigned_teacher_at: Optional[datetime] = None,
-        has_finished_onboarding: Optional[bool] = None,
         finished_onboarding_at: Optional[datetime] = None,
+
+        referee_phone: Optional[str] = None,
+        paid_referee: Optional[bool] = None,
+        paid_referee_at: Optional[datetime] = None,
+        
         comments: Optional[str] = None,
     ):
         self.phone = phone
         self.has_called = has_called
-        self.has_answered = has_answered
-        self.has_signed_up = has_signed_up
-        self.from_referral = from_referral
         self.called_at = called_at
+        self.has_answered = has_answered
         self.answered_at = answered_at
+        self.has_signed_up = has_signed_up
         self.signed_up_at = signed_up_at
+        self.from_referral = from_referral
         self.referee_phone = referee_phone
         self.has_assigned_teacher = has_assigned_teacher
         self.assigned_teacher_at = assigned_teacher_at
         self.has_finished_onboarding = has_finished_onboarding
         self.finished_onboarding_at = finished_onboarding_at
         self.comments = comments
+        self.paid_referee = paid_referee
+        self.paid_referee_at = paid_referee_at
+        self.new_student_id = new_student_id
 
 
 # CLASSES table
