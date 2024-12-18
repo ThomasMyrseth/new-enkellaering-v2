@@ -103,9 +103,10 @@ class NewStudents:
         new_student_id: str,
         phone: str,
         has_called: bool,
+        created_at: datetime,
         has_answered: bool,
         has_signed_up: bool,
-        from_referral: bool,
+        from_referal: bool,
         has_finished_onboarding: bool,
         has_assigned_teacher: bool,
 
@@ -113,6 +114,7 @@ class NewStudents:
         answered_at: Optional[datetime] = None,
         signed_up_at: Optional[datetime] = None,
         assigned_teacher_at: Optional[datetime] = None,
+        assigned_teacher_user_id: Optional[str] = None,
         finished_onboarding_at: Optional[datetime] = None,
 
         referee_phone: Optional[str] = None,
@@ -124,15 +126,17 @@ class NewStudents:
         self.phone = phone
         self.has_called = has_called
         self.called_at = called_at
+        self.created_at = created_at
         self.has_answered = has_answered
         self.answered_at = answered_at
         self.has_signed_up = has_signed_up
         self.signed_up_at = signed_up_at
-        self.from_referral = from_referral
+        self.from_referal = from_referal
         self.referee_phone = referee_phone
         self.has_assigned_teacher = has_assigned_teacher
         self.assigned_teacher_at = assigned_teacher_at
         self.has_finished_onboarding = has_finished_onboarding
+        self.assigned_teacher_user_id = assigned_teacher_user_id
         self.finished_onboarding_at = finished_onboarding_at
         self.comments = comments
         self.paid_referee = paid_referee
