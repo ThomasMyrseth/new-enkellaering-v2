@@ -372,7 +372,7 @@ const InvoiceStudentPopover = ( {student, classes, admin_user_id} : {student: St
     return (
         <Popover>
         <PopoverTrigger asChild>
-            <Button variant="outline">Send faktura til {student.firstname_parent} {student.lastname_parent}</Button>
+            <Button>Send faktura til {student.firstname_parent} {student.lastname_parent}</Button>
         </PopoverTrigger>
         <PopoverContent className="w-80">
             {success===true && <p className="text-green-400">Timene er satt til fakturert</p>}
@@ -395,7 +395,6 @@ const InvoiceStudentPopover = ( {student, classes, admin_user_id} : {student: St
 
                         //add the class to the list of classes to be invoiced
                         classIds.push(c.class_id)
-                        numberOfClassesToInvoice += 1
                         
                         //calculate invoice ammmount
                         const startTime: string = c.started_at;

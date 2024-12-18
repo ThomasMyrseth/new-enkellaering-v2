@@ -1,5 +1,7 @@
 "use client"
 
+import { Copy } from 'lucide-react';
+
 import {
     Table,
     TableBody,
@@ -20,6 +22,7 @@ import {
 import { Classes, Teacher, Student } from "./types";
 
 import { useEffect, useState } from "react"
+import React, { useRef } from "react";
 
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
@@ -216,6 +219,36 @@ export function PreviousClassesForEachTeacher({admin_user_id}: {admin_user_id: s
             let totalInvoicedHoursByTeacher :number =0
 
 
+            classes.map((c :Classes, index) => {
+                const startedAt: Date = new Date(c.started_at);
+                const endedAt: Date = new Date(c.ended_at);
+                const totalDurationMillis: number = endedAt.getTime() - startedAt.getTime();
+                const durationHours: number = Math.floor(totalDurationMillis / (1000 * 60 * 60));
+                const durationMinutes: number = Math.round((totalDurationMillis % (1000 * 60 * 60)) / (1000 * 60));
+                const invoiceAmount: number = durationHours * 540 + (durationMinutes / 60) * 540;
+                const toTeacherAmmount :number = durationHours * teacherHourlyPay + (durationMinutes / 60) * teacherHourlyPay;
+
+                if (!c.invoiced_student) {
+                    totalUninvoicedHoursByTeacher += durationHours + Math.round(durationMinutes/60)
+                    totalUninvoicedByTeacher += invoiceAmount
+                }
+                else {
+                    totalInvoicedHoursByTeacher += durationHours + Math.round(durationMinutes/60)
+                    totalInvoicedByTeacher += invoiceAmount
+                }
+
+                if (!c.paid_teacher) {
+                    totalUnpaidToTeacher += toTeacherAmmount
+                    totalUnpaidHoursToTeacher += durationHours + Math.round(durationMinutes/60)
+                }
+                else {
+                    totalPaidHoursToTeacher += durationHours + Math.round(durationMinutes/60)
+                    totalPaidToTeacher += toTeacherAmmount
+                }
+            })
+
+
+
         return (<div key={index} className="bg-white dark:bg-black shadow-lg w-full p-4 rounded-lg">
             <Accordion type="single" collapsible className="w-full mt-4">
                 <AccordionItem value="remaining-classes">
@@ -273,6 +306,7 @@ export function PreviousClassesForEachTeacher({admin_user_id}: {admin_user_id: s
                             </AccordionItem>
                         </Accordion>
 
+                        <PayTeacherPopover teacher={ct.teacher} classes={ct.classes} admin_user_id={admin_user_id}/>
 
                         <p className="my-4">
                             Totalt ufakturerte timer fra {ct.teacher.firstname}: <span className="text-red-400">{totalUninvoicedHoursByTeacher}h, {totalUninvoicedByTeacher}kr.</span> <br/>
@@ -305,24 +339,6 @@ export function PreviousClassesForEachTeacher({admin_user_id}: {admin_user_id: s
                                 const durationMinutes: number = Math.round((totalDurationMillis % (1000 * 60 * 60)) / (1000 * 60));
                                 const invoiceAmount: number = durationHours * 540 + (durationMinutes / 60) * 540;
                                 const toTeacherAmmount :number = durationHours * teacherHourlyPay + (durationMinutes / 60) * teacherHourlyPay;
-
-                                if (!c.invoiced_student) {
-                                    totalUninvoicedHoursByTeacher += durationHours + Math.round(durationMinutes/60)
-                                    totalUninvoicedByTeacher += invoiceAmount
-                                }
-                                else {
-                                    totalInvoicedHoursByTeacher += durationHours + Math.round(durationMinutes/60)
-                                    totalInvoicedByTeacher += invoiceAmount
-                                }
-
-                                if (!c.paid_teacher) {
-                                    totalUnpaidToTeacher += toTeacherAmmount
-                                    totalUnpaidHoursToTeacher += durationHours + Math.round(durationMinutes/60)
-                                }
-                                else {
-                                    totalPaidHoursToTeacher += durationHours + Math.round(durationMinutes/60)
-                                    totalPaidToTeacher += toTeacherAmmount
-                                }
                                 
                                 return (
                                 <TableRow key={index}>
@@ -358,4 +374,169 @@ export function PreviousClassesForEachTeacher({admin_user_id}: {admin_user_id: s
         })}
     </div>
   );
+}
+
+
+import { Button } from "@/components/ui/button"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+
+const PayTeacherPopover = ( {teacher, classes, admin_user_id} : {teacher: Teacher, classes: Classes[], admin_user_id: string}) => {
+
+    const [success, setSuccess] = useState<boolean | null>(null)
+    let numberOfClassesToPay :number= 0
+    const [clickedCopy, setClickedCopy] = useState<boolean>(false)
+
+    const monthsInNorwegian = [
+        "januar", "februar", "mars", "april", "mai", "juni",
+        "juli", "august", "september", "oktober", "november", "desember"
+    ];
+    // Get current date
+    const currentDate = new Date();
+    const currentMonth: string = monthsInNorwegian[currentDate.getMonth()];
+    const currentYear: number = currentDate.getFullYear();
+    
+    //Invoice ammount
+    let totalPaymentAmmount :number = 0
+    let totalNumberOfHours :number = 0
+    //clasIds to be marked as invoiced
+    const classIds :string[] = []
+
+
+    classes.map((c: Classes, index) => {
+        //skip already invoiced classes
+        if (c.paid_teacher) {
+            return null;
+        }
+
+        //add the class to the list of classes to have been paid
+        classIds.push(c.class_id)
+        numberOfClassesToPay += 1
+        
+        //calculate invoice ammmount
+        const startTime: string = c.started_at;
+        const endTime: string = c.ended_at;
+
+        // Calculate duration in hours and round to one decimal place
+        let durationHours = (new Date(endTime).getTime() - new Date(startTime).getTime()) / (1000 * 60 * 60);
+        durationHours = Math.round(durationHours * 10) / 10; // Rounds to one decimal place
+
+        totalNumberOfHours += durationHours;
+        totalPaymentAmmount += Math.round(durationHours * parseInt(teacher.hourly_pay));
+    });
+
+    //mark the classes as invoiced
+    const handleSetClassesToPaid = async () => {
+        const res = await fetch(`${BASEURL}/set-classes-to-paid`, {
+            method: "POST",
+            credentials: "include",
+            headers: {
+                "Content-Type": "application/json", // Corrected header key
+            },
+            body: JSON.stringify({
+                "admin_user_id": admin_user_id,
+                "class_ids": classIds
+            })
+        })
+
+        if (res.status==401) {
+            alert("Alle timer er allerede satt som betalt!")
+        }
+
+        else if (!res.ok){
+            setSuccess(false)
+            alert("En feil har skjedd. Kunne ikke sette timene til betalt!")
+        }
+
+        else {
+            setSuccess(true)
+        }
+    }
+
+    const contentRef = useRef<HTMLDivElement>(null);
+
+    const copyToClipboard = () => {
+        if (contentRef.current) {
+            // Get the text content of the ref
+            const content = contentRef.current.innerText;
+            navigator.clipboard.writeText(content).then(() => {
+                setClickedCopy(true)
+            }).catch(err => {
+                setClickedCopy(false)
+                alert("error copying text")
+                console.error("Failed to copy text: ", err);
+            });
+        }
+    };
+
+
+    return (
+        <Popover>
+        <PopoverTrigger asChild>
+            <Button>Betal {teacher.firstname} {teacher.lastname}</Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-80">
+            {success===true && <p className="text-green-400">Timene er satt til betalt</p>}
+            {success===false && <p className="text-red-400">En feil har skjedd, prøv igjen</p>}
+
+            <div ref={contentRef}>
+                <p>
+                    Lønn for {currentMonth} {currentYear}
+                    <br/>
+                    Total {totalNumberOfHours} timer, {totalPaymentAmmount} kroner, fordelt på {numberOfClassesToPay} ganger
+                    <br/>
+                </p>
+                
+                <div className="">
+                    {classes.map((c :Classes, index) => {
+                        //skip already invoiced classes
+                        if (c.paid_teacher) {
+                            return null;
+                        }
+
+                        //add the class to the list of classes to be invoiced
+                        classIds.push(c.class_id)
+                        
+                        //calculate invoice ammmount
+                        const startTime: string = c.started_at;
+                        const endTime: string = c.ended_at;
+                        // Format to Norwegian time
+                        const formatDateTime = (dateString: string): string => {
+                            const date = new Date(dateString);
+                            return new Intl.DateTimeFormat("nb-NO", {
+                                weekday: "short",
+                                day: "2-digit",
+                                month: "long",
+                                year: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                            }).format(date);
+                        };
+
+                        const formattedStartTime = formatDateTime(startTime);
+                        const formattedEndTime = formatDateTime(endTime);
+
+                        return (<div key={index}>
+                        <p>
+                            Fra {formattedStartTime} til {formattedEndTime} <br/>
+                        </p>
+                        </div>)
+                    })
+                    }
+                </div>
+
+            </div>
+
+            <div className=" flex flex-row space-x-4 justify-start mt-5">
+                <Button onClick={copyToClipboard} disabled={clickedCopy}>
+                    <Copy/>
+                </Button>
+                <Button onClick={handleSetClassesToPaid} disabled={success===true || numberOfClassesToPay===0}>Sett timene til betalt</Button>
+            </div>
+        </PopoverContent>
+        </Popover>
+    )
 }

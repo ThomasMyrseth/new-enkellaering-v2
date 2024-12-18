@@ -94,3 +94,28 @@ def setClassesToInvoiced(client: bigquery.Client, class_ids: list, admin_user_id
 
     # Run the query
     return client.query(query, job_config=job_config, location='EU')
+
+
+def setClassesToPaid(client: bigquery.Client, class_ids: list, admin_user_id: str):
+    query = f"""
+        UPDATE `{CLASSES_DATASET}.classes`
+        SET
+            paid_teacher = TRUE,
+            paid_teacher_at = CURRENT_TIMESTAMP()
+        WHERE class_id IN UNNEST(@class_ids)
+        AND EXISTS (
+            SELECT 1
+            FROM `{USER_DATASET}.teachers`
+            WHERE user_id = @admin_user_id
+        )"""
+
+    # Define query parameters
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ArrayQueryParameter("class_ids", "STRING", class_ids),
+            bigquery.ScalarQueryParameter("admin_user_id", "STRING", admin_user_id),
+        ]
+    )
+
+    # Run the query
+    return client.query(query, job_config=job_config, location='EU')
