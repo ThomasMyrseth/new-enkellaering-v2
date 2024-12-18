@@ -20,8 +20,9 @@ from datetime import timedelta
 load_dotenv()
 
 from auth.hash_password import hash_password, check_password
-from big_query.gets import get_student_by_email, get_teacher_by_email, get_teacher_by_user_id, get_classes_by_teacher, get_student_for_teacher, get_student_by_user_id, get_teacher_for_student, get_classes_for_student
+from big_query.gets import get_all_students, get_student_by_email, get_all_new_students, get_teacher_by_user_id, get_classes_by_teacher, get_student_for_teacher, get_student_by_user_id, get_teacher_for_student, get_classes_for_student, get_all_classes, get_all_teachers
 from big_query.inserts import insert_student, insert_teacher, insert_class
+from big_query.alters import setClassesToInvoiced, setClassesToPaid
 from big_query.bq_types import Classes
 
 
@@ -503,6 +504,298 @@ def get_classes_for_student_route():
     return jsonify({
         "classes": classes
     }), 200
+
+
+@app.route('/get-all-classes', methods=["POST"])
+def get_all_classes_route():
+    data = request.get_json()
+    admin_user_id = data.get('admin_user_id')
+
+    res = get_all_classes(client=bq_client, admin_user_id=admin_user_id)
+
+    if not res or res.errors:
+        print(f"Error fetching classes for admin {res.errors}")
+        return jsonify({
+            "message": "Error while fetching admin classes"
+        }), 400
+    
+    result = res.result()
+    classes = [dict(row) for row in result]
+
+    if len(classes)==0:
+        return jsonify({
+            "classes": []
+        }), 200
+    
+    return jsonify({
+        "classes": classes
+    }), 200
+
+@app.route('/get-all-teachers', methods=["POST"])
+def get_all_teachers_route():
+    data = request.get_json()
+    admin_user_id = data.get('admin_user_id')
+
+    if not admin_user_id:
+        return jsonify({"message": "Missing admin user id"}), 400
+    
+    res = get_all_teachers(client=bq_client, admin_user_id=admin_user_id)
+
+    if not res or res.errors:
+        print("Error fetching teachers")
+        return jsonify({"message": "Error fetching teachers"}), 500
+    
+    result = res.result()
+    teachers = [dict(row) for row in result]
+
+    if len(teachers)==0:
+        return jsonify({
+            "teachers": []
+        }), 200
+    
+    return jsonify({
+        "teachers": teachers
+    }), 200
+
+
+@app.route('/get-all-students', methods=["POST"])
+def get_all_students_route():
+    data = request.get_json()
+    admin_user_id = data.get('admin_user_id')
+
+    if not admin_user_id:
+        return jsonify({"message": "Missing admin user id"}), 400
+    
+    res = get_all_students(client=bq_client, admin_user_id=admin_user_id)
+
+    if not res or res.errors:
+        print("Error fetching students", res.errors)
+        return jsonify({"message": "Error fetching students"}), 500
+    
+    result = res.result()
+    print(res.result())
+    students = [dict(row) for row in result]
+
+    if len(students)==0:
+        return jsonify({
+            "students": []
+        }), 200
+    
+    return jsonify({
+        "students": students
+    }), 200
+
+
+
+
+
+
+@app.route('/get-new-students', methods=["POST"])
+def get_new_students_route():
+    data = request.get_json()
+    admin_user_id = data.get('admin_user_id')
+
+    if not admin_user_id:
+        return jsonify({
+            "message": "Missing admin user id"
+        }), 400
+
+    res = get_all_new_students(client=bq_client, admin_user_id=admin_user_id)
+
+    if not res or res.errors:
+        print("Error fetching new students")
+        return jsonify({
+            "message": "Error fetching new students"
+        }), 500
+    
+    result = res.result()
+    new_students = [dict(row) for row in result]
+
+    if len(new_students)==0:
+        return jsonify({
+            "new_students": []
+        }), 200
+    
+    return jsonify({
+        "new_students": new_students
+    }), 200
+
+
+from datetime import timezone
+from big_query.bq_types import NewStudents
+from big_query.alters import alterNewStudent
+
+@app.route('/update-new-student', methods=["POST"])
+def update_new_student_workflow():
+    data = request.get_json()
+
+    # Validate incoming data
+    is_valid, error_message = validate_new_student_data(data)
+    if not is_valid:
+        print("Validation error:", error_message)
+        return jsonify({"message": f"Validation error: {error_message}"}), 400
+
+    # Extract fields
+    newStudentId = data["new_student_id"]
+    admin_user_id = data["admin_user_id"]
+
+    # Build the updates dictionary
+    update = {
+        "has_called": data.get("has_called"),
+        "called_at": data.get("called_at"),
+        "has_answered": data.get("has_answered"),
+        "answered_at": data.get("answered_at"),
+        "has_signed_up": data.get("has_signed_up"),
+        "signed_up_at": data.get("signed_up_at"),
+        "from_referal": data.get("from_referal"),
+        "referee_phone": data.get("referee_phone"),
+        "has_assigned_teacher": data.get("has_assigned_teacher"),
+        "assigned_teacher_at": data.get("assigned_teacher_at"),
+        "assigned_teacher_user_id": data.get("teacher_user_id"),
+        "has_finished_onboarding": data.get("has_finished_onboarding"),
+        "finished_onboarding_at": data.get("finished_onboarding_at"),
+        "comments": data.get("comments"),
+        "paid_referee": data.get("paid_referee"),
+        "paid_referee_at": data.get("paid_referee_at"),
+    }
+
+    # Clean the updates dictionary
+    update = clean_updates(update)
+
+    # Perform the update
+    try:
+        res = alterNewStudent(client=bq_client, new_student_id=newStudentId, admin_user_id=admin_user_id, updates=update)
+        res.result()  # Force query execution to detect any errors
+    except Exception as e:
+        print("BigQuery error:", e)
+        return jsonify({"message": "Error while setting updates for new student"}), 500
+
+    return jsonify({"message": "Updated new student successfully"}), 200
+
+def clean_updates(updates: dict):
+    """Ensure all fields have valid default values."""
+    boolean_fields = [
+        "has_called", "has_answered", "has_signed_up", "from_referal",
+        "has_assigned_teacher", "has_finished_onboarding", "paid_referee"
+    ]
+    
+    timestamp_fields = [
+        "called_at", "answered_at", "signed_up_at", "assigned_teacher_at",
+        "finished_onboarding_at", "paid_referee_at"
+    ]
+    
+    string_fields = [
+        "referee_phone", "assigned_teacher_user_id", "comments"
+    ]
+    
+    # Set default values for missing or `None` fields
+    for field in boolean_fields:
+        updates[field] = updates.get(field, False)
+    
+    for field in timestamp_fields:
+        updates[field] = updates.get(field) or None  # Keep as `None` if not provided
+    
+    for field in string_fields:
+        updates[field] = updates.get(field) or ""  # Default to ''
+    
+    return updates
+
+def validate_new_student_data(data: dict) -> tuple[bool, str]:
+    """
+    Validate the incoming data for updating a new student.
+
+    :param data: Dictionary containing new student data.
+    :return: Tuple (is_valid, error_message). If valid, error_message is None.
+    """
+    required_fields = {
+        "new_student_id": str,
+        "has_called": bool,
+        "has_answered": bool,
+        "has_signed_up": bool,
+        "from_referal": bool,
+        "admin_user_id": str,
+        "has_assigned_teacher": bool,
+    }
+
+    optional_fields = {
+        "called_at": str,
+        "answered_at": str,
+        "signed_up_at": str,
+        "referee_phone": str,
+        "assigned_teacher_at": str,
+        "teacher_user_id": str,
+        "has_finished_onboarding": bool,
+        "finished_onboarding_at": str,
+        "comments": str,
+        "paid_referee": bool,
+        "paid_referee_at": str,
+    }
+
+    # Check required fields
+    for field, field_type in required_fields.items():
+        if field not in data:
+            return False, f"Missing required field: {field}"
+        if not isinstance(data[field], field_type):
+            return False, f"Invalid type for field '{field}': Expected {field_type}, got {type(data[field])}"
+
+    # Check optional fields (if provided)
+    for field, field_type in optional_fields.items():
+        if field in data and data[field] is not None:
+            if not isinstance(data[field], field_type):
+                return False, f"Invalid type for field '{field}': Expected {field_type}, got {type(data[field])}"
+
+    return True, None
+
+
+
+@app.route('/set-classes-to-invoiced', methods=["POST"])
+def set_classes_to_invoiced_route():
+    data = request.get_json()
+
+    admin_user_id = data.get('admin_user_id')
+    class_ids = data.get('class_ids')
+
+    if not admin_user_id or not class_ids:
+        print("missing class ids or user id")
+        return jsonify({"message": "missing class ids or user ids"}), 401
+    
+    if len(class_ids)==0:
+        print("class ids was an empty list")
+        return jsonify({"message": "class ids was an emtpy list"}), 400
+    
+    res = setClassesToInvoiced(client=bq_client, admin_user_id=admin_user_id, class_ids=class_ids)
+
+    if not res or res.errors:
+        print("Error setting classes to invoiced", res.errors)
+        return jsonify({"message": "failed to set classes to invoiced"}), 500
+    
+    print(res.result())
+    return jsonify({"message": "successfully set classes to invoiced"}), 200
+
+@app.route('/set-classes-to-paid', methods=["POST"])
+def set_classes_to_paid_route():
+    data = request.get_json()
+
+    admin_user_id = data.get('admin_user_id')
+    class_ids = data.get('class_ids')
+
+    if not admin_user_id or not class_ids:
+        print("missing class ids or user id")
+        return jsonify({"message": "missing class ids or user ids"}), 401
+    
+    if len(class_ids)==0:
+        print("class ids was an empty list")
+        return jsonify({"message": "class ids was an emtpy list"}), 400
+    
+    res = setClassesToPaid(client=bq_client, admin_user_id=admin_user_id, class_ids=class_ids)
+
+    if not res or res.errors:
+        print("Error setting classes to paid", res.errors)
+        return jsonify({"message": "failed to set classes to paid"}), 500
+    
+    print(res.result())
+    return jsonify({"message": "successfully set classes to paid"}), 200
+    
 
 
 
