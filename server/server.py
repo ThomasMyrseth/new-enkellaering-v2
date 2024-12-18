@@ -21,7 +21,7 @@ load_dotenv()
 
 from auth.hash_password import hash_password, check_password
 from big_query.gets import get_all_students, get_student_by_email, get_all_new_students, get_teacher_by_user_id, get_classes_by_teacher, get_student_for_teacher, get_student_by_user_id, get_teacher_for_student, get_classes_for_student, get_all_classes, get_all_teachers
-from big_query.inserts import insert_student, insert_teacher, insert_class
+from big_query.inserts import insert_student, insert_teacher, insert_class, insert_new_student
 from big_query.alters import setClassesToInvoiced, setClassesToPaid
 from big_query.bq_types import Classes
 
@@ -795,6 +795,57 @@ def set_classes_to_paid_route():
     
     print(res.result())
     return jsonify({"message": "successfully set classes to paid"}), 200
+    
+import pytz
+
+
+@app.route('/submit-new-student', methods = ["POST"])
+def submit_new_student_route():
+    data = request.get_json()
+    phone = data.get("phone")
+    norway_tz = pytz.timezone("Europe/Oslo")
+
+
+    if not phone:
+        return jsonify({"message": "Missing phone number"}), 400
+    
+    ns = NewStudents(
+        new_student_id=str(uuid.uuid4()),
+        phone=phone,
+        created_at=datetime.now(norway_tz),
+        has_called=False,
+        called_at=None,
+        has_answered=False,
+        answered_at=None,
+        has_signed_up=False,
+        signed_up_at=None,
+        from_referal=False,
+        referee_phone=None,
+        has_assigned_teacher=False,
+        assigned_teacher_at=None,
+        assigned_teacher_user_id=None,
+        has_finished_onboarding=False,
+        finished_onboarding_at=None,
+        comments=None,
+        paid_referee=False,
+        paid_referee_at=None
+    )
+
+    res = insert_new_student(client=bq_client, new_student=ns)
+
+    if not res or res.errors:
+        print("An error occured inserting nre student", res.errors)
+        return jsonify({
+            "message": "An error occured while inserting new student"
+        }), 500
+    
+    print("response: ", res.result())
+    return jsonify({"message": "New student successfully inserted"}), 200
+    
+
+    
+
+
     
 
 

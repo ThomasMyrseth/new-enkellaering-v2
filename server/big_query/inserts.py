@@ -155,17 +155,29 @@ def insert_referral(client: bigquery.Client, referral: Referrals):
     client.query(query, job_config=job_config)
 
 
-def insert_new_student(client: bigquery.Client, new_student: Students):
+def insert_new_student(client: bigquery.Client, new_student: NewStudents):
+
+    print(new_student.phone)
+    print(new_student.has_called)
+    print(new_student.created_at)
+    print(new_student.has_answered)
+    print(new_student.has_signed_up)
+    print(new_student.from_referal)
+    print(new_student.has_assigned_teacher)
+    print(new_student.has_finished_onboarding)
+    print(new_student.new_student_id)
+
+
     query = f"""
-        INSERT INTO `{PROJECT_ID}.{NEW_STUDENTS_DATASET}.NEW_STUDENTS` (
+        INSERT INTO `{PROJECT_ID}.{NEW_STUDENTS_DATASET}.new_students` (
             phone, has_called, called_at, has_answered, answered_at, has_signed_up, signed_up_at,
-            from_referral, referee_phone, has_assigned_teacher, assigned_teacher_at,
-            has_finished_onboarding, finished_onboarding_at, comments
+            from_referal, referee_phone, has_assigned_teacher, assigned_teacher_at,
+            has_finished_onboarding, finished_onboarding_at, comments, new_student_id, created_at
         )
         VALUES (
             @phone, @has_called, @called_at, @has_answered, @answered_at, @has_signed_up, @signed_up_at,
-            @from_referral, @referee_phone, @has_assigned_teacher, @assigned_teacher_at,
-            @has_finished_onboarding, @finished_onboarding_at, @comments
+            @from_referal, @referee_phone, @has_assigned_teacher, @assigned_teacher_at,
+            @has_finished_onboarding, @finished_onboarding_at, @comments, @new_student_id, @created_at
         )
     """
     job_config = bigquery.QueryJobConfig(
@@ -177,16 +189,19 @@ def insert_new_student(client: bigquery.Client, new_student: Students):
             bigquery.ScalarQueryParameter("answered_at", "TIMESTAMP", new_student.answered_at),
             bigquery.ScalarQueryParameter("has_signed_up", "BOOL", new_student.has_signed_up),
             bigquery.ScalarQueryParameter("signed_up_at", "TIMESTAMP", new_student.signed_up_at),
-            bigquery.ScalarQueryParameter("from_referral", "BOOL", new_student.from_referral),
+            bigquery.ScalarQueryParameter("from_referal", "BOOL", new_student.from_referal),
             bigquery.ScalarQueryParameter("referee_phone", "STRING", new_student.referee_phone),
             bigquery.ScalarQueryParameter("has_assigned_teacher", "BOOL", new_student.has_assigned_teacher),
             bigquery.ScalarQueryParameter("assigned_teacher_at", "TIMESTAMP", new_student.assigned_teacher_at),
             bigquery.ScalarQueryParameter("has_finished_onboarding", "BOOL", new_student.has_finished_onboarding),
             bigquery.ScalarQueryParameter("finished_onboarding_at", "TIMESTAMP", new_student.finished_onboarding_at),
             bigquery.ScalarQueryParameter("comments", "STRING", new_student.comments),
+            bigquery.ScalarQueryParameter("new_student_id", "STRING", new_student.new_student_id),
+            bigquery.ScalarQueryParameter("created_at", "TIMESTAMP", new_student.created_at),
         ]
     )
-    client.query(query, job_config=job_config)
+    
+    return client.query(query, job_config=job_config, location='EU')
 
 
 def insert_class(client: bigquery.Client, class_obj: Classes):
