@@ -60,7 +60,7 @@
 
     "firebase": "^11.1.0",
 
-    "framer-motion": "^11.14.4",
+    "framer-motion": "^11.15.0",
 
     "lucide-react": "^0.468.0",
 
@@ -73,6 +73,8 @@
     "react-day-picker": "^9.4.3",
 
     "react-dom": "^18.3.1",
+
+    "react-element-to-jsx-string": "^15.0.0",
 
     "react-hook-form": "^7.54.1",
 

@@ -267,7 +267,7 @@ function NewStudentRow({ ns, admin_user_id }: { ns: NewStudent; admin_user_id: s
 
     return(
     <TableRow className={`${ns.has_finished_onboarding ? "text-gray-400" : ""}`}>
-        <TableCell className="font-medium min-w-80">{ns.phone.slice(0, 3)} {ns.phone.slice(3, 5)} {ns.phone.slice(7, 10)} {ns.phone.slice(10, 13)} 
+        <TableCell className="font-medium min-w-80">{ns.phone.slice(0, 3)} {ns.phone.slice(3, 5)} {ns.phone.slice(5, 10)} {ns.phone.slice(10, 13)} 
                 <br/>
                 {new Intl.DateTimeFormat("nb-NO", {
                     day: "2-digit",
