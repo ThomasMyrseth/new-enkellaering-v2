@@ -22,6 +22,7 @@ load_dotenv()
 from auth.hash_password import hash_password, check_password
 from big_query.gets import get_all_students, get_student_by_email, get_all_new_students, get_teacher_by_user_id, get_classes_by_teacher, get_student_for_teacher, get_student_by_user_id, get_teacher_for_student, get_classes_for_student, get_all_classes, get_all_teachers
 from big_query.inserts import insert_student, insert_teacher, insert_class
+from big_query.alters import setClassesToInvoiced
 from big_query.bq_types import Classes
 
 
@@ -744,6 +745,33 @@ def validate_new_student_data(data: dict) -> tuple[bool, str]:
                 return False, f"Invalid type for field '{field}': Expected {field_type}, got {type(data[field])}"
 
     return True, None
+
+
+
+@app.route('/set-classes-to-invoiced', methods=["POST"])
+def set_classes_to_invoiced_route():
+    data = request.get_json()
+
+    admin_user_id = data.get('admin_user_id')
+    class_ids = data.get('class_ids')
+
+    if not admin_user_id or not class_ids:
+        print("missing class ids or user id")
+        return jsonify({"message": "missing class ids or user ids"}), 401
+    
+    if len(class_ids)==0:
+        print("class ids was an empty list")
+        return jsonify({"message": "class ids was an emtpy list"}), 400
+    
+    res = setClassesToInvoiced(client=bq_client, admin_user_id=admin_user_id, class_ids=class_ids)
+
+    if not res or res.errors:
+        print("Error setting classes to invoiced", res.errors)
+        return jsonify({"message": "failed to set classes to invoiced"}), 500
+    
+    print(res.result())
+    return jsonify({"message": "successfully set classes to invoiced"}), 200
+    
 
 
 if __name__ == "__main__":

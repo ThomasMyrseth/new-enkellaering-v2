@@ -43,8 +43,8 @@ export default function AdminPage() {
         <TeacherName teacher={teacher}/>
         <div className="flex flex-col items-center justify-center w-3/4 space-y-10">
             <DailyRevenueChart admin_user_id={userId}/>
-            <PreviousClassesForEachTeacher user_id={userId}/>
-            <PreviousClassesForEachStudent user_id={userId}/>
+            <PreviousClassesForEachTeacher admin_user_id={userId}/>
+            <PreviousClassesForEachStudent admin_user_id={userId}/>
             <NewStudentsWorkflow user_id={userId}/>
         </div>
         <div className="h-10"> </div>

@@ -17,7 +17,7 @@ import {
     AccordionTrigger,
 } from "@/components/ui/accordion";
 
-import { Classes, Teacher } from "./types";
+import { Classes, Teacher, Student } from "./types";
 
 import { useEffect, useState } from "react"
 
@@ -31,14 +31,15 @@ type classesJoinTeacher = {
     teacher: Teacher;
 }
 
-export function PreviousClassesForEachTeacher({user_id}: {user_id: string}) {      
+export function PreviousClassesForEachTeacher({admin_user_id}: {admin_user_id: string}) {      
 
     const [classes, setClasses] = useState<Classes[]>([]);
     const [teachers, setTeachers] = useState<Teacher[]>([]);
     const [classesByTeacher, setClassesByTeacher] = useState<classesJoinTeacher[]>([]);
+    const [students, setStudents] = useState<Student[]>([]);
+    
 
     const [loading, setLoading] = useState<boolean>(true)
-    let totalAmount :number = 0
 
     //get classes for everyone
     useEffect( () => {
@@ -50,7 +51,7 @@ export function PreviousClassesForEachTeacher({user_id}: {user_id: string}) {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    "admin_user_id": user_id
+                    "admin_user_id": admin_user_id
                 })
             })
 
@@ -73,7 +74,7 @@ export function PreviousClassesForEachTeacher({user_id}: {user_id: string}) {
         }
         fetchClasses()
     
-    },[user_id])
+    },[admin_user_id])
 
     //get all the teachers
     useEffect( () => {
@@ -86,7 +87,7 @@ export function PreviousClassesForEachTeacher({user_id}: {user_id: string}) {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    "admin_user_id": user_id
+                    "admin_user_id": admin_user_id
                 })
             })
 
@@ -112,8 +113,48 @@ export function PreviousClassesForEachTeacher({user_id}: {user_id: string}) {
         }
 
         getAllTeachers()
-    },[BASEURL, user_id])
+    },[BASEURL, admin_user_id])
 
+    //get all the students
+    useEffect( () => {
+        async function getAllStudents() {
+
+            const response = await fetch(`${BASEURL}/get-all-students`, {
+                method: "POST",
+                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    "admin_user_id": admin_user_id
+                })
+            })
+
+            if (!response.ok) {
+                alert("Error fetching students " + response.statusText)
+                setStudents([])
+                return null
+            }
+
+            const data = await response.json()
+            const students :Student[] = data.students
+
+            if (students.length===0) {
+                alert("No students found")
+                console.log("No students found")
+                setStudents([])
+                return null
+            }
+
+
+            else {
+                setStudents(students)
+                setLoading(false)
+            }
+        }
+
+        getAllStudents()
+    },[BASEURL, admin_user_id])
 
     //map each teacher to his classes
     useEffect( () => {
@@ -147,10 +188,13 @@ export function PreviousClassesForEachTeacher({user_id}: {user_id: string}) {
 
       
     return (<div className="flex flex-col justify-center items-center w-full">
-        <h2>En oversikt over tidligere timer</h2>
+        <h1 className="text-xl">En oversikt over tidligere timer for hver lærer</h1>
 
         {classesByTeacher.map((ct :classesJoinTeacher, index) => {
             const classes :Classes[] = ct.classes
+            const teacher :Teacher = ct.teacher
+            const yourStudents :Student[] = students.filter(s => s.your_teacher === teacher.user_id)
+
 
             //sortng classes by startedAt
             classes.sort((a, b) => {
@@ -174,88 +218,141 @@ export function PreviousClassesForEachTeacher({user_id}: {user_id: string}) {
 
         return (<div key={index} className="bg-white dark:bg-black shadow-lg w-full p-4 rounded-lg">
             <Accordion type="single" collapsible className="w-full mt-4">
-            <AccordionItem value="remaining-classes">
-                <AccordionTrigger>{ct.teacher.firstname} {ct.teacher.lastname}</AccordionTrigger>
-                <AccordionContent>
-
-                <p>Totalt ufakturerte timer fra {ct.teacher.firstname}: <span className="text-red-400">{totalUninvoicedHoursByTeacher}h, {totalUninvoicedByTeacher}kr.</span></p>
-                <p>Totalt ikke betalt til {ct.teacher.firstname}: <span className="text-red-400">{totalUnpaidHoursToTeacher}h, {totalUnpaidToTeacher}kr.</span></p>
-                <br/>
-                <p>Total fakturerte timer fra {ct.teacher.firstname}: <span className="text-green-400">{totalInvoicedHoursByTeacher}h, {totalInvoicedByTeacher}kr.</span></p>
-                <p>Totalt betalt til {ct.teacher.firstname}: <span className="text-green-400">{totalPaidHoursToTeacher}h, {totalPaidToTeacher}kr.</span></p>
-                <br/>
+                <AccordionItem value="remaining-classes">
+                    <AccordionTrigger>{ct.teacher.firstname} {ct.teacher.lastname}</AccordionTrigger>
+                    <AccordionContent>
 
 
-                <Table>
-                    <TableCaption>Kronologisk oversikt over alle timer til {ct.teacher.firstname}</TableCaption>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead className="w-[100px]">Dato</TableHead>
-                            <TableHead>Varighet</TableHead>
-                            <TableHead>Fakturert elev</TableHead>
-                            <TableHead className="text-right">Fakturert beløp</TableHead>
-                            <TableHead>Betalt lærer</TableHead>
-                            <TableHead>Beløp til lærer</TableHead>
-                            <TableHead>Kommentar fra timen</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                    {classes.map( (c :Classes, index) => {
-                        const startedAt: Date = new Date(c.started_at);
-                        const endedAt: Date = new Date(c.ended_at);
-                        const totalDurationMillis: number = endedAt.getTime() - startedAt.getTime();
-                        const durationHours: number = Math.floor(totalDurationMillis / (1000 * 60 * 60));
-                        const durationMinutes: number = Math.round((totalDurationMillis % (1000 * 60 * 60)) / (1000 * 60));
-                        const invoiceAmount: number = durationHours * 540 + (durationMinutes / 60) * 540;
-                        const toTeacherAmmount :number = durationHours * teacherHourlyPay + (durationMinutes / 60) * teacherHourlyPay;
+                        <Accordion type="single" collapsible className="w-full mb-4">
+                            <AccordionItem value="your-students">
+                                <AccordionTrigger>{ct.teacher.firstname} sine elever</AccordionTrigger>
+                                <AccordionContent>
+                                    <Accordion type="single" collapsible className="w-full">
+                                        {students.map( (student, index) => (
+                                            <AccordionItem value={index.toString()} key={index}>
+                                                <AccordionTrigger>
+                                                    <p>{student.firstname_parent} {student.lastname_parent}
+                                                        <br/>
+                                                        & {student.firstname_student} {student.lastname_student}
+                                                    </p>
+                                                </AccordionTrigger>
+                                                <AccordionContent>
+                                                    <p>
+                                                        <h4 className="mb-1 font-semibold">Forelder</h4>
+                                                        {student.firstname_parent} {student.lastname_parent}
+                                                        <br/>
+                                                        Tlf: {student.phone_parent}
+                                                        <br/>
+                                                        Epost: {student.email_parent}
+                                                    </p>
+                                                    <br/>
+                                                    <p>
+                                                        <h4 className="mb-1 font-semibold">Elev</h4>
+                                                        {student.firstname_student} {student.lastname_student}
+                                                        <br/>
+                                                        Tlf: {student.phone_student}
+                                                    </p>
+                                                    <br/>
+                                                    <p>
+                                                        <h4 className="mb-1 font-semibold">Info</h4>
+                                                        Hovedfag: {student.main_subjects}
+                                                        <br/>
+                                                        Spesielle forhold: {student.additional_comments}
+                                                        <br/>
+                                                        Hjemmeadresse: {student.address}
+                                                        <br/>
+                                                        Postnummer: {student.postal_code}
+                                                        <br/>
+                                                        {`${student.has_physical_tutoring? 'fysisk undervisning' : 'digital undervisning'}`}
+                                                    </p>
+                                                </AccordionContent>
+                                            </AccordionItem>
+                                        ))}
+                                    </Accordion>
+                                </AccordionContent>
+                            </AccordionItem>
+                        </Accordion>
 
-                        if (!c.invoiced_student) {
-                            totalUninvoicedHoursByTeacher += durationHours + Math.round(durationMinutes/60)
-                            totalUninvoicedByTeacher += invoiceAmount
-                        }
-                        else {
-                            totalInvoicedHoursByTeacher += durationHours + Math.round(durationMinutes/60)
-                            totalInvoicedByTeacher += invoiceAmount
-                        }
 
-                        if (!c.paid_teacher) {
-                            totalUnpaidToTeacher += toTeacherAmmount
-                            totalUnpaidHoursToTeacher += durationHours + Math.round(durationMinutes/60)
-                        }
-                        else {
-                            totalPaidHoursToTeacher += durationHours + Math.round(durationMinutes/60)
-                            totalPaidToTeacher += toTeacherAmmount
-                        }
-                        
-                        return (
-                        <TableRow key={index}>
-                            <TableCell className="font-medium">{c.started_at}</TableCell>
-                            <TableCell>{`${durationHours}t ${durationMinutes}min`}</TableCell>
-                            <TableCell>
-                            {c.invoiced_student ? (
-                                <p className="text-green-400">Fakturert</p>
-                            ) : (
-                                <p className="text-red-400">Ufakturert</p>
-                            )}
-                            </TableCell>
-                            <TableCell className="text-right">{invoiceAmount}kr</TableCell>
+                        <p className="my-4">
+                            Totalt ufakturerte timer fra {ct.teacher.firstname}: <span className="text-red-400">{totalUninvoicedHoursByTeacher}h, {totalUninvoicedByTeacher}kr.</span> <br/>
+                            Totalt ikke betalt til {ct.teacher.firstname}: <span className="text-red-400">{totalUnpaidHoursToTeacher}h, {totalUnpaidToTeacher}kr.</span> <br/>
+                            <br/>
+                            Total fakturerte timer fra {ct.teacher.firstname}: <span className="text-green-400">{totalInvoicedHoursByTeacher}h, {totalInvoicedByTeacher}kr.</span> <br/>
+                            Totalt betalt til {ct.teacher.firstname}: <span className="text-green-400">{totalPaidHoursToTeacher}h, {totalPaidToTeacher}kr.</span>
+                        </p>
+                    
 
-                            <TableCell>
-                            {c.paid_teacher ? (
-                                <p className="text-green-400">Betalt</p>
-                            ) : (
-                                <p className="text-red-400">Ikke betalt</p>
-                            )}
-                            </TableCell>
-                            <TableCell className="text-right">{toTeacherAmmount}kr</TableCell>
-                            <TableCell>{c.comment}</TableCell>
-                        </TableRow>
-                        );
-                    })}
-                    </TableBody>
-                </Table>
-                </AccordionContent>
-            </AccordionItem>
+                        <Table>
+                            <TableCaption>Kronologisk oversikt over alle timer til {ct.teacher.firstname}</TableCaption>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="w-[100px]">Dato</TableHead>
+                                    <TableHead>Varighet</TableHead>
+                                    <TableHead>Fakturert elev</TableHead>
+                                    <TableHead className="text-right">Fakturert beløp</TableHead>
+                                    <TableHead>Betalt lærer</TableHead>
+                                    <TableHead>Beløp til lærer</TableHead>
+                                    <TableHead>Kommentar fra timen</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                            {classes.map( (c :Classes, index) => {
+                                const startedAt: Date = new Date(c.started_at);
+                                const endedAt: Date = new Date(c.ended_at);
+                                const totalDurationMillis: number = endedAt.getTime() - startedAt.getTime();
+                                const durationHours: number = Math.floor(totalDurationMillis / (1000 * 60 * 60));
+                                const durationMinutes: number = Math.round((totalDurationMillis % (1000 * 60 * 60)) / (1000 * 60));
+                                const invoiceAmount: number = durationHours * 540 + (durationMinutes / 60) * 540;
+                                const toTeacherAmmount :number = durationHours * teacherHourlyPay + (durationMinutes / 60) * teacherHourlyPay;
+
+                                if (!c.invoiced_student) {
+                                    totalUninvoicedHoursByTeacher += durationHours + Math.round(durationMinutes/60)
+                                    totalUninvoicedByTeacher += invoiceAmount
+                                }
+                                else {
+                                    totalInvoicedHoursByTeacher += durationHours + Math.round(durationMinutes/60)
+                                    totalInvoicedByTeacher += invoiceAmount
+                                }
+
+                                if (!c.paid_teacher) {
+                                    totalUnpaidToTeacher += toTeacherAmmount
+                                    totalUnpaidHoursToTeacher += durationHours + Math.round(durationMinutes/60)
+                                }
+                                else {
+                                    totalPaidHoursToTeacher += durationHours + Math.round(durationMinutes/60)
+                                    totalPaidToTeacher += toTeacherAmmount
+                                }
+                                
+                                return (
+                                <TableRow key={index}>
+                                    <TableCell className="font-medium">{c.started_at}</TableCell>
+                                    <TableCell>{`${durationHours}t ${durationMinutes}min`}</TableCell>
+                                    <TableCell>
+                                    {c.invoiced_student ? (
+                                        <p className="text-green-400">Fakturert</p>
+                                    ) : (
+                                        <p className="text-red-400">Ufakturert</p>
+                                    )}
+                                    </TableCell>
+                                    <TableCell className="text-right">{invoiceAmount}kr</TableCell>
+
+                                    <TableCell>
+                                    {c.paid_teacher ? (
+                                        <p className="text-green-400">Betalt</p>
+                                    ) : (
+                                        <p className="text-red-400">Ikke betalt</p>
+                                    )}
+                                    </TableCell>
+                                    <TableCell className="text-right">{toTeacherAmmount}kr</TableCell>
+                                    <TableCell>{c.comment}</TableCell>
+                                </TableRow>
+                                );
+                            })}
+                            </TableBody>
+                        </Table>
+                    </AccordionContent>
+                </AccordionItem>
             </Accordion>
         </div>)
         })}

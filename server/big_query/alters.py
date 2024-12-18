@@ -10,6 +10,7 @@ USER_DATASET = os.getenv('USER_DATASET')
 CLASSES_DATASET = os.getenv('CLASSES_DATASET')
 NEW_STUDENTS_DATASET = os.getenv('NEW_STUDENTS_DATASET')
 
+
 def alterNewStudent(client: bigquery.Client, new_student_id: str, admin_user_id: str, updates: dict):
 
     print("new student id: ", new_student_id)
@@ -35,12 +36,17 @@ def alterNewStudent(client: bigquery.Client, new_student_id: str, admin_user_id:
             paid_referee = @paid_referee,
             paid_referee_at = @paid_referee_at
         WHERE new_student_id = @new_student_id
+            AND EXISTS (
+                SELECT 1
+                FROM `{USER_DATASET}.teachers`
+                WHERE user_id = @admin_user_id
+            )
         """
     
     # Prepare query parameters using ScalarQueryParameter
     params = [
-        bigquery.ScalarQueryParameter("new_student_id", "STRING", new_student_id),
         bigquery.ScalarQueryParameter("has_called", "BOOL", updates.get("has_called")),
+        bigquery.ScalarQueryParameter("admin_user_id", "STRING", admin_user_id),
         bigquery.ScalarQueryParameter("called_at", "TIMESTAMP", updates.get("called_at")),
         bigquery.ScalarQueryParameter("has_answered", "BOOL", updates.get("has_answered")),
         bigquery.ScalarQueryParameter("answered_at", "TIMESTAMP", updates.get("answered_at")),
@@ -63,3 +69,28 @@ def alterNewStudent(client: bigquery.Client, new_student_id: str, admin_user_id:
 
     # Execute the query
     return client.query(query, job_config=job_config)
+
+
+def setClassesToInvoiced(client: bigquery.Client, class_ids: list, admin_user_id: str):
+    query = f"""
+        UPDATE `{CLASSES_DATASET}.classes`
+        SET
+            invoiced_student = TRUE,
+            invoiced_student_at = CURRENT_TIMESTAMP()
+        WHERE class_id IN UNNEST(@class_ids)
+        AND EXISTS (
+            SELECT 1
+            FROM `{USER_DATASET}.teachers`
+            WHERE user_id = @admin_user_id
+        )"""
+
+    # Define query parameters
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ArrayQueryParameter("class_ids", "STRING", class_ids),
+            bigquery.ScalarQueryParameter("admin_user_id", "STRING", admin_user_id),
+        ]
+    )
+
+    # Run the query
+    return client.query(query, job_config=job_config, location='EU')
