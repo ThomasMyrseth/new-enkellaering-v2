@@ -171,12 +171,12 @@ def insert_new_student(client: bigquery.Client, new_student: NewStudents):
     query = f"""
         INSERT INTO `{PROJECT_ID}.{NEW_STUDENTS_DATASET}.new_students` (
             phone, has_called, called_at, has_answered, answered_at, has_signed_up, signed_up_at,
-            from_referal, referee_phone, has_assigned_teacher, assigned_teacher_at,
+            from_referal, referee_phone, referee_name, has_assigned_teacher, assigned_teacher_at,
             has_finished_onboarding, finished_onboarding_at, comments, new_student_id, created_at
         )
         VALUES (
             @phone, @has_called, @called_at, @has_answered, @answered_at, @has_signed_up, @signed_up_at,
-            @from_referal, @referee_phone, @has_assigned_teacher, @assigned_teacher_at,
+            @from_referal, @referee_phone, @referee_name, @has_assigned_teacher, @assigned_teacher_at,
             @has_finished_onboarding, @finished_onboarding_at, @comments, @new_student_id, @created_at
         )
     """
@@ -191,6 +191,7 @@ def insert_new_student(client: bigquery.Client, new_student: NewStudents):
             bigquery.ScalarQueryParameter("signed_up_at", "TIMESTAMP", new_student.signed_up_at),
             bigquery.ScalarQueryParameter("from_referal", "BOOL", new_student.from_referal),
             bigquery.ScalarQueryParameter("referee_phone", "STRING", new_student.referee_phone),
+            bigquery.ScalarQueryParameter("referee_name", "STRING", new_student.referee_name),
             bigquery.ScalarQueryParameter("has_assigned_teacher", "BOOL", new_student.has_assigned_teacher),
             bigquery.ScalarQueryParameter("assigned_teacher_at", "TIMESTAMP", new_student.assigned_teacher_at),
             bigquery.ScalarQueryParameter("has_finished_onboarding", "BOOL", new_student.has_finished_onboarding),
