@@ -1,91 +1,41 @@
 "use client"
 import Image from "next/image";
 import { TracingBeam } from "@/components/ui/tracing-beam";
-import { Card, FocusCards } from "@/components/ui/focus-cards";
-import { usePathname } from "next/navigation"; 
-import { useEffect, useState } from "react";
+import { TeacherFocusCards } from "@/components/ui/teacherCards";
+import NewStudentForm from "@/components/newStudentForm"
+import { HeroHighlight, Highlight } from "@/components/ui/hero-highlight";
+import { motion } from "framer-motion";
+import { BackgroundGradientAnimation } from "@/components/ui/background-gradient-animation";
+import { WavyBackground } from "@/components/ui/wavy-background";
+import { BackgroundBeamsWithCollision } from "@/components/ui/background-beams-with-collision";
+
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
 
 export default function Home() {
   return (<>       
-  <TracingBeam className="px-6">  
-    <FocusCardsHomePage/>
-    <Image
-      className="dark:invert"
-      src="/vercel.svg"
-      alt="Vercel logomark"
-      width={20}
-      height={20}
-    />
+    <div className="flex flex-col space-y-10 items-center justify-center bg-slate-200 dark:bg-slate-950 p-10">
 
-    </TracingBeam>
+      <BackgroundBeamsWithCollision className="rounded-lg">
+        <h2 className="text-2xl relative z-20 md:text-4xl lg:text-7xl font-bold text-center text-black dark:text-white font-sans tracking-tight">
+          Enkel Læring <br/>{" "}
+          <div className="relative mx-auto inline-block w-max [filter:drop-shadow(0px_1px_3px_rgba(27,_37,_80,_0.14))]">
+            <div className="relative bg-clip-text text-transparent bg-no-repeat bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500 py-4">
+              <span className="">Slik det alltid skulle ha vært</span>
+            </div>
+          </div>
+        </h2>
+      </BackgroundBeamsWithCollision>
+
+      <div className="w-full bg-white rounded-lg">
+      <NewStudentForm/>
+      </div>
+
+      <div className="bg-white rounded-lg w-full p-4 space-y-6 flex flex-col items-center justify-center">
+      <h1 className="text-5xl ">Møt våre <span className="relative bg-clip-text text-transparent bg-no-repeat bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500 py-4">helter</span></h1>
+      <TeacherFocusCards/>
+      </div>
+      
+    </div>
   </>)
 }
-
-type AboutMe = {
-  user_id :string,
-  about_me :string,
-  image_url :string,
-  firstname: string,
-  lastname: string
-}
-
-type Card = {
-  title: string,
-  description: string,
-  src: string
-}
-
-const FocusCardsHomePage = () => {
-  const [cardItems, setCardItems] = useState<Card[]>([]);
-
-  useEffect(() => {
-    async function getAllAboutMes() {
-      try {
-        const response = await fetch(`${BASEURL}/get-all-teacher-images-and-about-mes`, {
-          method: "GET",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-
-        if (!response.ok) {
-          console.error("Failed to fetch data.");
-          return;
-        }
-
-        const data = await response.json();
-        console.log(data);
-
-        if (!data.about_mes || !data.images) {
-          console.error("Invalid response format.");
-          return;
-        }
-
-        // Combine about_mes with images
-        const combinedData: Card[] = data.about_mes.map((aboutMe: any) => {
-          // Find the corresponding image
-          const imageUrl = data.images.find((image: string) =>
-            image.includes(aboutMe.user_id)
-          );
-
-          return {
-            title: `${aboutMe.firstname} ${aboutMe.lastname}`,
-            description: aboutMe.about_me,
-            src: imageUrl || "", // Use empty string if no image is found
-          };
-        });
-
-        setCardItems(combinedData);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
-    }
-
-    getAllAboutMes();
-  }, []);
-
-  return <FocusCards cards={cardItems} />;
-};
