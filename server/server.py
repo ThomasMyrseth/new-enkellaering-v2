@@ -20,10 +20,12 @@ from datetime import timedelta
 load_dotenv()
 
 from auth.hash_password import hash_password, check_password
-from big_query.gets import get_all_students, get_student_by_email, get_all_new_students, get_teacher_by_user_id, get_classes_by_teacher, get_student_for_teacher, get_student_by_user_id, get_teacher_for_student, get_classes_for_student, get_all_classes, get_all_teachers
-from big_query.inserts import insert_student, insert_teacher, insert_class, insert_new_student
+from big_query.gets import get_all_about_me_texts, get_all_students, get_student_by_email, get_all_new_students, get_teacher_by_user_id, get_classes_by_teacher, get_student_for_teacher, get_student_by_user_id, get_teacher_for_student, get_classes_for_student, get_all_classes, get_all_teachers
+from big_query.inserts import insert_student, insert_teacher, insert_class, insert_new_student, insert_about_me_text
 from big_query.alters import setClassesToInvoiced, setClassesToPaid
 from big_query.bq_types import Classes
+from big_query.buckets.uploads import upload_image_to_bucket
+from big_query.buckets.downloads import download_all_teacher_images
 
 
 app = Flask(__name__)
@@ -896,7 +898,61 @@ def submit_new_referal_route():
 
     
 
+@app.route("/upload-teacher-image", methods=["POST"])
+def upload_file():
+    if "file" not in request.files:
+        return jsonify({"error": "No file part"}), 400
 
+    file = request.files["file"]  # File object from form
+    user_id = request.form.get("user_id")  # user_id from form data
+    about_me = request.form.get("about_me")  # about_me text from form data
+
+    if not user_id:
+        return jsonify({"error": "Missing user_id"}), 400
+
+    if not about_me:
+        return jsonify({"error": "Missing about_me text"}), 400
+
+    if file.filename == "":
+        return jsonify({"error": "No selected file"}), 400
+
+    # Define Google Cloud Storage bucket and path
+    bucket_name = "enkellaering_images"
+    destination_blob_name = f"teacher_images/{user_id}/{file.filename}"
+
+    try:
+        # Upload directly from file object
+        upload_image_to_bucket(bucket_name, file, destination_blob_name)
+
+        # Insert about_me text into BigQuery
+        insert_about_me_text(client=bq_client, user_id=user_id, text=about_me)
+
+        return jsonify({"message": f"File uploaded successfully to {destination_blob_name}"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/get-all-teacher-images-and-about-mes', methods=["GET"])
+def get_all_images_and_about_mes():
+    try:
+        # Fetch about me texts
+        about_mes = get_all_about_me_texts(client=bq_client)
+
+        # Fetch teacher images
+        images = download_all_teacher_images()
+
+        if not about_mes:
+            return jsonify({"message": "Error getting about me texts"}), 500
+        
+        if not images:
+            return jsonify({"message": "Error getting images"}), 500
+
+        return jsonify({
+            "about_mes": about_mes,
+            "images": images
+        }), 200
+    
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(debug=True, port=8080)

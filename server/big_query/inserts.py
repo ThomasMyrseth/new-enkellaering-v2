@@ -205,6 +205,8 @@ def insert_new_student(client: bigquery.Client, new_student: NewStudents):
     return client.query(query, job_config=job_config, location='EU')
 
 
+
+
 def insert_class(client: bigquery.Client, class_obj: Classes):
     # Validate teacher exists
     teacher_query = f"""
@@ -264,3 +266,28 @@ def insert_class(client: bigquery.Client, class_obj: Classes):
     except Exception as e:
         print(f"Error executing query: {e}")
         raise Exception(f"Error executing query: {e}")
+    
+
+def insert_about_me_text(client: bigquery.Client, text: str, user_id :str):
+    
+    query = f"""
+        INSERT INTO `{PROJECT_ID}.{USER_DATASET}.about_me_texts` (
+            user_id, about_me
+        )
+        VALUES (
+            @user_id, @about_me
+        )
+    """
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("user_id", "STRING", user_id),
+            bigquery.ScalarQueryParameter("about_me", "STRING", text)
+
+        ]
+    )
+
+    return client.query(query, job_config=job_config, location="EU")
+
+
+
+    
