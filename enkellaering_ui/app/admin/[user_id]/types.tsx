@@ -70,5 +70,6 @@ export type NewStudent = {
     comments: string;
     paid_referee: boolean;
     paid_referee_at: string;
+    referee_name: string;
     new_student_id: string;
 }
