@@ -262,6 +262,7 @@ export function PreviousClassesForEachTeacher({admin_user_id}: {admin_user_id: s
                                 <AccordionContent>
                                     <Accordion type="single" collapsible className="w-full">
                                         {students.map( (student, index) => (
+                                            student.your_teacher === ct.teacher.user_id && (
                                             <AccordionItem value={index.toString()} key={index}>
                                                 <AccordionTrigger>
                                                     <p>{student.firstname_parent} {student.lastname_parent}
@@ -300,6 +301,7 @@ export function PreviousClassesForEachTeacher({admin_user_id}: {admin_user_id: s
                                                     </p>
                                                 </AccordionContent>
                                             </AccordionItem>
+                                            )
                                         ))}
                                     </Accordion>
                                 </AccordionContent>

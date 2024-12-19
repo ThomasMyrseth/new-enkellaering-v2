@@ -118,6 +118,7 @@ class NewStudents:
         finished_onboarding_at: Optional[datetime] = None,
 
         referee_phone: Optional[str] = None,
+        referee_name: Optional[str] = None,
         paid_referee: Optional[bool] = None,
         paid_referee_at: Optional[datetime] = None,
         
@@ -139,6 +140,7 @@ class NewStudents:
         self.assigned_teacher_user_id = assigned_teacher_user_id
         self.finished_onboarding_at = finished_onboarding_at
         self.comments = comments
+        self.referee_name = referee_name
         self.paid_referee = paid_referee
         self.paid_referee_at = paid_referee_at
         self.new_student_id = new_student_id

@@ -821,6 +821,7 @@ def submit_new_student_route():
         signed_up_at=None,
         from_referal=False,
         referee_phone=None,
+        referee_name = None,
         has_assigned_teacher=False,
         assigned_teacher_at=None,
         assigned_teacher_user_id=None,
@@ -843,6 +844,53 @@ def submit_new_student_route():
     return jsonify({"message": "New student successfully inserted"}), 200
     
 
+    
+
+@app.route('/submit-new-referal', methods = ["POST"])
+def submit_new_referal_route():
+    data = request.get_json()
+    referal_phone= data.get("referal_phone")
+    referee_phone = data.get("referee_phone")
+    referee_name = data.get("referee_name")
+    norway_tz = pytz.timezone("Europe/Oslo")
+
+
+    if not (referal_phone and referee_phone and referee_name):
+        return jsonify({"message": "Missing fields for adding new referal"}), 400
+    
+    ns = NewStudents(
+        new_student_id=str(uuid.uuid4()),
+        phone=referal_phone,
+        created_at=datetime.now(norway_tz),
+        has_called=False,
+        called_at=None,
+        has_answered=False,
+        answered_at=None,
+        has_signed_up=False,
+        signed_up_at=None,
+        from_referal=True,
+        referee_phone=referee_phone,
+        referee_name = referee_name,
+        has_assigned_teacher=False,
+        assigned_teacher_at=None,
+        assigned_teacher_user_id=None,
+        has_finished_onboarding=False,
+        finished_onboarding_at=None,
+        comments=None,
+        paid_referee=False,
+        paid_referee_at=None
+    )
+
+    res = insert_new_student(client=bq_client, new_student=ns)
+
+    if not res or res.errors:
+        print("An error occured inserting nre student", res.errors)
+        return jsonify({
+            "message": "An error occured while inserting new student"
+        }), 500
+    
+    print("response: ", res.result())
+    return jsonify({"message": "New student successfully inserted"}), 200
     
 
 

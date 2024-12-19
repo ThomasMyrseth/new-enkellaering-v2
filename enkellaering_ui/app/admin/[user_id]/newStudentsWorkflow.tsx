@@ -286,7 +286,7 @@ function NewStudentRow({ ns, admin_user_id }: { ns: NewStudent; admin_user_id: s
         <TableCell className="min-w-40">
             <RadioGroup onValueChange={handleSetCalled} defaultValue={ns.has_called? "Ja" : "Nei"} value={hasCalled? "Ja" : "Nei"}>
                 <RadioGroupItem value="Ja" className="text-green-400"></RadioGroupItem>
-                <RadioGroupItem value="Nei" className="text-red-400"></RadioGroupItem>
+                <RadioGroupItem value="Nei" className="text-red-400 "></RadioGroupItem>
             </RadioGroup>
         </TableCell>
 
@@ -313,7 +313,7 @@ function NewStudentRow({ ns, admin_user_id }: { ns: NewStudent; admin_user_id: s
 
         <TableCell className="min-w-60">
             {fromReferal ? (
-                <span className="text-gray-400">Ja, fra {refereePhone}</span>
+                <span className="text-gray-400">Fra {ns.referee_name} <br/> tlf: {refereePhone}</span>
             ) : (
                 <span className="text-gray-400">Nei</span>
 
@@ -396,6 +396,7 @@ const SetTeacherCombobox = ({ ns, teachers, passSelectedTeacher } : { ns :NewStu
               role="combobox"
               aria-expanded={open}
               className="w-[200px] justify-between"
+              disabled={!ns.has_signed_up}
             >
               {teacherUserId
                 ? selectedTeacher?.firstname + " " + selectedTeacher?.lastname

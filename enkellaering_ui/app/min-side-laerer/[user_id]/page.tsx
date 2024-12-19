@@ -314,7 +314,7 @@ function AddNewClass({teacher}: {teacher: Teacher}) {
     const [endedAt, setEndedAt] = useState<Date>()
     const [comment, setComment] = useState<string>()
     const [success, setSuccess] = useState<boolean>()
-    const [enableButton, setEnanleButton] = useState<boolean>(false)
+    const [enableButton, setEnableButton] = useState<boolean>(false)
 
     const handleStudentSelect = (userId: string) => {
         setSelectedStudentUserId(userId);
@@ -337,16 +337,16 @@ function AddNewClass({teacher}: {teacher: Teacher}) {
         setStartedAt(undefined)
         setEndedAt(undefined)
         setComment(undefined)
-        setEnanleButton(false)
+        setEnableButton(false)
     }
 
     //enable succesbutton once all fields are full
     useEffect( () => {
         if (selectedStudentUserId && startedAt && endedAt && comment) {
-            setEnanleButton(true)
+            setEnableButton(true)
         }
         else {
-            setEnanleButton(false)
+            setEnableButton(false)
         }
     },[selectedStudentUserId, startedAt, endedAt, comment])
 
@@ -414,6 +414,11 @@ function SelectStudent({teacher, onStudentSelect} : {teacher: Teacher; onStudent
                 const data = await response.json()
                 console.log("students: ", data.students)
                 setStudents(data.students)
+
+                // Automatically select the first student
+                if (data.students.length > 0) {
+                    onStudentSelect(data.students[0].user_id);
+                }
             }
             else {
                 alert(response.statusText)
