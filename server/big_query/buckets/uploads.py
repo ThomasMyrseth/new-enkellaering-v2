@@ -1,8 +1,8 @@
 from google.cloud import storage
 
-def upload_image_to_bucket(bucket_name, file_object, destination_blob_name):
+def upload_or_replace_image_in_bucket(bucket_name, file_object, destination_blob_name):
     """
-    Uploads an image to a Google Cloud Storage bucket directly from a file object.
+    Uploads or replaces an image in a Google Cloud Storage bucket directly from a file object.
 
     Args:
         bucket_name: Name of the GCS bucket.
@@ -15,10 +15,10 @@ def upload_image_to_bucket(bucket_name, file_object, destination_blob_name):
     # Get the bucket
     bucket = storage_client.bucket(bucket_name)
 
-    # Create a blob in the bucket
+    # Create or overwrite a blob in the bucket
     blob = bucket.blob(destination_blob_name)
 
-    # Upload directly from the file object
+    # Upload directly from the file object (overwrites if the blob already exists)
     blob.upload_from_file(file_object, content_type=file_object.content_type)
 
-    print(f"File uploaded directly to {destination_blob_name}.")
+    print(f"File uploaded or replaced at {destination_blob_name}.")

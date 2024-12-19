@@ -126,7 +126,7 @@ export default function LaererPage() {
             <br/>
             <YourStudent teacher={teacher}/>
             <br/>
-            <FileUploadForm/>
+            <FileUploadForm firstname={teacher.firstname} lastname={teacher.lastname}/>
 
         <div className="p-4 m-4">
         </div>

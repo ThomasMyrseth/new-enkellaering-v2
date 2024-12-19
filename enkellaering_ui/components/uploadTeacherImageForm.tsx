@@ -18,7 +18,7 @@ import {
  
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
 
-export function FileUploadForm() {
+export const FileUploadForm = ({firstname, lastname} : {firstname :string, lastname: string}) => {
     const pathname = usePathname(); // Get the current pathname
     const segments = pathname.split('/'); // Split the pathname into segments
     const userId :string= segments[2].toString(); // Extract the 'user_id' from the correct position
@@ -49,6 +49,8 @@ export function FileUploadForm() {
         formData.append("user_id", userId);
         formData.append("about_me", aboutMe);
         formData.append("file", files[0]); // Add the first file
+        formData.append("firstname", firstname)
+        formData.append("lastname", lastname)
       
         try {
           const response = await fetch(`${BASEURL}/upload-teacher-image`, {

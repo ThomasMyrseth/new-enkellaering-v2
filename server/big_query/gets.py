@@ -262,12 +262,12 @@ def get_all_about_me_texts(client: bigquery.Client):
     Returns a list of dictionaries.
     """
     query = f"""
-        SELECT user_id, about_me 
+        SELECT user_id, about_me, firstname, lastname 
         FROM `{PROJECT_ID}.{USER_DATASET}.about_me_texts`
     """
 
     query_job = client.query(query, location="EU")
     results = query_job.result()  # Fetch all rows
 
-    about_me_texts = [{"user_id": row["user_id"], "about_me": row["about_me"]} for row in results]
+    about_me_texts = [{"user_id": row["user_id"], "about_me": row["about_me"], "firstname" : row["firstname"], "lastname" : row["lastname"]} for row in results]
     return about_me_texts

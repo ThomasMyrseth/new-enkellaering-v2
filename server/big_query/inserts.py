@@ -268,26 +268,36 @@ def insert_class(client: bigquery.Client, class_obj: Classes):
         raise Exception(f"Error executing query: {e}")
     
 
-def insert_about_me_text(client: bigquery.Client, text: str, user_id :str):
-    
+def upsert_about_me_text(client: bigquery.Client, text: str, user_id: str, firstname: str, lastname: str):
     query = f"""
-        INSERT INTO `{PROJECT_ID}.{USER_DATASET}.about_me_texts` (
-            user_id, about_me
-        )
-        VALUES (
-            @user_id, @about_me
-        )
+        MERGE `{PROJECT_ID}.{USER_DATASET}.about_me_texts` AS target
+        USING (
+            SELECT 
+                @user_id AS user_id, 
+                @about_me AS about_me, 
+                @firstname AS firstname, 
+                @lastname AS lastname
+        ) AS source
+        ON target.user_id = source.user_id
+        WHEN MATCHED THEN
+            UPDATE SET 
+                about_me = source.about_me,
+                firstname = source.firstname,
+                lastname = source.lastname
+        WHEN NOT MATCHED THEN
+            INSERT (user_id, about_me, firstname, lastname)
+            VALUES (source.user_id, source.about_me, source.firstname, source.lastname)
     """
     job_config = bigquery.QueryJobConfig(
         query_parameters=[
             bigquery.ScalarQueryParameter("user_id", "STRING", user_id),
-            bigquery.ScalarQueryParameter("about_me", "STRING", text)
-
+            bigquery.ScalarQueryParameter("about_me", "STRING", text),
+            bigquery.ScalarQueryParameter("firstname", "STRING", firstname),
+            bigquery.ScalarQueryParameter("lastname", "STRING", lastname)
         ]
     )
 
     return client.query(query, job_config=job_config, location="EU")
-
 
 
     
