@@ -12,7 +12,6 @@ import { useAuth } from "@/context/AuthContext";
 
 
 export default function SignupForm() {
-  const { login } = useAuth()
   const [validParentPhone, setValidParentPhone] = useState(true);
   const [validStudentPhone, setValidStudentPhone] = useState(true);
   const [validPostalCode, setValidPostalCode] = useState(true);

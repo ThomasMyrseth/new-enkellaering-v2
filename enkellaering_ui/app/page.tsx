@@ -1,16 +1,8 @@
 "use client"
-import Image from "next/image";
-import { TracingBeam } from "@/components/ui/tracing-beam";
 import { TeacherFocusCards } from "@/components/ui/teacherCards";
 import NewStudentForm from "@/components/newStudentForm"
-import { HeroHighlight, Highlight } from "@/components/ui/hero-highlight";
-import { motion } from "framer-motion";
-import { BackgroundGradientAnimation } from "@/components/ui/background-gradient-animation";
-import { WavyBackground } from "@/components/ui/wavy-background";
 import { BackgroundBeamsWithCollision } from "@/components/ui/background-beams-with-collision";
 
-
-const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
 
 export default function Home() {
   return (<>       

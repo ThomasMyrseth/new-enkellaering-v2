@@ -1,11 +1,8 @@
 import NewStudentForm from "@/components/newStudentForm";
-import { BackgroundLines } from "@/components/ui/background-lines";
 import Image from "next/image";
 import React from "react";
 import { CardBody, CardContainer, CardItem } from "@/components/ui/3d-card";
 import Link from "next/link";
-import { TeacherFocusCards } from "@/components/ui/teacherCards";
-import { BackgroundBeamsWithCollision } from "@/components/ui/background-beams-with-collision";
 
 export default function BestillPage() {
     

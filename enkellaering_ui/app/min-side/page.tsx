@@ -1,10 +1,8 @@
 "use client"
-import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CardBody, CardContainer, CardItem } from "@/components/ui/3d-card";
 import Image from "next/image";
 import { BackgroundLines } from "@/components/ui/background-lines";
-import { BackgroundGradientAnimation } from "@/components/ui/background-gradient-animation";
 
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
@@ -248,7 +246,6 @@ function PreviousClasses() {
     const [classes, setClasses] = useState<Classes[]>();
     const [firstTenClasses, setFirstTenclasses] = useState<Classes[]>()
     const [remainingClasses, setRemainingClasses] = useState<Classes[]>()
-    const [hasClasses, setHasClasses] = useState<boolean>(false)
     const [loading, setLoading] = useState<boolean>(true)
     let totalAmount :number = 0
 
@@ -272,11 +269,9 @@ function PreviousClasses() {
             const classes = data.classes
 
             if (classes.length === 0) {
-                setHasClasses(false)
                 setLoading(false)
             }
             else {
-                setHasClasses(true)
                 setClasses(classes)
                 setLoading(false)
             }

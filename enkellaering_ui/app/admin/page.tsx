@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
   
 import { DailyRevenueChart } from "./dailyRevenue";
 import { TeacherName } from "./teacherName";
@@ -49,39 +49,33 @@ export default function AdminPage() {
     </div>)
 }
 
-function protectAdmin( {handleSetTeacher} :{handleSetTeacher: (teacher: Teacher) => void}) {
+const protectAdmin = async ( {handleSetTeacher} :{handleSetTeacher: (teacher: Teacher) => void}) => {
     const [isAdmin, setIsAdmin] = useState<boolean>(false)
     
-    useEffect( () => {
 
-        async function fetchTeacher() {
-            const response = await fetch(`${BASEURL}/get-teacher`, {
-                method: "GET",
-                credentials: "include",
-                headers: {
-                    "Content-Type": "application/json"
-                }
-            })
-    
-            if (!response.ok) {
-                alert("failed to fetch teacher: " + response.statusText)
-                setIsAdmin(false)
-            }
-
-            const data = await response.json()
-            const teacher = data.teacher
-            handleSetTeacher(teacher)
-
-            if (teacher.admin) {
-                setIsAdmin(true)
-            }
-            else {
-                setIsAdmin(false)
-            }
+    const response = await fetch(`${BASEURL}/get-teacher`, {
+        method: "GET",
+        credentials: "include",
+        headers: {
+            "Content-Type": "application/json"
         }
-        fetchTeacher()
+    })
 
-    },[])
+    if (!response.ok) {
+        alert("failed to fetch teacher: " + response.statusText)
+        setIsAdmin(false)
+    }
+
+    const data = await response.json()
+    const teacher = data.teacher
+    handleSetTeacher(teacher)
+
+    if (teacher.admin) {
+        setIsAdmin(true)
+    }
+    else {
+        setIsAdmin(false)
+    }
 
     return isAdmin
 }

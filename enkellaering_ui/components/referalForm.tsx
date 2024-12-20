@@ -1,9 +1,7 @@
 "use client"
-import { Button } from "@/components/ui/moving-border";
 import React, { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 import { Terminal } from "lucide-react"

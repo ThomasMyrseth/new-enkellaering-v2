@@ -186,8 +186,8 @@ export function PreviousClassesForEachTeacher() {
 
         {classesByTeacher.map((ct :classesJoinTeacher, index) => {
             const classes :Classes[] = ct.classes
-            const teacher :Teacher = ct.teacher
-            const yourStudents :Student[] = students.filter(s => s.your_teacher === teacher.user_id)
+            
+
 
 
             //sortng classes by startedAt
@@ -210,7 +210,7 @@ export function PreviousClassesForEachTeacher() {
             let totalInvoicedHoursByTeacher :number =0
 
 
-            classes.map((c :Classes, index) => {
+            classes.map((c :Classes) => {
                 const startedAt: Date = new Date(c.started_at);
                 const endedAt: Date = new Date(c.ended_at);
                 const totalDurationMillis: number = endedAt.getTime() - startedAt.getTime();
@@ -399,7 +399,7 @@ const PayTeacherPopover = ( {teacher, classes} : {teacher: Teacher, classes: Cla
     const classIds :string[] = []
 
 
-    classes.map((c: Classes, index) => {
+    classes.map((c: Classes) => {
         //skip already invoiced classes
         if (c.paid_teacher) {
             return null;

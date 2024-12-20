@@ -39,7 +39,7 @@ export default function LoginForm() {
       });
 
       if (response.ok) {
-        response.json().then(data => {
+        response.json().then( () => {
             router.push(`/min-side`);
         }).catch(err => {
             console.error("Failed to parse response JSON:", err);
@@ -48,9 +48,15 @@ export default function LoginForm() {
         const errorData = await response.json();
         setErrorMessage(`Login failed: ${errorData.error}`);
       }
-    } catch (error: any) {
-      console.error("Login error:", error);
-      setErrorMessage(error.message || "An unexpected error occurred.");
+    } catch (error: unknown) {
+      // Type guard to check if the error is an instance of Error
+      if (error instanceof Error) {
+        console.error("Login error:", error);
+        setErrorMessage(error.message);
+      } else {
+        console.error("Unexpected error:", error);
+        setErrorMessage("An unexpected error occurred.");
+      }
     }
   };
 

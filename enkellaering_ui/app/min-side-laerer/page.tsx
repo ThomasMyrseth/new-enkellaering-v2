@@ -1,5 +1,4 @@
 "use client"
-import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { LampContainer } from "@/components/ui/lamp";
@@ -34,9 +33,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogFooter,AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { BackgroundLines } from "@/components/ui/background-lines";
+import { AlertDialog, AlertDialogAction, AlertDialogFooter,AlertDialogContent,  AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 type Class = {
     comment: string; // Optional comment for the session
@@ -105,7 +102,7 @@ export default function LaererPage() {
             }
         }
         fetchTeacherName()
-    },[BASEURL])
+    },[])
 
     if (!teacher) {
         return (<p>Loading...</p>)
@@ -304,7 +301,6 @@ function DailyRevenueChart({ teacher }: { teacher: Teacher }) {
 
 
 function AddNewClass({teacher}: {teacher: Teacher}) {
-    const [date, setDate] = useState<Date>()
     const [selectedStudentUserId, setSelectedStudentUserId] = useState<string>()
     const [startedAt, setStartedAt] = useState<Date>()
     const [endedAt, setEndedAt] = useState<Date>()
@@ -419,7 +415,7 @@ function SelectStudent({teacher, onStudentSelect} : {teacher: Teacher; onStudent
         }
         fetchStudents()
 
-    },[BASEURL, userId])
+    },[ userId, onStudentSelect])
 
 
     const handleValueChange = (value: string) => {
@@ -523,7 +519,7 @@ function DateTimePicker({onStartDateSelected, onEndDateSelected} : {onStartDateS
     }
   };
 
-  const MyCalendar = (picker: "start" | "end") => (
+  const MyCalendar = ({ picker }: { picker: "start" | "end" }) => (
     <Popover
       open={picker === "start" ? isOpen : isEndTimePickerOpen}
       onOpenChange={picker === "start" ? setIsOpen : setIsEndTimePickerOpen}
@@ -606,11 +602,11 @@ function DateTimePicker({onStartDateSelected, onEndDateSelected} : {onStartDateS
     <div className="space-y-4">
       <div className="flex flex-col space-y-2 items-center">
         <h3>Når startet dere?</h3>
-        {MyCalendar("start")}
+        <MyCalendar picker="start"/>
       </div>
       <div className="flex flex-col space-y-2 items-center">
         <h3>Når avsluttet dere?</h3>
-        {MyCalendar("end")}
+        <MyCalendar picker="end"/>
       </div>
     </div>
   );
@@ -709,7 +705,6 @@ type FullStudent = {
 function YourStudent( {teacher} : {teacher: Teacher}) {
     const [students, setStudents] = useState<FullStudent[]>([])
     const [currentStudent, setCurrentStudent] = useState<FullStudent>()
-    const [openAccordion, setOpenAccordion] = useState<boolean>(false)
 
     useEffect( () => {
         async function fetchStudents() {

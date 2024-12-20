@@ -130,11 +130,11 @@ function NewStudentRow({ ns }: { ns: NewStudent }) {
     const [calledAt, setCalledAt] = useState<Date>(new Date(ns.called_at))
     const [hasAnswered, setHasAnswered] = useState<boolean>(ns.has_answered)
     const [answeredAt, setAnsweredAt] = useState<Date>(new Date(ns.answered_at))
-    const [hasSignedUp, setHasSignedUp] = useState<boolean>(ns.has_signed_up)
-    const [signedUpAt, setSignedUpAt] = useState<Date>(new Date(ns.signed_up_at))
+    const hasSignedUp =ns.has_signed_up
+    const signedUpAt = new Date(ns.signed_up_at)
     
-    const [fromReferal, setFromReferal] = useState<boolean>(ns.from_referal)
-    const [refereePhone, setRefereePhone] = useState<string>(ns.referee_phone)
+    const fromReferal = ns.from_referal
+    const refereePhone = ns.referee_phone
    
     const [hasAssignedTeacher, setHasAssignedTeacher] = useState<boolean>(ns.has_assigned_teacher)
     const [assignedTeacherAt, setAssignedTeacherAt] = useState<Date>(new Date(ns.assigned_teacher_at))
@@ -379,7 +379,7 @@ const SetTeacherCombobox = ({ ns, teachers, passSelectedTeacher } : { ns :NewStu
         const selectedTeacher = findTeacherById(teacherUserId) || null;
         setSelectedTeacher(selectedTeacher)
         console.log(selectedTeacher?.firstname)
-    }, [teacherUserId, teachers])
+    }, [teacherUserId, teachers, findTeacherById])
 
     return (
         <Popover open={open} onOpenChange={setOpen}>

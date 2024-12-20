@@ -13,7 +13,6 @@ import { useAuth } from "@/context/AuthContext";
 
 
 export default function SignupForm() {
-  const { login } = useAuth()
   const [validPhone, setValidPhone] = useState(true);
   const [validPostalCode, setValidPostalCode] = useState(true);
   const [passwordsMatch, setPasswordsMatch] = useState(true);

@@ -44,7 +44,7 @@ type FormattedClass = {
 }
 function getDaysInMonth(year :number, month :number) {
     // Create a date object for the first day of the next month
-    let date = new Date(year, month, 0);
+    const date = new Date(year, month, 0);
     // Get the day, which represents the number of days in the month
     return date.getDate();
 }

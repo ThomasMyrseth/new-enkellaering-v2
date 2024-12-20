@@ -42,7 +42,7 @@ export function PreviousClassesForEachStudent() {
     const [classesByStudents, setClassesByStudents] = useState<ClassesJoinStudent[]>([]);
 
     const [loading, setLoading] = useState<boolean>(true)
-    let totalAmount :number = 0
+
 
     //get classes for everyone
     useEffect( () => {
@@ -165,7 +165,7 @@ export function PreviousClassesForEachStudent() {
             let totalInvoicedStudent :number = 0
             let totalInvoicedHoursStudent :number = 0
 
-            classes.map( (c :Classes, index) => {
+            classes.map( (c :Classes ) => {
                 const startedAt: Date = new Date(c.started_at);
                 const endedAt: Date = new Date(c.ended_at);
                 const totalDurationMillis: number = endedAt.getTime() - startedAt.getTime();
