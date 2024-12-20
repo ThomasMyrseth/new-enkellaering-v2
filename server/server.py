@@ -980,6 +980,12 @@ def get_all_images_and_about_mes():
     except Exception as e:
         return jsonify({"message": str(e)}), 500
 
+
+@app.route('/logout')
+def logout():
+    # Handle logout logic here
+    return redirect('/') # or an appropriate redirect
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(debug=False, port=port, host='0.0.0.0')
