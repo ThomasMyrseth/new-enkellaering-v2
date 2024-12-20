@@ -6,7 +6,7 @@ import Link from "next/link";
 
 export default function BestillPage() {
     
-    return (<div className="w-full h-full bg-neutral-100 dark:bg-slate-900 space-y-10 p-10">
+    return (<div className="text-center w-full h-full bg-slate-200 dark:bg-slate-950 space-y-10 p-10">
 
             <NewStudentForm/>
             <Prices/>
@@ -22,9 +22,9 @@ function Prices() {
       <CardBody className="bg-gray-50 relative group/card  dark:hover:shadow-2xl dark:hover:shadow-emerald-500/[0.1] dark:bg-black dark:border-white/[0.2] border-black/[0.1] w-auto sm:w-[30rem] h-auto rounded-xl p-6 border  ">
         <CardItem
           translateZ="50"
-          className="text-xl font-bold text-neutral-600 dark:text-white"
+          className="flex flex-col w-full items-center justify-center font-bold text-neutral-600 dark:text-white"
         >
-          540 kroner per time <br/> <span className="font-light">- uansett hva</span>
+        <p className="w-full text-center text-3xl relative bg-clip-text text-transparent bg-no-repeat bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500 py-4">540 kroner per time<br/><span className="font-light">- uansett hva</span></p>
         </CardItem>
         <CardItem
           as="p"

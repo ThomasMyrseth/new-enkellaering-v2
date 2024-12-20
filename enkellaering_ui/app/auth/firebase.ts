@@ -1,4 +1,4 @@
-// lib/firebase.ts
+// auth/firebase.ts
 import { initializeApp, FirebaseApp } from "firebase/app";
 import { getAuth, Auth } from "firebase/auth";
 import { getAnalytics, Analytics, isSupported } from "firebase/analytics";

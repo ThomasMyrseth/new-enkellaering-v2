@@ -6,7 +6,7 @@ import React from "react";
 
 export default function OmOssPage() {
   return (
-    <div className="flex flex-col items-center justify-center max-w-screen py-4 px-4 md:px-6 lg:px-8 m-0 lg:py-10 min-h-screen space-y-10">
+    <div className="flex flex-col items-center justify-center w-full max-w-[100vw] py-4 px-4 md:px-6 lg:px-8 m-0 lg:py-10 min-h-screen space-y-10">
       <SparklesHeadline />
       <div className="space-y-10 flex flex-col items-center justify-center w-full">
         <AboutEl />
@@ -18,7 +18,7 @@ export default function OmOssPage() {
 
 function SparklesHeadline() {
   return (
-    <div className="h-[20rem] sm:h-[30rem] md:h-[40rem] w-full sm:w-3/4 bg-white dark:bg-black flex flex-col items-center justify-center overflow-hidden rounded-md">
+    <div className="h-[20rem] sm:h-[30rem] md:h-[40rem]  sm:w-3/4 bg-white dark:bg-black flex flex-col items-center justify-center overflow-hidden rounded-md">
       <h1 className="text-6xl md:text-5xl lg:text-7xl font-bold text-center text-black dark:text-white relative z-20">
         <span className="relative bg-clip-text text-transparent bg-no-repeat bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500 py-4">
             Om oss

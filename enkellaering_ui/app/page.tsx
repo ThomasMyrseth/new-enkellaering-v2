@@ -6,13 +6,13 @@ import { BackgroundBeamsWithCollision } from "@/components/ui/background-beams-w
 
 export default function Home() {
   return (<>       
-    <div className="flex flex-col w-full space-y-10 items-center justify-center bg-slate-200 dark:bg-slate-950 py-10 px-10">
+    <div className="text-center flex flex-col w-screen sm:w-full  space-y-10 items-center justify-center bg-slate-200 dark:bg-slate-950 py-10 px-10">
 
       <BackgroundBeamsWithCollision className="rounded-lg">
-        <h2 className="text-2xl relative z-20 md:text-4xl lg:text-7xl font-bold text-center text-black dark:text-white font-sans tracking-tight">
-          Enkel Læring <br/>{" "}
+        <h2 className="relative z-20 md:text-4xl lg:text-7xl font-bold text-center text-black dark:text-white font-sans tracking-tight">
+          <span className="text-4xl relative bg-clip-text text-transparent bg-no-repeat bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500 py-4">Enkel Læring </span> <br/>{" "}
           <div className="relative mx-auto inline-block w-max [filter:drop-shadow(0px_1px_3px_rgba(27,_37,_80,_0.14))]">
-            <div className="relative bg-clip-text text-transparent bg-no-repeat bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500 py-4">
+            <div className="text-xl relative bg-clip-text text-transparent bg-no-repeat bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500 py-4">
               <span className="">Slik det alltid skulle ha vært</span>
             </div>
           </div>
@@ -28,6 +28,7 @@ export default function Home() {
       <TeacherFocusCards/>
       </div>
 
+    <div className="py-10"></div>
     </div>
   </>)
 }

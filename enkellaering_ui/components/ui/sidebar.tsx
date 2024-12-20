@@ -84,6 +84,7 @@ const Sidebar: FC<SidebarProps> = ({ show, setter }) => {
             icon={<BookUser/>}
             setter={setter}
           />
+          <br/>
           <MenuItem
             name="Login for elev"
             route="login"
@@ -97,18 +98,32 @@ const Sidebar: FC<SidebarProps> = ({ show, setter }) => {
             setter={setter}
           />
           <MenuItem
+            name="Opprett konto for elev"
+            route="/signup"
+            icon={<LockKeyholeOpen/>}
+            setter={setter}
+          />
+          <br/>
+          <MenuItem
             name="Login for lærer"
             route="/login-laerer"
             icon={<LockKeyholeOpen/>}
             setter={setter}
           />
-        <MenuItem
+          <MenuItem
             name="Min side for lærer"
             route="/min-side-laerer"
             icon={<LayoutDashboard />}
             setter={setter}
           />
-                  <MenuItem
+          <MenuItem
+            name="Opprett konto for lærer"
+            route="/signup-laerer"
+            icon={<LockKeyholeOpen/>}
+            setter={setter}
+          />
+          <br/>
+          <MenuItem
             name="Logg ut"
             route="/logout"
             icon={<LockKeyhole />}

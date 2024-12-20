@@ -38,7 +38,7 @@ app.config['SESSION_COOKIE_SECURE'] = True #use TRUE for production
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 CORS(app, resources={
     r"/*": {
-        "origins": ["https://new-enkellaering-v2.vercel.app/*", "https://new-enkellaering-v2.vercel.app", "https://enkellaering.no"]
+        "origins": ["https://new-enkellaering-v2.vercel.app/*", "https://new-enkellaering-v2.vercel.app", "http://localhost:3000", "https://enkellaering.no"]
     }
 }, supports_credentials=True)
 Session(app)
@@ -54,7 +54,13 @@ logging.basicConfig(level=logging.INFO)
 
 bq_client = bigquery.Client.from_service_account_json('google_service_account.json')
 
+import firebase_admin
+from firebase_admin import credentials
 
+# Initialize Firebase Admin SDK
+if not firebase_admin._apps:
+    cred = credentials.Certificate("firebase_service_account.json")
+    firebase_admin.initialize_app(cred)
 
 
 
@@ -85,10 +91,9 @@ def get_user_id():
         return jsonify({'error': 'User not logged in'}), 401
     
 
-@app.route('/get-teacher', methods=['POST'])
+@app.route('/get-teacher', methods=['GET'])
 def get_current_teacher():
-    data = request.get_json()
-    user_id = data.get('user_id')  # Use .get() to avoid KeyError
+    user_id = session.get('user_id')  # Use .get() to avoid KeyError
 
     if not user_id:
         print("user id not found in request payload!")
@@ -380,10 +385,9 @@ def logout():
 
 
 
-@app.route('/fetch-classes-for-teacher', methods=["POST"])
+@app.route('/fetch-classes-for-teacher', methods=["GET"])
 def fetch_classes_for_teacher():
-    data = request.json
-    user_id = data.get('user_id')
+    user_id = session.get('user_id')
 
     print("session user id", session.get("user_i"))
 
@@ -403,11 +407,13 @@ def fetch_classes_for_teacher():
         "classes": classes_data
     }), 200
 
-@app.route('/get-students', methods=["POST"])
+@app.route('/get-students', methods=["GET"])
 def get_students():
-    data = request.get_json()
-    user_id = data.get('user_id')
+    user_id = session.get('user_id')
 
+    if not user_id:
+        return jsonify({"message": "missing user id"})
+    
     students = get_student_for_teacher(client=bq_client, teacher_user_id=user_id)
     students_data = [dict(row) for row in students]  # Assuming multiple rows, adjust as needed
 

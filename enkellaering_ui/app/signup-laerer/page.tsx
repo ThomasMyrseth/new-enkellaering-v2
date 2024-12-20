@@ -10,8 +10,6 @@ import { useRouter } from "next/navigation";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../auth/firebase";
 
-//dummy comment
-
 export default function SignupForm() {
   const [validPhone, setValidPhone] = useState(true);
   const [validPostalCode, setValidPostalCode] = useState(true);
