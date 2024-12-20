@@ -509,7 +509,7 @@ function DateTimePicker({onStartDateSelected, onEndDateSelected} : {onStartDateS
 
   const MyCalendar = ({ picker }: { picker: "start" | "end" }) => (
     <Popover
-      open={picker === "start" ? isOpen : isEndTimePickerOpen}
+      open={picker === "start"}
       onOpenChange={picker === "start" ? setIsOpen : setIsEndTimePickerOpen}
     >
       <PopoverTrigger asChild>

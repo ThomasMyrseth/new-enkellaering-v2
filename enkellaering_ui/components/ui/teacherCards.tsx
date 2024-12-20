@@ -66,6 +66,6 @@ type Card = {
         }, []);
     
         return (<>
-        {loading? <Skeleton className="h-[500px] w-[600px]" /> : <FocusCards cards={cardItems} />}
+        {loading===true ? <Skeleton className="h-[500px] w-[600px]" /> : <FocusCards cards={cardItems} />}
         </>)
 };
