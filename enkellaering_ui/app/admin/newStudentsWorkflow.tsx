@@ -24,7 +24,7 @@ const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
 
 
 
-export function NewStudentsWorkflow({user_id}: {user_id: string}) {
+export function NewStudentsWorkflow() {
     const [loading, setLoading] = useState<boolean>(true)
     const [newStudents, setNewStudents] = useState<NewStudent[]>()
 
@@ -32,14 +32,11 @@ export function NewStudentsWorkflow({user_id}: {user_id: string}) {
     useEffect( () => {
         async function getNewStudents() {
             const response = await fetch(`${BASEURL}/get-new-students`, {
-                method: "POST",
+                method: "GET",
                 credentials: "include",
                 headers: {
                     "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    "admin_user_id": user_id
-                })
+                }
             })
 
             if (!response.ok) {
@@ -64,7 +61,7 @@ export function NewStudentsWorkflow({user_id}: {user_id: string}) {
         }
 
         getNewStudents()
-    },[user_id, BASEURL])
+    },[])
 
     if (loading ) {
         return <p>Loading...</p>
@@ -75,7 +72,7 @@ export function NewStudentsWorkflow({user_id}: {user_id: string}) {
     }
 
 
-    return NewStudentTable(newStudents, user_id)
+    return NewStudentTable(newStudents)
     
 
 }
@@ -86,7 +83,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 
 
-function NewStudentTable(newStudents :NewStudent[], user_id :string) {
+function NewStudentTable(newStudents :NewStudent[]) {
 
     //order newStudents by created_at
     newStudents.sort((a, b) => {
@@ -118,7 +115,7 @@ function NewStudentTable(newStudents :NewStudent[], user_id :string) {
                     </TableHeader>
                     <TableBody>
                         {newStudents.map( ns => {
-                            return <NewStudentRow key={ns.new_student_id} ns={ns} admin_user_id={user_id}/>
+                            return <NewStudentRow key={ns.new_student_id} ns={ns}/>
                         })}
                     </TableBody>
                 </Table>   
@@ -126,7 +123,7 @@ function NewStudentTable(newStudents :NewStudent[], user_id :string) {
 }
 
 
-function NewStudentRow({ ns, admin_user_id }: { ns: NewStudent; admin_user_id: string }) {
+function NewStudentRow({ ns }: { ns: NewStudent }) {
     const [teachers, setTeachers] = useState<Teacher[]>([])
 
     const [hasCalled, setHasCalled] = useState<boolean>(ns.has_called)
@@ -156,14 +153,11 @@ function NewStudentRow({ ns, admin_user_id }: { ns: NewStudent; admin_user_id: s
         async function getAllTeachers() {
 
             const response = await fetch(`${BASEURL}/get-all-teachers`, {
-                method: "POST",
+                method: "GET",
                 credentials: "include",
                 headers: {
                     "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    "admin_user_id": admin_user_id
-                })
+                }
             })
 
             if (!response.ok) {
@@ -188,7 +182,7 @@ function NewStudentRow({ ns, admin_user_id }: { ns: NewStudent; admin_user_id: s
         }
 
         getAllTeachers()
-    },[BASEURL, admin_user_id])
+    },[])
 
 
 
@@ -251,7 +245,6 @@ function NewStudentRow({ ns, admin_user_id }: { ns: NewStudent; admin_user_id: s
                 "comments": comments || null,
                 "paid_referee": paidReferee,
                 "paid_referee_at": paidRefereeAt || null,
-                "admin_user_id": admin_user_id
             })
         })
 

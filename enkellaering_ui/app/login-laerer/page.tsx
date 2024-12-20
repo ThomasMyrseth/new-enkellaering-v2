@@ -40,11 +40,7 @@ export default function LoginForm() {
 
       if (response.ok) {
         response.json().then(data => {
-          const userId = data.userId; // Extract user_id from the response
-          localStorage.setItem('isAuthenticated', 'true');
-          localStorage.setItem('user_id', userId);
-          localStorage.setItem('role', 'teacher');
-          router.push(`/min-side-laerer/${userId}`);
+          router.push(`/min-side-laerer`);
         }).catch(err => {
             console.error("Failed to parse response JSON:", err);
         });

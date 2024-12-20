@@ -19,9 +19,6 @@ import {
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
 
 export const FileUploadForm = ({firstname, lastname} : {firstname :string, lastname: string}) => {
-    const pathname = usePathname(); // Get the current pathname
-    const segments = pathname.split('/'); // Split the pathname into segments
-    const userId :string= segments[2].toString(); // Extract the 'user_id' from the correct position
     const [files, setFiles] = useState<File[]>([]);
     const [aboutMe, setAboutMe] = useState<string>('')
     const [fileError, setFileError] = useState<boolean | null>(null)
@@ -46,7 +43,6 @@ export const FileUploadForm = ({firstname, lastname} : {firstname :string, lastn
         }
       
         const formData = new FormData();
-        formData.append("user_id", userId);
         formData.append("about_me", aboutMe);
         formData.append("file", files[0]); // Add the first file
         formData.append("firstname", firstname)
@@ -102,7 +98,7 @@ export const FileUploadForm = ({firstname, lastname} : {firstname :string, lastn
               </AlertDescription>
           </Alert>
         )}
-        {!success && (
+        {success===false && (
               <Alert className="text-red-400">
               <Terminal className="h-4 w-4" />
               <AlertTitle>Ojda</AlertTitle>
