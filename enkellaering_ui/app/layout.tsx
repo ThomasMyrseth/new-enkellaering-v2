@@ -28,11 +28,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           disableTransitionOnChange
         >
           <div className="flex h-full">
-              <MenuBarMobile setter={setShowSidebar} />
-              <Sidebar show={showSidebar} setter={setShowSidebar} />
-              <AuthProvider>
-                {isProtected ? <ProtectedRoute>{children}</ProtectedRoute> : children}
-              </AuthProvider>
+              <MenuBarMobile setter={setShowSidebar}/>
+                <Sidebar show={showSidebar} setter={setShowSidebar} />
+                <div className='my-[60px]'>
+                <AuthProvider>
+                  {isProtected ? <ProtectedRoute>{children}</ProtectedRoute> : children}
+                </AuthProvider>
+                </div>
           </div>
         </ThemeProvider>
       </body>
