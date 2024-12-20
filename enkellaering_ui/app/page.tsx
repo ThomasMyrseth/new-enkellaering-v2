@@ -14,7 +14,7 @@ const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
 
 export default function Home() {
   return (<>       
-    <div className="flex flex-col space-y-10 items-center justify-center bg-slate-200 dark:bg-slate-950 p-10">
+    <div className="flex flex-col w-full space-y-10 items-center justify-center bg-slate-200 dark:bg-slate-950 py-10 px-10">
 
       <BackgroundBeamsWithCollision className="rounded-lg">
         <h2 className="text-2xl relative z-20 md:text-4xl lg:text-7xl font-bold text-center text-black dark:text-white font-sans tracking-tight">
@@ -27,15 +27,15 @@ export default function Home() {
         </h2>
       </BackgroundBeamsWithCollision>
 
-      <div className="w-full bg-white rounded-lg">
+      <div className="w-full bg-white dark:bg-black rounded-lg">
       <NewStudentForm/>
       </div>
 
-      <div className="bg-white rounded-lg w-full p-4 space-y-6 flex flex-col items-center justify-center">
+      <div className="bg-white dark:bg-black rounded-lg w-full p-4 space-y-6 flex flex-col items-center justify-center">
       <h1 className="text-5xl ">Møt våre <span className="relative bg-clip-text text-transparent bg-no-repeat bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500 py-4">helter</span></h1>
       <TeacherFocusCards/>
       </div>
-      
+
     </div>
   </>)
 }

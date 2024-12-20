@@ -21,13 +21,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           enableSystem
           disableTransitionOnChange
         >
-          <AuthProvider>
-            {isProtected ? (
-              <ProtectedRoute>{children}</ProtectedRoute>
-            ) : (
-              children
-            )}
-          </AuthProvider>
+          <div className="flex h-screen">
+            {/* Ensure SidebarFilled is a flex container that can fill height */}
+              <AuthProvider>
+                {isProtected ? <ProtectedRoute>{children}</ProtectedRoute> : children}
+              </AuthProvider>
+          </div>
         </ThemeProvider>
       </body>
     </html>
