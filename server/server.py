@@ -37,7 +37,7 @@ app.config['SESSION_KEY_PREFIX'] = 'enkel-laering:'
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SECURE'] = True #use TRUE for production
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-CORS(app, supports_credentials=True, resources={r"/*": {"origins": ["http://localhost:3000", "https://new-enkellaering-v2.vercel.app", "enkellaering.no"]}})
+CORS(app, origins=["http://localhost:3000", "https://new-enkellaering-v2.vercel.app", "https://enkellaering.no"], supports_credentials=True)
 Session(app)
 
 #banana comment 
@@ -981,7 +981,7 @@ def get_all_images_and_about_mes():
         return jsonify({"message": str(e)}), 500
 
 
-@app.route('/logout')
+@app.route('/logout', methods=["GET"])
 def logout():
     # Handle logout logic here
     return redirect('/') # or an appropriate redirect
