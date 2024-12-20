@@ -3,9 +3,7 @@ import { Button } from "@/components/ui/moving-border";
 import React, { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-
 import { Terminal } from "lucide-react"
  
 import {
@@ -57,6 +55,7 @@ export default function NewStudentForm() {
 
     return(<>
     <div className="max-w-md rounded-lg w-full mx-auto md:rounded-2xl p-4 md:p-8 shadow-input bg-white dark:bg-black">
+        
         <h2 className="text-3xl font-bold relative bg-clip-text text-transparent bg-no-repeat bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500 py-4">Bestill privatundervisning</h2>
         <p>Legg igjen nummeret ditt her, vi ringer deg innen 24 timer for å avtale oppstart.</p>
 
