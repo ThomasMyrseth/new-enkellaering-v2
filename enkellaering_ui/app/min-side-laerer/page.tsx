@@ -82,9 +82,6 @@ const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
 import { FileUploadForm } from "@/components/uploadTeacherImageForm";
 
 export default function LaererPage() {
-    const pathname = usePathname(); // Get the current pathname
-    const segments = pathname.split('/'); // Split the pathname into segments
-    const userId :string= segments[2].toString(); // Extract the 'user_id' from the correct position
     const [teacher, setTeacher] = useState<Teacher>()
 
     useEffect(() => {
@@ -92,13 +89,10 @@ export default function LaererPage() {
 
             const response = await fetch(`${BASEURL}/get-teacher`, {
                 credentials: "include",
-                method: "POST",
+                method: "GET",
                 headers: {
                     "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    "user_id": userId
-                })
+                }
             })
 
             if (response.ok) {
@@ -117,10 +111,10 @@ export default function LaererPage() {
         return (<p>Loading...</p>)
     }
 
-    return (<div className="flex flex-col width-full h-full items-center justify-center">
+    return (<div className="flex flex-col items-center justify-center w-full min-h-screen">
             <TeacherName teacher={teacher}/>
 
-            <DailyRevenueChart teacher={teacher} userId={userId}/>
+            <DailyRevenueChart teacher={teacher}/>
             <br />
             <AddNewClass teacher={teacher}/>
             <br/>
@@ -179,7 +173,7 @@ function calculatePayment(classSession: Class, hourlyPay: number): number {
     return Math.round(payment); // Optional: Round to the nearest integer
 }
 
-function DailyRevenueChart({ teacher, userId }: { teacher: Teacher, userId: string }) {
+function DailyRevenueChart({ teacher }: { teacher: Teacher }) {
     const [chartData, setChartData] = useState<Class[]>()
     const [formattedChartData, setFormattedChartdata] = useState<FormattedClass[]>()
     const [totalPayment, setTotalPayment] = useState<number>(0); // Use state for totalPayment
@@ -200,14 +194,11 @@ function DailyRevenueChart({ teacher, userId }: { teacher: Teacher, userId: stri
         async function fetchRevenue() {
             try {
                 const response = await fetch(`${BASEURL}/fetch-classes-for-teacher`, {
-                    method: "POST",
+                    method: "GET",
                     credentials: "include",
                     headers: {
                         "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        "user_id": userId
-                    })
+                    }
                 })
 
                 if (!response.ok) {
@@ -225,7 +216,7 @@ function DailyRevenueChart({ teacher, userId }: { teacher: Teacher, userId: stri
             }
         }
         fetchRevenue()
-    },[BASEURL, userId])
+    },[])
 
 
     useEffect(() => {
@@ -405,14 +396,11 @@ function SelectStudent({teacher, onStudentSelect} : {teacher: Teacher; onStudent
     useEffect( () => {
         async function fetchStudents() {
             const response = await fetch(`${BASEURL}/get-students`, {
-                method: "POST",
+                method: "GET",
                 credentials: "include",
                 headers: {
                     "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    "user_id": userId
-                })
+                }
             })
 
             if (response.ok) {
@@ -726,14 +714,11 @@ function YourStudent( {teacher} : {teacher: Teacher}) {
     useEffect( () => {
         async function fetchStudents() {
             const response = await fetch(`${BASEURL}/get-students`, {
-                method: "POST",
+                method: "GET",
                 credentials: "include",
                 headers: {
                     "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    "user_id": teacher.user_id
-                })
+                }
             })
 
             const r = await response.json()

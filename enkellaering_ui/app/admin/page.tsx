@@ -19,15 +19,12 @@ const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
 export default function AdminPage() {
     const router = useRouter()
     const [teacher, setTeacher] = useState<Teacher>()
-    const pathname = usePathname(); // Get the current pathname
-    const segments = pathname.split('/'); // Split the pathname into segments
-    const userId :string= segments[2].toString(); // Extract the 'user_id' from the correct position
 
     function handleSetTeacher(teacher: Teacher) {
         setTeacher(teacher)
     }
 
-    protectAdmin({user_id: userId, handleSetTeacher})
+    protectAdmin({handleSetTeacher})
 
     //this user is an admin
     if (!teacher) {
@@ -39,34 +36,31 @@ export default function AdminPage() {
         router.push("/login-teacher")
     }
 
-    return(<div className="flex flex-col items-center justify-center bg-slate-100 dark:bg-slate-950">
+    return (<div className="flex flex-col items-center justify-center w-full space-y-10 min-h-screen">
         <TeacherName teacher={teacher}/>
-        <div className="flex flex-col items-center justify-center w-3/4 space-y-10">
-            <DailyRevenueChart admin_user_id={userId}/>
-            <PreviousClassesForEachTeacher admin_user_id={userId}/>
-            <PreviousClassesForEachStudent admin_user_id={userId}/>
-            <NewStudentsWorkflow user_id={userId}/>
+        <div className="flex flex-col items-center justify-center w-3/4 max-w-screen-lg space-y-10 mx-auto px-4">
+        <DailyRevenueChart />
+            <PreviousClassesForEachTeacher />
+            <PreviousClassesForEachStudent />
+            <NewStudentsWorkflow />
         </div>
         <div className="h-10"> </div>
 
     </div>)
 }
 
-function protectAdmin( {user_id, handleSetTeacher} :{user_id: string, handleSetTeacher: (teacher: Teacher) => void}) {
+function protectAdmin( {handleSetTeacher} :{handleSetTeacher: (teacher: Teacher) => void}) {
     const [isAdmin, setIsAdmin] = useState<boolean>(false)
     
     useEffect( () => {
 
-        async function fetchTeacher(user_id :string) {
+        async function fetchTeacher() {
             const response = await fetch(`${BASEURL}/get-teacher`, {
-                method: "POST",
+                method: "GET",
                 credentials: "include",
                 headers: {
                     "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    "user_id": user_id
-                })
+                }
             })
     
             if (!response.ok) {
@@ -85,9 +79,9 @@ function protectAdmin( {user_id, handleSetTeacher} :{user_id: string, handleSetT
                 setIsAdmin(false)
             }
         }
-        fetchTeacher(user_id)
+        fetchTeacher()
 
-    },[BASEURL, user_id])
+    },[])
 
     return isAdmin
 }

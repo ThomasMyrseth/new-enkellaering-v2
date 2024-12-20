@@ -35,7 +35,7 @@ type ClassesJoinStudent = {
     student: Student;
 }
 
-export function PreviousClassesForEachStudent({admin_user_id}: {admin_user_id: string}) {      
+export function PreviousClassesForEachStudent() {      
 
     const [classes, setClasses] = useState<Classes[]>([]);
     const [students, setStudents] = useState<Student[]>([]);
@@ -48,14 +48,11 @@ export function PreviousClassesForEachStudent({admin_user_id}: {admin_user_id: s
     useEffect( () => {
         async function fetchClasses() {
             const response = await fetch(`${BASEURL}/get-all-classes`, {
-                method: "POST",
+                method: "GET",
                 credentials: "include",
                 headers: {
                     "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    "admin_user_id": admin_user_id
-                })
+                }
             })
 
             if(!response.ok) {
@@ -77,21 +74,18 @@ export function PreviousClassesForEachStudent({admin_user_id}: {admin_user_id: s
         }
         fetchClasses()
     
-    },[admin_user_id])
+    },[])
 
     //get all the students
     useEffect( () => {
         async function getAllStudents() {
 
             const response = await fetch(`${BASEURL}/get-all-students`, {
-                method: "POST",
+                method: "GET",
                 credentials: "include",
                 headers: {
                     "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    "admin_user_id": admin_user_id
-                })
+                }
             })
 
             if (!response.ok) {
@@ -118,7 +112,7 @@ export function PreviousClassesForEachStudent({admin_user_id}: {admin_user_id: s
         }
 
         getAllStudents()
-    },[BASEURL, admin_user_id])
+    },[])
 
 
     //map each student to his classes
@@ -205,7 +199,7 @@ export function PreviousClassesForEachStudent({admin_user_id}: {admin_user_id: s
                 <p>Totalt ufakturerte timer fra {cs.student.firstname_parent}: <span className="text-red-400">{totalUninvoicedHoursStudent}h, {totalUninvoicedStudent}kr.</span></p>
                 <p>Total fakturerte timer fra {cs.student.firstname_parent}: <span className="text-green-400">{totalInvoicedHoursStudent}h, {totalInvoicedStudent}kr.</span></p>
 
-                <InvoiceStudentPopover student={cs.student} classes={cs.classes} admin_user_id={admin_user_id}/>
+                <InvoiceStudentPopover student={cs.student} classes={cs.classes}/>
 
                 <Table>
                     <TableCaption>Kronologisk oversikt over alle timer til {cs.student.firstname_parent}</TableCaption>
@@ -280,7 +274,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 
-const InvoiceStudentPopover = ( {student, classes, admin_user_id} : {student: Student, classes: Classes[], admin_user_id: string}) => {
+const InvoiceStudentPopover = ( {student, classes} : {student: Student, classes: Classes[]}) => {
 
     const [success, setSuccess] = useState<boolean | null>(null)
     let numberOfClassesToInvoice :number= 0
@@ -333,7 +327,6 @@ const InvoiceStudentPopover = ( {student, classes, admin_user_id} : {student: St
                 "Content-Type": "application/json", // Corrected header key
             },
             body: JSON.stringify({
-                "admin_user_id": admin_user_id,
                 "class_ids": classIds
             })
         })

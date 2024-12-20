@@ -34,7 +34,7 @@ type classesJoinTeacher = {
     teacher: Teacher;
 }
 
-export function PreviousClassesForEachTeacher({admin_user_id}: {admin_user_id: string}) {      
+export function PreviousClassesForEachTeacher() {      
 
     const [classes, setClasses] = useState<Classes[]>([]);
     const [teachers, setTeachers] = useState<Teacher[]>([]);
@@ -48,14 +48,11 @@ export function PreviousClassesForEachTeacher({admin_user_id}: {admin_user_id: s
     useEffect( () => {
         async function fetchClasses() {
             const response = await fetch(`${BASEURL}/get-all-classes`, {
-                method: "POST",
+                method: "GET",
                 credentials: "include",
                 headers: {
                     "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    "admin_user_id": admin_user_id
-                })
+                }
             })
 
             if(!response.ok) {
@@ -77,21 +74,18 @@ export function PreviousClassesForEachTeacher({admin_user_id}: {admin_user_id: s
         }
         fetchClasses()
     
-    },[admin_user_id])
+    },[])
 
     //get all the teachers
     useEffect( () => {
         async function getAllTeachers() {
 
             const response = await fetch(`${BASEURL}/get-all-teachers`, {
-                method: "POST",
+                method: "GET",
                 credentials: "include",
                 headers: {
                     "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    "admin_user_id": admin_user_id
-                })
+                }
             })
 
             if (!response.ok) {
@@ -116,21 +110,18 @@ export function PreviousClassesForEachTeacher({admin_user_id}: {admin_user_id: s
         }
 
         getAllTeachers()
-    },[BASEURL, admin_user_id])
+    },[])
 
     //get all the students
     useEffect( () => {
         async function getAllStudents() {
 
             const response = await fetch(`${BASEURL}/get-all-students`, {
-                method: "POST",
+                method: "GET",
                 credentials: "include",
                 headers: {
                     "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    "admin_user_id": admin_user_id
-                })
+                }
             })
 
             if (!response.ok) {
@@ -157,7 +148,7 @@ export function PreviousClassesForEachTeacher({admin_user_id}: {admin_user_id: s
         }
 
         getAllStudents()
-    },[BASEURL, admin_user_id])
+    },[])
 
     //map each teacher to his classes
     useEffect( () => {
@@ -308,7 +299,7 @@ export function PreviousClassesForEachTeacher({admin_user_id}: {admin_user_id: s
                             </AccordionItem>
                         </Accordion>
 
-                        <PayTeacherPopover teacher={ct.teacher} classes={ct.classes} admin_user_id={admin_user_id}/>
+                        <PayTeacherPopover teacher={ct.teacher} classes={ct.classes} />
 
                         <p className="my-4">
                             Totalt ufakturerte timer fra {ct.teacher.firstname}: <span className="text-red-400">{totalUninvoicedHoursByTeacher}h, {totalUninvoicedByTeacher}kr.</span> <br/>
@@ -386,7 +377,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 
-const PayTeacherPopover = ( {teacher, classes, admin_user_id} : {teacher: Teacher, classes: Classes[], admin_user_id: string}) => {
+const PayTeacherPopover = ( {teacher, classes} : {teacher: Teacher, classes: Classes[] }) => {
 
     const [success, setSuccess] = useState<boolean | null>(null)
     let numberOfClassesToPay :number= 0
@@ -439,7 +430,6 @@ const PayTeacherPopover = ( {teacher, classes, admin_user_id} : {teacher: Teache
                 "Content-Type": "application/json", // Corrected header key
             },
             body: JSON.stringify({
-                "admin_user_id": admin_user_id,
                 "class_ids": classIds
             })
         })

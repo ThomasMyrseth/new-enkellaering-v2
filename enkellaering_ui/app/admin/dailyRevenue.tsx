@@ -49,7 +49,7 @@ function getDaysInMonth(year :number, month :number) {
     return date.getDate();
 }
 
-export function DailyRevenueChart({ admin_user_id }: { admin_user_id :string }) {
+export function DailyRevenueChart() {
     const [chartData, setChartData] = useState<Classes[]>()
     const [formattedChartData, setFormattedChartdata] = useState<FormattedClass[]>([])
     const [totalPayment, setTotalPayment] = useState<number>(0); // Use state for totalPayment
@@ -70,14 +70,11 @@ export function DailyRevenueChart({ admin_user_id }: { admin_user_id :string }) 
         async function fetchRevenue() {
             try {
                 const response = await fetch(`${BASEURL}/get-all-classes`, {
-                    method: "POST",
+                    method: "GET",
                     credentials: "include",
                     headers: {
                         "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        "admin_user_id": admin_user_id
-                    })
+                    }
                 })
 
                 if (!response.ok) {
@@ -95,7 +92,7 @@ export function DailyRevenueChart({ admin_user_id }: { admin_user_id :string }) 
             }
         }
         fetchRevenue()
-    },[BASEURL, admin_user_id])
+    },[])
 
     //aggregate payments
     useEffect(() => {
@@ -131,7 +128,7 @@ export function DailyRevenueChart({ admin_user_id }: { admin_user_id :string }) 
 
         setTotalPayment(totalPayment)
 
-      }, [chartData, admin_user_id]);
+      }, [chartData]);
     
     
     if (formattedChartData?.length === 0) {
