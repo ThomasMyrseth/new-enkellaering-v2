@@ -5,6 +5,7 @@ import { TracingBeam } from "@/components/ui/tracing-beam";
 import { Card, FocusCards } from "@/components/ui/focus-cards";
 import { usePathname } from "next/navigation"; 
 import { useEffect, useState } from "react";
+import { Skeleton } from "./skeleton";
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
 
@@ -24,6 +25,7 @@ type AboutMe = {
   
     export const TeacherFocusCards= () => {
         const [cardItems, setCardItems] = useState<Card[]>([]);
+        const [loading, setLoading] = useState<boolean>(true)
     
         useEffect(() => {
         async function getAllAboutMes() {
@@ -64,6 +66,7 @@ type AboutMe = {
             });
     
             setCardItems(combinedData);
+            setLoading(false)
             } catch (error) {
             console.error("Error fetching data:", error);
             }
@@ -72,5 +75,7 @@ type AboutMe = {
         getAllAboutMes();
         }, []);
     
-        return <FocusCards cards={cardItems} />;
+        return (<>
+        {loading? <Skeleton className="h-[500px] w-[600px]" /> : <FocusCards cards={cardItems} />}
+        </>)
 };
