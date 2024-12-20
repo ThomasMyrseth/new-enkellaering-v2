@@ -56,11 +56,9 @@ export default function NewStudentForm() {
     }
 
     return(<>
-    <div className="max-w-md w-full mx-auto rounded-none md:rounded-2xl p-4 md:p-8 shadow-input bg-white dark:bg-black">
-      <h2 className="font-bold text-xl text-neutral-800 dark:text-neutral-200">Bestill privatundervisning</h2>
-      <p className="text-neutral-600 text-sm max-w-sm mt-2 dark:text-neutral-300">
-        Legg igjen nummeret ditt her, vi ringer deg innen 24 timer for å avtale oppstart.
-      </p>
+    <div className="max-w-md rounded-lg w-full mx-auto md:rounded-2xl p-4 md:p-8 shadow-input bg-white dark:bg-black">
+        <h2 className="text-3xl font-bold relative bg-clip-text text-transparent bg-no-repeat bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500 py-4">Bestill privatundervisning</h2>
+        <p>Legg igjen nummeret ditt her, vi ringer deg innen 24 timer for å avtale oppstart.</p>
 
         {errorMessage===false &&
             <Alert>
