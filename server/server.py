@@ -85,10 +85,9 @@ def get_user_id():
         return jsonify({'error': 'User not logged in'}), 401
     
 
-@app.route('/get-teacher', methods=['POST'])
+@app.route('/get-teacher', methods=['GET'])
 def get_current_teacher():
-    data = request.get_json()
-    user_id = data.get('user_id')  # Use .get() to avoid KeyError
+    user_id = session.get('user_id')  # Use .get() to avoid KeyError
 
     if not user_id:
         print("user id not found in request payload!")
@@ -380,12 +379,10 @@ def logout():
 
 
 
-@app.route('/fetch-classes-for-teacher', methods=["POST"])
+@app.route('/fetch-classes-for-teacher', methods=["GET"])
 def fetch_classes_for_teacher():
-    data = request.json
-    user_id = data.get('user_id')
-
-    print("session user id", session.get("user_i"))
+    user_id = session.get('user_id')
+    
 
     if not user_id:
         print("user id not found")
@@ -403,10 +400,9 @@ def fetch_classes_for_teacher():
         "classes": classes_data
     }), 200
 
-@app.route('/get-students', methods=["POST"])
+@app.route('/get-students', methods=["GET"])
 def get_students():
-    data = request.get_json()
-    user_id = data.get('user_id')
+    user_id = session.get('user_id')
 
     students = get_student_for_teacher(client=bq_client, teacher_user_id=user_id)
     students_data = [dict(row) for row in students]  # Assuming multiple rows, adjust as needed
@@ -455,10 +451,9 @@ def upload_new_class():
         return jsonify({"message": f"Error inserting new class {e}"}), 500
 
 
-@app.route('/get-student', methods=["POST"])
+@app.route('/get-student', methods=["GET"])
 def get_student():
-    data = request.get_json()
-    user_id = data.get('user_id')
+    user_id = session.get('user_id')
 
     res = get_student_by_user_id(client=bq_client, user_id=user_id)
 
@@ -471,10 +466,9 @@ def get_student():
         "student": students[0]
     }, 200
 
-@app.route('/get-teacher-for-student', methods=["POST"])
+@app.route('/get-teacher-for-student', methods=["GET"])
 def get_teacher_for_student_route():
-    data = request.get_json()
-    user_id = data.get('user_id')
+    user_id = session.get('user_id')
 
     res = get_teacher_for_student(client=bq_client, student_user_id=user_id)
 
@@ -494,10 +488,9 @@ def get_teacher_for_student_route():
         "teacher": teacher_data[0]
     }), 200
 
-@app.route('/get-classes-for-student', methods=["POST"])
+@app.route('/get-classes-for-student', methods=["GET"])
 def get_classes_for_student_route():
-    data = request.get_json(force=True)
-    user_id = data.get('user_id')
+    user_id = session.get('user_id')
 
     res = get_classes_for_student(client=bq_client, student_user_id=user_id)
 
@@ -519,10 +512,9 @@ def get_classes_for_student_route():
     }), 200
 
 
-@app.route('/get-all-classes', methods=["POST"])
+@app.route('/get-all-classes', methods=["GET"])
 def get_all_classes_route():
-    data = request.get_json()
-    admin_user_id = data.get('admin_user_id')
+    admin_user_id = session.get('user_id')
 
     res = get_all_classes(client=bq_client, admin_user_id=admin_user_id)
 
@@ -544,10 +536,9 @@ def get_all_classes_route():
         "classes": classes
     }), 200
 
-@app.route('/get-all-teachers', methods=["POST"])
+@app.route('/get-all-teachers', methods=["GET"])
 def get_all_teachers_route():
-    data = request.get_json()
-    admin_user_id = data.get('admin_user_id')
+    admin_user_id = session.get('user_id')
 
     if not admin_user_id:
         return jsonify({"message": "Missing admin user id"}), 400
@@ -571,10 +562,9 @@ def get_all_teachers_route():
     }), 200
 
 
-@app.route('/get-all-students', methods=["POST"])
+@app.route('/get-all-students', methods=["GET"])
 def get_all_students_route():
-    data = request.get_json()
-    admin_user_id = data.get('admin_user_id')
+    admin_user_id = session.get('user_id')
 
     if not admin_user_id:
         return jsonify({"message": "Missing admin user id"}), 400
@@ -603,10 +593,9 @@ def get_all_students_route():
 
 
 
-@app.route('/get-new-students', methods=["POST"])
+@app.route('/get-new-students', methods=["GET"])
 def get_new_students_route():
-    data = request.get_json()
-    admin_user_id = data.get('admin_user_id')
+    admin_user_id = session.get('user_id')
 
     if not admin_user_id:
         return jsonify({
@@ -650,7 +639,7 @@ def update_new_student_workflow():
 
     # Extract fields
     newStudentId = data["new_student_id"]
-    admin_user_id = data["admin_user_id"]
+    admin_user_id = session.get("user_id")
 
     # Build the updates dictionary
     update = {
@@ -765,7 +754,7 @@ def validate_new_student_data(data: dict) -> tuple[bool, str]:
 def set_classes_to_invoiced_route():
     data = request.get_json()
 
-    admin_user_id = data.get('admin_user_id')
+    admin_user_id = session.get('user_id')
     class_ids = data.get('class_ids')
 
     if not admin_user_id or not class_ids:
@@ -789,7 +778,7 @@ def set_classes_to_invoiced_route():
 def set_classes_to_paid_route():
     data = request.get_json()
 
-    admin_user_id = data.get('admin_user_id')
+    admin_user_id = session.get('user_id')
     class_ids = data.get('class_ids')
 
     if not admin_user_id or not class_ids:
@@ -916,7 +905,7 @@ def upload_file():
         return jsonify({"error": "No file part"}), 400
 
     file = request.files["file"]  # File object from form
-    user_id = request.form.get("user_id")  # user_id from form data
+    user_id = session.get("user_id")  # user_id from form data
     about_me = request.form.get("about_me")  # about_me text from form data
     firstname = request.form.get("firstname")
     lastname = request.form.get("lastname")

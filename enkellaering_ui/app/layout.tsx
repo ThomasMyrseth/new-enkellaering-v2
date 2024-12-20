@@ -27,7 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           enableSystem
           disableTransitionOnChange
         >
-          <div className="flex h-full">
+          <div className="flex h-full w-screen">
             {/* Render MenuBarMobile only on mobile screens */}
             <div className="md:hidden">
               <MenuBarMobile setter={setShowSidebar} />

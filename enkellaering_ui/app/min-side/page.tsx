@@ -55,22 +55,16 @@ type Classes = {
 };
 
 export default function MinSideStudentPage() {
-    const pathname = usePathname(); // Get the current pathname
-    const segments = pathname.split('/'); // Split the pathname into segments
-    const userId :string= segments[2].toString(); // Extract the 'user_id' from the correct position
     const [student, setStudent] = useState<Student>()
 
     useEffect( () => {
         async function fetchStudent() {
             const response = await fetch(`${BASEURL}/get-student`, {
-                method: "POST",
+                method: "GET",
                 credentials: "include",
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify({
-                    "user_id": userId
-                })
             })
 
             if (!response.ok) {
@@ -83,7 +77,7 @@ export default function MinSideStudentPage() {
         }
 
         fetchStudent()
-    },[BASEURL, userId])
+    },[])
 
     if (!student) {
         return (<>
@@ -94,8 +88,8 @@ export default function MinSideStudentPage() {
         <StudentName student={student} />
         <BackgroundLines>
             <div className="flex flex-col items-center justify-center w-full h-fit gap-6 bg-white dark:bg-black">
-                <MyTeacher user_id={student.user_id} />
-                <PreviousClasses user_id={student.user_id} />
+                <MyTeacher />
+                <PreviousClasses />
             </div>
         </BackgroundLines>
     </div>)
@@ -131,7 +125,7 @@ function StudentName({student} : {student: Student}) {
     </>)
 }
 
-function MyTeacher({user_id} : {user_id: string}) {
+function MyTeacher() {
     const [loading, setLoading] = useState<boolean>(true)
     const [teacher, setTeacher] = useState<Teacher>()
     const [hasTeacher, setHasTeacher] = useState<boolean>(false)
@@ -139,14 +133,11 @@ function MyTeacher({user_id} : {user_id: string}) {
     useEffect( () => {
         async function fetchTeacher() {
             const response = await fetch(`${BASEURL}/get-teacher-for-student`, {
-                method: "POST",
+                method: "GET",
                 credentials: "include",
                 headers: {
                     "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    "user_id": user_id
-                })
+                }
             })
 
             if (!response.ok) {
@@ -170,7 +161,7 @@ function MyTeacher({user_id} : {user_id: string}) {
             }
     }
     fetchTeacher()
-    },[user_id])
+    },[])
 
     if (loading) {
         return <p>Loading...</p>
@@ -253,7 +244,7 @@ import {
 } from "@/components/ui/accordion";
 
 
-function PreviousClasses({user_id}: {user_id: string}) {      
+function PreviousClasses() {      
     const [classes, setClasses] = useState<Classes[]>();
     const [firstTenClasses, setFirstTenclasses] = useState<Classes[]>()
     const [remainingClasses, setRemainingClasses] = useState<Classes[]>()
@@ -265,14 +256,11 @@ function PreviousClasses({user_id}: {user_id: string}) {
     useEffect( () => {
         async function fetchClasses() {
             const response = await fetch(`${BASEURL}/get-classes-for-student`, {
-                method: "POST",
+                method: "GET",
                 credentials: "include",
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify({
-                    "user_id": user_id
-                })
             })
 
             if(!response.ok) {
@@ -295,14 +283,14 @@ function PreviousClasses({user_id}: {user_id: string}) {
         }
         fetchClasses()
     
-    },[user_id])
+    },[])
 
     //sort classes cronologically by started at
     if (classes) {
         classes.sort((a, b) => {
             const dateA = new Date(a.started_at);
             const dateB = new Date(b.started_at);
-            return dateA.getTime() - dateB.getTime();
+            return dateB.getTime() - dateA.getTime();
         });
 
         classes.forEach(c => {
