@@ -13,11 +13,6 @@ import logging
 from datetime import timedelta
 
 
-
-# Load environment variables from .env file
-load_dotenv()
-
-from auth.hash_password import hash_password, check_password
 from big_query.gets import get_all_about_me_texts, get_all_students, get_student_by_email, get_all_new_students, get_teacher_by_user_id, get_classes_by_teacher, get_student_for_teacher, get_student_by_user_id, get_teacher_for_student, get_classes_for_student, get_all_classes, get_all_teachers
 from big_query.inserts import insert_student, insert_teacher, insert_class, insert_new_student, upsert_about_me_text
 from big_query.alters import setClassesToInvoiced, setClassesToPaid
@@ -25,8 +20,11 @@ from big_query.bq_types import Classes
 from big_query.buckets.uploads import upload_or_replace_image_in_bucket
 from big_query.buckets.downloads import download_all_teacher_images
 
-
+ 
 app = Flask(__name__)
+
+# Load environment variables from .env file
+load_dotenv()
 
 app.secret_key = os.getenv("APP_SECRET")
 app.config['SESSION_TYPE'] = 'filesystem'
