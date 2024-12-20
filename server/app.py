@@ -26,7 +26,7 @@ app = Flask(__name__)
 # Load environment variables from .env file
 load_dotenv()
 
-app.secret_key = os.getenv("APP_SECRET")
+app.config['SECRET_KEY'] = os.getenv("APP_SECRET")
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SESSION_PERMANENT'] = True
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
