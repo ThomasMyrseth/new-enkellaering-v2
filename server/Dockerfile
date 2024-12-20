@@ -1,5 +1,5 @@
 # Use an official Python image as a base
-FROM python:3.10-slim
+FROM python:3.10
 
 # Set the working directory in the container
 WORKDIR /app
@@ -15,4 +15,4 @@ COPY . .
 EXPOSE 8080
 
 # Define the command to run your app with Gunicorn
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8080", "app:app"]
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8080", "--timeout", "300", "app:app"]

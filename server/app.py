@@ -26,7 +26,8 @@ app = Flask(__name__)
 # Load environment variables from .env file
 load_dotenv()
 
-app.config['SECRET_KEY'] = os.getenv("APP_SECRET")
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'fallback_super_secret_key')
+
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SESSION_PERMANENT'] = True
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
@@ -362,7 +363,7 @@ def login_teacher():
         return jsonify({"error": "Authentication failed", "details": str(e)}), 500
 
 
-@app.route('/logout', methods=['POST'])
+@app.route('/logout', methods=['GET'])
 def logout():
     try:
         # Clear the user's session
@@ -979,17 +980,11 @@ def get_all_images_and_about_mes():
         return jsonify({"message": str(e)}), 500
 
 
-@app.route('/logout', methods=["GET"])
-def logout():
-    # Handle logout logic here
-    return redirect('/') # or an appropriate redirect
-
-
 @app.route('/hello', methods=["GET"])
 def hello_route():
-    return jsonify({"message": "Hello World!"})
+    return jsonify({"message": f"Hello World!"})
 
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8080))
-    app.run(host='0.0.0.0', port=port)
+    port = int(os.environ.get("PORT", 8080))  # Use PORT from the environment or default to 8080
+    app.run(host="0.0.0.0", port=port)
