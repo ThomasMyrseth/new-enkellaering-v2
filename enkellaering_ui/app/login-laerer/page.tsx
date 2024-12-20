@@ -42,6 +42,7 @@ export default function LoginForm() {
         response.json().then(() => {
           router.push(`/min-side-laerer`);
         }).catch(err => {
+            router.push('/error')
             console.error("Failed to parse response JSON:", err);
         });
       } else {
