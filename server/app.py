@@ -36,10 +36,13 @@ app.config['SESSION_KEY_PREFIX'] = 'enkel-laering:'
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SECURE'] = True #use TRUE for production
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-CORS(app, origins=["http://localhost:3000", "https://new-enkellaering-v2.vercel.app", "https://enkellaering.no"], supports_credentials=True)
+CORS(app, resources={
+    r"/*": {
+        "origins": ["https://new-enkellaering-v2.vercel.app/*", "https://new-enkellaering-v2.vercel.app", "https://enkellaering.no"]
+    }
+}, supports_credentials=True)
 Session(app)
 
-#banana comment 
 
 
 PROJECT_ID = os.getenv('PROJECT_ID')
