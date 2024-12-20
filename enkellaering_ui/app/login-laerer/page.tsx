@@ -26,7 +26,6 @@ export default function LoginForm() {
 
       // Get the Firebase ID token
       const idToken = await userCredential.user.getIdToken();
-      console.log("Firebase ID Token:", idToken);
 
       // Send the token to the backend for further validation
       const response = await fetch(`${BASE_URL}/login-teacher`, {
@@ -39,12 +38,7 @@ export default function LoginForm() {
       });
 
       if (response.ok) {
-        response.json().then(() => {
-          router.push(`/min-side-laerer`);
-        }).catch(err => {
-            router.push('/error')
-            console.error("Failed to parse response JSON:", err);
-        });
+        router.push('/min-side-laerer')
       } else {
         const errorData = await response.json();
         setErrorMessage(`Login failed: ${errorData.error}`);
