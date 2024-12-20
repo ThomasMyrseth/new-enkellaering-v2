@@ -76,6 +76,15 @@ def protected_route():
 
 
 
+@app.route('/get-user-id', methods=['GET'])
+def get_user_id():
+    user_id = session.get('user_id')
+    if user_id:
+        return jsonify({'user_id': user_id}), 200
+    else:
+        return jsonify({'error': 'User not logged in'}), 401
+    
+
 @app.route('/get-teacher', methods=['POST'])
 def get_current_teacher():
     data = request.get_json()
@@ -375,6 +384,8 @@ def logout():
 def fetch_classes_for_teacher():
     data = request.json
     user_id = data.get('user_id')
+
+    print("session user id", session.get("user_i"))
 
     if not user_id:
         print("user id not found")
