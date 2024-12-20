@@ -503,7 +503,11 @@ function DateTimePicker({onStartDateSelected, onEndDateSelected} : {onStartDateS
       } else if (type === "minute") {
         newDate.setMinutes(parseInt(value));
       }
-      picker === "start" ? setStartDate(newDate) : setEndDate(newDate);
+      if (picker === "start") {
+        setStartDate(newDate);
+      } else {
+          setEndDate(newDate);
+      }
     }
   };
 
