@@ -239,3 +239,35 @@ def get_classes_for_student(client: bigquery.Client, student_user_id):
     )
 
     return client.query(query, job_config=job_config)
+
+def get_about_me_text(client: bigquery.Client, user_id :str):
+    
+    query = f"""
+        SELECT about_me 
+        FROM`{PROJECT_ID}.{USER_DATASET}.about_me_texts
+        WHERE user_id=@user_id
+    """
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("user_id", "STRING", user_id),
+        ]
+    )
+
+    return client.query(query, job_config=job_config, location="EU")
+
+
+def get_all_about_me_texts(client: bigquery.Client):
+    """
+    Fetches all "about me" texts from the BigQuery table.
+    Returns a list of dictionaries.
+    """
+    query = f"""
+        SELECT user_id, about_me, firstname, lastname 
+        FROM `{PROJECT_ID}.{USER_DATASET}.about_me_texts`
+    """
+
+    query_job = client.query(query, location="EU")
+    results = query_job.result()  # Fetch all rows
+
+    about_me_texts = [{"user_id": row["user_id"], "about_me": row["about_me"], "firstname" : row["firstname"], "lastname" : row["lastname"]} for row in results]
+    return about_me_texts

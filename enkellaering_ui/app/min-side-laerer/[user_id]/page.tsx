@@ -78,6 +78,9 @@ type Teacher = {
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
 
+
+import { FileUploadForm } from "@/components/uploadTeacherImageForm";
+
 export default function LaererPage() {
     const pathname = usePathname(); // Get the current pathname
     const segments = pathname.split('/'); // Split the pathname into segments
@@ -122,6 +125,8 @@ export default function LaererPage() {
             <AddNewClass teacher={teacher}/>
             <br/>
             <YourStudent teacher={teacher}/>
+            <br/>
+            <FileUploadForm firstname={teacher.firstname} lastname={teacher.lastname}/>
 
         <div className="p-4 m-4">
         </div>

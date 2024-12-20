@@ -205,6 +205,8 @@ def insert_new_student(client: bigquery.Client, new_student: NewStudents):
     return client.query(query, job_config=job_config, location='EU')
 
 
+
+
 def insert_class(client: bigquery.Client, class_obj: Classes):
     # Validate teacher exists
     teacher_query = f"""
@@ -264,3 +266,38 @@ def insert_class(client: bigquery.Client, class_obj: Classes):
     except Exception as e:
         print(f"Error executing query: {e}")
         raise Exception(f"Error executing query: {e}")
+    
+
+def upsert_about_me_text(client: bigquery.Client, text: str, user_id: str, firstname: str, lastname: str):
+    query = f"""
+        MERGE `{PROJECT_ID}.{USER_DATASET}.about_me_texts` AS target
+        USING (
+            SELECT 
+                @user_id AS user_id, 
+                @about_me AS about_me, 
+                @firstname AS firstname, 
+                @lastname AS lastname
+        ) AS source
+        ON target.user_id = source.user_id
+        WHEN MATCHED THEN
+            UPDATE SET 
+                about_me = source.about_me,
+                firstname = source.firstname,
+                lastname = source.lastname
+        WHEN NOT MATCHED THEN
+            INSERT (user_id, about_me, firstname, lastname)
+            VALUES (source.user_id, source.about_me, source.firstname, source.lastname)
+    """
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("user_id", "STRING", user_id),
+            bigquery.ScalarQueryParameter("about_me", "STRING", text),
+            bigquery.ScalarQueryParameter("firstname", "STRING", firstname),
+            bigquery.ScalarQueryParameter("lastname", "STRING", lastname)
+        ]
+    )
+
+    return client.query(query, job_config=job_config, location="EU")
+
+
+    
