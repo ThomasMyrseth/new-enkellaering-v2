@@ -183,7 +183,7 @@ export function PreviousClassesForEachStudent() {
                     totalInvoicedStudent += invoiceAmount;
                 }
             })
-
+//lala
 
         return (<div key={index} className="bg-white dark:bg-black shadow-lg w-full p-4 rounded-lg">
             <Accordion type="single" collapsible className="w-full mt-4">
