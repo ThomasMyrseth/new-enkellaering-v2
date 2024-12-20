@@ -986,6 +986,12 @@ def logout():
     # Handle logout logic here
     return redirect('/') # or an appropriate redirect
 
+
+@app.route('/hello', methods=["GET"])
+def hello_route():
+    return jsonify({"message": "Hello World!"})
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
-    app.run( port=port, host='0.0.0.0')
+    app.run(host='0.0.0.0', port=port)
