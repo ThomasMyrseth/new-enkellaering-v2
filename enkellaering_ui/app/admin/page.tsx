@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation";
   
 import { DailyRevenueChart } from "./dailyRevenue";
@@ -24,7 +24,7 @@ export default function AdminPage() {
         setTeacher(teacher)
     }
 
-    protectAdmin({handleSetTeacher})
+    useProtectAdmin({handleSetTeacher})
 
     //this user is an admin
     if (!teacher) {
@@ -49,36 +49,50 @@ export default function AdminPage() {
     </div>)
 }
 
-const protectAdmin = async ( {handleSetTeacher} :{handleSetTeacher: (teacher: Teacher) => void}) => {
-    const [isAdmin, setIsAdmin] = useState<boolean>(false)
-    
 
-    const response = await fetch(`${BASEURL}/get-teacher`, {
-        method: "GET",
-        credentials: "include",
-        headers: {
-            "Content-Type": "application/json"
+import { useEffect } from "react";
+
+const useProtectAdmin = ({ handleSetTeacher }: { handleSetTeacher: (teacher: Teacher) => void }) => {
+    const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  
+    useEffect(() => {
+      const fetchTeacher = async () => {
+        try {
+          const response = await fetch(`${BASEURL}/get-teacher`, {
+            method: "GET",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+  
+          if (!response.ok) {
+            alert("Failed to fetch teacher: " + response.statusText);
+            setIsAdmin(false);
+            return;
+          }
+  
+          const data = await response.json();
+          const teacher = data.teacher;
+  
+          handleSetTeacher(teacher);
+  
+          if (teacher.admin) {
+            setIsAdmin(true);
+          } else {
+            setIsAdmin(false);
+          }
+        } catch (error) {
+          console.error("Error fetching teacher:", error);
+          setIsAdmin(false);
         }
-    })
-
-    if (!response.ok) {
-        alert("failed to fetch teacher: " + response.statusText)
-        setIsAdmin(false)
-    }
-
-    const data = await response.json()
-    const teacher = data.teacher
-    handleSetTeacher(teacher)
-
-    if (teacher.admin) {
-        setIsAdmin(true)
-    }
-    else {
-        setIsAdmin(false)
-    }
-
-    return isAdmin
-}
+      };
+  
+      fetchTeacher();
+    }, [handleSetTeacher]);
+  
+    return isAdmin;
+};
 
 
 

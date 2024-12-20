@@ -296,7 +296,7 @@ const InvoiceStudentPopover = ( {student, classes} : {student: Student, classes:
     const classIds :string[] = []
 
 
-    classes.map((c: Classes, index) => {
+    classes.map((c: Classes) => {
         //skip already invoiced classes
         if (c.invoiced_student) {
             return null;

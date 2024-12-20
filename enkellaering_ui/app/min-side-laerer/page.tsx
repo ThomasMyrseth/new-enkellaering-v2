@@ -306,7 +306,6 @@ function AddNewClass({teacher}: {teacher: Teacher}) {
     const [endedAt, setEndedAt] = useState<Date>()
     const [comment, setComment] = useState<string>()
     const [success, setSuccess] = useState<boolean>()
-    const [enableButton, setEnableButton] = useState<boolean>(false)
 
     const handleStudentSelect = (userId: string) => {
         setSelectedStudentUserId(userId);
@@ -329,18 +328,8 @@ function AddNewClass({teacher}: {teacher: Teacher}) {
         setStartedAt(undefined)
         setEndedAt(undefined)
         setComment(undefined)
-        setEnableButton(false)
     }
 
-    //enable succesbutton once all fields are full
-    useEffect( () => {
-        if (selectedStudentUserId && startedAt && endedAt && comment) {
-            setEnableButton(true)
-        }
-        else {
-            setEnableButton(false)
-        }
-    },[selectedStudentUserId, startedAt, endedAt, comment])
 
     if (!teacher) {
         return (<p>Loading...</p>)
@@ -662,14 +651,15 @@ function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUse
     };
 
     
-    return(<>
-        <Button 
-            onClick={handleSendClick} 
-            variant={"outline"}
-            disabled={!allValid}
-        >
-        Last opp ny time</Button>
-    </>)
+    return (
+      <Button
+        onClick={handleSendClick}
+        variant="outline"
+        disabled={!allValid}
+      >
+        Last opp ny time
+      </Button>
+    );
 }
 
 

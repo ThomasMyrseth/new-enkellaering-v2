@@ -341,7 +341,7 @@ function NewStudentRow({ ns }: { ns: NewStudent }) {
 
 
 import { cn } from "@/lib/utils"
-import { Check, ChevronsUpDown, Newspaper } from "lucide-react"
+import { Check, ChevronsUpDown } from "lucide-react"
 
 import {
   Command,
@@ -356,16 +356,20 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { useCallback } from "react";
 
 const SetTeacherCombobox = ({ ns, teachers, passSelectedTeacher } : { ns :NewStudent, teachers : Teacher[], passSelectedTeacher : (userId :string) => void }) => {
     const [teacherUserId, setTeacherUserId] = useState<string | null>(ns.assigned_teacher_user_id ||null)
     const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null)
     const [open, setOpen] = useState<boolean>(false)
 
-    // Function to find the teacher by userId
-    const findTeacherById = (userId: string | null) => {
+      // Wrap the function in useCallback to ensure stable reference
+    const findTeacherById = useCallback(
+        (userId: string | null) => {
         return teachers.find((teacher) => teacher.user_id === userId);
-    };
+        },
+    [teachers] // Only re-create if the `teachers` array changes
+    );
 
     const handleSelectTeacher = (userId: string) => {
         console.log("selected: ", userId)

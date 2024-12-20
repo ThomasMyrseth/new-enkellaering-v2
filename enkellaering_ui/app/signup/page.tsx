@@ -8,7 +8,6 @@ import { useRouter } from "next/navigation";
 
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../auth/firebase";
-import { useAuth } from "@/context/AuthContext";
 
 
 export default function SignupForm() {
