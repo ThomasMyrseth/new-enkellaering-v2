@@ -478,15 +478,14 @@ function DateTimePicker({onStartDateSelected, onEndDateSelected} : {onStartDateS
   const handleDateSelect = (selectedDate: Date | undefined, type: "start" | "end") => {
     if (selectedDate) {
       if (type === "start") {
-        setStartDate(selectedDate)
-        setEndDate(selectedDate)
-        onStartDateSelected(selectedDate)
-        onEndDateSelected(selectedDate)
+        setStartDate(selectedDate);
+        setEndDate(selectedDate);
+        onStartDateSelected(selectedDate);
+        onEndDateSelected(selectedDate);
+      } else {
+        setEndDate(selectedDate); // Corrected to use `selectedDate`
+        onEndDateSelected(selectedDate);
       }
-      else{
-        setEndDate(endDate)
-        onEndDateSelected(selectedDate)
-      } 
     }
   };
 

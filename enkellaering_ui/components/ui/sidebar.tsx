@@ -1,15 +1,9 @@
 // @/components/Layout/Sidebar.tsx
 import React, { Dispatch, SetStateAction, FC } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-
-import { SlHome } from 'react-icons/sl'
-import { BsInfoSquare, BsEnvelopeAt } from 'react-icons/bs'
-import { FaTshirt, FaRedhat } from 'react-icons/fa'
 import { usePathname } from 'next/navigation'
 
 import { LayoutDashboard, ShoppingCart } from 'lucide-react'
-import { LayoutDashboardIcon } from 'lucide-react'
 import { LockKeyhole } from 'lucide-react'
 import { LockKeyholeOpen } from 'lucide-react'
 import { BookUser } from 'lucide-react'

@@ -1,11 +1,6 @@
 "use client";
 import React, { useState } from "react";
 import { FileUpload } from "@/components/ui/file-upload";
-import { usePathname } from "next/navigation";
-import { Button } from "@/components/ui/moving-border";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 
 import { Terminal } from "lucide-react"

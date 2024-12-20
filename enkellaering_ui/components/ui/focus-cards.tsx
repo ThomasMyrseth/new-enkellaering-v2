@@ -3,6 +3,12 @@ import Image from "next/image";
 import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 
+type Card = {
+  title: string;
+  description: string;
+  src: string;
+};
+
 export const Card = React.memo(
   ({
     card,
@@ -11,7 +17,7 @@ export const Card = React.memo(
     setHovered,
     isMobile,
   }: {
-    card: any;
+    card: Card;
     index: number;
     hovered: number | null;
     setHovered: React.Dispatch<React.SetStateAction<number | null>>;
@@ -67,11 +73,6 @@ export const Card = React.memo(
 
 Card.displayName = "Card";
 
-type Card = {
-  title: string;
-  description: string;
-  src: string;
-};
 
 export function FocusCards({ cards }: { cards: Card[] }) {
   const [hovered, setHovered] = useState<number | null>(null);

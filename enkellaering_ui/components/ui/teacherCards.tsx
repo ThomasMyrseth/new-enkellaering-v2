@@ -1,23 +1,13 @@
 
 "use client"
-import Image from "next/image";
-import { TracingBeam } from "@/components/ui/tracing-beam";
 import { Card, FocusCards } from "@/components/ui/focus-cards";
-import { usePathname } from "next/navigation"; 
 import { useEffect, useState } from "react";
 import { Skeleton } from "./skeleton";
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
 
-type AboutMe = {
-    user_id :string,
-    about_me :string,
-    image_url :string,
-    firstname: string,
-    lastname: string
-}
   
-  type Card = {
+type Card = {
     title: string,
     description: string,
     src: string
