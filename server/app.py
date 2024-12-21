@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 import os
 import uuid
 from big_query.bq_types import Students, Teachers
-from flask_session import Session
+from flask.sessions import SessionInterface, SessionMixin
 from flask_cors import CORS
 from dotenv import load_dotenv
 from firebase_admin import auth
@@ -13,6 +13,9 @@ import logging
 from datetime import timedelta
 from google.cloud import firestore
 from uuid import uuid4
+from firebase_admin import credentials, initialize_app
+from functools import wraps
+from flask import session, redirect, url_for
 
 
 from big_query.gets import get_all_about_me_texts, get_all_students, get_student_by_email, get_all_new_students, get_teacher_by_user_id, get_classes_by_teacher, get_student_for_teacher, get_student_by_user_id, get_teacher_for_student, get_classes_for_student, get_all_classes, get_all_teachers
@@ -23,76 +26,105 @@ from big_query.buckets.uploads import upload_or_replace_image_in_bucket
 from big_query.buckets.downloads import download_all_teacher_images
 
  
+load_dotenv()
 app = Flask(__name__)
 
-# Load environment variables from .env file
-load_dotenv()
-
+# Configure logging, environment variables, etc.
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'fallback_super_secret_key')
-
 app.config['SESSION_PERMANENT'] = True
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
 app.config['SESSION_USE_SIGNER'] = True
-app.config['SESSION_KEY_PREFIX'] = 'enkel-laering:'
+app.config['SESSION_KEY_PREFIX'] = 'enkel_laering_prefix'
+app.config['SESSION_COOKIE_NAME'] = 'enkel_laering_coockie'
 app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SECURE'] = True #use TRUE for production
-app.config['SESSION_COOKIE_SAMESITE'] = 'None'  # Allows cross-origin cookies
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'None'
 if os.getenv("FLASK_ENV") == "production":
     app.config['SESSION_COOKIE_DOMAIN'] = 'enkellaering-service-895641904484.europe-west2.run.app'
 else:
-    app.config['SESSION_COOKIE_DOMAIN'] = None  # Defaults to localhost
+    app.config['SESSION_COOKIE_DOMAIN'] = None
+
 CORS(app, resources={
     r"/*": {
-        "origins": ["https://new-enkellaering-v2.vercel.app/*", "https://new-enkellaering-v2.vercel.app", "http://localhost:3000", "https://enkellaering.no"]
+        "origins": [
+            "https://new-enkellaering-v2.vercel.app",
+            "http://localhost:3000",
+            "https://enkellaering.no"
+        ]
     }
 }, supports_credentials=True)
-Session(app)
-
-
 
 PROJECT_ID = os.getenv('PROJECT_ID')
 USER_DATASET = os.getenv('USER_DATASET')
 CLASSES_DATASET = os.getenv('CLASSES_DATASET')
 NEW_STUDENTS_DATASET = os.getenv('NEW_STUDENTS_DATASET')
 
+
 logging.basicConfig(level=logging.INFO)
 
+# Firestore client
+firestore_client = firestore.Client(project='enkel-laering')
+
+# BigQuery Client
 bq_client = bigquery.Client.from_service_account_json('google_service_account.json')
-firestore_client = firestore.Client()
-
-import firebase_admin
-from firebase_admin import credentials
-
-# Initialize Firebase Admin SDK
-if not firebase_admin._apps:
-    cred = credentials.Certificate("firebase_service_account.json")
-    firebase_admin.initialize_app(cred)
 
 
-class FirestoreSessionInterface(Session):
-    def __init__(self, db_client):
+
+
+from flask.sessions import SessionInterface, SessionMixin
+from datetime import datetime, timedelta
+from uuid import uuid4
+import logging
+
+class FirestoreSession(dict, SessionMixin):
+    """
+    Our custom session class that extends dictionary-like behavior
+    and Flask's SessionMixin.
+    """
+    pass
+
+
+class FirestoreSessionInterface(SessionInterface):
+    """
+    A session interface that stores session data in Firestore.
+    """
+
+    def __init__(self, db_client, collection_name="sessions"):
         self.db_client = db_client
-        self.collection_name = "sessions"
+        self.collection_name = collection_name
 
     def _get_doc_ref(self, session_id):
         return self.db_client.collection(self.collection_name).document(session_id)
 
     def open_session(self, app, request):
-        session_id = request.cookies.get(app.session_cookie_name)
+        """Load session data from Firestore, if it exists."""
+        cookie_name = app.config.get('SESSION_COOKIE_NAME', 'session')
+        session_id = request.cookies.get(cookie_name)
         if session_id:
             try:
                 doc_ref = self._get_doc_ref(session_id)
                 doc = doc_ref.get()
                 if doc.exists:
-                    return self.session_class(doc.to_dict())
+                    data = doc.to_dict()
+                    expires_at_str = data.get('expires_at')
+                    if expires_at_str:
+                        expires_at = datetime.fromisoformat(expires_at_str)
+                        if datetime.utcnow() > expires_at:
+                            # Session expired; return a new empty session
+                            return FirestoreSession()
+                    return FirestoreSession(data)
             except Exception as e:
                 app.logger.error(f"Error retrieving session {session_id}: {e}")
-        return self.session_class()
+        return FirestoreSession()
 
     def save_session(self, app, session, response):
+        """Save or clear session data in Firestore, then set the cookie."""
+        cookie_name = app.config.get('SESSION_COOKIE_NAME', 'session')
+
+        # 1. If session is empty, remove from Firestore (cleanup) and return
         if not session:
-            session_id = request.cookies.get(app.session_cookie_name)
-            if session_id:
+            session_id = request.cookies.get(cookie_name)
+            if session_id is not None:
                 try:
                     doc_ref = self._get_doc_ref(session_id)
                     doc_ref.delete()
@@ -100,30 +132,49 @@ class FirestoreSessionInterface(Session):
                     app.logger.error(f"Error deleting session {session_id}: {e}")
             return
 
-        session_id = request.cookies.get(app.session_cookie_name) or str(uuid4())
-        expires_at = datetime.utcnow() + app.config.get('PERMANENT_SESSION_LIFETIME', timedelta(hours=1))
-        session_data = dict(session)
-        session_data['expires_at'] = expires_at.isoformat()
+        # 2. Otherwise, upsert the session into Firestore
+        session_id = request.cookies.get(cookie_name)
+        # If there is no cookie, generate a fresh session ID
+        if not session_id:
+            session_id = str(uuid4())
+
+        # 3. Set session expiration
+        expires_at = datetime.now() + app.config.get('PERMANENT_SESSION_LIFETIME', timedelta(hours=1))
+        session['expires_at'] = expires_at.isoformat()
+
+        # 4. Write session data to Firestore
         try:
             doc_ref = self._get_doc_ref(session_id)
-            doc_ref.set(session_data)
+            doc_ref.set(dict(session))  # Convert the session to a dict
         except Exception as e:
             app.logger.error(f"Error saving session {session_id}: {e}")
 
+        # 5. Set the cookie; ensure both `cookie_name` and `session_id` are strings
         response.set_cookie(
-            app.session_cookie_name,
-            session_id,
+            cookie_name,               # Must be a string
+            str(session_id),           # Must be a string
             httponly=True,
             secure=app.config['SESSION_COOKIE_SECURE'],
             samesite=app.config['SESSION_COOKIE_SAMESITE'],
         )
 
+    def is_null_session(self, session):
+        """Tell Flask if the session is empty."""
+        # Return True if `session` is None or has no keys
+        return not session or len(session) == 0
 
+
+
+
+# Use our custom session interface
 app.session_interface = FirestoreSessionInterface(firestore_client)
 
 
-from functools import wraps
-from flask import session, redirect, url_for
+# Initialize Firebase Admin SDK
+cred = credentials.Certificate("firebase_service_account.json")
+initialize_app(cred)
+
+
 
 def login_required(f):
     @wraps(f)
@@ -137,6 +188,12 @@ def login_required(f):
 @login_required
 def protected_route():
     return "This is a protected route"
+
+
+@app.route('/hello', methods=["GET"])
+def hello_route():
+    user_id = session.get('user_id')
+    return jsonify({"message": f"Hello World! Current user id: {user_id}"})
 
 
 
@@ -1044,11 +1101,6 @@ def get_all_images_and_about_mes():
     except Exception as e:
         return jsonify({"message": str(e)}), 500
 
-
-@app.route('/hello', methods=["GET"])
-def hello_route():
-    user_id = session.get('user_id')
-    return jsonify({"message": f"Hello World! Current user id: {user_id}"})
 
 
 if __name__ == "__main__":
