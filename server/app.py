@@ -754,10 +754,12 @@ from big_query.alters import alterNewStudent
 def update_new_student_workflow():
     data = request.get_json()
 
+    logging.info(f"data from update new student: {data}")
+
     # Validate incoming data
     is_valid, error_message = validate_new_student_data(data)
     if not is_valid:
-        logging.error("Validation error:", error_message)
+        logging.info("Validation error:", error_message)
         return jsonify({"message": f"Validation error: {error_message}"}), 400
 
     # Extract fields
