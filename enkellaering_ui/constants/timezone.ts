@@ -1,0 +1,1 @@
+export const OSLO_TIME_ZONE = "Europe/Oslo";

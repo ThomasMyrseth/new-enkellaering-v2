@@ -466,6 +466,10 @@ function AddComment({onAddComment} : {onAddComment: (comment: string) => void   
     </>)
 }
 
+
+
+
+
  
 function DateTimePicker({onStartDateSelected, onEndDateSelected} : {onStartDateSelected: (date: Date) => void; onEndDateSelected: (date: Date) => void}) {
   const [startDate, setStartDate] = useState<Date>();
@@ -477,15 +481,22 @@ function DateTimePicker({onStartDateSelected, onEndDateSelected} : {onStartDateS
 
   const handleDateSelect = (selectedDate: Date | undefined, type: "start" | "end") => {
     if (selectedDate) {
-      if (type === "start") {
-        setStartDate(selectedDate);
-        setEndDate(selectedDate);
-        onStartDateSelected(selectedDate);
-        onEndDateSelected(selectedDate);
-      } else {
-        setEndDate(selectedDate); // Corrected to use `selectedDate`
-        onEndDateSelected(selectedDate);
-      }
+        const currentTime = type === "start" ? startDate : endDate;
+
+        const newDate = new Date(selectedDate);
+        if (currentTime) {
+            // Preserve the current time when selecting a date
+            newDate.setHours(currentTime.getHours());
+            newDate.setMinutes(currentTime.getMinutes());
+        }
+
+        if (type === "start") {
+            setStartDate(newDate);
+            onStartDateSelected(newDate);
+        } else {
+            setEndDate(newDate);
+            onEndDateSelected(newDate);
+        }
     }
   };
 
@@ -497,17 +508,19 @@ function DateTimePicker({onStartDateSelected, onEndDateSelected} : {onStartDateS
     const targetDate = picker === "start" ? startDate : endDate;
 
     if (targetDate) {
-      const newDate = new Date(targetDate);
-      if (type === "hour") {
-        newDate.setHours(parseInt(value));
-      } else if (type === "minute") {
-        newDate.setMinutes(parseInt(value));
-      }
-      if (picker === "start") {
-        setStartDate(newDate);
-      } else {
-          setEndDate(newDate);
-      }
+        const newDate = new Date(targetDate);
+        if (type === "hour") {
+            newDate.setHours(parseInt(value));
+        } else if (type === "minute") {
+            newDate.setMinutes(parseInt(value));
+        }
+        if (picker === "start") {
+            setStartDate(newDate);
+            onStartDateSelected(newDate); // Propagate the correct date
+        } else {
+            setEndDate(newDate);
+            onEndDateSelected(newDate); // Propagate the correct date
+        }
     }
   };
 
