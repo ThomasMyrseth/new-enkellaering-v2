@@ -11,6 +11,8 @@ from dotenv import load_dotenv
 from firebase_admin import auth
 import logging
 from datetime import timedelta
+from google.cloud import firestore
+from uuid import uuid4
 
 
 from big_query.gets import get_all_about_me_texts, get_all_students, get_student_by_email, get_all_new_students, get_teacher_by_user_id, get_classes_by_teacher, get_student_for_teacher, get_student_by_user_id, get_teacher_for_student, get_classes_for_student, get_all_classes, get_all_teachers
@@ -28,14 +30,17 @@ load_dotenv()
 
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'fallback_super_secret_key')
 
-app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SESSION_PERMANENT'] = True
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
 app.config['SESSION_USE_SIGNER'] = True
 app.config['SESSION_KEY_PREFIX'] = 'enkel-laering:'
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SECURE'] = True #use TRUE for production
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_SAMESITE'] = 'None'  # Allows cross-origin cookies
+if os.getenv("FLASK_ENV") == "production":
+    app.config['SESSION_COOKIE_DOMAIN'] = 'enkellaering-service-895641904484.europe-west2.run.app'
+else:
+    app.config['SESSION_COOKIE_DOMAIN'] = None  # Defaults to localhost
 CORS(app, resources={
     r"/*": {
         "origins": ["https://new-enkellaering-v2.vercel.app/*", "https://new-enkellaering-v2.vercel.app", "http://localhost:3000", "https://enkellaering.no"]
@@ -53,6 +58,7 @@ NEW_STUDENTS_DATASET = os.getenv('NEW_STUDENTS_DATASET')
 logging.basicConfig(level=logging.INFO)
 
 bq_client = bigquery.Client.from_service_account_json('google_service_account.json')
+firestore_client = firestore.Client()
 
 import firebase_admin
 from firebase_admin import credentials
@@ -62,6 +68,58 @@ if not firebase_admin._apps:
     cred = credentials.Certificate("firebase_service_account.json")
     firebase_admin.initialize_app(cred)
 
+
+class FirestoreSessionInterface(Session):
+    def __init__(self, db_client):
+        self.db_client = db_client
+        self.collection_name = "sessions"
+
+    def _get_doc_ref(self, session_id):
+        return self.db_client.collection(self.collection_name).document(session_id)
+
+    def open_session(self, app, request):
+        session_id = request.cookies.get(app.session_cookie_name)
+        if session_id:
+            try:
+                doc_ref = self._get_doc_ref(session_id)
+                doc = doc_ref.get()
+                if doc.exists:
+                    return self.session_class(doc.to_dict())
+            except Exception as e:
+                app.logger.error(f"Error retrieving session {session_id}: {e}")
+        return self.session_class()
+
+    def save_session(self, app, session, response):
+        if not session:
+            session_id = request.cookies.get(app.session_cookie_name)
+            if session_id:
+                try:
+                    doc_ref = self._get_doc_ref(session_id)
+                    doc_ref.delete()
+                except Exception as e:
+                    app.logger.error(f"Error deleting session {session_id}: {e}")
+            return
+
+        session_id = request.cookies.get(app.session_cookie_name) or str(uuid4())
+        expires_at = datetime.utcnow() + app.config.get('PERMANENT_SESSION_LIFETIME', timedelta(hours=1))
+        session_data = dict(session)
+        session_data['expires_at'] = expires_at.isoformat()
+        try:
+            doc_ref = self._get_doc_ref(session_id)
+            doc_ref.set(session_data)
+        except Exception as e:
+            app.logger.error(f"Error saving session {session_id}: {e}")
+
+        response.set_cookie(
+            app.session_cookie_name,
+            session_id,
+            httponly=True,
+            secure=app.config['SESSION_COOKIE_SECURE'],
+            samesite=app.config['SESSION_COOKIE_SAMESITE'],
+        )
+
+
+app.session_interface = FirestoreSessionInterface(firestore_client)
 
 
 from functools import wraps
@@ -93,11 +151,9 @@ def get_user_id():
 
 @app.route('/get-teacher', methods=['GET'])
 def get_current_teacher():
-    user_id = session.get('user_id')  # Use .get() to avoid KeyError
-
+    user_id = session.get('user_id')  # Check if user_id exists
     if not user_id:
-        print("user id not found in request payload!")
-        return jsonify({"error": "User ID is required."}), 400
+        return jsonify({"error": "User id not found"}), 401  # Unauthorized
 
     # Fetch teacher data
     teacher = get_teacher_by_user_id(client=bq_client, user_id=user_id)
@@ -991,7 +1047,8 @@ def get_all_images_and_about_mes():
 
 @app.route('/hello', methods=["GET"])
 def hello_route():
-    return jsonify({"message": f"Hello World!"})
+    user_id = session.get('user_id')
+    return jsonify({"message": f"Hello World! Current user id: {user_id}"})
 
 
 if __name__ == "__main__":
