@@ -13,7 +13,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     const authState = localStorage.getItem('isAuthenticated') === 'true';
 
     if (!isAuthenticated && !authState) {
-      router.push('/login');
+      router.push('/you-are-not-logged-in');
     } else {
       setLoading(false);
     }

@@ -39,10 +39,7 @@ app.config['SESSION_COOKIE_NAME'] = 'enkel_laering_coockie'
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'None'
-if os.getenv("FLASK_ENV") == "production":
-    app.config['SESSION_COOKIE_DOMAIN'] = 'enkellaering-service-895641904484.europe-west2.run.app'
-else:
-    app.config['SESSION_COOKIE_DOMAIN'] = None
+app.config['SESSION_COOKIE_DOMAIN'] = 'enkellaering-service-895641904484.europe-west2.run.app'
 
 CORS(app, resources={
     r"/*": {
@@ -176,18 +173,20 @@ initialize_app(cred)
 
 
 
-def login_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session:
-            return redirect(url_for('login'))  # or return a JSON response
-        return f(*args, **kwargs)
-    return decorated_function
+# def login_required(f):
+#     @wraps(f)
+#     def decorated_function(*args, **kwargs):
+#         user_id = session.get("user_id")
+#         logging.info(f"Checking userId in loginRequired, userId: {user_id}")
+#         if not user_id:
+#             return redirect(url_for('login'))  # or return a JSON response
+#         return f(*args, **kwargs)
+#     return decorated_function
 
-@app.route('/protected-route')
-@login_required
-def protected_route():
-    return "This is a protected route"
+# @app.route('/protected-route')
+# @login_required
+# def protected_route():
+#     return "This is a protected route"
 
 
 @app.route('/hello', methods=["GET"])
@@ -409,7 +408,7 @@ def login():
         user_id = user["user_id"]
 
         # Save user session with minimal data
-        session['user_id'] = user_id
+        session['user_id'] = str(user_id) or "default_user_ud"
         session['role'] = "student"
         session['firstname_parent'] = user['firstname_parent']
         session['lastname_parent'] = user['lastname_parent']
@@ -467,10 +466,12 @@ def login_teacher():
         user_id = user["user_id"]
 
         # Save user session with minimal data
-        session['user_id'] = user_id
+        session['user_id'] = str(user_id) or "default_user_id"
         session['firstname'] = user['firstname']
         session['lastname'] = user['lastname']
         session['email'] = email
+
+        logging.info(f"User ID in loggin-laerer route is: {session.get('user_id')}")
 
         print(f"User {user_id} successfully logged in.")
 
