@@ -39,6 +39,7 @@ export default function LoginForm() {
 
       if (response.ok) {
         console.log("pushing to /min-side-laerer")
+        localStorage.setItem('isAuthenticated', 'true');
         router.push('/min-side-laerer')
       } else {
         const errorData = await response.json();

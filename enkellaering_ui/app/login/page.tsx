@@ -40,7 +40,8 @@ export default function LoginForm() {
 
       if (response.ok) {
         response.json().then( () => {
-            router.push(`/min-side`);
+          localStorage.setItem('isAuthenticated', 'true');
+          router.push(`/min-side`);
         }).catch(err => {
             console.error("Failed to parse response JSON:", err);
         });

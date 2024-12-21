@@ -95,7 +95,8 @@ export default function SignupForm() {
             localStorage.setItem('isAuthenticated', 'true');
             localStorage.setItem('user_id', userId);
             localStorage.setItem('role', 'teacher');
-            router.push(`/min-side-laerer/${userId}`);
+            localStorage.setItem('isAuthenticated', 'true');
+            router.push(`/min-side-laerer`);
         }).catch(err => {
             console.error("Failed to parse response JSON:", err);
         });
