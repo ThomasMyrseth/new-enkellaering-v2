@@ -747,7 +747,6 @@ def get_new_students_route():
     }), 200
 
 
-from datetime import timezone
 from big_query.bq_types import NewStudents
 from big_query.alters import alterNewStudent
 
@@ -758,12 +757,12 @@ def update_new_student_workflow():
     # Validate incoming data
     is_valid, error_message = validate_new_student_data(data)
     if not is_valid:
-        print("Validation error:", error_message)
+        logging.error("Validation error:", error_message)
         return jsonify({"message": f"Validation error: {error_message}"}), 400
 
     # Extract fields
     newStudentId = data["new_student_id"]
-    admin_user_id = data["admin_user_id"]
+    admin_user_id = session.get["user_id"]
 
     # Build the updates dictionary
     update = {
@@ -793,7 +792,7 @@ def update_new_student_workflow():
         res = alterNewStudent(client=bq_client, new_student_id=newStudentId, admin_user_id=admin_user_id, updates=update)
         res.result()  # Force query execution to detect any errors
     except Exception as e:
-        print("BigQuery error:", e)
+        logging.error("BigQuery error:", e)
         return jsonify({"message": "Error while setting updates for new student"}), 500
 
     return jsonify({"message": "Updated new student successfully"}), 200
@@ -1026,27 +1025,29 @@ import mimetypes
 @app.route("/upload-teacher-image", methods=["POST"])
 def upload_file():
     if "file" not in request.files:
+        logging.error("No file found in teacher image upload")
         return jsonify({"error": "No file part"}), 400
 
     file = request.files["file"]  # File object from form
-    user_id = request.form.get("user_id")  # user_id from form data
+    user_id = session.get("user_id")  # user_id from form data
     about_me = request.form.get("about_me")  # about_me text from form data
     firstname = request.form.get("firstname")
     lastname = request.form.get("lastname")
-
-    if not user_id:
-        return jsonify({"error": "Missing user_id"}), 400
     
     if not firstname:
+        logging.error("Missing firstname")
         return jsonify({"error": "Missing firstname"}), 400
     
     if not lastname:
+        logging.error("Missing lastname")
         return jsonify({"error": "Missing lastname"}), 400
 
     if not about_me:
+        logging.error("Missing about_me_text")
         return jsonify({"error": "Missing about_me text"}), 400
 
     if file.filename == "":
+        logging.error("No selected file")
         return jsonify({"error": "No selected file"}), 400
 
 
@@ -1070,6 +1071,7 @@ def upload_file():
 
         return jsonify({"message": f"File uploaded successfully to {destination_blob_name}"}), 200
     except Exception as e:
+        logging.error(f"An error occured, {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 @app.route('/get-all-teacher-images-and-about-mes', methods=["GET"])
