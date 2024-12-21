@@ -575,10 +575,9 @@ def upload_new_class():
         return jsonify({"message": f"Error inserting new class {e}"}), 500
 
 
-@app.route('/get-student', methods=["POST"])
+@app.route('/get-student', methods=["GET"])
 def get_student():
-    data = request.get_json()
-    user_id = data.get('user_id')
+    user_id = session.get('user_id')
 
     res = get_student_by_user_id(client=bq_client, user_id=user_id)
 
@@ -591,10 +590,9 @@ def get_student():
         "student": students[0]
     }, 200
 
-@app.route('/get-teacher-for-student', methods=["POST"])
+@app.route('/get-teacher-for-student', methods=["GET"])
 def get_teacher_for_student_route():
-    data = request.get_json()
-    user_id = data.get('user_id')
+    user_id = session.get('user_id')
 
     res = get_teacher_for_student(client=bq_client, student_user_id=user_id)
 
@@ -614,10 +612,9 @@ def get_teacher_for_student_route():
         "teacher": teacher_data[0]
     }), 200
 
-@app.route('/get-classes-for-student', methods=["POST"])
+@app.route('/get-classes-for-student', methods=["GET"])
 def get_classes_for_student_route():
-    data = request.get_json(force=True)
-    user_id = data.get('user_id')
+    user_id = session.get('user_id')
 
     res = get_classes_for_student(client=bq_client, student_user_id=user_id)
 
@@ -639,10 +636,9 @@ def get_classes_for_student_route():
     }), 200
 
 
-@app.route('/get-all-classes', methods=["POST"])
+@app.route('/get-all-classes', methods=["GET"])
 def get_all_classes_route():
-    data = request.get_json()
-    admin_user_id = data.get('admin_user_id')
+    admin_user_id = session.get('user_id')
 
     res = get_all_classes(client=bq_client, admin_user_id=admin_user_id)
 
@@ -664,10 +660,9 @@ def get_all_classes_route():
         "classes": classes
     }), 200
 
-@app.route('/get-all-teachers', methods=["POST"])
+@app.route('/get-all-teachers', methods=["GET"])
 def get_all_teachers_route():
-    data = request.get_json()
-    admin_user_id = data.get('admin_user_id')
+    admin_user_id = session.get('user_id')
 
     if not admin_user_id:
         return jsonify({"message": "Missing admin user id"}), 400
@@ -691,10 +686,9 @@ def get_all_teachers_route():
     }), 200
 
 
-@app.route('/get-all-students', methods=["POST"])
+@app.route('/get-all-students', methods=["GET"])
 def get_all_students_route():
-    data = request.get_json()
-    admin_user_id = data.get('admin_user_id')
+    admin_user_id = session.get('user_id')
 
     if not admin_user_id:
         return jsonify({"message": "Missing admin user id"}), 400
@@ -723,10 +717,9 @@ def get_all_students_route():
 
 
 
-@app.route('/get-new-students', methods=["POST"])
+@app.route('/get-new-students', methods=["GET"])
 def get_new_students_route():
-    data = request.get_json()
-    admin_user_id = data.get('admin_user_id')
+    admin_user_id = session.get('admin_user_id')
 
     if not admin_user_id:
         return jsonify({
