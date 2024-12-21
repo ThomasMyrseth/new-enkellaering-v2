@@ -719,7 +719,7 @@ def get_all_students_route():
 
 @app.route('/get-new-students', methods=["GET"])
 def get_new_students_route():
-    admin_user_id = session.get('admin_user_id')
+    admin_user_id = session.get('user_id')
 
     if not admin_user_id:
         return jsonify({
