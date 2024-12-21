@@ -108,7 +108,7 @@ export default function LaererPage() {
         return (<p>Loading...</p>)
     }
 
-    return (<div className="flex flex-col items-center justify-center w-full min-h-screen">
+    return (<div className="flex flex-col items-center justify-center w-full min-h-screen bg-slate-200 dark:bg-slate-900">
             <TeacherName teacher={teacher}/>
 
             <DailyRevenueChart teacher={teacher}/>
@@ -260,7 +260,7 @@ function DailyRevenueChart({ teacher }: { teacher: Teacher }) {
     }
     
 
-    return(<div className="w-3/4 h-full p-4">
+    return(<div className="w-3/4 p-4">
         <Card>
         <CardHeader>
             <CardTitle>Timer du ikke har fått betalt for</CardTitle>
@@ -336,7 +336,7 @@ function AddNewClass({teacher}: {teacher: Teacher}) {
     }
     
     
-    return (<div className="w-3/4 h-full p-4 bg-white dark:bg-black rounded-lg">
+    return (<div className="w-3/4  p-4 bg-white dark:bg-black rounded-lg">
          {success && (
             <AlertDialog open={success}>
                 <AlertDialogContent>
@@ -451,7 +451,7 @@ function AddComment({onAddComment} : {onAddComment: (comment: string) => void   
             <h3>Hvordan var timen?</h3>
             <LabelInputContainer >
               <Textarea  
-                rows={6} 
+                rows={10} 
                 className="w-full" 
                 value={comment} 
                 onChange={(e) => handleAddComment(e.target.value)} 

@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react";
 import { CardBody, CardContainer, CardItem } from "@/components/ui/3d-card";
 import Image from "next/image";
-import { BackgroundLines } from "@/components/ui/background-lines";
 
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
@@ -82,15 +81,13 @@ export default function MinSideStudentPage() {
             <p>Loading...</p>
         </>)
     }
-    return(<div className="flex flex-col items-center justify-center w-full min-h-screen">
-        <StudentName student={student} />
-        <BackgroundLines>
-            <div className="flex flex-col items-center justify-center w-full h-fit gap-6 bg-white dark:bg-black">
-                <MyTeacher />
-                <PreviousClasses />
-            </div>
-        </BackgroundLines>
-    </div>)
+    return (
+        <div className="flex flex-col items-center justify-center  w-full min-h-screen bg-slate-200 dark:bg-slate-900">
+            <StudentName student={student} />
+            <MyTeacher />
+            <PreviousClasses />
+        </div>
+    );
 }
 
 import { motion } from "framer-motion";
@@ -166,8 +163,8 @@ function MyTeacher() {
     }
 
 
-    return(
-        <CardContainer className="inter-var">
+    return(<div className="w-3/4 sm:w-full overflow-hidden">
+        <CardContainer className="inter-var w-3/4 sm:w-full">
             <CardBody className="bg-gray-50 relative group/card  dark:hover:shadow-2xl dark:hover:shadow-emerald-500/[0.1] dark:bg-black dark:border-white/[0.2] border-black/[0.1] w-auto sm:w-[30rem] h-auto rounded-xl p-6 border  ">
                 <CardItem
                     translateZ="50"
@@ -219,7 +216,7 @@ function MyTeacher() {
                 </CardItem>
             </CardBody>
     </CardContainer>
-  );
+  </div>);
 }
 
 
@@ -314,7 +311,7 @@ function PreviousClasses() {
     }
 
       
-    return (<div className="flex flex-col justify-center items-center w-3/4">
+    return (<div className="flex flex-col justify-center items-center w-3/4 bg-white dark:bg-black rounded-lg p-4">
         <h2>En oversikt over tidligere timer</h2>
         <Table>
         <TableCaption>*At en time er fakturert vil si at faktura for timen er sendt ut, det betyr ikke at timen er betalt</TableCaption>
