@@ -17,6 +17,7 @@ const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
 
 
 export default function AdminPage() {
+    const token = localStorage.getItem('token')
     const router = useRouter()
     const [teacher, setTeacher] = useState<Teacher>()
 
@@ -28,10 +29,9 @@ export default function AdminPage() {
         try {
           const response = await fetch(`${BASEURL}/get-teacher`, {
             method: "GET",
-            credentials: "include",
             headers: {
-              "Content-Type": "application/json",
-            },
+              'Authorization': `Bearer ${token}`
+            }
           });
     
           if (!response.ok) {

@@ -38,8 +38,12 @@ export default function LoginForm() {
       });
 
       if (response.ok) {
+        const data = await response.json()
+        
         console.log("pushing to /min-side-laerer")
         localStorage.setItem('isAuthenticated', 'true');
+        localStorage.setItem('token', data.token)
+
         router.push('/min-side-laerer')
       } else {
         const errorData = await response.json();

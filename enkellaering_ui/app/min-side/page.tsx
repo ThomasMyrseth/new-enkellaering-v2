@@ -52,15 +52,16 @@ type Classes = {
 };
 
 export default function MinSideStudentPage() {
+    const token = localStorage.getItem('token')
+    
     const [student, setStudent] = useState<Student>()
 
     useEffect( () => {
         async function fetchStudent() {
             const response = await fetch(`${BASEURL}/get-student`, {
                 method: "GET",
-                credentials: "include",
                 headers: {
-                    "Content-Type": "application/json"
+                    'Authorization': `Bearer ${token}`
                 },
             })
 
@@ -121,6 +122,7 @@ function StudentName({student} : {student: Student}) {
 }
 
 function MyTeacher() {
+    const token = localStorage.getItem('token')
     const [loading, setLoading] = useState<boolean>(true)
     const [teacher, setTeacher] = useState<Teacher>()
     const [hasTeacher, setHasTeacher] = useState<boolean>(false)
@@ -129,9 +131,8 @@ function MyTeacher() {
         async function fetchTeacher() {
             const response = await fetch(`${BASEURL}/get-teacher-for-student`, {
                 method: "GET",
-                credentials: "include",
                 headers: {
-                    "Content-Type": "application/json"
+                    'Authorization': `Bearer ${token}`
                 }
             })
 
@@ -239,7 +240,9 @@ import {
 } from "@/components/ui/accordion";
 
 
-function PreviousClasses() {      
+function PreviousClasses() {     
+    const token = localStorage.getItem('token') 
+
     const [classes, setClasses] = useState<Classes[]>();
     const [firstTenClasses, setFirstTenclasses] = useState<Classes[]>()
     const [remainingClasses, setRemainingClasses] = useState<Classes[]>()
@@ -251,9 +254,8 @@ function PreviousClasses() {
         async function fetchClasses() {
             const response = await fetch(`${BASEURL}/get-classes-for-student`, {
                 method: "GET",
-                credentials: "include",
                 headers: {
-                    "Content-Type": "application/json"
+                    'Authorization': `Bearer ${token}`
                 },
             })
 

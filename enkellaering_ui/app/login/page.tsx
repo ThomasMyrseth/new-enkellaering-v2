@@ -31,7 +31,6 @@ export default function LoginForm() {
       // Send the token to the backend for further validation
       const response = await fetch(`${BASE_URL}/login`, {
         method: "POST",
-        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },

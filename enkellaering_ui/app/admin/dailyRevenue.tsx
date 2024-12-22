@@ -50,6 +50,7 @@ function getDaysInMonth(year :number, month :number) {
 }
 
 export function DailyRevenueChart() {
+    const token = localStorage.getItem('token')
     const [chartData, setChartData] = useState<Classes[]>()
     const [formattedChartData, setFormattedChartdata] = useState<FormattedClass[]>([])
     const [totalPayment, setTotalPayment] = useState<number>(0); // Use state for totalPayment
@@ -71,10 +72,9 @@ export function DailyRevenueChart() {
             try {
                 const response = await fetch(`${BASEURL}/get-all-classes`, {
                     method: "GET",
-                    credentials: "include",
                     headers: {
-                        "Content-Type": "application/json"
-                    }
+                        'Authorization': `Bearer ${token}`
+                      }
                 })
 
                 if (!response.ok) {
@@ -92,7 +92,7 @@ export function DailyRevenueChart() {
             }
         }
         fetchRevenue()
-    },[])
+    },[token])
 
     //fetching chartData
     useEffect(() => {

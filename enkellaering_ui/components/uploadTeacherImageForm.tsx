@@ -14,6 +14,8 @@ import {
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
 
 export const FileUploadForm = ({firstname, lastname} : {firstname :string, lastname: string}) => {
+    const token = localStorage.getItem('token')
+
     const [files, setFiles] = useState<File[]>([]);
     const [aboutMe, setAboutMe] = useState<string>('')
     const [fileError, setFileError] = useState<boolean | null>(null)
@@ -48,7 +50,9 @@ export const FileUploadForm = ({firstname, lastname} : {firstname :string, lastn
         try {
           const response = await fetch(`${BASEURL}/upload-teacher-image`, {
             method: "POST",
-            credentials: "include",
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
             body: formData, // Use FormData directly
           });
       

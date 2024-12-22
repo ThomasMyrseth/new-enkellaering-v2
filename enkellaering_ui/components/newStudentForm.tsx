@@ -33,9 +33,8 @@ export default function NewStudentForm() {
 
         const response = await fetch(`${BASEURL}/submit-new-student`, {
             method: "POST",
-            credentials: "include",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
             },
             body: JSON.stringify({
                 "phone": phone

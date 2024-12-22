@@ -25,6 +25,7 @@ const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
 
 
 export function NewStudentsWorkflow() {
+    const token = localStorage.getItem('token')
     const [loading, setLoading] = useState<boolean>(true)
     const [newStudents, setNewStudents] = useState<NewStudent[]>()
 
@@ -33,9 +34,8 @@ export function NewStudentsWorkflow() {
         async function getNewStudents() {
             const response = await fetch(`${BASEURL}/get-new-students`, {
                 method: "GET",
-                credentials: "include",
                 headers: {
-                    "Content-Type": "application/json"
+                    'Authorization': `Bearer ${token}`
                 }
             })
 
@@ -60,7 +60,7 @@ export function NewStudentsWorkflow() {
         }
 
         getNewStudents()
-    },[])
+    },[token])
 
     if (loading ) {
         return <p>Loading...</p>
@@ -84,6 +84,7 @@ import { Button } from "@/components/ui/button"
 
 const NewStudentTable =( {newStudents} : {newStudents : NewStudent[]})  => {
     const [teachers, setTeachers] = useState<Teacher[]>([])
+    const token = localStorage.getItem('token')
 
     //order newStudents by created_at
     newStudents.sort((a, b) => {
@@ -98,9 +99,8 @@ const NewStudentTable =( {newStudents} : {newStudents : NewStudent[]})  => {
 
             const response = await fetch(`${BASEURL}/get-all-teachers`, {
                 method: "GET",
-                credentials: "include",
                 headers: {
-                    "Content-Type": "application/json"
+                    'Authorization': `Bearer ${token}`
                 }
             })
 
@@ -125,7 +125,7 @@ const NewStudentTable =( {newStudents} : {newStudents : NewStudent[]})  => {
         }
 
         getAllTeachers()
-    },[])
+    },[token])
 
     return (<div className=" w-screen sm:w-full bg-white dark:bg-black rounded-sm shadow-lg flex flex-col items-center justify-center">
         <Table>
@@ -158,6 +158,7 @@ const NewStudentTable =( {newStudents} : {newStudents : NewStudent[]})  => {
 
 
 function NewStudentRow({ ns, teachers }: { ns: NewStudent, teachers :Teacher[] }) {
+    const token = localStorage.getItem('token')
 
     const [hasCalled, setHasCalled] = useState<boolean>(ns.has_called)
     const [calledAt, setCalledAt] = useState<Date>(new Date(ns.called_at))
@@ -220,9 +221,9 @@ function NewStudentRow({ ns, teachers }: { ns: NewStudent, teachers :Teacher[] }
 
         const response = await fetch(`${BASEURL}/update-new-student`, {
             method: "POST",
-            credentials: "include",
             headers: {
-                "Content-Type": "application/json"
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json' // Added Content-Type header
             },
             body: JSON.stringify({
                 "new_student_id": ns.new_student_id,

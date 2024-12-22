@@ -92,10 +92,14 @@ export default function SignupForm() {
       if (response.ok) {
         response.json().then(data => {
             const userId = data.user_id; // Extract user_id from the response
+            const token = data.token
+
+            localStorage.setItem('token', token)
             localStorage.setItem('isAuthenticated', 'true');
             localStorage.setItem('user_id', userId);
             localStorage.setItem('role', 'teacher');
             localStorage.setItem('isAuthenticated', 'true');
+            
             router.push(`/min-side-laerer`);
         }).catch(err => {
             console.error("Failed to parse response JSON:", err);

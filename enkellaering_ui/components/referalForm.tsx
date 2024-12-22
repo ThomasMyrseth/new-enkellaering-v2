@@ -38,7 +38,6 @@ export default function ReferalForm() {
 
         const response = await fetch(`${BASEURL}/submit-new-referal`, {
             method: "POST",
-            credentials: "include",
             headers: {
                 "Content-Type": "application/json"
             },

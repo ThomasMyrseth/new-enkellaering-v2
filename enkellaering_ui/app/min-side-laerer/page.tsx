@@ -80,15 +80,14 @@ import { FileUploadForm } from "@/components/uploadTeacherImageForm";
 
 export default function LaererPage() {
     const [teacher, setTeacher] = useState<Teacher>()
-
+    const token = localStorage.getItem('token'); // Or any secure storage method
     useEffect(() => {
         async function fetchTeacherName() {
 
             const response = await fetch(`${BASEURL}/get-teacher`, {
-                credentials: "include",
-                method: "GET",
+                method: 'GET',
                 headers: {
-                    "Content-Type": "application/json"
+                    'Authorization': `Bearer ${token}`
                 }
             })
 
@@ -171,6 +170,8 @@ function calculatePayment(classSession: Class, hourlyPay: number): number {
 }
 
 function DailyRevenueChart({ teacher }: { teacher: Teacher }) {
+    const token = localStorage.getItem('token')
+
     const [chartData, setChartData] = useState<Class[]>()
     const [formattedChartData, setFormattedChartdata] = useState<FormattedClass[]>()
     const [totalPayment, setTotalPayment] = useState<number>(0); // Use state for totalPayment
@@ -192,9 +193,8 @@ function DailyRevenueChart({ teacher }: { teacher: Teacher }) {
             try {
                 const response = await fetch(`${BASEURL}/fetch-classes-for-teacher`, {
                     method: "GET",
-                    credentials: "include",
                     headers: {
-                        "Content-Type": "application/json"
+                        'Authorization': `Bearer ${token}`
                     }
                 })
 
@@ -376,15 +376,15 @@ function AddNewClass({teacher}: {teacher: Teacher}) {
 
 
 function SelectStudent({ onStudentSelect} : {onStudentSelect: (user_id:string)=> void}) {
+    const token = localStorage.getItem('token')
     const [students, setStudents] = useState<Student[]>([])
 
     useEffect( () => {
         async function fetchStudents() {
             const response = await fetch(`${BASEURL}/get-students`, {
                 method: "GET",
-                credentials: "include",
                 headers: {
-                    "Content-Type": "application/json"
+                    'Authorization': `Bearer ${token}`
                 }
             })
 
@@ -618,6 +618,8 @@ function DateTimePicker({onStartDateSelected, onEndDateSelected} : {onStartDateS
 
 
 function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUserId, setUploadSuccessfull} : {teacher: Teacher; started_at?: Date; ended_at?: Date; comment?: string, selectedStudentUserId?: string, setUploadSuccessfull: (success: boolean) => void}) {
+    const token = localStorage.getItem('token')
+
     const [allValid, setAllValid] = useState<boolean>(false)
 
     useEffect( () => {
@@ -639,8 +641,8 @@ function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUse
         try {
             const response = await fetch(`${BASEURL}/upload-new-class`, {
             method: "POST",
-            credentials: "include",
             headers: {
+                'Authorization': `Bearer ${token}`,
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
@@ -708,6 +710,7 @@ type FullStudent = {
 }
 
 function YourStudent( {teacher} : {teacher: Teacher}) {
+    const token = localStorage.getItem('token')
     const [students, setStudents] = useState<FullStudent[]>([])
     const [currentStudent, setCurrentStudent] = useState<FullStudent>()
 
@@ -715,9 +718,8 @@ function YourStudent( {teacher} : {teacher: Teacher}) {
         async function fetchStudents() {
             const response = await fetch(`${BASEURL}/get-students`, {
                 method: "GET",
-                credentials: "include",
                 headers: {
-                    "Content-Type": "application/json",
+                    'Authorization': `Bearer ${token}`
                 }
             })
 

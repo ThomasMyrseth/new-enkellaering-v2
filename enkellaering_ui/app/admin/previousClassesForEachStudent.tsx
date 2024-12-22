@@ -36,6 +36,7 @@ type ClassesJoinStudent = {
 }
 
 export function PreviousClassesForEachStudent() {      
+    const token = localStorage.getItem('token')
 
     const [classes, setClasses] = useState<Classes[]>([]);
     const [students, setStudents] = useState<Student[]>([]);
@@ -49,9 +50,8 @@ export function PreviousClassesForEachStudent() {
         async function fetchClasses() {
             const response = await fetch(`${BASEURL}/get-all-classes`, {
                 method: "GET",
-                credentials: "include",
                 headers: {
-                    "Content-Type": "application/json"
+                    'Authorization': `Bearer ${token}`
                 }
             })
 
@@ -82,9 +82,8 @@ export function PreviousClassesForEachStudent() {
 
             const response = await fetch(`${BASEURL}/get-all-students`, {
                 method: "GET",
-                credentials: "include",
                 headers: {
-                    "Content-Type": "application/json"
+                    'Authorization': `Bearer ${token}`
                 }
             })
 
@@ -275,6 +274,7 @@ import {
 } from "@/components/ui/popover"
 
 const InvoiceStudentPopover = ( {student, classes} : {student: Student, classes: Classes[]}) => {
+    const token = localStorage.getItem('token')
 
     const [success, setSuccess] = useState<boolean | null>(null)
     let numberOfClassesToInvoice :number= 0
@@ -322,9 +322,9 @@ const InvoiceStudentPopover = ( {student, classes} : {student: Student, classes:
     const handleSetClassesToInvoiced = async () => {
         const res = await fetch(`${BASEURL}/set-classes-to-invoiced`, {
             method: "POST",
-            credentials: "include",
             headers: {
                 "Content-Type": "application/json", // Corrected header key
+                'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({
                 "class_ids": classIds

@@ -35,6 +35,7 @@ type classesJoinTeacher = {
 }
 
 export function PreviousClassesForEachTeacher() {      
+    const token = localStorage.getItem('token')
 
     const [classes, setClasses] = useState<Classes[]>([]);
     const [teachers, setTeachers] = useState<Teacher[]>([]);
@@ -49,9 +50,8 @@ export function PreviousClassesForEachTeacher() {
         async function fetchClasses() {
             const response = await fetch(`${BASEURL}/get-all-classes`, {
                 method: "GET",
-                credentials: "include",
                 headers: {
-                    "Content-Type": "application/json"
+                    'Authorization': `Bearer ${token}`
                 }
             })
 
@@ -78,9 +78,8 @@ export function PreviousClassesForEachTeacher() {
 
             const response = await fetch(`${BASEURL}/get-all-teachers`, {
                 method: "GET",
-                credentials: "include",
                 headers: {
-                    "Content-Type": "application/json"
+                    'Authorization': `Bearer ${token}`
                 }
             })
 
@@ -110,9 +109,8 @@ export function PreviousClassesForEachTeacher() {
 
             const response = await fetch(`${BASEURL}/get-all-students`, {
                 method: "GET",
-                credentials: "include",
                 headers: {
-                    "Content-Type": "application/json"
+                    'Authorization': `Bearer ${token}`
                 }
             })
 
@@ -444,6 +442,7 @@ import {
 } from "@/components/ui/popover"
 
 const PayTeacherPopover = ( {teacher, classes} : {teacher: Teacher, classes: Classes[] }) => {
+    const token = localStorage.getItem('token')
 
     const [success, setSuccess] = useState<boolean | null>(null)
     let numberOfClassesToPay :number= 0
@@ -491,9 +490,9 @@ const PayTeacherPopover = ( {teacher, classes} : {teacher: Teacher, classes: Cla
     const handleSetClassesToPaid = async () => {
         const res = await fetch(`${BASEURL}/set-classes-to-paid`, {
             method: "POST",
-            credentials: "include",
             headers: {
                 "Content-Type": "application/json", // Corrected header key
+                'Authorization': `Bearer ${token}` 
             },
             body: JSON.stringify({
                 "class_ids": classIds
