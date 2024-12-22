@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation";
   
 import { DailyRevenueChart } from "./dailyRevenue";
@@ -20,20 +20,52 @@ export default function AdminPage() {
     const router = useRouter()
     const [teacher, setTeacher] = useState<Teacher>()
 
-    function handleSetTeacher(teacher: Teacher) {
-        setTeacher(teacher)
-    }
 
-    useProtectAdmin({handleSetTeacher})
+    //fetch the current logged in teacher, and redirect if he is not admin
+    useEffect(() => {
+
+      async function fetchTeacher() {
+        try {
+          const response = await fetch(`${BASEURL}/get-teacher`, {
+            method: "GET",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+    
+          if (!response.ok) {
+            alert("Failed to fetch teacher: " + response.statusText);
+            
+            return false
+          }
+    
+          const data = await response.json();
+          const teacher = data.teacher;
+
+          if (!teacher) {
+            console.log("error fetching teacher!")
+            router.push("/error")
+          }
+          if (!teacher.admin) {
+            console.log(`${teacher.firstname} er ikke admin!`)
+            router.push("/login-laerer")
+          }
+
+          setTeacher(teacher)
+
+        } 
+        catch (error) {
+          console.error("Error fetching teacher:", error);
+          router.push("/error")
+        }
+      }
+      fetchTeacher()
+    },[])
 
     //this user is an admin
     if (!teacher) {
         return <p>Loading...</p>
-    }
-
-    if(!teacher.admin) {
-        console.log("Du er ikk en admin")
-        router.push("/login-teacher")
     }
 
     return (<div className="flex flex-col items-center justify-center w-full space-y-10 min-h-screen">
@@ -48,42 +80,6 @@ export default function AdminPage() {
 
     </div>)
 }
-
-
-const useProtectAdmin = async ({ handleSetTeacher }: { handleSetTeacher: (teacher: Teacher) => void }) => {
-  
-    try {
-      const response = await fetch(`${BASEURL}/get-teacher`, {
-        method: "GET",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        alert("Failed to fetch teacher: " + response.statusText);
-        
-        return false
-      }
-
-      const data = await response.json();
-      const teacher = data.teacher;
-
-      handleSetTeacher(teacher);
-
-      if (teacher.admin) {
-        return true
-      } else {
-        return false
-      }
-    } catch (error) {
-      console.error("Error fetching teacher:", error);
-      return false
-    }
-};
-
-
 
 
 

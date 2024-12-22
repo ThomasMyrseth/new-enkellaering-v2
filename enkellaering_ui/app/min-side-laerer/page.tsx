@@ -33,7 +33,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { AlertDialog, AlertDialogAction, AlertDialogFooter,AlertDialogContent,  AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogDescription, AlertDialogAction, AlertDialogFooter,AlertDialogContent,  AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 type Class = {
     comment: string; // Optional comment for the session
@@ -339,6 +339,7 @@ function AddNewClass({teacher}: {teacher: Teacher}) {
     return (<div className="w-3/4  p-4 bg-white dark:bg-black rounded-lg">
          {success && (
             <AlertDialog open={success}>
+                <AlertDialogDescription value="Timen ble lastet opp!"/>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Timen er lastet opp!</AlertDialogTitle>
@@ -354,7 +355,7 @@ function AddNewClass({teacher}: {teacher: Teacher}) {
             </AlertDialog>
         )}
         <div className="flex flex-col space-y-4 items-strech">
-            <SelectStudent teacher={teacher} onStudentSelect={handleStudentSelect} />
+            <SelectStudent onStudentSelect={handleStudentSelect} />
             <br />
             <DateTimePicker onStartDateSelected={handleStartDateSelect} onEndDateSelected={handleEndDateSelect}/>
             <br />
@@ -374,8 +375,7 @@ function AddNewClass({teacher}: {teacher: Teacher}) {
 }
 
 
-function SelectStudent({teacher, onStudentSelect} : {teacher: Teacher; onStudentSelect: (user_id:string)=> void}) {
-    const userId :string = teacher.user_id
+function SelectStudent({ onStudentSelect} : {onStudentSelect: (user_id:string)=> void}) {
     const [students, setStudents] = useState<Student[]>([])
 
     useEffect( () => {
@@ -390,7 +390,6 @@ function SelectStudent({teacher, onStudentSelect} : {teacher: Teacher; onStudent
 
             if (response.ok) {
                 const data = await response.json()
-                console.log("students: ", data.students)
                 setStudents(data.students)
 
                 // Automatically select the first student
@@ -404,7 +403,7 @@ function SelectStudent({teacher, onStudentSelect} : {teacher: Teacher; onStudent
         }
         fetchStudents()
 
-    },[ userId, onStudentSelect])
+    },[onStudentSelect])
 
 
     const handleValueChange = (value: string) => {
@@ -723,10 +722,8 @@ function YourStudent( {teacher} : {teacher: Teacher}) {
             })
 
             const r = await response.json()
-            console.log(r)
 
             const students = r.students
-            console.log(students)
             setCurrentStudent(students[0])
             setStudents(students)
         }
