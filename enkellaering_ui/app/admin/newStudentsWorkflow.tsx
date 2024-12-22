@@ -48,7 +48,6 @@ export function NewStudentsWorkflow() {
             const newStudents :NewStudent[] = data.new_students
 
             if (newStudents.length===0) {
-                console.log("No new students found")
                 setLoading(false)
                 setNewStudents([])
                 return null
@@ -72,7 +71,7 @@ export function NewStudentsWorkflow() {
     }
 
 
-    return NewStudentTable(newStudents)
+    return (<NewStudentTable newStudents={newStudents}/>)
     
 
 }
@@ -83,7 +82,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 
 
-function NewStudentTable(newStudents :NewStudent[]) {
+const NewStudentTable =( {newStudents} : {newStudents : NewStudent[]})  => {
+    const [teachers, setTeachers] = useState<Teacher[]>([])
 
     //order newStudents by created_at
     newStudents.sort((a, b) => {
@@ -92,6 +92,40 @@ function NewStudentTable(newStudents :NewStudent[]) {
         return dateB.getTime() - dateA.getTime();
     });
 
+    //get all the teachers and pass it to newStudentRow
+    useEffect( () => {
+        async function getAllTeachers() {
+
+            const response = await fetch(`${BASEURL}/get-all-teachers`, {
+                method: "GET",
+                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            })
+
+            if (!response.ok) {
+                alert("Error fetching teachers " + response.statusText)
+                setTeachers([])
+                return null
+            }
+
+            const data = await response.json()
+            const teachers :Teacher[] = data.teachers
+
+            if (teachers.length===0) {
+                alert("No teachers found")
+                setTeachers([])
+                return null
+            }
+
+            else {
+                setTeachers(teachers)
+            }
+        }
+
+        getAllTeachers()
+    },[])
 
     return (<div className=" w-screen sm:w-full bg-white dark:bg-black rounded-sm shadow-lg flex flex-col items-center justify-center">
         <Table>
@@ -115,7 +149,7 @@ function NewStudentTable(newStudents :NewStudent[]) {
                     </TableHeader>
                     <TableBody>
                         {newStudents.map( ns => {
-                            return <NewStudentRow key={ns.new_student_id} ns={ns}/>
+                            return <NewStudentRow key={ns.new_student_id} ns={ns} teachers={teachers}/>
                         })}
                     </TableBody>
                 </Table>   
@@ -123,8 +157,7 @@ function NewStudentTable(newStudents :NewStudent[]) {
 }
 
 
-function NewStudentRow({ ns }: { ns: NewStudent }) {
-    const [teachers, setTeachers] = useState<Teacher[]>([])
+function NewStudentRow({ ns, teachers }: { ns: NewStudent, teachers :Teacher[] }) {
 
     const [hasCalled, setHasCalled] = useState<boolean>(ns.has_called)
     const [calledAt, setCalledAt] = useState<Date>(new Date(ns.called_at))
@@ -148,41 +181,7 @@ function NewStudentRow({ ns }: { ns: NewStudent }) {
     const [comments, setComments] = useState<string>(ns.comments)
 
 
-    //get all the teachers
-    useEffect( () => {
-        async function getAllTeachers() {
 
-            const response = await fetch(`${BASEURL}/get-all-teachers`, {
-                method: "GET",
-                credentials: "include",
-                headers: {
-                    "Content-Type": "application/json"
-                }
-            })
-
-            if (!response.ok) {
-                alert("Error fetching teachers " + response.statusText)
-                setTeachers([])
-                return null
-            }
-
-            const data = await response.json()
-            const teachers :Teacher[] = data.teachers
-
-            if (teachers.length===0) {
-                alert("No teachers found")
-                console.log("No teachers found")
-                setTeachers([])
-                return null
-            }
-
-            else {
-                setTeachers(teachers)
-            }
-        }
-
-        getAllTeachers()
-    },[])
 
 
 
@@ -203,7 +202,6 @@ function NewStudentRow({ ns }: { ns: NewStudent }) {
         setHasAssignedTeacher(true)
         setAssignedTeacherAt(new Date())
         setAssignedTeacherUserId(teacherUserId)
-        console.log("assigning", teacherUserId)
     }
 
     const handleSetFinishedOnboarding = (value :string) => {
@@ -219,7 +217,6 @@ function NewStudentRow({ ns }: { ns: NewStudent }) {
     }
 
     const handleSaveClick = async () => {
-        console.log("saving teacher ", assingedTeacherUserId)
 
         const response = await fetch(`${BASEURL}/update-new-student`, {
             method: "POST",
@@ -356,34 +353,30 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { useCallback } from "react";
+import { useMemo } from "react";
 
 const SetTeacherCombobox = ({ ns, teachers, passSelectedTeacher } : { ns :NewStudent, teachers : Teacher[], passSelectedTeacher : (userId :string) => void }) => {
     const [teacherUserId, setTeacherUserId] = useState<string | null>(ns.assigned_teacher_user_id ||null)
     const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null)
     const [open, setOpen] = useState<boolean>(false)
 
-      // Wrap the function in useCallback to ensure stable reference
-    const findTeacherById = useCallback(
-        (userId: string | null) => {
-        return teachers.find((teacher) => teacher.user_id === userId);
-        },
-    [teachers] // Only re-create if the `teachers` array changes
-    );
+
+    const findTeacherById = ((userId :string) => {
+        const t = teachers.find((teacher) => teacher.user_id === userId);
+        if (!t) {
+            return null
+        }
+        else {
+            return t
+        }
+    });
 
     const handleSelectTeacher = (userId: string) => {
-        console.log("selected: ", userId)
         setTeacherUserId(userId);
         const selectedTeacher = findTeacherById(userId) || null;
         setSelectedTeacher(selectedTeacher)
         passSelectedTeacher(userId)
     };
-
-    useEffect( () => {
-        const selectedTeacher = findTeacherById(teacherUserId) || null;
-        setSelectedTeacher(selectedTeacher)
-        console.log(selectedTeacher?.firstname)
-    }, [teacherUserId, teachers, findTeacherById])
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
@@ -397,7 +390,7 @@ const SetTeacherCombobox = ({ ns, teachers, passSelectedTeacher } : { ns :NewStu
             >
               {teacherUserId
                 ? selectedTeacher?.firstname + " " + selectedTeacher?.lastname
-                : "Velg lærer"}
+                : "Ingen lærer tildelt"}
               <ChevronsUpDown className="opacity-50" />
             </Button>
           </PopoverTrigger>

@@ -6,6 +6,7 @@ import { AuthProvider } from '../context/AuthContext';
 import { ThemeProvider } from '@/components/theme-provider';
 import { useState } from 'react';
 import './globals.css'; // Make sure this path is correct
+import Head from 'next/head';
 import MenuBarMobile from '@/components/ui/menubarMobile';
 import Sidebar from '@/components/ui/sidebar';
 
@@ -20,6 +21,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <html lang="en">
+      <Head>
+        <link rel="icon" href="/favicon.ico" />
+        <title>Enkel Laering</title>
+        <meta 
+          name="Velkommen til Enkel Læring. Vi tilbyr privatundervisning av øverste klasse til deg og dine barn"
+         content="Enkel Læring tilbyr privatundervisning til elever ved grunnskolen og videregående" />
+      </Head>
       <body>
         <ThemeProvider
           attribute="class"

@@ -73,11 +73,7 @@ export function PreviousClassesForEachTeacher() {
             }
         }
         fetchClasses()
-    
-    },[])
 
-    //get all the teachers
-    useEffect( () => {
         async function getAllTeachers() {
 
             const response = await fetch(`${BASEURL}/get-all-teachers`, {
@@ -108,12 +104,8 @@ export function PreviousClassesForEachTeacher() {
                 setTeachers(teachers)
             }
         }
-
         getAllTeachers()
-    },[])
 
-    //get all the students
-    useEffect( () => {
         async function getAllStudents() {
 
             const response = await fetch(`${BASEURL}/get-all-students`, {
@@ -146,9 +138,84 @@ export function PreviousClassesForEachTeacher() {
                 setLoading(false)
             }
         }
-
         getAllStudents()
+
+    
     },[])
+
+    // //get all the teachers
+    // useEffect( () => {
+    //     async function getAllTeachers() {
+
+    //         const response = await fetch(`${BASEURL}/get-all-teachers`, {
+    //             method: "GET",
+    //             credentials: "include",
+    //             headers: {
+    //                 "Content-Type": "application/json"
+    //             }
+    //         })
+
+    //         if (!response.ok) {
+    //             alert("Error fetching teachers " + response.statusText)
+    //             setTeachers([])
+    //             return null
+    //         }
+
+    //         const data = await response.json()
+    //         const teachers :Teacher[] = data.teachers
+
+    //         if (teachers.length===0) {
+    //             alert("No teachers found")
+    //             console.log("No teachers found")
+    //             setTeachers([])
+    //             return null
+    //         }
+
+    //         else {
+    //             setTeachers(teachers)
+    //         }
+    //     }
+
+    //     getAllTeachers()
+    // },[])
+
+    // //get all the students
+    // useEffect( () => {
+    //     async function getAllStudents() {
+
+    //         const response = await fetch(`${BASEURL}/get-all-students`, {
+    //             method: "GET",
+    //             credentials: "include",
+    //             headers: {
+    //                 "Content-Type": "application/json"
+    //             }
+    //         })
+
+    //         if (!response.ok) {
+    //             alert("Error fetching students " + response.statusText)
+    //             setStudents([])
+    //             return null
+    //         }
+
+    //         const data = await response.json()
+    //         const students :Student[] = data.students
+
+    //         if (students.length===0) {
+    //             alert("No students found")
+    //             console.log("No students found")
+    //             setStudents([])
+    //             return null
+    //         }
+
+
+    //         else {
+    //             setStudents(students)
+    //             setLoading(false)
+    //         }
+    //     }
+
+    //     getAllStudents()
+    // },[])
 
     //map each teacher to his classes
     useEffect( () => {
@@ -171,7 +238,6 @@ export function PreviousClassesForEachTeacher() {
                 teacher: t
             })
         })
-
         setClassesByTeacher(classesByTeacher)
 
     },[classes, teachers])

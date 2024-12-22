@@ -42,6 +42,8 @@ export const FileUploadForm = ({firstname, lastname} : {firstname :string, lastn
         formData.append("file", files[0]); // Add the first file
         formData.append("firstname", firstname)
         formData.append("lastname", lastname)
+
+        console.log("formdata is: ", formData)
       
         try {
           const response = await fetch(`${BASEURL}/upload-teacher-image`, {

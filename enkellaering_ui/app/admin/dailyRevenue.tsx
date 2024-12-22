@@ -94,40 +94,42 @@ export function DailyRevenueChart() {
         fetchRevenue()
     },[])
 
-    //aggregate payments
+    //fetching chartData
     useEffect(() => {
-        //go thrugh each day of the month
-        const currentDate = new Date(); // Get the current date and time
-        const currentMonth = currentDate.getMonth(); // Get the current month (0-11)
-        const numberOfDays = getDaysInMonth(currentDate.getFullYear(), currentMonth + 1); // Get the number of days in the current month
-        let totalPayment :number =0;
-
-        //go through classses and populate chartdata by each day
+        if (!chartData) return; // or if (chartData.length === 0) return;
+        
+        const currentDate = new Date();
+        const currentMonth = currentDate.getMonth();
+        const numberOfDays = getDaysInMonth(currentDate.getFullYear(), currentMonth + 1);
+      
+        let totalPayment = 0;
+        const tempFormattedData: FormattedClass[] = [];
+      
         for (let day = 1; day <= numberOfDays; day++) {
-            const thisDate :Date= new Date(currentDate.getFullYear(), currentMonth, day);
-            const thisDateString: string = thisDate.toISOString().split("T")[0]; // Format to YYYY-MM-DD
-
-            let totalPaymentToday :number = 0
-            chartData?.forEach( c => {
-                const startedAtDate = new Date(c.started_at);
-                const startedAtString = startedAtDate.toISOString().split("T")[0]; // Format to YYYY-MM-DD
-
-                if (startedAtString === thisDateString) {
-                    totalPaymentToday += calculatePayment(c, 540);
-                }
-            })
-
-            const formattedClass = {
-                started_at: thisDateString,
-                payment: totalPaymentToday
+          const thisDate = new Date(currentDate.getFullYear(), currentMonth, day);
+          const thisDateString = thisDate.toISOString().split("T")[0];
+      
+          let totalPaymentToday = 0;
+      
+          chartData.forEach((c) => {
+            const startedAtDate = new Date(c.started_at);
+            const startedAtString = startedAtDate.toISOString().split("T")[0]; 
+            if (startedAtString === thisDateString) {
+              totalPaymentToday += calculatePayment(c, 540);
             }
-
-            setFormattedChartdata(prevData => [...prevData, formattedClass])
-            totalPayment += totalPaymentToday
+          });
+      
+          tempFormattedData.push({
+            started_at: thisDateString,
+            payment: totalPaymentToday,
+          });
+      
+          totalPayment += totalPaymentToday;
         }
-
-        setTotalPayment(totalPayment)
-
+      
+        // Now do just one update
+        setFormattedChartdata(tempFormattedData);
+        setTotalPayment(totalPayment);
       }, [chartData]);
     
     
