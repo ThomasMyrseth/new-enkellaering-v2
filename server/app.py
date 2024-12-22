@@ -16,7 +16,7 @@ from uuid import uuid4
 from firebase_admin import credentials, initialize_app
 from functools import wraps
 from flask import session, redirect, url_for
-
+import jwt
 
 from big_query.gets import get_all_about_me_texts, get_all_students, get_student_by_email, get_all_new_students, get_teacher_by_user_id, get_classes_by_teacher, get_student_for_teacher, get_student_by_user_id, get_teacher_for_student, get_classes_for_student, get_all_classes, get_all_teachers
 from big_query.inserts import insert_student, insert_teacher, insert_class, insert_new_student, upsert_about_me_text
@@ -30,7 +30,9 @@ load_dotenv()
 app = Flask(__name__)
 
 # Configure logging, environment variables, etc.
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'fallback_super_secret_key')
+SECRET_KEY = os.getenv('SECRET_KEY')
+if not SECRET_KEY:
+    raise ValueError("No SECRET_KEY set for Flask application")
 app.config['SESSION_PERMANENT'] = True
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
 app.config['SESSION_USE_SIGNER'] = True
@@ -173,32 +175,69 @@ initialize_app(cred)
 
 
 
-# def login_required(f):
-#     @wraps(f)
-#     def decorated_function(*args, **kwargs):
-#         user_id = session.get("user_id")
-#         logging.info(f"Checking userId in loginRequired, userId: {user_id}")
-#         if not user_id:
-#             return redirect(url_for('login'))  # or return a JSON response
-#         return f(*args, **kwargs)
-#     return decorated_function
+SECRET_KEY = os.getenv('SECRET_KEY', 'fallback_super_secret_key')
+from datetime import timezone
+def generate_token(user_id):
+    payload = {
+        'user_id': user_id,
+        'exp': datetime.now(timezone.utc) + timedelta(hours=1),  # Token expiration
+        'iat': datetime.now(timezone.utc)
+    }
+    token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
+    logging.info(f"Generated token for user_id {user_id}: {token}")
+    if isinstance(token, bytes):
+        token = token.decode('utf-8')
+    return token
 
-# @app.route('/protected-route')
-# @login_required
-# def protected_route():
-#     return "This is a protected route"
 
+def decode_token(token):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
+        logging.info(f"Decoded token payload: {payload}")
+        return payload['user_id']
+    except jwt.ExpiredSignatureError:
+        logging.warning("Token has expired.")
+        return None
+    except jwt.InvalidTokenError:
+        logging.warning("Invalid token.")
+        return None
+
+
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+        # JWT is expected in the Authorization header
+        if 'Authorization' in request.headers:
+            auth_header = request.headers['Authorization']
+            parts = auth_header.split()
+            if len(parts) == 2 and parts[0].lower() == 'bearer':
+                token = parts[1]
+
+        if not token:
+            logging.warning("Token is missing in the request.")
+            return jsonify({'error': 'Token is missing!'}), 401
+
+        user_id = decode_token(token)
+        logging.info("token requored, user_id found is: ", user_id)
+        if not user_id:
+            logging.warning("Token is invalid or expired.")
+            return jsonify({'error': 'Token is invalid or expired!'}), 401
+
+        # Pass the user_id to the route function
+        return f(user_id, *args, **kwargs)
+
+    return decorated
 
 @app.route('/hello', methods=["GET"])
 def hello_route():
-    user_id = session.get('user_id')
-    return jsonify({"message": f"Hello World! Current user id: {user_id}"})
+    return jsonify({"message": f"Hello World!"})
 
 
 
 @app.route('/get-user-id', methods=['GET'])
-def get_user_id():
-    user_id = session.get('user_id')
+@token_required
+def get_user_id(user_id):
     if user_id:
         return jsonify({'user_id': user_id}), 200
     else:
@@ -206,8 +245,10 @@ def get_user_id():
     
 
 @app.route('/get-teacher', methods=['GET'])
-def get_current_teacher():
-    user_id = session.get('user_id')  # Check if user_id exists
+@token_required
+def get_current_teacher(user_id):
+    logging.info(f"Fetching teacher data for user_id: {user_id}")
+    print(f"fetching teacher for {user_id}")
     if not user_id:
         return jsonify({"error": "User id not found"}), 401  # Unauthorized
 
@@ -289,12 +330,11 @@ def register():
 
         # Save user_id in session
         session['user_id'] = user_id
-        session['firstname'] = firstname_student
-        session['lastname'] = lastname_student
-        session['email'] = email_parent
+        token = generate_token(user_id)
+
         logging.info(f"Student {user_id} successfully registered.")
 
-        return jsonify({"message": "User registered successfully.", "user_id": user_id}), 200
+        return jsonify({"message": "User registered successfully.", "user_id": user_id, "token": token}), 200
 
     except auth.InvalidIdTokenError:
         logging.error("Invalid Firebase ID token.")
@@ -357,11 +397,13 @@ def register_teacher():
 
         # Save minimal user data in session
         session['user_id'] = user_id
+        token = generate_token(user_id=user_id)
 
         logging.info(f"Teacher {user_id} successfully registered.")
         return jsonify({
             "message": "User registered successfully.",
-            "user_id": user_id    
+            "user_id": user_id,
+            "token": token    
         }), 200
 
     except Exception as e:
@@ -408,17 +450,10 @@ def login():
         user_id = user["user_id"]
 
         # Save user session with minimal data
-        session['user_id'] = str(user_id) or "default_user_ud"
-        session['role'] = "student"
-        session['firstname_parent'] = user['firstname_parent']
-        session['lastname_parent'] = user['lastname_parent']
-        session['email_parent'] = email
-        session['firstname_student'] = user['firstname_student']
-        session['lastname_student'] = user['lastname_student']
+        session['user_id'] = str(user_id) or "default_user_id"
+        token = generate_token(user_id)
 
-        print(f"User {user_id} successfully logged in.")
-
-        return jsonify({"message": "Login successful", "user_id": user_id}), 200
+        return jsonify({"message": "Login successful", "user_id": user_id, "token": token}), 200
 
     except auth.InvalidIdTokenError:
         logging.error("Invalid Firebase ID token.")
@@ -431,6 +466,7 @@ def login():
 
 @app.route('/login-teacher', methods=['POST'])
 def login_teacher():
+    print("loggin in new teacher")
     try:
         # Get the Firebase ID token from the request
         id_token = request.json.get('id_token')
@@ -464,18 +500,11 @@ def login_teacher():
         # Extract user data from query results
         user = results[0]
         user_id = user["user_id"]
+        print("logged in user id is", user_id)
+        token = generate_token(user['user_id'])
 
-        # Save user session with minimal data
-        session['user_id'] = str(user_id) or "default_user_id"
-        session['firstname'] = user['firstname']
-        session['lastname'] = user['lastname']
-        session['email'] = email
 
-        logging.info(f"User ID in loggin-laerer route is: {session.get('user_id')}")
-
-        print(f"User {user_id} successfully logged in.")
-
-        return jsonify({"message": "Login successful", "userId": user_id}), 200
+        return jsonify({"message": "Login successful", "userId": user_id, "token": token}), 200
 
     except auth.InvalidIdTokenError:
         logging.error("Invalid Firebase ID token.")
@@ -485,23 +514,23 @@ def login_teacher():
         return jsonify({"error": "Authentication failed", "details": str(e)}), 500
 
 
-@app.route('/logout', methods=['GET'])
+@app.route('/logout', methods=['POST'])
 def logout():
     try:
-        # Clear the user's session
-        session.clear()
+        # Clear the JWT cookie by setting it to expire immediately
+        response = jsonify({"message": "Logout successful"})
+        response.set_cookie('token', '', expires=0, httponly=True, secure=True, samesite='None')
         logging.info("User successfully logged out.")
-        return jsonify({"message": "Logout successful"}), 200
+        return response, 200
     except Exception as e:
         logging.error(f"Error during logout: {str(e)}")
         return jsonify({"error": "Logout failed", "details": str(e)}), 500
 
 
 
-
 @app.route('/fetch-classes-for-teacher', methods=["GET"])
-def fetch_classes_for_teacher():
-    user_id = session.get('user_id')
+@token_required
+def fetch_classes_for_teacher(user_id):
 
     print("session user id", session.get("user_i"))
 
@@ -522,8 +551,8 @@ def fetch_classes_for_teacher():
     }), 200
 
 @app.route('/get-students', methods=["GET"])
-def get_students():
-    user_id = session.get('user_id')
+@token_required
+def get_students(user_id):
 
     if not user_id:
         return jsonify({"message": "missing user id"})
@@ -536,7 +565,8 @@ def get_students():
     }), 200
 
 @app.route('/upload-new-class', methods=["POST"])
-def upload_new_class():
+@token_required
+def upload_new_class(user_id):
     data = request.get_json()
     teacher_user_id = data.get('teacher_user_id')
     student_user_id = data.get('student_user_id')
@@ -576,8 +606,8 @@ def upload_new_class():
 
 
 @app.route('/get-student', methods=["GET"])
-def get_student():
-    user_id = session.get('user_id')
+@token_required
+def get_student(user_id):
 
     res = get_student_by_user_id(client=bq_client, user_id=user_id)
 
@@ -591,8 +621,8 @@ def get_student():
     }, 200
 
 @app.route('/get-teacher-for-student', methods=["GET"])
-def get_teacher_for_student_route():
-    user_id = session.get('user_id')
+@token_required
+def get_teacher_for_student_route(user_id):
 
     res = get_teacher_for_student(client=bq_client, student_user_id=user_id)
 
@@ -613,8 +643,8 @@ def get_teacher_for_student_route():
     }), 200
 
 @app.route('/get-classes-for-student', methods=["GET"])
-def get_classes_for_student_route():
-    user_id = session.get('user_id')
+@token_required
+def get_classes_for_student_route(user_id):
 
     res = get_classes_for_student(client=bq_client, student_user_id=user_id)
 
@@ -637,8 +667,9 @@ def get_classes_for_student_route():
 
 
 @app.route('/get-all-classes', methods=["GET"])
-def get_all_classes_route():
-    admin_user_id = session.get('user_id')
+@token_required
+def get_all_classes_route(user_id):
+    admin_user_id = user_id
 
     res = get_all_classes(client=bq_client, admin_user_id=admin_user_id)
 
@@ -661,8 +692,9 @@ def get_all_classes_route():
     }), 200
 
 @app.route('/get-all-teachers', methods=["GET"])
-def get_all_teachers_route():
-    admin_user_id = session.get('user_id')
+@token_required
+def get_all_teachers_route(user_id):
+    admin_user_id = user_id
 
     if not admin_user_id:
         return jsonify({"message": "Missing admin user id"}), 400
@@ -687,8 +719,9 @@ def get_all_teachers_route():
 
 
 @app.route('/get-all-students', methods=["GET"])
-def get_all_students_route():
-    admin_user_id = session.get('user_id')
+@token_required
+def get_all_students_route(user_id):
+    admin_user_id = user_id
 
     if not admin_user_id:
         return jsonify({"message": "Missing admin user id"}), 400
@@ -718,8 +751,9 @@ def get_all_students_route():
 
 
 @app.route('/get-new-students', methods=["GET"])
-def get_new_students_route():
-    admin_user_id = session.get('user_id')
+@token_required
+def get_new_students_route(user_id):
+    admin_user_id = user_id
 
     if not admin_user_id:
         return jsonify({
@@ -751,7 +785,9 @@ from big_query.bq_types import NewStudents
 from big_query.alters import alterNewStudent
 
 @app.route('/update-new-student', methods=["POST"])
-def update_new_student_workflow():
+@token_required
+def update_new_student_workflow(user_id):
+    admin_user_id = user_id
     data = request.get_json()
 
     logging.info(f"data from update new student: {data}")
@@ -764,7 +800,6 @@ def update_new_student_workflow():
 
     # Extract fields
     new_student_id = data.get("new_student_id")
-    admin_user_id = session.get("user_id")
 
     # Build the updates dictionary
     update = {
@@ -877,10 +912,10 @@ def validate_new_student_data(data: dict) -> tuple[bool, str]:
 
 
 @app.route('/set-classes-to-invoiced', methods=["POST"])
-def set_classes_to_invoiced_route():
+@token_required
+def set_classes_to_invoiced_route(user_id):
+    admin_user_id = user_id
     data = request.get_json()
-
-    admin_user_id = data.get('admin_user_id')
     class_ids = data.get('class_ids')
 
     if not admin_user_id or not class_ids:
@@ -901,10 +936,10 @@ def set_classes_to_invoiced_route():
     return jsonify({"message": "successfully set classes to invoiced"}), 200
 
 @app.route('/set-classes-to-paid', methods=["POST"])
-def set_classes_to_paid_route():
+@token_required
+def set_classes_to_paid_route(user_id):
+    admin_user_id = user_id
     data = request.get_json()
-
-    admin_user_id = data.get('admin_user_id')
     class_ids = data.get('class_ids')
 
     if not admin_user_id or not class_ids:
@@ -1026,13 +1061,13 @@ import mimetypes
 
 
 @app.route("/upload-teacher-image", methods=["POST"])
-def upload_file():
+@token_required
+def upload_file(user_id):
     if "file" not in request.files:
         logging.error("No file found in teacher image upload")
         return jsonify({"error": "No file part"}), 400
 
     file = request.files["file"]  # File object from form
-    user_id = session.get("user_id")  # user_id from from session
     about_me = request.form.get("about_me")  # about_me text from form data
     firstname = request.form.get("firstname")
     lastname = request.form.get("lastname")
@@ -1104,4 +1139,4 @@ def get_all_images_and_about_mes():
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))  # Use PORT from the environment or default to 8080
-    app.run(host="0.0.0.0", port=port)
+    app.run(debug=True ,host="0.0.0.0", port=port)

@@ -38,8 +38,11 @@ export default function LoginForm() {
       });
 
       if (response.ok) {
-        response.json().then( () => {
+        response.json().then( (data) => {
+          
+          localStorage.setItem('token', data.token)
           localStorage.setItem('isAuthenticated', 'true');
+
           router.push(`/min-side`);
         }).catch(err => {
             console.error("Failed to parse response JSON:", err);
