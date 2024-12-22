@@ -61,7 +61,7 @@ export default function AdminPage() {
         }
       }
       fetchTeacher()
-    },[])
+    },[router])
 
     //this user is an admin
     if (!teacher) {
