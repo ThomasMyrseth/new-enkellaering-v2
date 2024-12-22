@@ -339,7 +339,7 @@ function AddNewClass({teacher}: {teacher: Teacher}) {
     return (<div className="w-3/4  p-4 bg-white dark:bg-black rounded-lg">
          {success && (
             <AlertDialog open={success}>
-                <AlertDialogDescription value="Timen ble lastet opp!"/>
+                <AlertDialogDescription>Timen er lastet opp!</AlertDialogDescription>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Timen er lastet opp!</AlertDialogTitle>
