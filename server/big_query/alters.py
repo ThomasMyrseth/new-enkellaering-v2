@@ -13,9 +13,6 @@ NEW_STUDENTS_DATASET = os.getenv('NEW_STUDENTS_DATASET')
 
 def alterNewStudent(client: bigquery.Client, new_student_id: str, admin_user_id: str, updates: dict):
 
-    print("new student id: ", new_student_id)
-    print("updates: \n", updates)
-
     query = f"""
         UPDATE `new_students.new_students`
         SET
@@ -62,6 +59,7 @@ def alterNewStudent(client: bigquery.Client, new_student_id: str, admin_user_id:
         bigquery.ScalarQueryParameter("comments", "STRING", updates.get("comments")),
         bigquery.ScalarQueryParameter("paid_referee", "BOOL", updates.get("paid_referee")),
         bigquery.ScalarQueryParameter("paid_referee_at", "TIMESTAMP", updates.get("paid_referee_at")),
+        bigquery.ScalarQueryParameter("new_student_id", "STRING", new_student_id)
     ]
 
     # Configure the query job

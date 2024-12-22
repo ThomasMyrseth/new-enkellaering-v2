@@ -37,11 +37,11 @@ export default function AdminPage() {
     }
 
     return (<div className="flex flex-col items-center justify-center w-full space-y-10 min-h-screen">
-        {/* <TeacherName teacher={teacher}/> */}
+        <TeacherName teacher={teacher}/>
         <div className="flex flex-col items-center justify-center w-3/4 max-w-screen-lg space-y-10 mx-auto px-4">
-          {/* <DailyRevenueChart />
+          <DailyRevenueChart />
           <PreviousClassesForEachTeacher />
-          <PreviousClassesForEachStudent /> */}
+          <PreviousClassesForEachStudent />
           <NewStudentsWorkflow />
         </div>
         <div className="h-10"> </div>
@@ -50,48 +50,37 @@ export default function AdminPage() {
 }
 
 
-import { useEffect } from "react";
+const useProtectAdmin = async ({ handleSetTeacher }: { handleSetTeacher: (teacher: Teacher) => void }) => {
+  
+    try {
+      const response = await fetch(`${BASEURL}/get-teacher`, {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
-const useProtectAdmin = ({ handleSetTeacher }: { handleSetTeacher: (teacher: Teacher) => void }) => {
-    const [isAdmin, setIsAdmin] = useState<boolean>(false);
-  
-    useEffect(() => {
-      const fetchTeacher = async () => {
-        try {
-          const response = await fetch(`${BASEURL}/get-teacher`, {
-            method: "GET",
-            credentials: "include",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          });
-  
-          if (!response.ok) {
-            alert("Failed to fetch teacher: " + response.statusText);
-            setIsAdmin(false);
-            return;
-          }
-  
-          const data = await response.json();
-          const teacher = data.teacher;
-  
-          handleSetTeacher(teacher);
-  
-          if (teacher.admin) {
-            setIsAdmin(true);
-          } else {
-            setIsAdmin(false);
-          }
-        } catch (error) {
-          console.error("Error fetching teacher:", error);
-          setIsAdmin(false);
-        }
-      };
-  
-      fetchTeacher();
-    }, []);
-  
-    return isAdmin;
+      if (!response.ok) {
+        alert("Failed to fetch teacher: " + response.statusText);
+        
+        return false
+      }
+
+      const data = await response.json();
+      const teacher = data.teacher;
+
+      handleSetTeacher(teacher);
+
+      if (teacher.admin) {
+        return true
+      } else {
+        return false
+      }
+    } catch (error) {
+      console.error("Error fetching teacher:", error);
+      return false
+    }
 };
 
 

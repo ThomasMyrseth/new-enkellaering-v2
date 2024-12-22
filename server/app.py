@@ -763,8 +763,8 @@ def update_new_student_workflow():
         return jsonify({"message": f"Validation error: {error_message}"}), 400
 
     # Extract fields
-    newStudentId = data["new_student_id"]
-    admin_user_id = session.get["user_id"]
+    new_student_id = data.get("new_student_id")
+    admin_user_id = session.get("user_id")
 
     # Build the updates dictionary
     update = {
@@ -789,9 +789,11 @@ def update_new_student_workflow():
     # Clean the updates dictionary
     update = clean_updates(update)
 
+    print("updates: ", update)
+
     # Perform the update
     try:
-        res = alterNewStudent(client=bq_client, new_student_id=newStudentId, admin_user_id=admin_user_id, updates=update)
+        res = alterNewStudent(client=bq_client, new_student_id=new_student_id, admin_user_id=admin_user_id, updates=update)
         res.result()  # Force query execution to detect any errors
     except Exception as e:
         logging.error("BigQuery error:", e)
@@ -840,7 +842,6 @@ def validate_new_student_data(data: dict) -> tuple[bool, str]:
         "has_answered": bool,
         "has_signed_up": bool,
         "from_referal": bool,
-        "admin_user_id": str,
         "has_assigned_teacher": bool,
     }
 
@@ -1031,7 +1032,7 @@ def upload_file():
         return jsonify({"error": "No file part"}), 400
 
     file = request.files["file"]  # File object from form
-    user_id = session.get("user_id")  # user_id from form data
+    user_id = session.get("user_id")  # user_id from from session
     about_me = request.form.get("about_me")  # about_me text from form data
     firstname = request.form.get("firstname")
     lastname = request.form.get("lastname")
