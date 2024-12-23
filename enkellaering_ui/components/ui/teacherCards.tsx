@@ -29,10 +29,6 @@ export const TeacherFocusCards= () => {
         try {
         const response = await fetch(`${BASEURL}/get-all-teacher-images-and-about-mes`, {
             method: "GET",
-            credentials: "include",
-            headers: {
-            "Content-Type": "application/json",
-            },
         });
 
         if (!response.ok) {
@@ -41,7 +37,6 @@ export const TeacherFocusCards= () => {
         }
 
         const data = await response.json();
-        console.log(data);
 
         if (!data.about_mes || !data.images) {
             console.error("Invalid response format.");

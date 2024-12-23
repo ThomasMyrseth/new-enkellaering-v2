@@ -62,9 +62,11 @@ export const Card = React.memo(
           <div className="text-xl md:text-2xl font-medium bg-clip-text text-transparent bg-gradient-to-b from-neutral-50 to-neutral-200">
             {card.title}
           </div>
-          <div className="text-sm md:text-base text-neutral-300 mt-2">
-            {card.description || "No description available"}
-          </div>
+          <div
+            className="text-sm md:text-base overflow-y-auto text-neutral-300 mt-2 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200"
+          >
+          {card.description || "No description available"}
+        </div>
         </div>
       </div>
     );
