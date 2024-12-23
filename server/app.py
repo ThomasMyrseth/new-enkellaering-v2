@@ -48,7 +48,8 @@ CORS(app, resources={
         "origins": [
             "https://new-enkellaering-v2.vercel.app",
             "http://localhost:3000",
-            "https://enkellaering.no"
+            "https://enkellaering.no",
+            "https://www.enkellaering.no"
         ]
     }
 }, supports_credentials=True)
