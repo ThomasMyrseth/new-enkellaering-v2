@@ -189,7 +189,7 @@ export default function SignupForm() {
         {/* Subjects and Comments */}
         <LabelInputContainer>
           <Label htmlFor="desired-subjects">Ønskede fag å få undervisning i</Label>
-          <Input id="desired-subjects" placeholder="Matte, engelsk" type="text" />
+          <Input id="desired-subjects" placeholder="VG1: Matte 1T, engelsk" type="text" />
         </LabelInputContainer>
         <LabelInputContainer>
           <Label htmlFor="additional-comments">Andre kommentarer</Label>
