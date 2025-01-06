@@ -9,6 +9,8 @@ import { useRouter } from "next/navigation";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../auth/firebase";
 
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+
 
 export default function SignupForm() {
   const [validParentPhone, setValidParentPhone] = useState(true);
@@ -16,6 +18,7 @@ export default function SignupForm() {
   const [validPostalCode, setValidPostalCode] = useState(true);
   const [passwordsMatch, setPasswordsMatch] = useState(true);
   const [validPassword, setValidPassword] = useState(true)
+  const [hasPhysicalTutouring, setHasPhysicalTutouring] = useState<boolean>(true)
 
   const router = useRouter();
   const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
@@ -92,6 +95,7 @@ export default function SignupForm() {
           address: form["address"].value,
           postal_code: form["postal-code"].value,
           main_subjects: form["desired-subjects"].value,
+          has_physical_tutoring: hasPhysicalTutouring,
           additional_comments: form["additional-comments"].value,
         }),
       });
@@ -120,6 +124,10 @@ export default function SignupForm() {
     }
   };
 
+  const handleSetPhysical = (value :string) => {
+    const physical :boolean = value === "Fysisk"
+    setHasPhysicalTutouring(physical)
+  }
   return (
     <div className="max-w-md w-full mx-auto rounded-none md:rounded-2xl p-4 md:p-8 shadow-input bg-white dark:bg-black">
       <h2 className="font-bold text-xl text-neutral-800 dark:text-neutral-200">Velkommen til Enkel Læring</h2>
@@ -191,6 +199,21 @@ export default function SignupForm() {
           <Label htmlFor="desired-subjects">Ønskede fag å få undervisning i</Label>
           <Input id="desired-subjects" placeholder="VG1: Matte 1T, engelsk" type="text" />
         </LabelInputContainer>
+
+        <LabelInputContainer>
+          <Label>Skal dere ha fysisk eller digital undervisning?</Label>
+          <RadioGroup defaultValue="Fysisk" value={hasPhysicalTutouring ? "Fysisk" : "Digital"} onValueChange={handleSetPhysical}>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="Fysisk" id="fysisk" />
+              <Label htmlFor="fysisk">Fysisk</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="Digital" id="digital" />
+              <Label htmlFor="digital">Digital</Label>
+            </div>
+          </RadioGroup>
+        </LabelInputContainer>
+
         <LabelInputContainer>
           <Label htmlFor="additional-comments">Andre kommentarer</Label>
           <Input id="additional-comments" placeholder="Eleven er allergisk mot pels" type="text" />

@@ -10,6 +10,18 @@ import {
     TableRow,
 } from "@/components/ui/table"
 
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+  } from "@/components/ui/alert-dialog"
+  
 import { useEffect, useState } from "react"
 import { NewStudent, Teacher } from "./types";
 
@@ -145,6 +157,7 @@ const NewStudentTable =( {newStudents} : {newStudents : NewStudent[]})  => {
                             <TableHead>Ny elev har fullført oppstart</TableHead>
                             <TableHead>Kommentarer</TableHead>
                             <TableHead>Lagre</TableHead>
+                            <TableHead>Slett ny elev</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -256,6 +269,29 @@ function NewStudentRow({ ns, teachers }: { ns: NewStudent, teachers :Teacher[] }
         
     }
 
+    const handleDelete = async () => {
+
+        const response = await fetch(`${BASEURL}/delete-new-student`, {
+            method: "POST",
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json' // Added Content-Type header
+            },
+            body: JSON.stringify({
+                new_student_id : ns.new_student_id
+            })
+        })
+
+        if (!response.ok) {
+            alert("Error while deleting new student")
+            return null;
+        }
+        else {
+            alert("Eleven er slettet")
+        }
+
+    }
+
     return(
     <TableRow className={`${ns.has_finished_onboarding ? "text-gray-400" : ""}`}>
         <TableCell className="font-medium min-w-80">{ns.phone.slice(0, 3)} {ns.phone.slice(3, 5)} {ns.phone.slice(5, 10)} {ns.phone.slice(10, 13)} 
@@ -297,6 +333,8 @@ function NewStudentRow({ ns, teachers }: { ns: NewStudent, teachers :Teacher[] }
             )}
         </TableCell>
 
+
+
         <TableCell className="min-w-80">
             <SetTeacherCombobox teachers={teachers} passSelectedTeacher={handleAssignTeacher} ns={ns}/>
         </TableCell>
@@ -332,6 +370,25 @@ function NewStudentRow({ ns, teachers }: { ns: NewStudent, teachers :Teacher[] }
 
         <TableCell>
             <Button onClick={handleSaveClick}>Lagre endringer i raden</Button>
+        </TableCell>
+
+
+        <TableCell>
+            <AlertDialog>
+            <AlertDialogTrigger><Button className="bg-red-400 text-white dark:text-black">Slett ny elev</Button></AlertDialogTrigger>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                <AlertDialogTitle>Er du sikker på at du vil slette den nye eleven?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    Dette kan ikke angres. Den nye eleven og all tilhørende data slettes permanent fra databasen.
+                </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                <AlertDialogCancel>Kanseler</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete}>Continue</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+            </AlertDialog>
         </TableCell>
     </TableRow>
     )

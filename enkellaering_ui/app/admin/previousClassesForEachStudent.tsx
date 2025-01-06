@@ -114,7 +114,7 @@ export function PreviousClassesForEachStudent() {
     },[])
 
 
-    //map each student to his classes
+    //map each student to his classes and sort alfabetically on students name
     useEffect( () => {
         
         if (!classes || !students) {
@@ -135,6 +135,13 @@ export function PreviousClassesForEachStudent() {
                 student: s
             })
         })
+
+        //sorting the array
+        classesByStudent.sort((a, b) => {
+            return a.student.firstname_parent.localeCompare(b.student.firstname_parent, undefined, {
+              sensitivity: "base",
+            });
+        });
 
         setClassesByStudents(classesByStudent)
         setLoading(false)
@@ -182,7 +189,6 @@ export function PreviousClassesForEachStudent() {
                     totalInvoicedStudent += invoiceAmount;
                 }
             })
-//lala alalal
 
         return (<div key={index} className="bg-white dark:bg-black shadow-lg w-full p-4 rounded-lg">
             <Accordion type="single" collapsible className="w-full mt-4">
@@ -194,6 +200,44 @@ export function PreviousClassesForEachStudent() {
                     </div>
                 </AccordionTrigger>
                 <AccordionContent>
+
+                    <Accordion type="single" collapsible className="w-full">
+                        <AccordionItem value={`Om ${cs.student.firstname_parent}`} key={1}>
+                            <AccordionTrigger>
+                                <p>{cs.student.firstname_parent}</p>
+                            </AccordionTrigger>
+                            <AccordionContent>
+                                <p>
+                                    <h4 className="mb-1 font-semibold">Forelder</h4>
+                                    {cs.student.firstname_parent} {cs.student.lastname_parent}
+                                    <br/>
+                                    Tlf: {cs.student.phone_parent}
+                                    <br/>
+                                    Epost: {cs.student.email_parent}
+                                </p>
+                                <br/>
+                                <p>
+                                    <h4 className="mb-1 font-semibold">Elev</h4>
+                                    {cs.student.firstname_student} {cs.student.lastname_student}
+                                    <br/>
+                                    Tlf: {cs.student.phone_student}
+                                </p>
+                                <br/>
+                                <p>
+                                    <h4 className="mb-1 font-semibold">Info</h4>
+                                    Hovedfag: {cs.student.main_subjects}
+                                    <br/>
+                                    Spesielle forhold: {cs.student.additional_comments}
+                                    <br/>
+                                    Hjemmeadresse: {cs.student.address}
+                                    <br/>
+                                    Postnummer: {cs.student.postal_code}
+                                    <br/>
+                                    {`${cs.student.has_physical_tutoring? 'fysisk undervisning' : 'digital undervisning'}`}
+                                </p>
+                            </AccordionContent>
+                        </AccordionItem>
+                </Accordion>
 
                 <p>Totalt ufakturerte timer fra {cs.student.firstname_parent}: <span className="text-red-400">{totalUninvoicedHoursStudent}h, {totalUninvoicedStudent}kr.</span></p>
                 <p>Total fakturerte timer fra {cs.student.firstname_parent}: <span className="text-green-400">{totalInvoicedHoursStudent}h, {totalInvoicedStudent}kr.</span></p>
