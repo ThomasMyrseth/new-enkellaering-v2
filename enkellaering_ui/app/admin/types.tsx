@@ -72,4 +72,5 @@ export type NewStudent = {
     paid_referee_at: string;
     referee_name: string;
     new_student_id: string;
+    has_physical_tutoring: boolean | null
 }

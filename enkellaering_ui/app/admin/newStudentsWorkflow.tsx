@@ -164,6 +164,7 @@ function NewStudentRow({ ns, teachers }: { ns: NewStudent, teachers :Teacher[] }
     const [calledAt, setCalledAt] = useState<Date>(new Date(ns.called_at))
     const [hasAnswered, setHasAnswered] = useState<boolean>(ns.has_answered)
     const [answeredAt, setAnsweredAt] = useState<Date>(new Date(ns.answered_at))
+    const [hasPhysicalTutouring, setHasPhysicalTutouring] = useState<boolean>(ns.has_physical_tutoring || false)
     const hasSignedUp =ns.has_signed_up
     const signedUpAt = new Date(ns.signed_up_at)
     
@@ -296,6 +297,8 @@ function NewStudentRow({ ns, teachers }: { ns: NewStudent, teachers :Teacher[] }
                 <span className="text-red-400">Nei</span>
             )}
         </TableCell>
+
+
 
         <TableCell className="min-w-80">
             <SetTeacherCombobox teachers={teachers} passSelectedTeacher={handleAssignTeacher} ns={ns}/>
