@@ -236,6 +236,14 @@ export function PreviousClassesForEachTeacher() {
                 teacher: t
             })
         })
+
+
+        //sort the array alfabetically
+        classesByTeacher.sort( (a,b) => {
+            return a.teacher.firstname.localeCompare(b.teacher.firstname, undefined, {
+                sensitivity: "base",
+              });
+        })
         setClassesByTeacher(classesByTeacher)
 
     },[classes, teachers])
