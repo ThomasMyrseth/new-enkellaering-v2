@@ -375,7 +375,7 @@ function NewStudentRow({ ns, teachers }: { ns: NewStudent, teachers :Teacher[] }
 
         <TableCell>
             <AlertDialog>
-            <AlertDialogTrigger><Button className="bg-red-400 text-white dark:text-black">Slett ny elev</Button></AlertDialogTrigger>
+            <AlertDialogTrigger><Button className="bg-red-400 dark:bg-red-800 text-white dark:text-white">Slett ny elev</Button></AlertDialogTrigger>
             <AlertDialogContent>
                 <AlertDialogHeader>
                 <AlertDialogTitle>Er du sikker på at du vil slette den nye eleven?</AlertDialogTitle>
