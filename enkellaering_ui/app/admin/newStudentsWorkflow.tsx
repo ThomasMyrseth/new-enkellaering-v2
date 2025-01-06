@@ -157,6 +157,7 @@ const NewStudentTable =( {newStudents} : {newStudents : NewStudent[]})  => {
                             <TableHead>Ny elev har fullført oppstart</TableHead>
                             <TableHead>Kommentarer</TableHead>
                             <TableHead>Lagre</TableHead>
+                            <TableHead>Slett ny elev</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
