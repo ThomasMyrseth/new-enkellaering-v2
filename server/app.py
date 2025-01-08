@@ -21,7 +21,7 @@ import jwt
 from big_query.gets import get_all_about_me_texts, get_all_students, get_student_by_email, get_all_new_students, get_teacher_by_user_id, get_classes_by_teacher, get_student_for_teacher, get_student_by_user_id, get_teacher_for_student, get_classes_for_student, get_all_classes, get_all_teachers
 from big_query.inserts import insert_student, insert_teacher, insert_class, insert_new_student, upsert_about_me_text
 from big_query.alters import setClassesToInvoiced, setClassesToPaid
-from big_query.deletes import deleteNewStudent
+from big_query.deletes import hideNewStudent
 from big_query.bq_types import Classes
 from big_query.buckets.uploads import upload_or_replace_image_in_bucket
 from big_query.buckets.downloads import download_all_teacher_images
@@ -913,7 +913,7 @@ def validate_new_student_data(data: dict) -> tuple[bool, str]:
 
 
 
-@app.route('/delete-new-student', methods=["POST"])
+@app.route('/hide-new-student', methods=["POST"])
 @token_required
 def delete_new_student(user_id):
     admin_user_id = user_id
@@ -924,7 +924,7 @@ def delete_new_student(user_id):
 
     # Perform the update
     try:
-        res = deleteNewStudent(client=bq_client, new_student_id=new_student_id, admin_user_id=admin_user_id)
+        res = hideNewStudent(client=bq_client, new_student_id=new_student_id, admin_user_id=admin_user_id)
         res.result()  # Force query execution to detect any errors
     except Exception as e:
         logging.error("BigQuery error:", e)

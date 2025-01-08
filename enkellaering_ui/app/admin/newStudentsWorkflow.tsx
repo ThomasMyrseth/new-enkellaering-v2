@@ -162,6 +162,10 @@ const NewStudentTable =( {newStudents} : {newStudents : NewStudent[]})  => {
                     </TableHeader>
                     <TableBody>
                         {newStudents.map( ns => {
+                            if (ns.hidden) {
+                                return null
+                            }
+                            console.log(ns)
                             return <NewStudentRow key={ns.new_student_id} ns={ns} teachers={teachers}/>
                         })}
                     </TableBody>
@@ -271,7 +275,7 @@ function NewStudentRow({ ns, teachers }: { ns: NewStudent, teachers :Teacher[] }
 
     const handleDelete = async () => {
 
-        const response = await fetch(`${BASEURL}/delete-new-student`, {
+        const response = await fetch(`${BASEURL}/hide-new-student`, {
             method: "POST",
             headers: {
                 'Authorization': `Bearer ${token}`,

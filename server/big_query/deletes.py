@@ -12,20 +12,21 @@ CLASSES_DATASET = os.getenv('CLASSES_DATASET')
 NEW_STUDENTS_DATASET = os.getenv('NEW_STUDENTS_DATASET')
 
 
-def deleteNewStudent(new_student_id, admin_user_id, client=None):
+def hideNewStudent(new_student_id, admin_user_id, client=None):
 
     if not client:
         client = bigquery.Client.from_service_account_json('google_service_account.json')
     query = f"""
-        DELETE FROM `{NEW_STUDENTS_DATASET}.new_students`
+        UPDATE `{NEW_STUDENTS_DATASET}.new_students`
+        SET hidden = TRUE
         WHERE
-        new_student_id = @new_student_id
-        AND EXISTS (
-            SELECT 1
-            FROM `{PROJECT_ID}.{USER_DATASET}.teachers`
-            WHERE user_id = @admin_user_id
-            AND admin = TRUE
-        )
+            new_student_id = @new_student_id
+            AND EXISTS (
+                SELECT 1
+                FROM `{PROJECT_ID}.{USER_DATASET}.teachers`
+                WHERE user_id = @admin_user_id
+                AND admin = TRUE
+            )
     """
 
     query_params = [bigquery.ScalarQueryParameter("admin_user_id", "STRING", admin_user_id),
