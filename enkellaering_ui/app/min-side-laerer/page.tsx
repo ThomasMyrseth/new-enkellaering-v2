@@ -309,6 +309,7 @@ function AddNewClass({teacher}: {teacher: Teacher}) {
     const [success, setSuccess] = useState<boolean>()
 
     const handleStudentSelect = (userId: string) => {
+        console.log("setting user id", userId)
         setSelectedStudentUserId(userId);
     };
 
@@ -379,6 +380,8 @@ function AddNewClass({teacher}: {teacher: Teacher}) {
 function SelectStudent({ onStudentSelect} : {onStudentSelect: (user_id:string)=> void}) {
     const token = localStorage.getItem('token')
     const [students, setStudents] = useState<Student[]>([])
+    const [selectedStudentUserId, setSelectedStudentUserId] = useState<string | undefined>();
+
 
     useEffect( () => {
         async function fetchStudents() {
@@ -393,9 +396,11 @@ function SelectStudent({ onStudentSelect} : {onStudentSelect: (user_id:string)=>
                 const data = await response.json()
                 setStudents(data.students)
 
-                // Automatically select the first student
+                // Automatically select the first student only once
                 if (data.students.length > 0) {
-                    onStudentSelect(data.students[0].user_id);
+                    const firstStudentId = data.students[0].user_id;
+                    setSelectedStudentUserId(firstStudentId);
+                    onStudentSelect(firstStudentId);
                 }
             }
             else {
@@ -404,31 +409,38 @@ function SelectStudent({ onStudentSelect} : {onStudentSelect: (user_id:string)=>
         }
         fetchStudents()
 
-    },[onStudentSelect])
+    },[token])
 
 
-    const handleValueChange = (value: string) => {
-        const index: number = parseInt(value.split("-")[1]);
-        if (!isNaN(index) && students[index]) {
-          onStudentSelect(students[index].user_id); // Pass the selected student ID upwards
-        }
-      };
+
+    const handleValueChange = (user_id: string) => {
+        setSelectedStudentUserId(user_id); // Update state with selected user_id
+        onStudentSelect(user_id); // Notify parent
+    };
+
     
-    return (<div className="w-full h-full flex flex-col  items-center">
-    <h3 className="pb-4">Hvem hadde du i dag?</h3>
-    <RadioGroup defaultValue="option-0" onValueChange={handleValueChange}>
-        {students.map( (student :Student, index :number) => {
-            return( 
-                <div key={index} className="flex items-center space-x-2">
-                    <RadioGroupItem value={`option-${index}`} id={`option-${index}`} />
-                    <Label htmlFor="option-two">
-                        <p>{student.firstname_parent} {student.lastname_parent}</p>
-                        <p className="text-sm text-neutral-600"> & {student.firstname_student} {student.lastname_student}</p>
-                    </Label>
-                </div>);
-        })}
-    </RadioGroup>
-    </div>);
+    return (
+        <div className="w-full h-full flex flex-col items-center">
+            <h3 className="pb-4">Hvem hadde du i dag?</h3>
+            <RadioGroup 
+                value={selectedStudentUserId} // Controlled by state
+                onValueChange={handleValueChange} // Update state on change
+            >
+                {students.map((student: Student, index: number) => {
+                    const optionValue = student.user_id;
+                    return (
+                        <div key={index} className="flex items-center space-x-2">
+                            <RadioGroupItem value={optionValue} id={optionValue} />
+                            <Label htmlFor={optionValue}>
+                                <p>{student.firstname_parent} {student.lastname_parent}</p>
+                                <p className="text-sm text-neutral-600">& {student.firstname_student} {student.lastname_student}</p>
+                            </Label>
+                        </div>
+                    );
+                })}
+            </RadioGroup>
+        </div>
+    );
 }
 
 const LabelInputContainer = ({ children }: { children: React.ReactNode }) => {
