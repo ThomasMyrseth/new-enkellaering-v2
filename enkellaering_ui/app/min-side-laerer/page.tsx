@@ -33,7 +33,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { AlertDialog, AlertDialogDescription, AlertDialogAction, AlertDialogFooter,AlertDialogContent,  AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogDescription,AlertDialogCancel, AlertDialogAction, AlertDialogFooter,AlertDialogContent,  AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+
 
 type Class = {
     comment: string; // Optional comment for the session
@@ -538,11 +539,11 @@ function DateTimePicker({onStartDateSelected, onEndDateSelected} : {onStartDateS
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
           {picker === "start" && startDate ? (
-            format(startDate, "MM/dd/yyyy HH:mm")
+            format(startDate, "dd/MM/yyyy HH:mm")
           ) : picker === "end" && endDate ? (
-            format(endDate, "MM/dd/yyyy HH:mm")
+            format(endDate, "dd/MM/yyyy HH:mm")
           ) : (
-            <span>MM/DD/YYYY HH:mm</span>
+            <span>DD/MM/YYYY HH:mm</span>
           )}
         </Button>
       </PopoverTrigger>
@@ -619,8 +620,9 @@ function DateTimePicker({onStartDateSelected, onEndDateSelected} : {onStartDateS
 
 function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUserId, setUploadSuccessfull} : {teacher: Teacher; started_at?: Date; ended_at?: Date; comment?: string, selectedStudentUserId?: string, setUploadSuccessfull: (success: boolean) => void}) {
     const token = localStorage.getItem('token')
-
+    const [durationInHours, setDurationInHours] = useState<number | undefined>()
     const [allValid, setAllValid] = useState<boolean>(false)
+    const [isAlertDialog, setIsAlertDialog] = useState<boolean>(false)
 
     useEffect( () => {
         if (teacher && started_at && ended_at && comment && selectedStudentUserId) {
@@ -637,7 +639,27 @@ function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUse
             setUploadSuccessfull(false);
             return;
         }
-    
+
+        const duration = ended_at.getTime() - started_at.getTime();
+        const hours :number= Math.floor(duration / (1000 * 60 * 60));
+        setDurationInHours(hours)
+
+        if (hours >= 4) {
+            setIsAlertDialog(true)
+            return;
+        }
+
+        //if all good, proceed
+        await uploadClass()
+    };
+
+    const uploadClass = async() => {
+        if (!teacher || !started_at || !ended_at || !comment || !selectedStudentUserId) {
+            alert("All fields must be filled in.");
+            setUploadSuccessfull(false);
+            return;
+        }
+
         try {
             const response = await fetch(`${BASEURL}/upload-new-class`, {
             method: "POST",
@@ -665,18 +687,39 @@ function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUse
             alert("An error occurred. Please try again.");
             setUploadSuccessfull(false);
         }
-    };
+    }
 
     
-    return (
-      <Button
+    return (<>
+        <Button
         onClick={handleSendClick}
         variant="outline"
         disabled={!allValid}
-      >
+        >
         Last opp ny time
-      </Button>
-    );
+        </Button>
+
+        <AlertDialog open={isAlertDialog} onOpenChange={setIsAlertDialog}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Dette var en veldig lang time</AlertDialogTitle>
+                <AlertDialogDescription>
+                    Du har prøver å legge inn en time som varer i {durationInHours} timer. Er dette riktig?
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => {setIsAlertDialog(false)} } className="">Nei det er feil</AlertDialogCancel>
+                <AlertDialogAction onClick={() => {
+                    setIsAlertDialog(false);
+                    uploadClass();
+                }}
+                className="bg-red-400 dark:bg-red-800 dark:text-white">
+                    Ja det er riktig
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+        </AlertDialog>
+    </>);
 }
 
 
@@ -712,7 +755,6 @@ type FullStudent = {
 function YourStudent( {teacher} : {teacher: Teacher}) {
     const token = localStorage.getItem('token')
     const [students, setStudents] = useState<FullStudent[]>([])
-    const [currentStudent, setCurrentStudent] = useState<FullStudent>()
 
     useEffect( () => {
         async function fetchStudents() {
@@ -726,13 +768,12 @@ function YourStudent( {teacher} : {teacher: Teacher}) {
             const r = await response.json()
 
             const students = r.students
-            setCurrentStudent(students[0])
             setStudents(students)
         }
         fetchStudents()
         },[])
 
-    if (!teacher || !students || !currentStudent) {
+    if (!teacher || !students) {
         return (<p>Loading...</p>)
     }
 
@@ -759,22 +800,22 @@ function YourStudent( {teacher} : {teacher: Teacher}) {
                         <br/>
                         <p>
                             <h4 className="mb-1 font-semibold">Elev</h4>
-                            {currentStudent.firstname_student} {currentStudent.lastname_student}
+                            {student.firstname_student} {student.lastname_student}
                             <br/>
-                            Tlf: {currentStudent.phone_student}
+                            Tlf: {student.phone_student}
                         </p>
                         <br/>
                         <p>
                             <h4 className="mb-1 font-semibold">Info</h4>
-                            Hovedfag: {currentStudent.main_subjects}
+                            Hovedfag: {student.main_subjects}
                             <br/>
-                            Spesielle forhold: {currentStudent.additional_comments}
+                            Spesielle forhold: {student.additional_comments}
                             <br/>
-                            Hjemmeadresse: {currentStudent.address}
+                            Hjemmeadresse: {student.address}
                             <br/>
-                            Postnummer: {currentStudent.postal_code}
+                            Postnummer: {student.postal_code}
                             <br/>
-                            {`${currentStudent.has_physical_tutoring? 'fysisk undervisning' : 'digital undervisning'}`}
+                            {`${student.has_physical_tutoring? 'fysisk undervisning' : 'digital undervisning'}`}
                         </p>
                     </AccordionContent>
                 </AccordionItem>

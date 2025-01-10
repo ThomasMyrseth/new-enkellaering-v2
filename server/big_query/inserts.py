@@ -276,24 +276,27 @@ def upsert_about_me_text(client: bigquery.Client, text: str, user_id: str, first
                 @user_id AS user_id, 
                 @about_me AS about_me, 
                 @firstname AS firstname, 
-                @lastname AS lastname
+                @lastname AS lastname,
+                @created_at AS created_at
         ) AS source
         ON target.user_id = source.user_id
         WHEN MATCHED THEN
             UPDATE SET 
                 about_me = source.about_me,
                 firstname = source.firstname,
-                lastname = source.lastname
+                lastname = source.lastname,
+                created_at = source.created_at
         WHEN NOT MATCHED THEN
-            INSERT (user_id, about_me, firstname, lastname)
-            VALUES (source.user_id, source.about_me, source.firstname, source.lastname)
+            INSERT (user_id, about_me, firstname, lastname, created_at)
+            VALUES (source.user_id, source.about_me, source.firstname, source.lastname, source.created_at)
     """
     job_config = bigquery.QueryJobConfig(
         query_parameters=[
             bigquery.ScalarQueryParameter("user_id", "STRING", user_id),
             bigquery.ScalarQueryParameter("about_me", "STRING", text),
             bigquery.ScalarQueryParameter("firstname", "STRING", firstname),
-            bigquery.ScalarQueryParameter("lastname", "STRING", lastname)
+            bigquery.ScalarQueryParameter("lastname", "STRING", lastname),
+            bigquery.ScalarQueryParameter("create_at", "TIMESTAMP", datetime.now(timezone.utc))
         ]
     )
 
