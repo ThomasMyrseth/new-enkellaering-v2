@@ -318,6 +318,15 @@ export function PreviousClassesForEachTeacher() {
                     <AccordionTrigger>{ct.teacher.firstname} {ct.teacher.lastname}</AccordionTrigger>
                     <AccordionContent>
 
+                        <p>
+                            Tlf: <span className='font-semibold'>{ct.teacher.phone}</span>
+                            <br/>
+                            Epost: <span className='font-semibold'>{ct.teacher.email}</span>
+                            <br/>
+                            Adresse: <span className='font-semibold'>{ct.teacher.address}, {ct.teacher.postal_code}</span>
+                            <br/>
+                            Spesielle forhold: <span className='font-sembibold'>{ct.teacher.additional_comments? "" : ct.teacher.additional_comments }</span>
+                        </p>
 
                         <Accordion type="single" collapsible className="w-full mb-4">
                             <AccordionItem value="your-students">
