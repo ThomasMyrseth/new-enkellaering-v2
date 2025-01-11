@@ -19,6 +19,7 @@ export default function SignupForm() {
   const [passwordsMatch, setPasswordsMatch] = useState(true);
   const [validPassword, setValidPassword] = useState(true)
   const [hasPhysicalTutouring, setHasPhysicalTutouring] = useState<boolean>(true)
+  const [isSendDisabled, setIsSendDisabled] = useState<boolean>(false)
 
   const router = useRouter();
   const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
@@ -61,9 +62,11 @@ export default function SignupForm() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
+    
     if (!validateForm(e)) return;
-
+    
+    setIsSendDisabled(true) //avoid spam by disabling the button uppon first click 
+    
     try {
       const form = e.target as HTMLFormElement;
       
@@ -233,9 +236,14 @@ export default function SignupForm() {
           {!validPassword && <p className="text-red-500 text-sm">Passordet må være minst 8 tegn lang</p>}
         </LabelInputContainer>
 
-        <button type="submit" className="bg-gradient-to-br from-black to-gray-800 text-white w-full py-2 rounded-md mt-4" >
-          Opprett bruker
+        <button  type="submit" disabled={isSendDisabled} className="relative inline-flex h-12 overflow-hidden rounded-full p-[5px] dark:p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50">
+            <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
+            <span className={`${isSendDisabled ? "bg-slate-400" :"inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-slate-950 px-3 py-1 text-sm font-medium text-white backdrop-blur-3xl"}`}>
+                Opprett bruker
+            </span>
         </button>
+
+
       </form>
     </div>
   );
