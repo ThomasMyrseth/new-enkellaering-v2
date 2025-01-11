@@ -636,6 +636,7 @@ function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUse
     const [allValid, setAllValid] = useState<boolean>(false)
     const [isAlertDialog, setIsAlertDialog] = useState<boolean>(false)
     const [negativeTimeAlert, setNegativeTimeAlert] = useState<boolean>(false)
+    const [isSendButtonDisabled, setIsSendButtonDisabled] = useState(false);
 
     useEffect( () => {
         if (teacher && started_at && ended_at && comment && selectedStudentUserId) {
@@ -647,9 +648,13 @@ function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUse
     },[teacher, started_at, ended_at, comment, selectedStudentUserId])
 
     const handleSendClick = async () => {
+        //avoid spamming
+        setIsSendButtonDisabled(true); // Prevent multiple clicks right away
+
         if (!teacher || !started_at || !ended_at || !comment || !selectedStudentUserId) {
             alert("All fields must be filled in.");
             setUploadSuccessfull(false);
+            setIsSendButtonDisabled(false);
             return;
         }
 
@@ -659,15 +664,16 @@ function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUse
 
         if (hours >= 4) {
             setIsAlertDialog(true)
+            setIsSendButtonDisabled(false); // Prevent multiple clicks right away
             return;
         }
 
         if (hours<0) {
             setNegativeTimeAlert(true)
+            setIsSendButtonDisabled(false); // Prevent multiple clicks right away
             return
         }
 
-        //if all good, proceed
         await uploadClass()
     };
 
@@ -704,6 +710,7 @@ function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUse
             console.error("Error uploading class:", error);
             alert("An error occurred. Please try again.");
             setUploadSuccessfull(false);
+            setIsSendButtonDisabled(false);
         }
     }
 
@@ -712,7 +719,7 @@ function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUse
         <Button
         onClick={handleSendClick}
         variant="outline"
-        disabled={!allValid}
+        disabled={!allValid || isSendButtonDisabled}
         >
         Last opp ny time
         </Button>
