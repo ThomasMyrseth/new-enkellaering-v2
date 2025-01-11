@@ -68,6 +68,24 @@ def alterNewStudent(client: bigquery.Client, new_student_id: str, admin_user_id:
     # Execute the query
     return client.query(query, job_config=job_config)
 
+def setHasSignedUp(client :bigquery.Client, phone: str):
+
+    query = f"""
+        UPDATE `new_students.new_students`
+        SET
+            has_signed_up = @has_signed_up,
+            signed_up_at = CURRENT_TIMESTAMP()
+        WHERE phone = @phone
+    """
+
+    params = [ bigquery.ScalarQueryParameter("has_signed_up", "BOOL", True),
+               bigquery.ScalarQueryParameter("phone", "STRING", phone)]
+    
+    job_config = bigquery.QueryJobConfig(query_parameters=params)
+
+    return client.query(query, job_config=job_config)
+
+
 
 def setClassesToInvoiced(client: bigquery.Client, class_ids: list, admin_user_id: str):
     query = f"""

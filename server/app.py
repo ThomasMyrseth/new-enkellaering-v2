@@ -18,9 +18,9 @@ from functools import wraps
 from flask import session, redirect, url_for
 import jwt
 
-from big_query.gets import get_all_about_me_texts, get_all_students, get_student_by_email, get_all_new_students, get_teacher_by_user_id, get_classes_by_teacher, get_student_for_teacher, get_student_by_user_id, get_teacher_for_student, get_classes_for_student, get_all_classes, get_all_teachers
+from big_query.gets import get_all_about_me_texts, get_all_students, get_student_by_email, get_all_new_students, get_teacher_by_user_id, get_classes_by_teacher, get_student_for_teacher, get_student_by_user_id, get_teacher_for_student, get_classes_for_student, get_all_classes, get_all_teachers, get_new_student_by_phone
 from big_query.inserts import insert_student, insert_teacher, insert_class, insert_new_student, upsert_about_me_text
-from big_query.alters import setClassesToInvoiced, setClassesToPaid
+from big_query.alters import setClassesToInvoiced, setClassesToPaid, setHasSignedUp
 from big_query.deletes import hideNewStudent
 from big_query.bq_types import Classes
 from big_query.buckets.uploads import upload_or_replace_image_in_bucket
@@ -221,7 +221,7 @@ def token_required(f):
             return jsonify({'error': 'Token is missing!'}), 401
 
         user_id = decode_token(token)
-        logging.info("token requored, user_id found is: ", user_id)
+        logging.info(f"token requored, user_id found is: {user_id}")
         if not user_id:
             logging.warning("Token is invalid or expired.")
             return jsonify({'error': 'Token is invalid or expired!'}), 401
@@ -329,6 +329,25 @@ def register():
         # Insert the new student into the database
         print(f"Inserting student {user_id} into the database.")
         insert_student(client=bq_client, student=new_student)
+
+        #check if the phoneNumber exisist in new_students table
+        res = get_new_student_by_phone(client=bq_client, phone=phone_parent)
+        e = res.errors
+
+        if e:
+            return jsonify({"Error": f"An error occured while looking in newStudents, {e}"}), 500
+        
+       
+        results_iterator = res.result()  # This is a RowIterator
+
+        # Convert to a list so we can do len()
+        rows_list = list(results_iterator)
+        print("existing new students: ", rows_list)
+        if len(rows_list) > 0:
+            print("User has an entry in new_students_table:", rows_list)
+            setHasSignedUp(client=bq_client, phone=phone_parent)
+        else:
+            print("No entry found in new_students_table")
 
         # Save user_id in session
         session['user_id'] = user_id

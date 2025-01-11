@@ -119,21 +119,18 @@ def get_all_new_students(client: bigquery.Client, admin_user_id: str):
     job_config = bigquery.QueryJobConfig(query_parameters=query_params)
     return client.query(query, job_config=job_config, location='EU')
 
-def get_new_student_by_phone(client: bigquery.Client, admin_user_id: str, phone: str):
+def get_new_student_by_phone(client: bigquery.Client, phone: str):
+    print("phone: ", phone)
+
     query = f"""
-    SELECT * FROM `{PROJECT_ID}.{NEW_STUDENTS_DATASET}.new_students`
+    SELECT * FROM new_students.new_students
     WHERE phone = @phone
-      AND EXISTS (
-          SELECT 1 FROM `{PROJECT_ID}.{USER_DATASET}.teachers`
-          WHERE admin_user_id = @admin_user_id AND admin = TRUE
-      )
     """
     query_params = [
-        bigquery.ScalarQueryParameter("admin_user_id", "STRING", admin_user_id),
         bigquery.ScalarQueryParameter("phone", "STRING", phone),
     ]
     job_config = bigquery.QueryJobConfig(query_parameters=query_params)
-    return client.query(query, job_config=job_config).result()
+    return client.query(query, job_config=job_config)
 
 def get_all_classes(client: bigquery.Client, admin_user_id: str):
     query = f"""
