@@ -635,6 +635,8 @@ function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUse
     const [durationInHours, setDurationInHours] = useState<number | undefined>()
     const [allValid, setAllValid] = useState<boolean>(false)
     const [isAlertDialog, setIsAlertDialog] = useState<boolean>(false)
+    const [negativeTimeAlert, setNegativeTimeAlert] = useState<boolean>(false)
+    const [isSendButtonDisabled, setIsSendButtonDisabled] = useState(false);
 
     useEffect( () => {
         if (teacher && started_at && ended_at && comment && selectedStudentUserId) {
@@ -646,9 +648,13 @@ function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUse
     },[teacher, started_at, ended_at, comment, selectedStudentUserId])
 
     const handleSendClick = async () => {
+        //avoid spamming
+        setIsSendButtonDisabled(true); // Prevent multiple clicks right away
+
         if (!teacher || !started_at || !ended_at || !comment || !selectedStudentUserId) {
             alert("All fields must be filled in.");
             setUploadSuccessfull(false);
+            setIsSendButtonDisabled(false);
             return;
         }
 
@@ -658,10 +664,16 @@ function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUse
 
         if (hours >= 4) {
             setIsAlertDialog(true)
+            setIsSendButtonDisabled(false); // Prevent multiple clicks right away
             return;
         }
 
-        //if all good, proceed
+        if (hours<0) {
+            setNegativeTimeAlert(true)
+            setIsSendButtonDisabled(false); // Prevent multiple clicks right away
+            return
+        }
+
         await uploadClass()
     };
 
@@ -698,6 +710,7 @@ function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUse
             console.error("Error uploading class:", error);
             alert("An error occurred. Please try again.");
             setUploadSuccessfull(false);
+            setIsSendButtonDisabled(false);
         }
     }
 
@@ -706,7 +719,7 @@ function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUse
         <Button
         onClick={handleSendClick}
         variant="outline"
-        disabled={!allValid}
+        disabled={!allValid || isSendButtonDisabled}
         >
         Last opp ny time
         </Button>
@@ -728,6 +741,20 @@ function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUse
                 className="bg-red-400 dark:bg-red-800 dark:text-white">
                     Ja det er riktig
                 </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog open={negativeTimeAlert} onOpenChange={setNegativeTimeAlert}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Slutttid kan ikke være før starttid</AlertDialogTitle>
+                <AlertDialogDescription>
+                    Du prøver å legge inn en time der timen slutter før den starter. Dobbelsjekk klokkeslettene og prøv igjen.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => {setNegativeTimeAlert(false)} } className="">Jeg ønsker å sette inn ny dato</AlertDialogCancel>
             </AlertDialogFooter>
         </AlertDialogContent>
         </AlertDialog>

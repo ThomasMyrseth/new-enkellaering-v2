@@ -3,7 +3,7 @@ import React, { Dispatch, SetStateAction, FC } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
-import { LayoutDashboard, ShoppingCart } from 'lucide-react'
+import { LayoutDashboard, ShoppingCart, DollarSign } from 'lucide-react'
 import { LockKeyhole } from 'lucide-react'
 import { LockKeyholeOpen } from 'lucide-react'
 import { BookUser } from 'lucide-react'
@@ -72,10 +72,16 @@ const Sidebar: FC<SidebarProps> = ({ show, setter }) => {
           </Link>
         </div>
         <div className="flex flex-col">
-          <MenuItem
+        <MenuItem
             name="Bestill"
             route="/bestill"
             icon={<ShoppingCart/>}
+            setter={setter}
+          />
+          <MenuItem
+            name="Verv"
+            route="/verv"
+            icon={<DollarSign/>}
             setter={setter}
           />
           <MenuItem
