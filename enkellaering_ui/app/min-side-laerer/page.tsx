@@ -103,8 +103,6 @@ export default function LaererPage() {
                 alert(response.statusText)
             }
         }
-        fetchTeacherName()
-
 
         //get classes for teacher
         async function fetchClasses() {
@@ -126,6 +124,7 @@ export default function LaererPage() {
             setClasses(classes)
         }
         fetchClasses()
+        fetchTeacherName()
     
     },[])
 
@@ -910,8 +909,7 @@ import {
     TableCell,
     TableHead,
     TableHeader,
-    TableRow,
-    TableFooter
+    TableRow
 } from "@/components/ui/table"
 
 
@@ -922,7 +920,6 @@ const PreviousClasses =  ({student, teacher, allClasses}  : {student :FullStuden
     const [firstTenClasses, setFirstTenclasses] = useState<Class[]>()
     const [remainingClasses, setRemainingClasses] = useState<Class[]>()
     const [loading, setLoading] = useState<boolean>(true)
-    let totalAmount :number = 0
 
 
 
