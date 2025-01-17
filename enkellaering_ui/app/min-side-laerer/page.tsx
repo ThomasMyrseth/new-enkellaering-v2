@@ -916,7 +916,7 @@ import {
 
 const PreviousClasses =  ({student, teacher, allClasses}  : {student :FullStudent, teacher :Teacher, allClasses :Class[]})  => {     
 
-    let classes :Class[] = []
+    const classes :Class[] = []
     const [firstTenClasses, setFirstTenclasses] = useState<Class[]>()
     const [remainingClasses, setRemainingClasses] = useState<Class[]>()
     const [loading, setLoading] = useState<boolean>(true)
