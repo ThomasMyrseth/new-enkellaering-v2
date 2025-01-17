@@ -312,10 +312,15 @@ export function PreviousClassesForEachTeacher() {
 
 
 
-        return (<div key={index} className="bg-white dark:bg-black shadow-lg w-full p-4 rounded-lg">
+        return (<div key={index} className="bg-white dark:bg-black shadow-lg w-full p-4 rounded-lg mb-4">
             <Accordion type="single" collapsible className="w-full mt-4">
                 <AccordionItem value="remaining-classes">
-                    <AccordionTrigger>{ct.teacher.firstname} {ct.teacher.lastname} <span className='font-light'> { `${parseInt(ct.teacher.postal_code)<4000 ? "Oslo" : "Trondheim"}` }</span></AccordionTrigger>
+                    <AccordionTrigger>
+                        <div className='flex flex-row w-full items-center justify-between'>
+                            <div className='text-start'>{ct.teacher.firstname} {ct.teacher.lastname}</div>
+                            <div className='text-start font-extralight mr-2 w-20 text-neutral-400'> { `${parseInt(ct.teacher.postal_code)<4000 ? "Oslo" : "Trondheim"}` }</div>
+                        </div>
+                    </AccordionTrigger>
                     <AccordionContent>
 
                         <p>

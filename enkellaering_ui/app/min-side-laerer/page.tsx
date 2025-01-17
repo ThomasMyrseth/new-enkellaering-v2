@@ -984,12 +984,6 @@ const PreviousClasses =  ({student, teacher, allClasses}  : {student :FullStuden
                 )
             })}
         </TableBody>
-        <TableFooter>
-            <TableRow>
-            <TableCell colSpan={3}>Neste lønning er på</TableCell>
-            <TableCell className="text-right">{totalAmount}kr.</TableCell>
-            </TableRow>
-        </TableFooter>
         </Table>
 
         {remainingClasses && (

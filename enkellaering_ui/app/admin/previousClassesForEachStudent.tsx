@@ -190,13 +190,18 @@ export function PreviousClassesForEachStudent() {
                 }
             })
 
-        return (<div key={index} className="bg-white dark:bg-black shadow-lg w-full p-4 rounded-lg">
+        return (<div key={index} className="bg-white dark:bg-black shadow-lg w-full p-4 rounded-lg mb-4">
             <Accordion type="single" collapsible className="w-full mt-4">
             <AccordionItem value="remaining-classes">
                 <AccordionTrigger>
-                    <div>
-                        {cs.student.firstname_parent} {cs.student.lastname_parent} <br/>
-                        & {cs.student.firstname_student} {cs.student.lastname_student}
+                    <div className="flex flex-row justify-between items-center w-full pr-2">
+                        <p className="text-start">
+                            {cs.student.firstname_parent} {cs.student.lastname_parent} <br/>
+                            & {cs.student.firstname_student} {cs.student.lastname_student}
+                        </p>
+                        <p className="w-20 text-start text-neutral-400">
+                            {parseInt(cs.student.postal_code) < 4000 ? "Oslo" : "Trondheim"}
+                        </p>
                     </div>
                 </AccordionTrigger>
                 <AccordionContent>
