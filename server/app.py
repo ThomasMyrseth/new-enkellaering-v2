@@ -15,7 +15,7 @@ from google.cloud import firestore
 from uuid import uuid4
 from firebase_admin import credentials, initialize_app
 from functools import wraps
-from flask import session, redirect, url_for
+from flask import session
 import jwt
 
 from big_query.gets import get_all_about_me_texts, get_all_students, get_student_by_email, get_all_new_students, get_teacher_by_user_id, get_classes_by_teacher, get_student_for_teacher, get_student_by_user_id, get_teacher_for_student, get_classes_for_student, get_all_classes, get_all_teachers, get_new_student_by_phone, get_classes_for_teacher
@@ -35,7 +35,7 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 if not SECRET_KEY:
     raise ValueError("No SECRET_KEY set for Flask application")
 app.config['SESSION_PERMANENT'] = True
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=23)
 app.config['SESSION_USE_SIGNER'] = True
 app.config['SESSION_KEY_PREFIX'] = 'enkel_laering_prefix'
 app.config['SESSION_COOKIE_NAME'] = 'enkel_laering_coockie'
