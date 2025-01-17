@@ -254,7 +254,7 @@ function DailyRevenueChart({ teacher }: { teacher: Teacher }) {
       
             // Calculate the payment for this class
             const payment = calculatePayment(c, parseInt(teacher?.hourly_pay));
-            setTotalPayment(prevTotal => prevTotal + payment); // Update totalPayment
+
       
             // Check if the date already exists in the accumulator
             const existingEntry = acc.find((entry: FormattedClass) => entry.started_at === date);
@@ -277,6 +277,13 @@ function DailyRevenueChart({ teacher }: { teacher: Teacher }) {
           });
       
           setFormattedChartdata(sortedData);
+
+          const total = aggregatedData.reduce(
+            (sum, current) => sum + current.payment,
+            0
+          );
+          setTotalPayment(total);
+        
         }
       }, [chartData, teacher]);
     
