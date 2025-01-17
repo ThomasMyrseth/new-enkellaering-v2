@@ -920,7 +920,7 @@ const PreviousClasses =  ({student, teacher, allClasses}  : {student :FullStuden
     const [firstTenClasses, setFirstTenclasses] = useState<Class[]>()
     const [remainingClasses, setRemainingClasses] = useState<Class[]>()
     const [loading, setLoading] = useState<boolean>(true)
-
+//
 
 
     //sort classes cronologically by started at
