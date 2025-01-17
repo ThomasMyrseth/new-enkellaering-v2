@@ -315,7 +315,7 @@ export function PreviousClassesForEachTeacher() {
         return (<div key={index} className="bg-white dark:bg-black shadow-lg w-full p-4 rounded-lg">
             <Accordion type="single" collapsible className="w-full mt-4">
                 <AccordionItem value="remaining-classes">
-                    <AccordionTrigger>{ct.teacher.firstname} {ct.teacher.lastname}</AccordionTrigger>
+                    <AccordionTrigger>{ct.teacher.firstname} {ct.teacher.lastname} <span className='font-light'> { `${parseInt(ct.teacher.postal_code)<4000 ? "Oslo" : "Trondheim"}` }</span></AccordionTrigger>
                     <AccordionContent>
 
                         <p>
