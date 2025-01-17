@@ -40,15 +40,20 @@ export default function SignupForm() {
     const form = e.target as HTMLFormElement;
     let allValid = true;
 
+    //remove spaces in the fields
+    const parent_phone: string = form["parent-phone"].value.replace(/\s+/g, "");
+    const student_phone: string = form["student-phone"].value.replace(/\s+/g, "");
+    const postal_code: string = form["postal-code"].value.replace(/\s+/g, "");
+
+
     // Validate phone and postal code lengths
-    allValid = validateField(form["parent-phone"].value, 8, setValidParentPhone) && allValid;
-    allValid = validateField(form["student-phone"].value, 8, setValidStudentPhone) && allValid;
-    allValid = validateField(form["postal-code"].value, 4, setValidPostalCode) && allValid;
+    allValid = validateField(parent_phone, 8, setValidParentPhone) && allValid;
+    allValid = validateField(student_phone, 8, setValidStudentPhone) && allValid;
+    allValid = validateField(postal_code, 4, setValidPostalCode) && allValid;
     allValid = validatePassword(form["password"].value)
 
     // Validate password match
     const password = form["password"].value;
-    console.log("password, ", password)
     const repeatPassword = form["repeat-password"].value;
     if (password !== repeatPassword) {
       setPasswordsMatch(false);
@@ -90,13 +95,13 @@ export default function SignupForm() {
           id_token: idToken,
           firstname_parent: form["parent-firstname"].value,
           lastname_parent: form["parent-lastname"].value,
-          email_parent: form["parent-email"].value,
-          phone_parent: form["parent-phone"].value,
+          email_parent: form["parent-email"].value.replace(/\s+/g, ""),
+          phone_parent: form["parent-phone"].value.replace(/\s+/g, ""),
           firstname_student: form["student-firstname"].value,
           lastname_student: form["student-lastname"].value,
-          phone_student: form["student-phone"].value,
+          phone_student: form["student-phone"].value.replace(/\s+/g, ""),
           address: form["address"].value,
-          postal_code: form["postal-code"].value,
+          postal_code: form["postal-code"].value.replace(/\s+/g, ""),
           main_subjects: form["desired-subjects"].value,
           has_physical_tutoring: hasPhysicalTutouring,
           additional_comments: form["additional-comments"].value,

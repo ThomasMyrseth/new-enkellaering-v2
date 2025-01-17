@@ -15,10 +15,10 @@ from google.cloud import firestore
 from uuid import uuid4
 from firebase_admin import credentials, initialize_app
 from functools import wraps
-from flask import session, redirect, url_for
+from flask import session
 import jwt
 
-from big_query.gets import get_all_about_me_texts, get_all_students, get_student_by_email, get_all_new_students, get_teacher_by_user_id, get_classes_by_teacher, get_student_for_teacher, get_student_by_user_id, get_teacher_for_student, get_classes_for_student, get_all_classes, get_all_teachers, get_new_student_by_phone
+from big_query.gets import get_all_about_me_texts, get_all_students, get_student_by_email, get_all_new_students, get_teacher_by_user_id, get_classes_by_teacher, get_student_for_teacher, get_student_by_user_id, get_teacher_for_student, get_classes_for_student, get_all_classes, get_all_teachers, get_new_student_by_phone, get_classes_for_teacher
 from big_query.inserts import insert_student, insert_teacher, insert_class, insert_new_student, upsert_about_me_text
 from big_query.alters import setClassesToInvoiced, setClassesToPaid, setHasSignedUp
 from big_query.deletes import hideNewStudent
@@ -35,7 +35,7 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 if not SECRET_KEY:
     raise ValueError("No SECRET_KEY set for Flask application")
 app.config['SESSION_PERMANENT'] = True
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=23)
 app.config['SESSION_USE_SIGNER'] = True
 app.config['SESSION_KEY_PREFIX'] = 'enkel_laering_prefix'
 app.config['SESSION_COOKIE_NAME'] = 'enkel_laering_coockie'
@@ -668,6 +668,32 @@ def get_teacher_for_student_route(user_id):
 def get_classes_for_student_route(user_id):
 
     res = get_classes_for_student(client=bq_client, student_user_id=user_id)
+
+    if not res or res.errors:
+        return jsonify({
+            "message": f"An error happened while fetching classes: {res.errors}"
+        }), 500
+    
+    data = res.result()
+    classes = [dict(row) for row in data] 
+
+    if len(classes)==0:
+        return jsonify({
+            "classes": []
+        }), 200
+
+    return jsonify({
+        "classes": classes
+    }), 200
+
+
+
+
+@app.route('/get-classes-for-teacher', methods=["GET"])
+@token_required
+def get_classes_for_teacher_route(user_id):
+
+    res = get_classes_for_teacher(client=bq_client, teacher_user_id=user_id)
 
     if not res or res.errors:
         return jsonify({

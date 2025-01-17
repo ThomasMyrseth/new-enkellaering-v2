@@ -43,6 +43,8 @@ type Class = {
     ended_at: string; // Timestamp for when the session ended (ISO format)
     invoiced_student: boolean; // Indicates if the student was invoiced
     paid_teacher: boolean; // Indicates if the teacher was paid
+    teacher_user_id :string;
+    student_user_id :string;
 };
 
 type FormattedClass = {
@@ -81,10 +83,10 @@ import { FileUploadForm } from "@/components/uploadTeacherImageForm";
 
 export default function LaererPage() {
     const [teacher, setTeacher] = useState<Teacher>()
+    const [classes, setClasses] = useState<Class[]>([])
     const token = localStorage.getItem('token'); // Or any secure storage method
     useEffect(() => {
         async function fetchTeacherName() {
-
             const response = await fetch(`${BASEURL}/get-teacher`, {
                 method: 'GET',
                 headers: {
@@ -101,7 +103,29 @@ export default function LaererPage() {
                 alert(response.statusText)
             }
         }
+
+        //get classes for teacher
+        async function fetchClasses() {
+            const response = await fetch(`${BASEURL}/get-classes-for-teacher`, {
+                method: "GET",
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+            })
+
+            if(!response.ok) {
+                alert("En feil har skjedd, prøv igjen")
+                return null;
+            }
+
+            const data = await response.json()
+            const classes = data.classes
+
+            setClasses(classes)
+        }
+        fetchClasses()
         fetchTeacherName()
+    
     },[])
 
     if (!teacher) {
@@ -115,7 +139,7 @@ export default function LaererPage() {
             <br />
             <AddNewClass teacher={teacher}/>
             <br/>
-            <YourStudent teacher={teacher}/>
+            <YourStudent teacher={teacher} classes={classes}/>
             <br/>
             <FileUploadForm firstname={teacher.firstname} lastname={teacher.lastname}/>
 
@@ -229,7 +253,7 @@ function DailyRevenueChart({ teacher }: { teacher: Teacher }) {
       
             // Calculate the payment for this class
             const payment = calculatePayment(c, parseInt(teacher?.hourly_pay));
-            setTotalPayment(prevTotal => prevTotal + payment); // Update totalPayment
+
       
             // Check if the date already exists in the accumulator
             const existingEntry = acc.find((entry: FormattedClass) => entry.started_at === date);
@@ -252,6 +276,13 @@ function DailyRevenueChart({ teacher }: { teacher: Teacher }) {
           });
       
           setFormattedChartdata(sortedData);
+
+          const total = aggregatedData.reduce(
+            (sum, current) => sum + current.payment,
+            0
+          );
+          setTotalPayment(total);
+        
         }
       }, [chartData, teacher]);
     
@@ -791,7 +822,7 @@ type FullStudent = {
     your_teacher: string
 }
 
-function YourStudent( {teacher} : {teacher: Teacher}) {
+function YourStudent( {teacher, classes} : {teacher: Teacher, classes :Class[]}) {
     const token = localStorage.getItem('token')
     const [students, setStudents] = useState<FullStudent[]>([])
 
@@ -811,7 +842,7 @@ function YourStudent( {teacher} : {teacher: Teacher}) {
         }
         fetchStudents()
         },[])
-
+    
     if (!teacher || !students) {
         return (<p>Loading...</p>)
     }
@@ -856,6 +887,8 @@ function YourStudent( {teacher} : {teacher: Teacher}) {
                             <br/>
                             {`${student.has_physical_tutoring? 'fysisk undervisning' : 'digital undervisning'}`}
                         </p>
+
+                        <PreviousClasses student={student} teacher={teacher} allClasses={classes} />
                     </AccordionContent>
                 </AccordionItem>
             ))}
@@ -864,4 +897,136 @@ function YourStudent( {teacher} : {teacher: Teacher}) {
 
     </div>)
 
+}
+
+
+
+
+import {
+    Table,
+    TableBody,
+    TableCaption,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow
+} from "@/components/ui/table"
+
+
+
+const PreviousClasses =  ({student, teacher, allClasses}  : {student :FullStudent, teacher :Teacher, allClasses :Class[]})  => {     
+
+    let classes :Class[] = []
+    const [firstTenClasses, setFirstTenclasses] = useState<Class[]>()
+    const [remainingClasses, setRemainingClasses] = useState<Class[]>()
+    const [loading, setLoading] = useState<boolean>(true)
+
+
+
+    //sort classes cronologically by started at
+    if (allClasses) {
+        allClasses.sort((a, b) => {
+            const dateA = new Date(a.started_at);
+            const dateB = new Date(b.started_at);
+            return dateB.getTime() - dateA.getTime();
+        });
+    }
+
+    //filter out the classes for this student
+    allClasses.forEach( (c :Class) => {
+        if (c.student_user_id === student.user_id) {
+            classes.push(c)
+        }
+    })
+
+    //split classes
+    useEffect(() => {
+        if (classes) {
+            setFirstTenclasses(classes.slice(0, 10));
+            setRemainingClasses(classes.slice(10));
+        }
+        
+        setLoading(false)
+    }, [classes]); // Only run when `classes` changes
+
+
+    if (loading) {
+        return <p>Loading...</p>
+    }
+
+      
+    return (<div className="flex flex-col justify-center items-center w-full bg-white dark:bg-black rounded-lg p-4">
+        <Table>
+        <TableCaption>Tidligre timer med {student.firstname_student}</TableCaption>
+        <TableHeader>
+            <TableRow>
+                <TableHead className="w-[100px]">Dato</TableHead>
+                <TableHead>Varighet</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Beløp</TableHead>
+                <TableHead>Kommentar</TableHead>
+            </TableRow>
+        </TableHeader>
+        <TableBody>
+            {firstTenClasses && firstTenClasses.map((c, index) => {
+                const startedAt :Date = new Date(c.started_at); // Convert started_at to a Date object
+                const endedAt :Date = new Date(c.ended_at);     // Convert ended_at to a Date object
+                
+                const totalDurationMillis: number = endedAt.getTime() - startedAt.getTime();
+                const durationHours: number = Math.floor(totalDurationMillis / (1000 * 60 * 60)); // Whole hours
+                const durationMinutes: number = Math.round((totalDurationMillis % (1000 * 60 * 60)) / (1000 * 60)); // Remaining minutes
+                const amount: number = durationHours * parseInt(teacher.hourly_pay) + (durationMinutes / 60) * parseInt(teacher.hourly_pay); // Adding fractional hours
+
+                return(
+                    <TableRow key={index}>
+                        <TableCell className="font-medium">{c.started_at}</TableCell>
+                        <TableCell>{`${durationHours}t ${Math.round(durationMinutes % 60)}min`}</TableCell>
+                        <TableCell>{c.paid_teacher ? <p className="text-green-400">Betalt</p> : <p className="text-red-400">Ubetalt</p>}</TableCell>
+                        <TableCell className="text-right">{amount}</TableCell>
+                        <TableCell>{c.comment}</TableCell>
+                    </TableRow>
+                )
+            })}
+        </TableBody>
+        </Table>
+
+        {remainingClasses && (
+        <Accordion type="single" collapsible className="w-full mt-4">
+          <AccordionItem value="remaining-classes">
+            <AccordionTrigger>Vis flere timer</AccordionTrigger>
+            <AccordionContent>
+              <Table>
+                <TableBody>
+                  {remainingClasses.map((c, index) => {
+                    const startedAt: Date = new Date(c.started_at);
+                    const endedAt: Date = new Date(c.ended_at);
+                    const totalDurationMillis: number = endedAt.getTime() - startedAt.getTime();
+                    const durationHours: number = Math.floor(totalDurationMillis / (1000 * 60 * 60));
+                    const durationMinutes: number = Math.round((totalDurationMillis % (1000 * 60 * 60)) / (1000 * 60));
+                    const amount: number = durationHours * parseInt(teacher.hourly_pay) + (durationMinutes / 60) * parseInt(teacher.hourly_pay);
+
+                    return (
+                      <TableRow key={index}>
+                        <TableCell className="font-medium">{c.started_at}</TableCell>
+                        <TableCell>{`${durationHours}t ${durationMinutes}min`}</TableCell>
+                        <TableCell>
+                          {c.invoiced_student ? (
+                            <p className="text-green-400">Betalt</p>
+                          ) : (
+                            <p className="text-red-400">Ubetalt</p>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">{amount}kr</TableCell>
+                        <TableCell>{c.comment}</TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      )}
+    </div>
+  );
 }

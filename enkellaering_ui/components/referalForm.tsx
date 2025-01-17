@@ -21,15 +21,19 @@ export default function ReferalForm() {
     const [referalPhone, setReferalPhone] = useState<string>("");
     const [refereePhone, setRefereePhone] = useState<string>("");
     const [refereeName, setRefereeName] = useState<string>("");
+    const [isSendDisabled, setIsSendDisabled] = useState<boolean>(false);
+
 
 
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setErrorMessage(null);
+        setIsSendDisabled(true)
 
         if (referalPhone.length!=8 || refereePhone.length!=8 || refereeName.length<3) {
             setValidPhone(false)
+            setIsSendDisabled(false)
             return
         }
         else {
@@ -50,10 +54,12 @@ export default function ReferalForm() {
 
         if (!response.ok) {
             setErrorMessage(true)
+            setIsSendDisabled(false)
             alert("En feil har skjedd. Venligst prøv igjen!")
         }
         else {
             setErrorMessage(false) //we have success
+            setIsSendDisabled(false)
             setReferalPhone('')
             setRefereePhone('')
             setRefereeName('')
@@ -127,10 +133,10 @@ export default function ReferalForm() {
           />
         </LabelInputContainer>
 
-        <button className="relative inline-flex h-12 overflow-hidden rounded-full p-[5px] dark:p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50">
+        <button  type="submit" disabled={isSendDisabled} className="relative inline-flex h-12 overflow-hidden rounded-full p-[5px] dark:p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50">
             <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
-            <span className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-slate-950 px-3 py-1 text-sm font-medium text-white backdrop-blur-3xl">
-                Send inn
+            <span className={`${isSendDisabled ? "bg-slate-400" :"inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-slate-950 px-3 py-1 text-sm font-medium text-white backdrop-blur-3xl"}`}>
+                Opprett bruker
             </span>
         </button>
         
