@@ -237,6 +237,20 @@ def get_classes_for_student(client: bigquery.Client, student_user_id):
 
     return client.query(query, job_config=job_config)
 
+
+def get_classes_for_teacher(client :bigquery.Client, teacher_user_id):
+    query = f"""
+        SELECT *
+        FROM {CLASSES_DATASET}.classes
+        WHERE teacher_user_id = @teacher_user_id
+    """
+
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[bigquery.ScalarQueryParameter("teacher_user_id", "STRING", teacher_user_id)]
+    )
+
+    return client.query(query, job_config=job_config)
+
 def get_about_me_text(client: bigquery.Client, user_id :str):
     
     query = f"""
