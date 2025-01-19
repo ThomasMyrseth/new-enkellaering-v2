@@ -85,6 +85,23 @@ def setHasSignedUp(client :bigquery.Client, phone: str):
 
     return client.query(query, job_config=job_config)
 
+def setYourTeacher(client :bigquery.Client, phone: str, your_teacher :str):
+
+    query = f"""
+        UPDATE `users.students`
+        SET
+            your_teacher = @your_teacher
+        WHERE phone_parent = @phone
+    """
+
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("your_teacher", "STRING", your_teacher),
+            bigquery.ScalarQueryParameter("phone", "STRING", phone)
+        ]
+    )
+
+    return client.query(query, job_config=job_config)
 
 
 def setClassesToInvoiced(client: bigquery.Client, class_ids: list, admin_user_id: str):

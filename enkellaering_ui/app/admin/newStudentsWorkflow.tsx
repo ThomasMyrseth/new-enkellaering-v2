@@ -244,6 +244,7 @@ function NewStudentRow({ ns, teachers }: { ns: NewStudent, teachers :Teacher[] }
             },
             body: JSON.stringify({
                 "new_student_id": ns.new_student_id,
+                "phone" : ns.phone,
                 "has_called": hasCalled,
                 "called_at": calledAt || null,
                 "has_answered": hasAnswered,
@@ -417,75 +418,78 @@ import {
 } from "@/components/ui/popover"
 
 
-const SetTeacherCombobox = ({ ns, teachers, passSelectedTeacher } : { ns :NewStudent, teachers : Teacher[], passSelectedTeacher : (userId :string) => void }) => {
-    const [teacherUserId, setTeacherUserId] = useState<string | null>(ns.assigned_teacher_user_id ||null)
-    const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null)
-    const [open, setOpen] = useState<boolean>(false)
-
-
-    const findTeacherById = ((userId :string) => {
-        const t = teachers.find((teacher) => teacher.user_id === userId);
-        if (!t) {
-            return null
-        }
-        else {
-            return t
-        }
-    });
-
+const SetTeacherCombobox = ({ ns, teachers, passSelectedTeacher }: { 
+    ns: NewStudent, 
+    teachers: Teacher[], 
+    passSelectedTeacher: (userId: string) => void 
+  }) => {
+    const [teacherUserId, setTeacherUserId] = useState<string | null>(
+      ns.assigned_teacher_user_id || null
+    );
+    const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(
+      teachers.find((teacher) => teacher.user_id === ns.assigned_teacher_user_id) || null
+    );
+    const [open, setOpen] = useState<boolean>(false);
+  
+    useEffect(() => {
+      setTeacherUserId(ns.assigned_teacher_user_id || null);
+      setSelectedTeacher(
+        teachers.find((teacher) => teacher.user_id === ns.assigned_teacher_user_id) || null
+      );
+    }, [ns.assigned_teacher_user_id, teachers]);
+  
+    const getTeacherName = (teacher: Teacher | null) =>
+      teacher ? `${teacher.firstname} ${teacher.lastname}` : "Ingen lærer tildelt";
+  
     const handleSelectTeacher = (userId: string) => {
-        setTeacherUserId(userId);
-        const selectedTeacher = findTeacherById(userId) || null;
-        setSelectedTeacher(selectedTeacher)
-        passSelectedTeacher(userId)
+      setTeacherUserId(userId);
+      const selectedTeacher = teachers.find((teacher) => teacher.user_id === userId) || null;
+      setSelectedTeacher(selectedTeacher);
+      passSelectedTeacher(userId);
     };
-
+  
     return (
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              role="combobox"
-              aria-expanded={open}
-              className="w-[200px] justify-between"
-              disabled={!ns.has_signed_up}
-            >
-              {teacherUserId
-                ? selectedTeacher?.firstname + " " + selectedTeacher?.lastname
-                : "Ingen lærer tildelt"}
-              <ChevronsUpDown className="opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-[200px] p-0">
-            <Command>
-              <CommandInput placeholder="Search framework..." />
-              <CommandList>
-                <CommandEmpty>Ingen lærere funnet</CommandEmpty>
-                <CommandGroup>
-                  {teachers.map((teacher) => (
-                    <CommandItem
-                      key={teacher.user_id}
-                      value={teacher.user_id}
-                      onSelect={(currentValue) => {
-                        handleSelectTeacher(currentValue)
-                        setOpen(false)
-                      }}
-                    >
-                      {teacher.firstname + " " + teacher.lastname}
-                      <Check
-                        className={cn(
-                          "ml-auto",
-                          teacherUserId === teacher.user_id
-                            ? "opacity-100" : "opacity-0"
-                        )}
-                      />
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
-      )
-}
-    
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className="w-[200px] justify-between"
+            disabled={!ns.has_signed_up || teachers.length === 0}
+          >
+            {getTeacherName(selectedTeacher)}
+            <ChevronsUpDown className="opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[200px] p-0">
+          <Command>
+            <CommandInput placeholder="Søk etter lærer..." />
+            <CommandList>
+              <CommandEmpty>Ingen lærere funnet</CommandEmpty>
+              <CommandGroup>
+                {teachers.map((teacher) => (
+                  <CommandItem
+                    key={teacher.user_id}
+                    value={teacher.user_id}
+                    onSelect={(currentValue) => {
+                      handleSelectTeacher(currentValue);
+                      setOpen(false);
+                    }}
+                  >
+                    {getTeacherName(teacher)}
+                    <Check
+                      className={cn(
+                        "ml-auto",
+                        teacherUserId === teacher.user_id ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    );
+  };

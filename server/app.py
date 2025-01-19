@@ -20,7 +20,7 @@ import jwt
 
 from big_query.gets import get_all_about_me_texts, get_all_students, get_student_by_email, get_all_new_students, get_teacher_by_user_id, get_classes_by_teacher, get_student_for_teacher, get_student_by_user_id, get_teacher_for_student, get_classes_for_student, get_all_classes, get_all_teachers, get_new_student_by_phone, get_classes_for_teacher
 from big_query.inserts import insert_student, insert_teacher, insert_class, insert_new_student, upsert_about_me_text
-from big_query.alters import setClassesToInvoiced, setClassesToPaid, setHasSignedUp
+from big_query.alters import setClassesToInvoiced, setClassesToPaid, setHasSignedUp, setYourTeacher
 from big_query.deletes import hideNewStudent
 from big_query.bq_types import Classes
 from big_query.buckets.uploads import upload_or_replace_image_in_bucket
@@ -847,6 +847,7 @@ def update_new_student_workflow(user_id):
 
     # Extract fields
     new_student_id = data.get("new_student_id")
+    phone = data.get("phone")
 
     # Build the updates dictionary
     update = {
@@ -871,8 +872,6 @@ def update_new_student_workflow(user_id):
     # Clean the updates dictionary
     update = clean_updates(update)
 
-    print("updates: ", update)
-
     # Perform the update
     try:
         res = alterNewStudent(client=bq_client, new_student_id=new_student_id, admin_user_id=admin_user_id, updates=update)
@@ -880,6 +879,16 @@ def update_new_student_workflow(user_id):
     except Exception as e:
         logging.error("BigQuery error:", e)
         return jsonify({"message": "Error while setting updates for new student"}), 500
+    
+    #set your_teacher in users.students if assigned_teacher_user_id!=NULL
+    if  data.get("has_assigned_teacher")==True and data.get("teacher_user_id")!=None:
+        try:
+            res = setYourTeacher(client=bq_client, phone=phone, your_teacher=data.get("teacher_user_id"))
+            res.result()  # Force query execution to detect any errors
+        except Exception as e:
+            logging.error("Bigquery errror while setting your_teacher", e)
+            return jsonify({"message": "Error while setting the teacher in users.students"}), 500
+
 
     return jsonify({"message": "Updated new student successfully"}), 200
 
