@@ -8,6 +8,7 @@ import { TeacherName } from "./teacherName";
 import { NewStudentsWorkflow } from "./newStudentsWorkflow";
 import { PreviousClassesForEachTeacher } from "./previousClassesForEachTeacher copy";
 import { PreviousClassesForEachStudent } from "./previousClassesForEachStudent";
+import { NewStudentsWithoutTeacherPage } from "./studentsWithoutTeacher";
 
 import { Teacher } from "./types";
 
@@ -75,6 +76,8 @@ export default function AdminPage() {
           <PreviousClassesForEachTeacher />
           <PreviousClassesForEachStudent />
           <NewStudentsWorkflow />
+          <NewStudentsWithoutTeacherPage />
+
         </div>
         <div className="h-10"> </div>
 

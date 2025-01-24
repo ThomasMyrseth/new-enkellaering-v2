@@ -20,7 +20,7 @@ import jwt
 
 from big_query.gets import get_all_about_me_texts, get_all_students, get_student_by_email, get_all_new_students, get_teacher_by_user_id, get_classes_by_teacher, get_student_for_teacher, get_student_by_user_id, get_teacher_for_student, get_classes_for_student, get_all_classes, get_all_teachers, get_new_student_by_phone, get_classes_for_teacher
 from big_query.inserts import insert_student, insert_teacher, insert_class, insert_new_student, upsert_about_me_text
-from big_query.alters import setClassesToInvoiced, setClassesToPaid, setHasSignedUp, setYourTeacher
+from big_query.alters import setClassesToInvoiced, setClassesToPaid, setHasSignedUp, setYourTeacher, setYourTeacherByuserId
 from big_query.deletes import hideNewStudent
 from big_query.bq_types import Classes
 from big_query.buckets.uploads import upload_or_replace_image_in_bucket
@@ -771,6 +771,7 @@ def get_all_students_route(user_id):
     admin_user_id = user_id
 
     if not admin_user_id:
+        print("missing admin user id")
         return jsonify({"message": "Missing admin user id"}), 400
     
     res = get_all_students(client=bq_client, admin_user_id=admin_user_id)
@@ -1211,7 +1212,24 @@ def get_all_images_and_about_mes():
     except Exception as e:
         return jsonify({"message": str(e)}), 500
 
+@app.route("/assign-teacher-for-student", methods=["POST"])
+@token_required
+def assign_teacher_for_student(user_id):
+    data = request.get_json()
+    teacher_user_id = data.get('teacher_user_id')
+    student_user_id = data.get('student_user_id')
 
+    if not teacher_user_id or not student_user_id:
+        return jsonify({"message": "Missing required fields"}), 400
+    
+    try:
+        response = setYourTeacherByuserId(client=bq_client, student_user_id=student_user_id, teacher_user_id=teacher_user_id, admin_user_id=user_id)
+
+        response.result()
+        return jsonify({"message": "Teacher assigned successfully"}), 200
+    except Exception as e:
+        return jsonify({"An error occured"}), 500
+    
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))  # Use PORT from the environment or default to 8080

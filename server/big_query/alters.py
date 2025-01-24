@@ -103,6 +103,34 @@ def setYourTeacher(client :bigquery.Client, phone: str, your_teacher :str):
 
     return client.query(query, job_config=job_config)
 
+def setYourTeacherByuserId (client: bigquery.Client, student_user_id: str, teacher_user_id: str, admin_user_id :str):
+    query = f"""
+        UPDATE `{USER_DATASET}.students`
+        SET
+            your_teacher = @your_teacher
+        WHERE user_id = @user_id
+        AND EXISTS (
+            SELECT 1
+            FROM `{USER_DATASET}.teachers`
+            WHERE user_id = @admin_user_id
+        )"""
+    
+    params = [ bigquery.ScalarQueryParameter("your_teacher", "STRING", teacher_user_id),
+               bigquery.ScalarQueryParameter("user_id", "STRING", student_user_id),
+               bigquery.ScalarQueryParameter("admin_user_id", "STRING", admin_user_id)
+            ]
+    
+    job_config = bigquery.QueryJobConfig(query_parameters=params)
+
+    return client.query(query, job_config=job_config)
+
+
+
+
+
+
+
+
 
 def setClassesToInvoiced(client: bigquery.Client, class_ids: list, admin_user_id: str):
     query = f"""
