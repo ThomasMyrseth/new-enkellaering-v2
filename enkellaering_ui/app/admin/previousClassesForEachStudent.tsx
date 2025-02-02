@@ -162,7 +162,7 @@ export function PreviousClassesForEachStudent() {
             classes.sort((a, b) => {
                 const dateA = new Date(a.started_at);
                 const dateB = new Date(b.started_at);
-                return dateA.getTime() - dateB.getTime();
+                return -(dateA.getTime() - dateB.getTime()); //reverse cronological order
             });
 
             //calculate total univoiced ammount
@@ -361,11 +361,14 @@ const InvoiceStudentPopover = ( {student, classes} : {student: Student, classes:
 
         // Calculate duration in hours and round to one decimal place
         let durationHours = (new Date(endTime).getTime() - new Date(startTime).getTime()) / (1000 * 60 * 60);
-        durationHours = Math.round(durationHours * 10) / 10; // Rounds to one decimal place
 
         totalNumberOfHours += durationHours;
-        totalInvoiceAmmount += Math.round(durationHours * 540);
+        totalInvoiceAmmount += durationHours * 540;
     });
+
+    //now round of total values
+    totalInvoiceAmmount = Math.round(totalInvoiceAmmount * 10) / 10;
+    totalNumberOfHours = Math.round(totalNumberOfHours * 10) / 10;
 
     //mark the classes as invoiced
     const handleSetClassesToInvoiced = async () => {

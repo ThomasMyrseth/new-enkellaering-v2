@@ -266,7 +266,7 @@ export function PreviousClassesForEachTeacher() {
             classes.sort((a, b) => {
                 const dateA = new Date(a.started_at);
                 const dateB = new Date(b.started_at);
-                return dateA.getTime() - dateB.getTime();
+                return -(dateA.getTime() - dateB.getTime()); //reverse cronological order
             });
 
 
@@ -286,29 +286,38 @@ export function PreviousClassesForEachTeacher() {
                 const startedAt: Date = new Date(c.started_at);
                 const endedAt: Date = new Date(c.ended_at);
                 const totalDurationMillis: number = endedAt.getTime() - startedAt.getTime();
-                const durationHours: number = Math.floor(totalDurationMillis / (1000 * 60 * 60));
-                const durationMinutes: number = Math.round((totalDurationMillis % (1000 * 60 * 60)) / (1000 * 60));
-                const invoiceAmount: number = durationHours * 540 + (durationMinutes / 60) * 540;
-                const toTeacherAmmount :number = durationHours * teacherHourlyPay + (durationMinutes / 60) * teacherHourlyPay;
+                const invoiceAmount: number = (totalDurationMillis / (1000 * 60 * 60)) * 540
+                const toTeacherAmmount :number = totalDurationMillis / (1000 * 60 * 60) * teacherHourlyPay
 
                 if (!c.invoiced_student) {
-                    totalUninvoicedHoursByTeacher += durationHours + Math.round(durationMinutes/60)
+                    totalUninvoicedHoursByTeacher += totalDurationMillis / (1000 * 60 * 60)
                     totalUninvoicedByTeacher += invoiceAmount
                 }
                 else {
-                    totalInvoicedHoursByTeacher += durationHours + Math.round(durationMinutes/60)
+                    totalInvoicedHoursByTeacher += totalDurationMillis / (1000 * 60 * 60)
                     totalInvoicedByTeacher += invoiceAmount
                 }
 
                 if (!c.paid_teacher) {
                     totalUnpaidToTeacher += toTeacherAmmount
-                    totalUnpaidHoursToTeacher += durationHours + Math.round(durationMinutes/60)
+                    totalUnpaidHoursToTeacher += totalDurationMillis / (1000 * 60 * 60)
                 }
                 else {
-                    totalPaidHoursToTeacher += durationHours + Math.round(durationMinutes/60)
+                    totalPaidHoursToTeacher += totalDurationMillis / (1000 * 60 * 60)
                     totalPaidToTeacher += toTeacherAmmount
                 }
             })
+
+            //round of all values
+            totalUnpaidToTeacher = Math.round(totalUnpaidToTeacher)
+            totalUnpaidHoursToTeacher = Math.round(totalUnpaidHoursToTeacher*100)/100
+            totalPaidToTeacher = Math.round(totalPaidToTeacher)
+            totalPaidHoursToTeacher = Math.round(totalPaidHoursToTeacher*100)/100
+
+            totalUninvoicedByTeacher = Math.round(totalUninvoicedByTeacher)
+            totalUninvoicedHoursByTeacher = Math.round(totalUninvoicedHoursByTeacher*100)/100
+            totalInvoicedByTeacher = Math.round(totalInvoicedByTeacher)
+            totalInvoicedHoursByTeacher = Math.round(totalInvoicedHoursByTeacher*100)/100
 
 
 
@@ -416,8 +425,9 @@ export function PreviousClassesForEachTeacher() {
                                 const totalDurationMillis: number = endedAt.getTime() - startedAt.getTime();
                                 const durationHours: number = Math.floor(totalDurationMillis / (1000 * 60 * 60));
                                 const durationMinutes: number = Math.round((totalDurationMillis % (1000 * 60 * 60)) / (1000 * 60));
-                                const invoiceAmount: number = durationHours * 540 + (durationMinutes / 60) * 540;
-                                const toTeacherAmmount :number = durationHours * teacherHourlyPay + (durationMinutes / 60) * teacherHourlyPay;
+                                const invoiceAmount: number = Math.round(totalDurationMillis / (1000 * 60 * 60) *540)
+                                const toTeacherAmmount :number = Math.round(totalDurationMillis / (1000 * 60 * 60) * teacherHourlyPay)
+
                                 
                                 return (
                                 <TableRow key={index}>
@@ -500,13 +510,17 @@ const PayTeacherPopover = ( {teacher, classes} : {teacher: Teacher, classes: Cla
         const startTime: string = c.started_at;
         const endTime: string = c.ended_at;
 
-        // Calculate duration in hours and round to one decimal place
+        
         let durationHours = (new Date(endTime).getTime() - new Date(startTime).getTime()) / (1000 * 60 * 60);
         durationHours = Math.round(durationHours * 10) / 10; // Rounds to one decimal place
 
         totalNumberOfHours += durationHours;
         totalPaymentAmmount += Math.round(durationHours * parseInt(teacher.hourly_pay));
     });
+
+    //round of final values
+    totalPaymentAmmount = Math.round(totalPaymentAmmount)
+    totalNumberOfHours = Math.round(totalNumberOfHours*100)/100 //2 decimals
 
     //mark the classes as invoiced
     const handleSetClassesToPaid = async () => {
@@ -567,6 +581,7 @@ const PayTeacherPopover = ( {teacher, classes} : {teacher: Teacher, classes: Cla
                     <br/>
                     Total {totalNumberOfHours} timer, {totalPaymentAmmount} kroner, fordelt på {numberOfClassesToPay} ganger
                     <br/>
+                    Timelønn: {teacher.hourly_pay}
                 </p>
                 
                 <div className="">

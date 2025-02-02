@@ -245,6 +245,12 @@ function DailyRevenueChart({ teacher }: { teacher: Teacher }) {
         if (chartData) {
           // Aggregate payments by date
           const aggregatedData = chartData.reduce<FormattedClass[]>((acc, c: Class) => {
+
+            //skip the class if it is already paid out
+            if (c.paid_teacher) {
+                return acc;
+            }
+
             // Format the date
             const date = new Date(c.started_at).toLocaleDateString("en-US", {
               month: "short",
@@ -287,9 +293,9 @@ function DailyRevenueChart({ teacher }: { teacher: Teacher }) {
       }, [chartData, teacher]);
     
     
-    if (formattedChartData?.length === 0) {
-    return <p>Loading...</p>;
-    }
+    // if (formattedChartData?.length === 0) {
+    // return <p>Loading...</p>;
+    // }
     
 
     return(<div className="w-3/4 p-4">
@@ -425,7 +431,19 @@ function SelectStudent({ onStudentSelect} : {onStudentSelect: (user_id:string)=>
 
             if (response.ok) {
                 const data = await response.json()
-                setStudents(data.students)
+
+                const students :Student[]= data.students.sort( (a :Student, b :Student) => {
+                    const nameA = a.firstname_parent.toUpperCase()
+                    const nameB = b.firstname_parent.toUpperCase()
+                    if (nameA < nameB) {
+                        return -1
+                    }
+                    if (nameA > nameB) {
+                        return 1
+                    }
+                    return 0
+                })
+                setStudents(students)
 
                 // Automatically select the first student only once
                 if (data.students.length > 0) {
@@ -837,7 +855,20 @@ function YourStudent( {teacher, classes} : {teacher: Teacher, classes :Class[]})
 
             const r = await response.json()
 
-            const students = r.students
+            let students = r.students
+
+            //order the students alfabetically
+            students = students.sort( (a :Student, b :Student) => {
+                const nameA = a.firstname_parent.toUpperCase()
+                const nameB = b.firstname_parent.toUpperCase()
+                if (nameA < nameB) {
+                    return -1
+                }
+                if (nameA > nameB) {
+                    return 1
+                }
+                return 0
+            })
             setStudents(students)
         }
         fetchStudents()
