@@ -360,7 +360,7 @@ const InvoiceStudentPopover = ( {student, classes} : {student: Student, classes:
         const endTime: string = c.ended_at;
 
         // Calculate duration in hours and round to one decimal place
-        let durationHours = (new Date(endTime).getTime() - new Date(startTime).getTime()) / (1000 * 60 * 60);
+        const durationHours = (new Date(endTime).getTime() - new Date(startTime).getTime()) / (1000 * 60 * 60);
 
         totalNumberOfHours += durationHours;
         totalInvoiceAmmount += durationHours * 540;
