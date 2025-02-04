@@ -53,6 +53,10 @@ function Prices() {
             <p className="text-neutral-500 text-sm dark:text-neutral-300">Vi fakturerer dere etterskuddvis på slutten av hver måned, der dere betaler kun for de timene dere har hatt. 
             <br/> Det betyr ingen bindingstid og fullstendig fleksibilitet.
             </p>
+            <br/>
+            <p className="text-neutral-500 text-sm dark:text-neutral-300">
+              * Alle timer må avbestilles minst én virkedag (24 timer) før. 
+              Dersom avbestillingen skjer etter dette vil dere bli fakturert for hele den planlagte tiden. Avbestillinger skjer ved å kontakte deres lærer per SMS.</p>
           </CardItem>
         </div>
       </CardBody>
