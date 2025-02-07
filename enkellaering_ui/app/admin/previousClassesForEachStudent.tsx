@@ -156,6 +156,11 @@ export function PreviousClassesForEachStudent() {
         <h1 className="text-xl">En oversikt over tidligere time for hver elev</h1>
 
         {classesByStudents.map((cs :ClassesJoinStudent, index) => {
+
+            if (cs.student.is_active===false) {
+                return null;
+            }
+            
             const classes :Classes[] = cs.classes
 
             //sortng classes by startedAt
@@ -171,7 +176,13 @@ export function PreviousClassesForEachStudent() {
             let totalInvoicedStudent :number = 0
             let totalInvoicedHoursStudent :number = 0
 
+            let hoursOfClassesLastFourWeeks : number = 0
+
             classes.map( (c :Classes ) => {
+                const today :Date = new Date();
+                const fourWeeksAgo: Date = new Date(today); // Create a copy of today
+                fourWeeksAgo.setDate(today.getDate() - 28); // Subtract 21 days
+
                 const startedAt: Date = new Date(c.started_at);
                 const endedAt: Date = new Date(c.ended_at);
                 const totalDurationMillis: number = endedAt.getTime() - startedAt.getTime();
@@ -188,7 +199,18 @@ export function PreviousClassesForEachStudent() {
                     totalInvoicedHoursStudent += totalDurationHours;
                     totalInvoicedStudent += invoiceAmount;
                 }
+
+                //check if the class is within three weeks of now
+                if (startedAt.getTime() > fourWeeksAgo.getTime()) {
+                    hoursOfClassesLastFourWeeks += totalDurationMillis/(1000*60*60)
+                }
             })
+
+            hoursOfClassesLastFourWeeks = Math.round(hoursOfClassesLastFourWeeks*10)/10 //1 decimal
+            totalUninvoicedStudent = Math.round(totalUninvoicedStudent)
+            totalUninvoicedHoursStudent= Math.round(totalUninvoicedHoursStudent*10)/10
+            totalInvoicedStudent = Math.round(totalInvoicedStudent)
+            totalInvoicedHoursStudent = Math.round(totalInvoicedHoursStudent*10)/10
 
         return (<div key={index} className="bg-white dark:bg-black shadow-lg w-full p-4 rounded-lg mb-4">
             <Accordion type="single" collapsible className="w-full mt-4">
@@ -199,9 +221,16 @@ export function PreviousClassesForEachStudent() {
                             {cs.student.firstname_parent} {cs.student.lastname_parent} <br/>
                             & {cs.student.firstname_student} {cs.student.lastname_student}
                         </p>
-                        <p className="w-20 text-start text-neutral-400">
-                            {parseInt(cs.student.postal_code) < 4000 ? "Oslo" : "Trondheim"}
-                        </p>
+                        <div className="flex flex-col">
+                            <p className={`
+                                    ${hoursOfClassesLastFourWeeks<cs.student.est_hours_per_week*4 ? "text-red-300" : "text-neutral-400"} 
+                                `}>
+                               {hoursOfClassesLastFourWeeks}/{cs.student.est_hours_per_week*4}h siste fire uker
+                            </p>
+                            <p className="text-end text-neutral-400">
+                                {parseInt(cs.student.postal_code) < 4000 ? "Oslo" : "Trondheim"}
+                            </p>
+                        </div>
                     </div>
                 </AccordionTrigger>
                 <AccordionContent>
@@ -246,8 +275,11 @@ export function PreviousClassesForEachStudent() {
 
                 <p>Totalt ufakturerte timer fra {cs.student.firstname_parent}: <span className="text-red-400">{totalUninvoicedHoursStudent}h, {totalUninvoicedStudent}kr.</span></p>
                 <p>Total fakturerte timer fra {cs.student.firstname_parent}: <span className="text-green-400">{totalInvoicedHoursStudent}h, {totalInvoicedStudent}kr.</span></p>
-
-                <InvoiceStudentPopover student={cs.student} classes={cs.classes}/>
+                                
+                <div className="flex flex-row w-full justify-between pt-2">
+                    <InvoiceStudentPopover student={cs.student} classes={cs.classes}/>
+                    <SetStudentInactive student={cs.student} />
+                </div>
 
                 <Table>
                     <TableCaption>Kronologisk oversikt over alle timer til {cs.student.firstname_parent}</TableCaption>
@@ -481,3 +513,62 @@ const InvoiceStudentPopover = ( {student, classes} : {student: Student, classes:
         </Popover>
     )
 }
+
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+  } from "@/components/ui/alert-dialog"
+
+
+const handleSetInactive = async (student: Student) => {
+    const token = localStorage.getItem('token')
+
+    try {
+        const response = await fetch(`${BASEURL}/set-student-to-inactive`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                "student_user_id": student.user_id
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error: ${response.status} - ${response.statusText}`);
+        }
+
+        alert(`${student.firstname_parent} ${student.lastname_parent} er satt til inaktiv`)
+
+    } catch (error) {
+        alert(`Failed to set student inactive: ${error}`);
+    }
+}
+const SetStudentInactive = ({ student }: { student: Student }) => {
+
+    return(<>
+         <AlertDialog>
+            <AlertDialogTrigger><Button className="bg-red-400 dark:bg-red-800 text-white dark:text-white">Sett {student.firstname_parent} som inaktiv</Button></AlertDialogTrigger>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                <AlertDialogTitle>Er du sikker på du vil sette denne eleven som inaktiv</AlertDialogTitle>
+                <AlertDialogDescription>
+                    Dette kan ikke angres. Det blir ikke mulig å føre inn flere timer på eleven. Det blir ikke mulig å fakturere for ubetalte timer.
+                </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                <AlertDialogCancel>Kanseler</AlertDialogCancel>
+                <AlertDialogAction onClick={ () => handleSetInactive(student)}>Fortsett</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+    </>)
+};

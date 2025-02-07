@@ -20,7 +20,7 @@ import jwt
 
 from big_query.gets import get_all_about_me_texts, get_all_students, get_student_by_email, get_all_new_students, get_teacher_by_user_id, get_classes_by_teacher, get_student_for_teacher, get_student_by_user_id, get_teacher_for_student, get_classes_for_student, get_all_classes, get_all_teachers, get_new_student_by_phone, get_classes_for_teacher
 from big_query.inserts import insert_student, insert_teacher, insert_class, insert_new_student, upsert_about_me_text
-from big_query.alters import setClassesToInvoiced, setClassesToPaid, setHasSignedUp, setYourTeacher, setYourTeacherByuserId
+from big_query.alters import setClassesToInvoiced, setClassesToPaid, setHasSignedUp, setYourTeacher, setYourTeacherByuserId, setStudentToInactive, setStudentToActive
 from big_query.deletes import hideNewStudent
 from big_query.bq_types import Classes
 from big_query.buckets.uploads import upload_or_replace_image_in_bucket
@@ -41,8 +41,10 @@ app.config['SESSION_KEY_PREFIX'] = 'enkel_laering_prefix'
 app.config['SESSION_COOKIE_NAME'] = 'enkel_laering_coockie'
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SECURE'] = True
+#app.config['SESSION_COOCKIE_SECURE'] = False
 app.config['SESSION_COOKIE_SAMESITE'] = 'None'
 app.config['SESSION_COOKIE_DOMAIN'] = 'enkellaering-service-895641904484.europe-west2.run.app'
+#app.config['SESSION_COOKIE_DOMAIN'] = 'localhost'
 
 CORS(app, resources={
     r"/*": {
@@ -292,11 +294,12 @@ def register():
         lastname_student = data.get("lastname_student")
         phone_student = data.get("phone_student")
         created_at = datetime.now()
-        main_subjects = data.get("main_subjects")
+        main_subjects = data.get("main_subjects") or ""
         additional_comments = data.get("additional_comments") or ""
         address = data.get("address")
         postal_code = data.get("postal_code")
-        has_physical_tutoring = data.get("has_physical_tutoring", False)  # Default to False
+        est_hours_per_week = float(data.get("hours_per_week")) or 2
+        has_physical_tutoring = data.get("has_physical_tutoring", True)  # Default to True
 
         # Validate required fields
         if not all([firstname_parent, lastname_parent, email_parent, phone_parent, firstname_student, lastname_student]):
@@ -323,6 +326,7 @@ def register():
             additional_comments=additional_comments,
             address=address,
             postal_code=postal_code,
+            est_hours_per_week = est_hours_per_week,
             has_physical_tutoring=has_physical_tutoring
         )
 
@@ -1231,6 +1235,39 @@ def assign_teacher_for_student(user_id):
         return jsonify({"An error occured"}), 500
     
 
+@app.route('/set-student-to-inactive', methods=["POST"])
+@token_required
+def set_student_to_inactive_route(user_id):
+    data = request.get_json()
+    student_user_id = data.get('student_user_id')
+
+    res = setStudentToInactive(client=bq_client, admin_user_id=user_id, student_user_id=student_user_id)
+
+    if not res or res.errors:
+        print("Error setting student to inactive", res.errors)
+        return jsonify({"message": "failed to set student to inactive"}), 500
+    
+    print(res.result())
+    return jsonify({"message": "successfully set student to inactive"}), 200
+
+@app.route('/set-student-to-active', methods=["POST"])
+@token_required
+def set_student_to_active_route(user_id):
+    data = request.get_json()
+    student_user_id = data.get('student_user_id')
+
+    res = setStudentToActive(client=bq_client, admin_user_id=user_id, student_user_id=student_user_id)
+
+    if not res or res.errors:
+        print("Error setting student to active", res.errors)
+        return jsonify({"message": "failed to set student to active"}), 500
+    
+    print(res.result())
+    return jsonify({"message": "successfully set student to active"}), 200
+
+
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))  # Use PORT from the environment or default to 8080
-    app.run(debug=True ,host="0.0.0.0", port=port)
+    app.run(debug=False ,host="0.0.0.0", port=port)

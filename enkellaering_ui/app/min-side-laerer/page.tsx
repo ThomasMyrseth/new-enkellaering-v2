@@ -58,6 +58,7 @@ type Student = {
     firstname_student: string;
     lastname_student: string;
     user_id: string;
+    is_active: boolean;
 }
 
 type Teacher = {
@@ -476,6 +477,10 @@ function SelectStudent({ onStudentSelect} : {onStudentSelect: (user_id:string)=>
                 onValueChange={handleValueChange} // Update state on change
             >
                 {students.map((student: Student, index: number) => {
+                    if (student.is_active===false) {
+                        return null;
+                    }
+
                     const optionValue = student.user_id;
                     return (
                         <div key={index} className="flex items-center space-x-2">
@@ -838,6 +843,8 @@ type FullStudent = {
     created_at: string,
     additional_comments: string,
     your_teacher: string
+
+    is_active :boolean
 }
 
 function YourStudent( {teacher, classes} : {teacher: Teacher, classes :Class[]}) {
@@ -881,7 +888,11 @@ function YourStudent( {teacher, classes} : {teacher: Teacher, classes :Class[]})
     return(<div className="w-3/4 bg-white dark:bg-black rounded-lg p-4 flex flex-col justify-center items-center">
         <h2 className="text-xl font-semibold mb-4 text-neutral-800 dark:text-neutral-200">Dine elever</h2>
         <Accordion type="single" collapsible className="w-full">
-            {students.map( (student, index) => (
+            {students.map( (student, index) => {
+                if (student.is_active===false) {
+                    return null;
+                }
+                return (
                 <AccordionItem value={index.toString()} key={index}>
                     <AccordionTrigger>
                         <p>{student.firstname_parent} {student.lastname_parent}
@@ -922,7 +933,8 @@ function YourStudent( {teacher, classes} : {teacher: Teacher, classes :Class[]})
                         <PreviousClasses student={student} teacher={teacher} allClasses={classes} />
                     </AccordionContent>
                 </AccordionItem>
-            ))}
+                )
+                })}
         </Accordion>
 
 

@@ -18,6 +18,9 @@ export type Student = {
     created_at: string,
     additional_comments: string,
     your_teacher: string
+
+    est_hours_per_week : number
+    is_active : boolean
 }
 
 export type Teacher = {

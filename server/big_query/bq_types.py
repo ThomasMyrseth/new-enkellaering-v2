@@ -54,6 +54,7 @@ class Students:
         created_at: Optional[datetime] = None,
         additional_comments: Optional[str] = None,
         is_active: Optional[bool] = None,
+        est_hours_per_week: Optional[float] = None,
     ):
         self.user_id = user_id
         self.firstname_parent = firstname_parent
