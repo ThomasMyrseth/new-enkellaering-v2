@@ -68,7 +68,7 @@ export default function SignupForm() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
-    if (!validateForm(e)) return;
+    if (!validateForm(e)) return null;
     
     setIsSendDisabled(true) //avoid spam by disabling the button uppon first click 
     
@@ -225,7 +225,7 @@ export default function SignupForm() {
 
         <LabelInputContainer>
           <Label htmlFor="hours-per-week">Omtrent hvor mange klokketimer i uken ønsker dere å ha per uke?</Label>
-          <Input id="hours-per-week" placeholder="2" type="number" />
+          <Input id="hours-per-week" placeholder="2,0" type="number" step="0.1" min="0.1" defaultValue={2}/>
         </LabelInputContainer>
 
         <LabelInputContainer>

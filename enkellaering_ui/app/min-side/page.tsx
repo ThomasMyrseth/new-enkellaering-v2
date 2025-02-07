@@ -24,6 +24,8 @@ type Student = {
     created_at: string,
     additional_comments: string,
     your_teacher: string
+
+    est_hours_per_week :number
 }
 
 type Teacher = {
@@ -86,7 +88,7 @@ export default function MinSideStudentPage() {
         <div className="flex flex-col items-center justify-center  w-full min-h-screen bg-slate-200 dark:bg-slate-900">
             <StudentName student={student} />
             <MyTeacher />
-            <PreviousClasses />
+            <PreviousClasses student={student} />
         </div>
     );
 }
@@ -136,8 +138,9 @@ function MyTeacher() {
                 }
             })
 
+            setLoading(false)
+
             if (!response.ok) {
-                alert("failed to fetch teacher: " + response.statusText)
                 return null
             }
 
@@ -145,15 +148,12 @@ function MyTeacher() {
             const teacher = data.teacher
             console.log(teacher)
             
-            if (teacher.length === 0) {
+            if (!teacher || Object.keys(teacher).length === 0) {
                 console.log("Student doesn't have a teacher yet");
                 setHasTeacher(false);
-                setLoading(false)
-            }
-            else {
-                setHasTeacher(true)
-                setTeacher(data.teacher)
-                setLoading(false)
+            } else {
+                setHasTeacher(true);
+                setTeacher(teacher);
             }
     }
     fetchTeacher()
@@ -165,7 +165,7 @@ function MyTeacher() {
 
 
     return(<div className="w-3/4 sm:w-full overflow-hidden">
-        <CardContainer className="inter-var w-3/4 sm:w-full">
+        <CardContainer className="inter-var">
             <CardBody className="bg-gray-50 relative group/card  dark:hover:shadow-2xl dark:hover:shadow-emerald-500/[0.1] dark:bg-black dark:border-white/[0.2] border-black/[0.1] w-auto sm:w-[30rem] h-auto rounded-xl p-6 border  ">
                 <CardItem
                     translateZ="50"
@@ -240,7 +240,7 @@ import {
 } from "@/components/ui/accordion";
 
 
-function PreviousClasses() {     
+function PreviousClasses({student} : {student : Student}) {     
     const token = localStorage.getItem('token') 
 
     const [classes, setClasses] = useState<Classes[]>();
@@ -248,6 +248,11 @@ function PreviousClasses() {
     const [remainingClasses, setRemainingClasses] = useState<Classes[]>()
     const [loading, setLoading] = useState<boolean>(true)
     let totalAmount :number = 0
+
+    let hoursOfClassesLastFourWeeks :number = 0
+    const now = new Date()
+    const fourWeeksAgo = new Date(now)
+    fourWeeksAgo.setDate(now.getDate() - 28); // Subtract 21 days
 
     //get classes for student
     useEffect( () => {
@@ -279,8 +284,8 @@ function PreviousClasses() {
     
     },[])
 
-    //sort classes cronologically by started at
     if (classes) {
+        //sort classes cronologically by started at
         classes.sort((a, b) => {
             const dateA = new Date(a.started_at);
             const dateB = new Date(b.started_at);
@@ -288,11 +293,19 @@ function PreviousClasses() {
         });
 
         classes.forEach(c => {
+            const totalDurationMillis: number = new Date(c.ended_at).getTime() - new Date(c.started_at).getTime();
             const durationHours = (new Date(c.ended_at).getTime() - new Date(c.started_at).getTime()) / (1000 * 60 * 60)
             if (!c.invoiced_student) {
                 totalAmount += durationHours*540;
             }
+
+            //add it to the threeweek
+            if (new Date(c.started_at).getTime() > fourWeeksAgo.getTime()) {
+                hoursOfClassesLastFourWeeks += totalDurationMillis / (1000*60*60)
+            }
         })
+
+        hoursOfClassesLastFourWeeks = Math.round(hoursOfClassesLastFourWeeks)
 
         //round of to an integer NOK
         totalAmount = Math.round(totalAmount)
@@ -315,6 +328,12 @@ function PreviousClasses() {
       
     return (<div className="flex flex-col justify-center items-center w-3/4 bg-white dark:bg-black rounded-lg p-4">
         <h2>En oversikt over tidligere timer</h2>
+        <div className="m-4 p-4 rounded-sm bg-neutral-100 dark:bg-neutral-900">
+        <p className="text-sm text-neutral-500 dark:text-neutral-200">De siste fire ukene har dere totalt hatt {hoursOfClassesLastFourWeeks} timer
+            <br/>
+            Dere sikter dere mot {student.est_hours_per_week} timer per uke, {student.est_hours_per_week*4} timer per måned
+        </p>
+        </div>
         <Table>
         <TableCaption>*At en time er fakturert vil si at faktura for timen er sendt ut, det betyr ikke at timen er betalt</TableCaption>
         <TableHeader>

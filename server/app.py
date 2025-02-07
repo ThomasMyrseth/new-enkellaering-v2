@@ -42,7 +42,8 @@ app.config['SESSION_COOKIE_NAME'] = 'enkel_laering_coockie'
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'None'
-app.config['SESSION_COOKIE_DOMAIN'] = 'enkellaering-service-895641904484.europe-west2.run.app'
+#app.config['SESSION_COOKIE_DOMAIN'] = 'enkellaering-service-895641904484.europe-west2.run.app'
+app.config['SESSION_COOCKIE_DOMAIN'] = 'localhost:8080'
 
 CORS(app, resources={
     r"/*": {
@@ -292,12 +293,12 @@ def register():
         lastname_student = data.get("lastname_student")
         phone_student = data.get("phone_student")
         created_at = datetime.now()
-        main_subjects = data.get("main_subjects")
+        main_subjects = data.get("main_subjects") or ""
         additional_comments = data.get("additional_comments") or ""
         address = data.get("address")
         postal_code = data.get("postal_code")
-        est_hours_per_week = int(data.get("hours_per_week"), 2)
-        has_physical_tutoring = data.get("has_physical_tutoring", False)  # Default to False
+        est_hours_per_week = float(data.get("hours_per_week")) or 2
+        has_physical_tutoring = data.get("has_physical_tutoring", True)  # Default to True
 
         # Validate required fields
         if not all([firstname_parent, lastname_parent, email_parent, phone_parent, firstname_student, lastname_student]):
