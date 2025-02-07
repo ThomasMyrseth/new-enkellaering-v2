@@ -20,7 +20,7 @@ import jwt
 
 from big_query.gets import get_all_about_me_texts, get_all_students, get_student_by_email, get_all_new_students, get_teacher_by_user_id, get_classes_by_teacher, get_student_for_teacher, get_student_by_user_id, get_teacher_for_student, get_classes_for_student, get_all_classes, get_all_teachers, get_new_student_by_phone, get_classes_for_teacher
 from big_query.inserts import insert_student, insert_teacher, insert_class, insert_new_student, upsert_about_me_text
-from big_query.alters import setClassesToInvoiced, setClassesToPaid, setHasSignedUp, setYourTeacher, setYourTeacherByuserId
+from big_query.alters import setClassesToInvoiced, setClassesToPaid, setHasSignedUp, setYourTeacher, setYourTeacherByuserId, setStudentToInactive
 from big_query.deletes import hideNewStudent
 from big_query.bq_types import Classes
 from big_query.buckets.uploads import upload_or_replace_image_in_bucket
@@ -40,10 +40,11 @@ app.config['SESSION_USE_SIGNER'] = True
 app.config['SESSION_KEY_PREFIX'] = 'enkel_laering_prefix'
 app.config['SESSION_COOKIE_NAME'] = 'enkel_laering_coockie'
 app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SECURE'] = True
+#app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOCKIE_SECURE'] = False
 app.config['SESSION_COOKIE_SAMESITE'] = 'None'
 #app.config['SESSION_COOKIE_DOMAIN'] = 'enkellaering-service-895641904484.europe-west2.run.app'
-app.config['SESSION_COOCKIE_DOMAIN'] = 'localhost:8080'
+app.config['SESSION_COOKIE_DOMAIN'] = 'localhost'
 
 CORS(app, resources={
     r"/*": {
@@ -1233,6 +1234,22 @@ def assign_teacher_for_student(user_id):
     except Exception as e:
         return jsonify({"An error occured"}), 500
     
+
+@app.route('/set-student-to-inactive', methods=["POST"])
+@token_required
+def set_student_to_inactive_route(user_id):
+    data = request.get_json()
+    student_user_id = data.get('student_user_id')
+
+    res = setStudentToInactive(client=bq_client, admin_user_id=user_id, student_user_id=student_user_id)
+
+    if not res or res.errors:
+        print("Error setting student to inactive", res.errors)
+        return jsonify({"message": "failed to set student to inactive"}), 500
+    
+    print(res.result())
+    return jsonify({"message": "successfully set student to inactive"}), 200
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))  # Use PORT from the environment or default to 8080

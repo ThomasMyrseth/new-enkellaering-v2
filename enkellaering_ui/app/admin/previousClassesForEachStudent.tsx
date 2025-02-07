@@ -270,8 +270,11 @@ export function PreviousClassesForEachStudent() {
 
                 <p>Totalt ufakturerte timer fra {cs.student.firstname_parent}: <span className="text-red-400">{totalUninvoicedHoursStudent}h, {totalUninvoicedStudent}kr.</span></p>
                 <p>Total fakturerte timer fra {cs.student.firstname_parent}: <span className="text-green-400">{totalInvoicedHoursStudent}h, {totalInvoicedStudent}kr.</span></p>
-
-                <InvoiceStudentPopover student={cs.student} classes={cs.classes}/>
+                                
+                <div className="flex flex-row w-full justify-between pt-2">
+                    <InvoiceStudentPopover student={cs.student} classes={cs.classes}/>
+                    <SetStudentInactive student={cs.student} />
+                </div>
 
                 <Table>
                     <TableCaption>Kronologisk oversikt over alle timer til {cs.student.firstname_parent}</TableCaption>
@@ -505,3 +508,62 @@ const InvoiceStudentPopover = ( {student, classes} : {student: Student, classes:
         </Popover>
     )
 }
+
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+  } from "@/components/ui/alert-dialog"
+
+
+const handleSetInactive = async (student: Student) => {
+    const token = localStorage.getItem('token')
+
+    try {
+        const response = await fetch(`${BASEURL}/set-student-to-inactive`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                "student_user_id": student.user_id
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error: ${response.status} - ${response.statusText}`);
+        }
+
+        alert(`${student.firstname_parent} ${student.lastname_parent} er satt til inaktiv`)
+
+    } catch (error) {
+        alert(`Failed to set student inactive: ${error}`);
+    }
+}
+const SetStudentInactive = ({ student }: { student: Student }) => {
+
+    return(<>
+         <AlertDialog>
+            <AlertDialogTrigger><Button className="bg-red-400 dark:bg-red-800 text-white dark:text-white">Sett {student.firstname_parent} som inaktiv</Button></AlertDialogTrigger>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                <AlertDialogTitle>Er du sikker på du vil sette denne eleven som inaktiv</AlertDialogTitle>
+                <AlertDialogDescription>
+                    Dette kan ikke angres. Det blir ikke mulig å føre inn flere timer på eleven. Det blir ikke mulig å fakturere for ubetalte timer.
+                </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                <AlertDialogCancel>Kanseler</AlertDialogCancel>
+                <AlertDialogAction onClick={ () => handleSetInactive(student)}>Fortsett</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+    </>)
+};
