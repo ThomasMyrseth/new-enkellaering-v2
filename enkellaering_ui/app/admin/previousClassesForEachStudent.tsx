@@ -171,12 +171,12 @@ export function PreviousClassesForEachStudent() {
             let totalInvoicedStudent :number = 0
             let totalInvoicedHoursStudent :number = 0
 
-            let hoursOfClassesLastThreeWeeks : number = 0
+            let hoursOfClassesLastFourWeeks : number = 0
 
             classes.map( (c :Classes ) => {
                 const today :Date = new Date();
-                const threeWeeksAgo: Date = new Date(today); // Create a copy of today
-                threeWeeksAgo.setDate(today.getDate() - 21); // Subtract 21 days
+                const fourWeeksAgo: Date = new Date(today); // Create a copy of today
+                fourWeeksAgo.setDate(today.getDate() - 28); // Subtract 21 days
 
                 const startedAt: Date = new Date(c.started_at);
                 const endedAt: Date = new Date(c.ended_at);
@@ -196,12 +196,16 @@ export function PreviousClassesForEachStudent() {
                 }
 
                 //check if the class is within three weeks of now
-                if (startedAt.getTime() > threeWeeksAgo.getTime()) {
-                    hoursOfClassesLastThreeWeeks += totalDurationMillis/(1000*60*60)
+                if (startedAt.getTime() > fourWeeksAgo.getTime()) {
+                    hoursOfClassesLastFourWeeks += totalDurationMillis/(1000*60*60)
                 }
             })
 
-            hoursOfClassesLastThreeWeeks = Math.round(hoursOfClassesLastThreeWeeks*10)/10 //1 decimal
+            hoursOfClassesLastFourWeeks = Math.round(hoursOfClassesLastFourWeeks*10)/10 //1 decimal
+            totalUninvoicedStudent = Math.round(totalUninvoicedStudent)
+            totalUninvoicedHoursStudent= Math.round(totalUninvoicedHoursStudent*10)/10
+            totalInvoicedStudent = Math.round(totalInvoicedStudent)
+            totalInvoicedHoursStudent = Math.round(totalInvoicedHoursStudent*10)/10
 
         return (<div key={index} className="bg-white dark:bg-black shadow-lg w-full p-4 rounded-lg mb-4">
             <Accordion type="single" collapsible className="w-full mt-4">
@@ -214,9 +218,9 @@ export function PreviousClassesForEachStudent() {
                         </p>
                         <div className="flex flex-col">
                             <p className={`
-                                    ${hoursOfClassesLastThreeWeeks<cs.student.est_hours_per_week*3 ? "text-red-300" : "text-neutral-400"} 
+                                    ${hoursOfClassesLastFourWeeks<cs.student.est_hours_per_week*4 ? "text-red-300" : "text-neutral-400"} 
                                 `}>
-                               {hoursOfClassesLastThreeWeeks}/{cs.student.est_hours_per_week*3}h siste tre uker
+                               {hoursOfClassesLastFourWeeks}/{cs.student.est_hours_per_week*4}h siste fire uker
                             </p>
                             <p className="text-end text-neutral-400">
                                 {parseInt(cs.student.postal_code) < 4000 ? "Oslo" : "Trondheim"}
