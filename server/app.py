@@ -40,11 +40,11 @@ app.config['SESSION_USE_SIGNER'] = True
 app.config['SESSION_KEY_PREFIX'] = 'enkel_laering_prefix'
 app.config['SESSION_COOKIE_NAME'] = 'enkel_laering_coockie'
 app.config['SESSION_COOKIE_HTTPONLY'] = True
-#app.config['SESSION_COOKIE_SECURE'] = True
-app.config['SESSION_COOCKIE_SECURE'] = False
+app.config['SESSION_COOKIE_SECURE'] = True
+#app.config['SESSION_COOCKIE_SECURE'] = False
 app.config['SESSION_COOKIE_SAMESITE'] = 'None'
-#app.config['SESSION_COOKIE_DOMAIN'] = 'enkellaering-service-895641904484.europe-west2.run.app'
-app.config['SESSION_COOKIE_DOMAIN'] = 'localhost'
+app.config['SESSION_COOKIE_DOMAIN'] = 'enkellaering-service-895641904484.europe-west2.run.app'
+#app.config['SESSION_COOKIE_DOMAIN'] = 'localhost'
 
 CORS(app, resources={
     r"/*": {
