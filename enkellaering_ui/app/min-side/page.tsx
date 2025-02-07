@@ -311,7 +311,7 @@ function PreviousClasses({student} : {student : Student}) {
             }
         })
 
-        hoursOfClassesLastFourWeeks = Math.round(hoursOfClassesLastFourWeeks)
+        hoursOfClassesLastFourWeeks = Math.round(hoursOfClassesLastFourWeeks*10)/10
 
         //round of to an integer NOK
         totalAmount = Math.round(totalAmount)
