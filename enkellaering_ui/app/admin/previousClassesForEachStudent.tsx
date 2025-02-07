@@ -302,7 +302,7 @@ export function PreviousClassesForEachStudent() {
                         const durationMinutes: number = Math.round((totalDurationMillis % (1000 * 60 * 60)) / (1000 * 60));
                         const totalDurationHours: number = durationHours + durationMinutes / 60; // Combine fractional hours
                     
-                        const invoiceAmount: number = totalDurationHours * 540;
+                        const invoiceAmount: number = Math.round(totalDurationHours * 540);
                         
                         return (
                         <TableRow key={index}>
