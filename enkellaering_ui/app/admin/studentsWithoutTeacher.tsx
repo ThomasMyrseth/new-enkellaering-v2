@@ -119,6 +119,11 @@ export function NewStudentsWithoutTeacherPage() {
                     if (s.your_teacher) {
                         return null; // Skip students who have a teacher
                     }
+
+                    //skip inactive students
+                    if (s.is_active===false) {
+                        return null;
+                    }
                     return (
                         <>
                             <TableRow className="m-0 p-0" key={s.user_id}>
@@ -189,8 +194,57 @@ export function NewStudentsWithoutTeacherPage() {
             </TableBody>
         </Table>   
         </div>
+
+        <InactiveStudents students={students}/>
     </div>)
 
+}
+
+
+
+const InactiveStudents = ( {students} : {students : Student[]}) => {
+
+    return(<>
+    <h3 className="pt-4">Inaktive elever</h3>
+        <Table>
+            <TableHeader>
+                <TableRow>
+                    <TableHead>Forelder</TableHead>
+                    <TableHead>Forelders tlf</TableHead>
+
+                    <TableHead>Elev</TableHead>
+                    <TableHead>Elev tlf</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody key={'2'}>
+                {students.map( (s :Student) => {
+
+                    //do not display students that are active
+                if (s.is_active===true) {
+                    return null
+                }
+                return (<>
+                    <TableRow key={s.user_id}>
+                        <TableCell>
+                            {s.firstname_parent} {s.lastname_parent}
+                        </TableCell>
+                        <TableCell>
+                            {s.phone_parent}
+                        </TableCell>
+
+                        <TableCell>
+                            {s.firstname_student} {s.lastname_student}
+                        </TableCell>
+                        <TableCell>
+                            {s.phone_student}
+                        </TableCell>
+                    </TableRow>
+                </>)
+                })
+                }
+            </TableBody>
+        </Table>   
+    </>)
 }
 
 const assignTeacher = async (teacherUserId: string, studentUserId: string): Promise<void> => {
@@ -218,8 +272,6 @@ const assignTeacher = async (teacherUserId: string, studentUserId: string): Prom
         alert("Læreren er blitt tildelt til eleven")
     }
 }
-
-
 
 
 const SetTeacherCombobox = ({student, teachers, passSelectedTeacher }: { 

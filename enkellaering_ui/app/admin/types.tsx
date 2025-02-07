@@ -20,6 +20,7 @@ export type Student = {
     your_teacher: string
 
     est_hours_per_week : number
+    is_active : boolean
 }
 
 export type Teacher = {

@@ -156,6 +156,11 @@ export function PreviousClassesForEachStudent() {
         <h1 className="text-xl">En oversikt over tidligere time for hver elev</h1>
 
         {classesByStudents.map((cs :ClassesJoinStudent, index) => {
+
+            if (cs.student.is_active===false) {
+                return null;
+            }
+            
             const classes :Classes[] = cs.classes
 
             //sortng classes by startedAt

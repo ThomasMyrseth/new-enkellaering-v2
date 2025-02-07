@@ -26,6 +26,7 @@ type Student = {
     your_teacher: string
 
     est_hours_per_week :number
+    is_active :boolean
 }
 
 type Teacher = {
@@ -86,9 +87,14 @@ export default function MinSideStudentPage() {
     }
     return (
         <div className="flex flex-col items-center justify-center  w-full min-h-screen bg-slate-200 dark:bg-slate-900">
+            <IsActive student={student}/>
             <StudentName student={student} />
+            <IsActive student={student}/>
             <MyTeacher />
+            <IsActive student={student}/>
             <PreviousClasses student={student} />
+            <IsActive student={student}/>
+
         </div>
     );
 }
@@ -413,4 +419,24 @@ function PreviousClasses({student} : {student : Student}) {
       )}
     </div>
   );
+}
+
+const IsActive = ( {student} : {student :Student} ) => {
+    if (student.is_active) {
+        return null;
+    }
+
+    return (<div className="w-full md:w-3/4 rounded-sm bg-red-300 m-4 p-4 text-center">
+        <h1 className="text-red-600 text-5xl">Dere er satt til inaktiv</h1>
+        <p>Dette er grunnet at dere ikke har hatt timer på en god stund. 
+            Læreren deres får dere ikke lenger opp på sin min-side.
+        </p>
+        <br/>
+        <h3>Dersom dette er feil eller dere ønsker å starte opp med privatundervisning igjen kan dere kontakte <br/>
+            <span className="font-bold">Thomas Myrseth, tlf: 47184744 <br/>
+            Karoline Aasheim, tlf: 90656969 <br/>
+            Epost: kontakt@enkellaering.no
+            </span>
+        </h3>
+    </div>)
 }
