@@ -53,12 +53,26 @@ type FormattedClass = {
 }
 
 type Student = {
-    firstname_parent: string;
-    lastname_parent: string;
-    firstname_student: string;
-    lastname_student: string;
-    user_id: string;
-    is_active: boolean;
+    user_id: string,
+    firstname_parent: string,
+    lastname_parent: string,
+    email_parent: string,
+    phone_parent: string,
+
+    firstname_student: string,
+    lastname_student: string,
+    phone_student: string,
+
+    main_subjects: string,
+    address: string,
+    postal_code: string,
+    has_physical_tutoring: boolean,
+    created_at: string,
+    additional_comments: string,
+    your_teacher: string
+
+    est_hours_per_week : number
+    is_active : boolean
 }
 
 type Teacher = {
@@ -85,7 +99,10 @@ import { FileUploadForm } from "@/components/uploadTeacherImageForm";
 export default function LaererPage() {
     const [teacher, setTeacher] = useState<Teacher>()
     const [classes, setClasses] = useState<Class[]>([])
+    const [students, setStudents] = useState<Student[]>([])
+
     const token = localStorage.getItem('token'); // Or any secure storage method
+
     useEffect(() => {
         async function fetchTeacherName() {
             const response = await fetch(`${BASEURL}/get-teacher`, {
@@ -124,6 +141,36 @@ export default function LaererPage() {
 
             setClasses(classes)
         }
+
+
+        async function fetchStudents() {
+            const response = await fetch(`${BASEURL}/get-students`, {
+                method: "GET",
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+
+            const r = await response.json()
+
+            let students = r.students
+
+            //order the students alfabetically
+            students = students.sort( (a :Student, b :Student) => {
+                const nameA = a.firstname_parent.toUpperCase()
+                const nameB = b.firstname_parent.toUpperCase()
+                if (nameA < nameB) {
+                    return -1
+                }
+                if (nameA > nameB) {
+                    return 1
+                }
+                return 0
+            })
+            setStudents(students)
+        }
+
+        fetchStudents()
         fetchClasses()
         fetchTeacherName()
     
@@ -140,7 +187,7 @@ export default function LaererPage() {
             <br />
             <AddNewClass teacher={teacher}/>
             <br/>
-            <YourStudent teacher={teacher} classes={classes}/>
+            <YourStudent teacher={teacher} classes={classes} students={students}/>
             <br/>
             <FileUploadForm firstname={teacher.firstname} lastname={teacher.lastname}/>
 
@@ -842,63 +889,53 @@ type FullStudent = {
     has_physical_tutoring: boolean,
     created_at: string,
     additional_comments: string,
-    your_teacher: string
+    your_teacher: string,
 
-    is_active :boolean
+    is_active :boolean,
+    est_hours_per_week :number
 }
 
-function YourStudent( {teacher, classes} : {teacher: Teacher, classes :Class[]}) {
-    const token = localStorage.getItem('token')
-    const [students, setStudents] = useState<FullStudent[]>([])
-
-    useEffect( () => {
-        async function fetchStudents() {
-            const response = await fetch(`${BASEURL}/get-students`, {
-                method: "GET",
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            })
-
-            const r = await response.json()
-
-            let students = r.students
-
-            //order the students alfabetically
-            students = students.sort( (a :Student, b :Student) => {
-                const nameA = a.firstname_parent.toUpperCase()
-                const nameB = b.firstname_parent.toUpperCase()
-                if (nameA < nameB) {
-                    return -1
-                }
-                if (nameA > nameB) {
-                    return 1
-                }
-                return 0
-            })
-            setStudents(students)
-        }
-        fetchStudents()
-        },[])
+function YourStudent( {teacher, classes, students} : {teacher: Teacher, classes :Class[], students :Student[]}) {
     
     if (!teacher || !students) {
         return (<p>Loading...</p>)
     }
 
+    
+
     return(<div className="w-3/4 bg-white dark:bg-black rounded-lg p-4 flex flex-col justify-center items-center">
         <h2 className="text-xl font-semibold mb-4 text-neutral-800 dark:text-neutral-200">Dine elever</h2>
         <Accordion type="single" collapsible className="w-full">
             {students.map( (student, index) => {
+
+                let totalDurationMillisLastFourWeeks :number = 0
+                const today = new Date()
+                const fourWeeksAgo = new Date()
+                fourWeeksAgo.setDate(fourWeeksAgo.getDate()-28)
+
                 if (student.is_active===false) {
                     return null;
                 }
+
+                classes.map( (c :Class) => {
+                    if (c.student_user_id===student.user_id && new Date(c.started_at).getTime() > fourWeeksAgo.getTime()) {
+                        const durationMillis :number = new Date(c.ended_at).getTime() - new Date(c.started_at).getTime()
+                        totalDurationMillisLastFourWeeks += durationMillis
+                    }
+                })
+
+                const totalDurationHours = Math.round(totalDurationMillisLastFourWeeks/(1000*60*60)*10)/10
+
                 return (
                 <AccordionItem value={index.toString()} key={index}>
                     <AccordionTrigger>
-                        <p>{student.firstname_parent} {student.lastname_parent}
-                            <br/>
-                            & {student.firstname_student} {student.lastname_student}
-                        </p>
+                        <div className="flex flex-row justify-between w-full mr-4">
+                            <p className="text-left md:text-center w-3/4 md:w-1/2">{student.firstname_parent} {student.lastname_parent}
+                                <br/>
+                                & {student.firstname_student} {student.lastname_student}
+                            </p>
+                            <p className={`w-1/4 md:w-full text-right ${totalDurationHours < student.est_hours_per_week*4 ? "text-red-400" : "text-neutral-400"}`}>{totalDurationHours}/{student.est_hours_per_week*4}h de siste fire ukene</p>
+                        </div>
                     </AccordionTrigger>
                     <AccordionContent>
                         <p>
@@ -964,7 +1001,6 @@ const PreviousClasses =  ({student, teacher, allClasses}  : {student :FullStuden
     const [remainingClasses, setRemainingClasses] = useState<Class[]>()
     const [loading, setLoading] = useState<boolean>(true)
 
-
     //sort classes cronologically by started at
     if (allClasses) {
         allClasses.sort((a, b) => {
@@ -974,7 +1010,7 @@ const PreviousClasses =  ({student, teacher, allClasses}  : {student :FullStuden
         });
     }
 
-    //filter out the classes for this student
+    //filter out the classes for this student and sum them up
     allClasses.forEach( (c :Class) => {
         if (c.student_user_id === student.user_id) {
             classes.push(c)

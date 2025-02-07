@@ -168,6 +168,11 @@ export function NewStudentsWithoutTeacherPage() {
                 if (!s.your_teacher) {
                     return null
                 }
+
+                if (!s.is_active) {
+                    return null;
+                }
+                
                 return (<>
                     <TableRow key={s.user_id}>
                         <TableCell>
@@ -224,28 +229,30 @@ const InactiveStudents = ( {students} : {students : Student[]}) => {
                 if (s.is_active===true) {
                     return null
                 }
-                return (<>
-                    <TableRow key={s.user_id}>
-                        <TableCell>
-                            {s.firstname_parent} {s.lastname_parent}
-                        </TableCell>
-                        <TableCell>
-                            {s.phone_parent}
-                        </TableCell>
+                else {
+                    return (<>
+                        <TableRow key={s.user_id}>
+                            <TableCell>
+                                {s.firstname_parent} {s.lastname_parent}
+                            </TableCell>
+                            <TableCell>
+                                {s.phone_parent}
+                            </TableCell>
 
-                        <TableCell>
-                            {s.firstname_student} {s.lastname_student}
-                        </TableCell>
-                        <TableCell>
-                            {s.phone_student}
-                        </TableCell>
-                        <TableCell>
-                            <Button className="w-full" onClick={() => handleSetActive(s)}>
-                                Sett {s.firstname_parent} til aktiv
-                            </Button>
-                        </TableCell>
-                    </TableRow>
-                </>)
+                            <TableCell>
+                                {s.firstname_student} {s.lastname_student}
+                            </TableCell>
+                            <TableCell>
+                                {s.phone_student}
+                            </TableCell>
+                            <TableCell>
+                                <Button className="w-full" onClick={() => handleSetActive(s)}>
+                                    Sett {s.firstname_parent} til aktiv
+                                </Button>
+                            </TableCell>
+                        </TableRow>
+                    </>)
+                }    
                 })
                 }
             </TableBody>
