@@ -207,3 +207,29 @@ def setStudentToInactive(client: bigquery.Client, student_user_id: str, admin_us
 
     # Run the query
     return client.query(query, job_config=job_config, location='EU')
+
+
+
+
+def setStudentToActive(client: bigquery.Client, student_user_id: str, admin_user_id: str):
+    query = f"""
+        UPDATE `{USER_DATASET}.students`
+        SET
+            is_active = TRUE
+        WHERE user_id = @student_user_id
+        AND EXISTS (
+            SELECT 1
+            FROM `{USER_DATASET}.teachers`
+            WHERE user_id = @admin_user_id
+        )"""
+
+    # Define query parameters
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("student_user_id", "STRING", student_user_id),
+            bigquery.ScalarQueryParameter("admin_user_id", "STRING", admin_user_id),
+        ]
+    )
+
+    # Run the query
+    return client.query(query, job_config=job_config, location='EU')

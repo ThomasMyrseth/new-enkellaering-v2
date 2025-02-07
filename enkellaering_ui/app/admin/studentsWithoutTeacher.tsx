@@ -30,6 +30,7 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover"
+import { Button } from "@/components/ui/button"
 
 
 export function NewStudentsWithoutTeacherPage() {
@@ -238,6 +239,11 @@ const InactiveStudents = ( {students} : {students : Student[]}) => {
                         <TableCell>
                             {s.phone_student}
                         </TableCell>
+                        <TableCell>
+                            <Button className="w-full" onClick={() => handleSetActive(s)}>
+                                Sett {s.firstname_parent} til aktiv
+                            </Button>
+                        </TableCell>
                     </TableRow>
                 </>)
                 })
@@ -273,6 +279,32 @@ const assignTeacher = async (teacherUserId: string, studentUserId: string): Prom
     }
 }
 
+const handleSetActive = async (student: Student) => {
+    const token = localStorage.getItem('token')
+    const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
+
+    try {
+        const response = await fetch(`${BASEURL}/set-student-to-active`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                "student_user_id": student.user_id
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error: ${response.status} - ${response.statusText}`);
+        }
+
+        alert(`${student.firstname_parent} ${student.lastname_parent} er satt til aktiv`)
+
+    } catch (error) {
+        alert(`Failed to set student inactive: ${error}`);
+    }
+}
 
 const SetTeacherCombobox = ({student, teachers, passSelectedTeacher }: { 
     student: Student, 

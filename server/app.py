@@ -20,7 +20,7 @@ import jwt
 
 from big_query.gets import get_all_about_me_texts, get_all_students, get_student_by_email, get_all_new_students, get_teacher_by_user_id, get_classes_by_teacher, get_student_for_teacher, get_student_by_user_id, get_teacher_for_student, get_classes_for_student, get_all_classes, get_all_teachers, get_new_student_by_phone, get_classes_for_teacher
 from big_query.inserts import insert_student, insert_teacher, insert_class, insert_new_student, upsert_about_me_text
-from big_query.alters import setClassesToInvoiced, setClassesToPaid, setHasSignedUp, setYourTeacher, setYourTeacherByuserId, setStudentToInactive
+from big_query.alters import setClassesToInvoiced, setClassesToPaid, setHasSignedUp, setYourTeacher, setYourTeacherByuserId, setStudentToInactive, setStudentToActive
 from big_query.deletes import hideNewStudent
 from big_query.bq_types import Classes
 from big_query.buckets.uploads import upload_or_replace_image_in_bucket
@@ -1249,6 +1249,23 @@ def set_student_to_inactive_route(user_id):
     
     print(res.result())
     return jsonify({"message": "successfully set student to inactive"}), 200
+
+@app.route('/set-student-to-active', methods=["POST"])
+@token_required
+def set_student_to_active_route(user_id):
+    data = request.get_json()
+    student_user_id = data.get('student_user_id')
+
+    res = setStudentToActive(client=bq_client, admin_user_id=user_id, student_user_id=student_user_id)
+
+    if not res or res.errors:
+        print("Error setting student to active", res.errors)
+        return jsonify({"message": "failed to set student to active"}), 500
+    
+    print(res.result())
+    return jsonify({"message": "successfully set student to active"}), 200
+
+
 
 
 if __name__ == "__main__":
