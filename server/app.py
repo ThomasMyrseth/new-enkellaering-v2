@@ -296,6 +296,7 @@ def register():
         additional_comments = data.get("additional_comments") or ""
         address = data.get("address")
         postal_code = data.get("postal_code")
+        est_hours_per_week = int(data.get("hours_per_week"), 2)
         has_physical_tutoring = data.get("has_physical_tutoring", False)  # Default to False
 
         # Validate required fields
@@ -323,6 +324,7 @@ def register():
             additional_comments=additional_comments,
             address=address,
             postal_code=postal_code,
+            est_hours_per_week = est_hours_per_week,
             has_physical_tutoring=has_physical_tutoring
         )
 
