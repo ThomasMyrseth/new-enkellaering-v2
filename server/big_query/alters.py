@@ -128,10 +128,6 @@ def setYourTeacherByuserId (client: bigquery.Client, student_user_id: str, teach
 
 
 
-
-
-
-
 def setClassesToInvoiced(client: bigquery.Client, class_ids: list, admin_user_id: str):
     query = f"""
         UPDATE `{CLASSES_DATASET}.classes`
@@ -228,6 +224,29 @@ def setStudentToActive(client: bigquery.Client, student_user_id: str, admin_user
         query_parameters=[
             bigquery.ScalarQueryParameter("student_user_id", "STRING", student_user_id),
             bigquery.ScalarQueryParameter("admin_user_id", "STRING", admin_user_id),
+        ]
+    )
+
+    # Run the query
+    return client.query(query, job_config=job_config, location='EU')
+
+
+
+
+
+def toggleWantMoreStudents(client: bigquery.Client, wants_more_students :bool, teacher_user_id: str):
+    query = f"""
+        UPDATE `{USER_DATASET}.teachers`
+        SET
+            wants_more_students = @wants_more_students
+        WHERE user_id = @teacher_user_id
+    """
+
+    # Define query parameters
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("wants_more_students", "BOOL", wants_more_students),
+            bigquery.ScalarQueryParameter("teacher_user_id", "STRING", teacher_user_id),
         ]
     )
 

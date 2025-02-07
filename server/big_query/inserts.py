@@ -26,11 +26,12 @@ def insert_teacher(client: bigquery.Client, teacher: Teachers):
             address,
             postal_code,
             hourly_pay,
+            resigned,
             additional_comments,
             created_at,
             admin,
-            resigned,
-            resigned_at
+            resigned_at,
+            wants_more_students
         )
         VALUES (
             @user_id,
@@ -45,7 +46,8 @@ def insert_teacher(client: bigquery.Client, teacher: Teachers):
             @created_at,
             @admin,
             @resigned,
-            @resigned_at
+            @resigned_at,
+            TRUE
         )
     """
     job_config = bigquery.QueryJobConfig(
