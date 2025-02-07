@@ -37,6 +37,7 @@ export type Teacher = {
     created_at: string;
     admin: boolean;
     resigned_at: string | null;
+    wants_more_students :boolean;
 }
 
 export type Classes = {

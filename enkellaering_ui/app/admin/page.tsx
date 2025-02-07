@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { DailyRevenueChart } from "./dailyRevenue";
 import { TeacherName } from "./teacherName";
 import { NewStudentsWorkflow } from "./newStudentsWorkflow";
-import { PreviousClassesForEachTeacher } from "./previousClassesForEachTeacher copy";
+import { PreviousClassesForEachTeacher } from "./previousClassesForEachTeacher";
 import { PreviousClassesForEachStudent } from "./previousClassesForEachStudent";
 import { NewStudentsWithoutTeacherPage } from "./studentsWithoutTeacher";
 

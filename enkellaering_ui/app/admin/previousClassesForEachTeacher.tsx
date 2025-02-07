@@ -23,6 +23,7 @@ import { Classes, Teacher, Student } from "./types";
 
 import { useEffect, useState } from "react"
 import React, { useRef } from "react";
+import { Circle } from "lucide-react";
 
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
@@ -326,7 +327,10 @@ export function PreviousClassesForEachTeacher() {
                 <AccordionItem value="remaining-classes">
                     <AccordionTrigger>
                         <div className='flex flex-row w-full items-center justify-between'>
-                            <div className='text-start'>{ct.teacher.firstname} {ct.teacher.lastname}</div>
+                            <div className='flex flex-row items-center'>
+                                <div className={`rounded-full h-4 w-4 mr-4 ${ct.teacher.wants_more_students ? "bg-green-500" : "bg-red-500"}`}/>
+                                <div className='text-start'>{ct.teacher.firstname} {ct.teacher.lastname}</div>
+                            </div>
                             <div className='text-start font-extralight mr-2 w-20 text-neutral-400'> { `${parseInt(ct.teacher.postal_code)<4000 ? "Oslo" : "Trondheim"}` }</div>
                         </div>
                     </AccordionTrigger>

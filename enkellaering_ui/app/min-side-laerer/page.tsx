@@ -89,6 +89,7 @@ type Teacher = {
     created_at: string;
     admin: boolean;
     resigned_at: string | null;
+    wants_more_students : boolean;
 }
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
@@ -182,6 +183,7 @@ export default function LaererPage() {
 
     return (<div className="flex flex-col items-center justify-center w-full min-h-screen bg-slate-200 dark:bg-slate-900">
             <TeacherName teacher={teacher}/>
+            <WantMoreStudents teacher={teacher}/>
 
             <DailyRevenueChart teacher={teacher}/>
             <br />
@@ -1108,3 +1110,51 @@ const PreviousClasses =  ({student, teacher, allClasses}  : {student :FullStuden
     </div>
   );
 }
+
+import { Switch } from "@/components/ui/switch"
+
+  
+const WantMoreStudents = ({teacher} : {teacher :Teacher}) => {
+    const [wantMore, setWantMore] = useState<boolean>(teacher.wants_more_students);
+
+    const handleToggle = async () => {
+        const newState = !wantMore;
+        setWantMore(newState);
+        await setWantMoreStudents(newState); // Update on the backend
+    };
+
+    return(<>
+
+    <Card className="flex flex-col items-center w-3/4 m-4">
+      <CardHeader>
+        <CardTitle>Ønsker du flere elever?</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center space-x-2">
+            <Switch id="more-students" checked={wantMore} onCheckedChange={handleToggle}/>
+            <Label htmlFor="more-students" className={`${wantMore ? '' : 'text-neutral-400'}`}>Jeg ønsker meg flere elever</Label>
+        </div>
+      </CardContent>
+    
+    </Card>
+    </>)
+}
+
+const setWantMoreStudents = async (yesOrNo: boolean) => {
+    const token = localStorage.getItem('token')
+
+    const response = await fetch(`${BASEURL}/toggle-wants-more-students`, {
+        method: "POST",
+        headers: {
+            "Authorization": `Bearer ${token}`, // Correct Authorization header format
+            "Content-Type": "application/json"  // Ensure the server knows it's JSON
+        },
+        body: JSON.stringify({ 'wants_more_students': yesOrNo }) // Use body instead of data
+    });
+
+    if (!response.ok) {
+        alert("Error toggling wether you want more students");
+    }
+
+    return true;
+};
