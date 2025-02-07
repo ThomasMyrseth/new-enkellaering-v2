@@ -911,7 +911,6 @@ function YourStudent( {teacher, classes, students} : {teacher: Teacher, classes 
             {students.map( (student, index) => {
 
                 let totalDurationMillisLastFourWeeks :number = 0
-                const today = new Date()
                 const fourWeeksAgo = new Date()
                 fourWeeksAgo.setDate(fourWeeksAgo.getDate()-28)
 

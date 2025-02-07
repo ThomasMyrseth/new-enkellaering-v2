@@ -23,7 +23,6 @@ import { Classes, Teacher, Student } from "./types";
 
 import { useEffect, useState } from "react"
 import React, { useRef } from "react";
-import { Circle } from "lucide-react";
 
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
