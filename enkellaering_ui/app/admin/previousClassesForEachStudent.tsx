@@ -219,7 +219,8 @@ export function PreviousClassesForEachStudent() {
                     <div className="flex flex-row justify-between items-center w-full pr-2">
                         <p className="text-start">
                             {cs.student.firstname_parent} {cs.student.lastname_parent} <br/>
-                            & {cs.student.firstname_student} {cs.student.lastname_student}
+                            & {cs.student.firstname_student} {cs.student.lastname_student} <br/>
+                            {cs.student.phone_parent}
                         </p>
                         <div className="flex flex-col">
                             <p className={`
