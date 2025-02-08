@@ -139,7 +139,7 @@ const NewStudentTable =( {newStudents} : {newStudents : NewStudent[]})  => {
         getAllTeachers()
     },[token])
 
-    return (<div className=" w-screen sm:w-full bg-white dark:bg-black rounded-sm shadow-lg flex flex-col items-center justify-center">
+    return (<div className=" w-full sm:w-full bg-white dark:bg-black rounded-sm shadow-lg flex flex-col items-center justify-center">
         <Table>
                 <TableCaption>Arbeidsoversikt for ny elev</TableCaption>
                     <TableHeader>

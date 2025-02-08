@@ -252,3 +252,35 @@ def toggleWantMoreStudents(client: bigquery.Client, wants_more_students :bool, t
 
     # Run the query
     return client.query(query, job_config=job_config, location='EU')
+
+
+
+
+def updateStudentNotes(admin_user_id :str, student_user_id :str, notes: str, client: bigquery.Client):
+    print("admin user id: ", admin_user_id)
+    print("student", student_user_id)
+    print("notes", notes)
+    
+    query = f"""
+        UPDATE `{USER_DATASET}.students`
+        SET
+            notes = @notes
+        WHERE user_id = @student_user_id
+         AND EXISTS (
+            SELECT 1
+            FROM `{USER_DATASET}.teachers`
+            WHERE user_id = @admin_user_id
+        )
+    """
+
+    # Define query parameters
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("notes", "STRING", notes),
+            bigquery.ScalarQueryParameter("student_user_id", "STRING", student_user_id),
+            bigquery.ScalarQueryParameter("admin_user_id", "STRING", admin_user_id)
+        ]
+    )
+
+    # Run the query
+    return client.query(query, job_config=job_config, location='EU')

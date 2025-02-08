@@ -219,7 +219,8 @@ export function PreviousClassesForEachStudent() {
                     <div className="flex flex-row justify-between items-center w-full pr-2">
                         <p className="text-start">
                             {cs.student.firstname_parent} {cs.student.lastname_parent} <br/>
-                            & {cs.student.firstname_student} {cs.student.lastname_student}
+                            & {cs.student.firstname_student} {cs.student.lastname_student} <br/>
+                            {cs.student.phone_parent}
                         </p>
                         <div className="flex flex-col">
                             <p className={`
@@ -234,6 +235,8 @@ export function PreviousClassesForEachStudent() {
                     </div>
                 </AccordionTrigger>
                 <AccordionContent>
+                    
+                    <StudentNotes student={cs.student}/>
 
                     <Accordion type="single" collapsible className="w-full">
                         <AccordionItem value={`Om ${cs.student.firstname_parent}`} key={1}>
@@ -572,3 +575,52 @@ const SetStudentInactive = ({ student }: { student: Student }) => {
         </AlertDialog>
     </>)
 };
+
+import { Textarea } from "@/components/ui/textarea";
+
+const StudentNotes = ({student} : {student : Student}) => {
+    const [notes, setNotes] = useState<string>(student.notes)
+
+    const handleAddNotes = (note :string) => {
+        setNotes(note)
+    }
+
+    return (<div className="flex flex-col my-10">
+        <Textarea  
+                rows={10} 
+                className="w-full mb-2 dark:bg-neutral-800" 
+                value={notes} 
+                onChange={(e) => handleAddNotes(e.target.value)} 
+                id="notes" 
+                placeholder="Noter ned generell info om eleven (kun synlig for admin)"
+        />
+        <Button onClick={() => {saveNotes(notes, student.user_id)} } className="bg-blue-900 dark:bg-blue-900 dark:text-neutral-100">Lagre</Button>
+    </div>)
+}
+
+const saveNotes = async ( notes :string, studentUserId :string) => {
+    const token :string | null= localStorage.getItem('token')
+
+    try {
+        const response = await fetch(`${BASEURL}/upload-notes-about-student`, {
+        method: "POST",
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            student_user_id : studentUserId,
+            notes : notes
+        }),
+        });
+
+        if (!response.ok) {
+            throw new Error("An error occurred. Please try again.");
+        } 
+
+        return true
+    } catch (error) {
+        console.error("Error uploading notes:", error);
+        alert("An error occurred. Please try again.");
+    }
+}
