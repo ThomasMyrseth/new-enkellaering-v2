@@ -21,6 +21,7 @@ export type Student = {
 
     est_hours_per_week : number
     is_active : boolean
+    notes :string
 }
 
 export type Teacher = {
@@ -38,6 +39,7 @@ export type Teacher = {
     admin: boolean;
     resigned_at: string | null;
     wants_more_students :boolean;
+    notes :string;
 }
 
 export type Classes = {
