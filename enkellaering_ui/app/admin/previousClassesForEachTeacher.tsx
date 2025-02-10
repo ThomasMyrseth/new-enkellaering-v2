@@ -45,7 +45,7 @@ export function PreviousClassesForEachTeacher() {
 
     const [loading, setLoading] = useState<boolean>(true)
 
-    //get classes for everyone
+    //get classes, teachers and students for everyone
     useEffect( () => {
         async function fetchClasses() {
             const response = await fetch(`${BASEURL}/get-all-classes`, {
@@ -72,8 +72,6 @@ export function PreviousClassesForEachTeacher() {
                 setLoading(false)
             }
         }
-        fetchClasses()
-
         async function getAllTeachers() {
 
             const response = await fetch(`${BASEURL}/get-all-teachers`, {
@@ -103,8 +101,6 @@ export function PreviousClassesForEachTeacher() {
                 setTeachers(teachers)
             }
         }
-        getAllTeachers()
-
         async function getAllStudents() {
 
             const response = await fetch(`${BASEURL}/get-all-students`, {
@@ -136,84 +132,12 @@ export function PreviousClassesForEachTeacher() {
                 setLoading(false)
             }
         }
+        fetchClasses()
+        getAllTeachers()
         getAllStudents()
 
     
     },[])
-
-    // //get all the teachers
-    // useEffect( () => {
-    //     async function getAllTeachers() {
-
-    //         const response = await fetch(`${BASEURL}/get-all-teachers`, {
-    //             method: "GET",
-    //             credentials: "include",
-    //             headers: {
-    //                 "Content-Type": "application/json"
-    //             }
-    //         })
-
-    //         if (!response.ok) {
-    //             alert("Error fetching teachers " + response.statusText)
-    //             setTeachers([])
-    //             return null
-    //         }
-
-    //         const data = await response.json()
-    //         const teachers :Teacher[] = data.teachers
-
-    //         if (teachers.length===0) {
-    //             alert("No teachers found")
-    //             console.log("No teachers found")
-    //             setTeachers([])
-    //             return null
-    //         }
-
-    //         else {
-    //             setTeachers(teachers)
-    //         }
-    //     }
-
-    //     getAllTeachers()
-    // },[])
-
-    // //get all the students
-    // useEffect( () => {
-    //     async function getAllStudents() {
-
-    //         const response = await fetch(`${BASEURL}/get-all-students`, {
-    //             method: "GET",
-    //             credentials: "include",
-    //             headers: {
-    //                 "Content-Type": "application/json"
-    //             }
-    //         })
-
-    //         if (!response.ok) {
-    //             alert("Error fetching students " + response.statusText)
-    //             setStudents([])
-    //             return null
-    //         }
-
-    //         const data = await response.json()
-    //         const students :Student[] = data.students
-
-    //         if (students.length===0) {
-    //             alert("No students found")
-    //             console.log("No students found")
-    //             setStudents([])
-    //             return null
-    //         }
-
-
-    //         else {
-    //             setStudents(students)
-    //             setLoading(false)
-    //         }
-    //     }
-
-    //     getAllStudents()
-    // },[])
 
     //map each teacher to his classes
     useEffect( () => {
@@ -281,6 +205,19 @@ export function PreviousClassesForEachTeacher() {
             let totalInvoicedByTeacher :number =0
             let totalInvoicedHoursByTeacher :number =0
 
+            const fourWeeksAgo = new Date()
+            fourWeeksAgo.setDate(fourWeeksAgo.getDate()-28)
+            let estTotalHoursLastFourWeeks :number = 0
+            let actualTotalHoursLastFourWeeks :number = 0
+
+            //go through all this teachers students and add up estimated hours per week
+            students.map( (student :Student ) => {
+                console.log("student: ", student.your_teacher)
+                console.log("teacher: ", ct.teacher.user_id, "\n\n")
+                if (student.your_teacher === ct.teacher.user_id && student.is_active) {
+                    estTotalHoursLastFourWeeks += student.est_hours_per_week;
+                }
+            }) 
 
             classes.map((c :Classes) => {
                 const startedAt: Date = new Date(c.started_at);
@@ -288,6 +225,11 @@ export function PreviousClassesForEachTeacher() {
                 const totalDurationMillis: number = endedAt.getTime() - startedAt.getTime();
                 const invoiceAmount: number = (totalDurationMillis / (1000 * 60 * 60)) * 540
                 const toTeacherAmmount :number = totalDurationMillis / (1000 * 60 * 60) * teacherHourlyPay
+
+                //add up to see how many hours the teacher has had the last four weeks
+                if (new Date(c.started_at).getTime() > fourWeeksAgo.getTime()) {
+                    actualTotalHoursLastFourWeeks += totalDurationMillis / (1000*60*60)
+                }
 
                 if (!c.invoiced_student) {
                     totalUninvoicedHoursByTeacher += totalDurationMillis / (1000 * 60 * 60)
@@ -309,6 +251,9 @@ export function PreviousClassesForEachTeacher() {
             })
 
             //round of all values
+            actualTotalHoursLastFourWeeks = Math.round(actualTotalHoursLastFourWeeks*10)/10
+            estTotalHoursLastFourWeeks = Math.round(estTotalHoursLastFourWeeks*10)/10*4 //*4 to get this into a four week mark
+
             totalUnpaidToTeacher = Math.round(totalUnpaidToTeacher)
             totalUnpaidHoursToTeacher = Math.round(totalUnpaidHoursToTeacher*100)/100
             totalPaidToTeacher = Math.round(totalPaidToTeacher)
@@ -320,7 +265,6 @@ export function PreviousClassesForEachTeacher() {
             totalInvoicedHoursByTeacher = Math.round(totalInvoicedHoursByTeacher*100)/100
 
 
-
         return (<div key={index} className="bg-white dark:bg-black shadow-lg w-full p-4 rounded-lg mb-4">
             <Accordion type="single" collapsible className="w-full mt-4">
                 <AccordionItem value="remaining-classes">
@@ -330,7 +274,13 @@ export function PreviousClassesForEachTeacher() {
                                 <div className={`rounded-full h-4 w-4 mr-4 ${ct.teacher.wants_more_students ? "bg-green-500" : "bg-red-500"}`}/>
                                 <div className='text-start'>{ct.teacher.firstname} {ct.teacher.lastname}</div>
                             </div>
-                            <div className='text-start font-extralight mr-2 w-20 text-neutral-400'> { `${parseInt(ct.teacher.postal_code)<4000 ? "Oslo" : "Trondheim"}` }</div>
+                            <div className='text-start font-extralight mr-2 w-44 text-neutral-400'> 
+                                { `${parseInt(ct.teacher.postal_code)<4000 ? "Oslo" : "Trondheim"}` }
+
+                                <p 
+                                    className={`${actualTotalHoursLastFourWeeks<estTotalHoursLastFourWeeks ? 'text-red-400' : ''}`}
+                                >{ actualTotalHoursLastFourWeeks}/{estTotalHoursLastFourWeeks}h siste fire uker</p>
+                            </div>
                         </div>
                     </AccordionTrigger>
                     <AccordionContent>
@@ -350,8 +300,14 @@ export function PreviousClassesForEachTeacher() {
                                 <AccordionTrigger>{ct.teacher.firstname} sine elever</AccordionTrigger>
                                 <AccordionContent>
                                     <Accordion type="single" collapsible className="w-full">
-                                        {students.map( (student, index) => (
-                                            student.your_teacher === ct.teacher.user_id && (
+                                        {students.map( (student, index) => {
+                                            
+                                            //skip not this teachers students
+                                            if (student.your_teacher !== ct.teacher.user_id || !student.is_active) {
+                                                return null;
+                                            }
+
+                                            return (<>
                                             <AccordionItem value={index.toString()} key={index}>
                                                 <AccordionTrigger>
                                                     <p>{student.firstname_parent} {student.lastname_parent}
@@ -390,8 +346,9 @@ export function PreviousClassesForEachTeacher() {
                                                     </p>
                                                 </AccordionContent>
                                             </AccordionItem>
-                                            )
-                                        ))}
+                                            </>)
+                                        }
+                                        )}
                                     </Accordion>
                                 </AccordionContent>
                             </AccordionItem>
