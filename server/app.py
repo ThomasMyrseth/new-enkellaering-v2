@@ -40,11 +40,11 @@ app.config['SESSION_USE_SIGNER'] = True
 app.config['SESSION_KEY_PREFIX'] = 'enkel_laering_prefix'
 app.config['SESSION_COOKIE_NAME'] = 'enkel_laering_coockie'
 app.config['SESSION_COOKIE_HTTPONLY'] = True
-#app.config['SESSION_COOKIE_SECURE'] = True
-app.config['SESSION_COOCKIE_SECURE'] = False
+app.config['SESSION_COOKIE_SECURE'] = True
+#app.config['SESSION_COOCKIE_SECURE'] = False
 app.config['SESSION_COOKIE_SAMESITE'] = 'None'
-#app.config['SESSION_COOKIE_DOMAIN'] = 'enkellaering-service-895641904484.europe-west2.run.app'
-app.config['SESSION_COOKIE_DOMAIN'] = 'localhost'
+app.config['SESSION_COOKIE_DOMAIN'] = 'enkellaering-service-895641904484.europe-west2.run.app'
+#app.config['SESSION_COOKIE_DOMAIN'] = 'localhost'
 
 CORS(app, resources={
     r"/*": {
@@ -598,6 +598,7 @@ def upload_new_class(user_id):
     started_at = data.get("started_at")
     ended_at = data.get("ended_at")
     comment = data.get("comment")
+    was_canselled = data.get("was_canselled") or False
     invoiced_student = False
     paid_teacher = False
     paid_teacher_at = None
@@ -617,7 +618,8 @@ def upload_new_class(user_id):
         paid_teacher=paid_teacher,
         invoiced_student=invoiced_student,
         paid_teacher_at=paid_teacher_at,
-        invoiced_student_at=invoiced_student_at
+        invoiced_student_at=invoiced_student_at,
+        was_canselled=was_canselled
     )
 
     try:

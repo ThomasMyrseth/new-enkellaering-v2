@@ -231,11 +231,11 @@ def insert_class(client: bigquery.Client, class_obj: Classes):
     query = f"""
         INSERT INTO `{PROJECT_ID}.{CLASSES_DATASET}.classes` (
             class_id, teacher_user_id, student_user_id, created_at, started_at, ended_at,
-            comment, paid_teacher, invoiced_student
+            comment, paid_teacher, invoiced_student, was_canselled
         )
         VALUES (
             @class_id, @teacher_user_id, @student_user_id, @created_at, @started_at, @ended_at,
-            @comment, @paid_teacher, @invoiced_student
+            @comment, @paid_teacher, @invoiced_student, @was_canselled
         )
     """
     job_config = bigquery.QueryJobConfig(
@@ -249,6 +249,7 @@ def insert_class(client: bigquery.Client, class_obj: Classes):
             bigquery.ScalarQueryParameter("comment", "STRING", class_obj.comment),
             bigquery.ScalarQueryParameter("paid_teacher", "BOOL", class_obj.paid_teacher),
             bigquery.ScalarQueryParameter("invoiced_student", "BOOL", class_obj.invoiced_student),
+            bigquery.ScalarQueryParameter("was_canselled", "BOOL", class_obj.was_canselled),
         ]
     )
 
