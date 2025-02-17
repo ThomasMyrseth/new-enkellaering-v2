@@ -34,7 +34,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { AlertDialog, AlertDialogDescription,AlertDialogCancel, AlertDialogAction, AlertDialogFooter,AlertDialogContent,  AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Checkbox } from "@/components/ui/checkbox"
 
 type Class = {
     comment: string; // Optional comment for the session
