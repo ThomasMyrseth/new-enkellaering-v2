@@ -54,6 +54,7 @@ export type Classes = {
     paid_teacher_at :string;
     invoiced_student_at :string;
     class_id :string;
+    was_canselled :boolean;
 };
 
 

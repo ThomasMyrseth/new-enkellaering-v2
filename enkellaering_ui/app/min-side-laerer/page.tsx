@@ -35,7 +35,6 @@ import {
 } from "@/components/ui/popover"
 import { AlertDialog, AlertDialogDescription,AlertDialogCancel, AlertDialogAction, AlertDialogFooter,AlertDialogContent,  AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
-
 type Class = {
     comment: string; // Optional comment for the session
     created_at: string; // Timestamp when the record was created (ISO format)
@@ -45,6 +44,7 @@ type Class = {
     paid_teacher: boolean; // Indicates if the teacher was paid
     teacher_user_id :string;
     student_user_id :string;
+    was_canselled :boolean;
 };
 
 type FormattedClass = {
@@ -394,6 +394,7 @@ function AddNewClass({teacher}: {teacher: Teacher}) {
     const [endedAt, setEndedAt] = useState<Date>()
     const [comment, setComment] = useState<string>()
     const [success, setSuccess] = useState<boolean>()
+    const [wasCanselled, setWasCanselled] = useState<boolean>(false)
 
     const handleStudentSelect = (userId: string) => {
         console.log("setting user id", userId)
@@ -409,6 +410,10 @@ function AddNewClass({teacher}: {teacher: Teacher}) {
 
     const handleSetComment = (comment :string) => {
         setComment(comment)
+    }
+
+    const handleSetCanselled = (canselled :boolean) => {
+        setWasCanselled(canselled)
     }
 
     const handleSetSucces = (s :boolean) => {
@@ -448,6 +453,8 @@ function AddNewClass({teacher}: {teacher: Teacher}) {
             <br />
             <DateTimePicker onStartDateSelected={handleStartDateSelect} onEndDateSelected={handleEndDateSelect}/>
             <br />
+            <WasCanselled onWasCanselled={handleSetCanselled}/>
+            <br />
             <AddComment onAddComment={handleSetComment}/>
             <br />
             <SendButton 
@@ -456,6 +463,7 @@ function AddNewClass({teacher}: {teacher: Teacher}) {
                 ended_at={endedAt}
                 comment={comment}
                 selectedStudentUserId={selectedStudentUserId}
+                wasCanselled={wasCanselled}
                 setUploadSuccessfull={handleSetSucces}
             />
         </div>
@@ -581,7 +589,23 @@ function AddComment({onAddComment} : {onAddComment: (comment: string) => void   
     </>)
 }
 
+function WasCanselled({onWasCanselled} : {onWasCanselled: (wasCanselled: boolean) => void}) {
+    const [wasCanselled, setWasCanselled] = useState<boolean>(false)
 
+    const handleToggle = () => {
+        setWasCanselled(!wasCanselled)
+        onWasCanselled(!wasCanselled)
+    }
+    
+    return(<>
+        <div className="w-full flex flex-col items-center space-x-2">
+            <div className="flex items-center space-x-2">
+                <Switch id="more-students" checked={wasCanselled} onCheckedChange={handleToggle}/>
+                <Label htmlFor="more-students" className={`${wasCanselled ? '' : 'text-neutral-400'}`}>Timen var avbestilt mindre enn 24h før</Label>
+            </div>
+    </div>
+  </>)
+}
 
 
 
@@ -733,7 +757,7 @@ function DateTimePicker({onStartDateSelected, onEndDateSelected} : {onStartDateS
 }
 
 
-function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUserId, setUploadSuccessfull} : {teacher: Teacher; started_at?: Date; ended_at?: Date; comment?: string, selectedStudentUserId?: string, setUploadSuccessfull: (success: boolean) => void}) {
+function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUserId, wasCanselled, setUploadSuccessfull} : {teacher: Teacher; started_at?: Date; ended_at?: Date; comment?: string, selectedStudentUserId?: string, wasCanselled :boolean, setUploadSuccessfull: (success: boolean) => void}) {
     const token = localStorage.getItem('token')
     const [durationInHours, setDurationInHours] = useState<number | undefined>()
     const [allValid, setAllValid] = useState<boolean>(false)
@@ -777,14 +801,18 @@ function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUse
             return
         }
 
-        await uploadClass()
+        const response = await uploadClass()
+
+        if (response) {
+            setIsSendButtonDisabled(false)
+        }
     };
 
     const uploadClass = async() => {
         if (!teacher || !started_at || !ended_at || !comment || !selectedStudentUserId) {
             alert("All fields must be filled in.");
             setUploadSuccessfull(false);
-            return;
+            return true;
         }
 
         try {
@@ -800,20 +828,24 @@ function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUse
                 started_at: started_at.toISOString(),
                 ended_at: ended_at.toISOString(),
                 comment: comment,
+                was_canselled: wasCanselled
             }),
             });
     
             if (!response.ok) {
                 alert("An error occurred. Please try again.");
                 setUploadSuccessfull(false);
+                return true;
             } else {
                 setUploadSuccessfull(true);
+                return true;
             }
         } catch (error) {
             console.error("Error uploading class:", error);
             alert("An error occurred. Please try again.");
             setUploadSuccessfull(false);
             setIsSendButtonDisabled(false);
+            return true;
         }
     }
 
@@ -1057,7 +1089,7 @@ const PreviousClasses =  ({student, teacher, allClasses}  : {student :FullStuden
                 const amount: number = durationHours * parseInt(teacher.hourly_pay) + (durationMinutes / 60) * parseInt(teacher.hourly_pay); // Adding fractional hours
 
                 return(
-                    <TableRow key={index}>
+                    <TableRow key={index} className={`${c.was_canselled===true ? 'bg-red-50 dark:bg-red-950' : ''}`}>
                         <TableCell className="font-medium">{c.started_at}</TableCell>
                         <TableCell>{`${durationHours}t ${Math.round(durationMinutes % 60)}min`}</TableCell>
                         <TableCell>{c.paid_teacher ? <p className="text-green-400">Betalt</p> : <p className="text-red-400">Ubetalt</p>}</TableCell>
@@ -1085,7 +1117,7 @@ const PreviousClasses =  ({student, teacher, allClasses}  : {student :FullStuden
                     const amount: number = durationHours * parseInt(teacher.hourly_pay) + (durationMinutes / 60) * parseInt(teacher.hourly_pay);
 
                     return (
-                      <TableRow key={index}>
+                      <TableRow key={index} className={`${c.was_canselled ? 'bg-red-50 dark:bg-red-950' : ''}`}>
                         <TableCell className="font-medium">{c.started_at}</TableCell>
                         <TableCell>{`${durationHours}t ${durationMinutes}min`}</TableCell>
                         <TableCell>

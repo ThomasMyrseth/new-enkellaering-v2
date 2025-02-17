@@ -52,6 +52,7 @@ type Classes = {
     ended_at: string; // Timestamp for when the session ended (ISO format)
     invoiced_student: boolean; // Indicates if the student was invoiced
     paid_teacher: boolean; // Indicates if the teacher was paid
+    was_canselled :boolean;
 };
 
 export default function MinSideStudentPage() {
@@ -341,7 +342,9 @@ function PreviousClasses({student} : {student : Student}) {
         </p>
         </div>
         <Table>
-        <TableCaption>*At en time er fakturert vil si at faktura for timen er sendt ut, det betyr ikke at timen er betalt</TableCaption>
+        <TableCaption>*At en time er fakturert vil si at faktura for timen er sendt ut, det betyr ikke at timen er betalt
+            <br/>*At en rad er rød vil si at den ble avbestilt mindre enn 24 timer før timen skulle utføres.
+        </TableCaption>
         <TableHeader>
             <TableRow>
                 <TableHead className="w-[100px]">Dato</TableHead>
@@ -362,7 +365,7 @@ function PreviousClasses({student} : {student : Student}) {
                 const amount: number = durationHours * 540 + (durationMinutes / 60) * 540; // Adding fractional hours
 
                 return(
-                    <TableRow key={index}>
+                    <TableRow key={index} className={`${c.was_canselled===true? 'bg-red-50 dark:bg-red-950' : ''}`}>
                         <TableCell className="font-medium">{c.started_at}</TableCell>
                         <TableCell>{`${durationHours}t ${Math.round(durationMinutes % 60)}min`}</TableCell>
                         <TableCell>{c.invoiced_student ? <p className="text-green-400">Fakturert</p> : <p className="text-red-400">Ufakturert</p>}</TableCell>

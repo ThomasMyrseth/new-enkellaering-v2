@@ -178,6 +178,8 @@ export function PreviousClassesForEachStudent() {
 
             let hoursOfClassesLastFourWeeks : number = 0
 
+            let numberOfCanselledClassesLastFourWeeks :number =0
+
             classes.map( (c :Classes ) => {
                 const today :Date = new Date();
                 const fourWeeksAgo: Date = new Date(today); // Create a copy of today
@@ -204,6 +206,10 @@ export function PreviousClassesForEachStudent() {
                 if (startedAt.getTime() > fourWeeksAgo.getTime()) {
                     hoursOfClassesLastFourWeeks += totalDurationMillis/(1000*60*60)
                 }
+
+                if (c.was_canselled===true && startedAt.getTime() > fourWeeksAgo.getTime()) {
+                    numberOfCanselledClassesLastFourWeeks += 1
+                }
             })
 
             hoursOfClassesLastFourWeeks = Math.round(hoursOfClassesLastFourWeeks*10)/10 //1 decimal
@@ -215,8 +221,8 @@ export function PreviousClassesForEachStudent() {
         return (<div key={index} className="bg-white dark:bg-black shadow-lg w-full p-4 rounded-lg mb-4">
             <Accordion type="single" collapsible className="w-full mt-4">
             <AccordionItem value="remaining-classes">
-                <AccordionTrigger>
-                    <div className="flex flex-row justify-between items-center w-full pr-2">
+                <AccordionTrigger className={`w-full h-full p-4 ${numberOfCanselledClassesLastFourWeeks>=2 ? 'bg-red-50 dark:bg-red-950':''}`}>
+                    <div className={`flex flex-row justify-between items-center w-full pr-2 }`}>
                         <p className="text-start">
                             {cs.student.firstname_parent} {cs.student.lastname_parent} <br/>
                             & {cs.student.firstname_student} {cs.student.lastname_student} <br/>
@@ -308,7 +314,7 @@ export function PreviousClassesForEachStudent() {
                         const invoiceAmount: number = Math.round(totalDurationHours * 540);
                         
                         return (
-                        <TableRow key={index}>
+                        <TableRow key={index} className={`${c.was_canselled===true? 'bg-red-50 dark:bg-red-950' : ''}`}>
                             <TableCell className="font-medium">{c.started_at}</TableCell>
                             <TableCell>{`${durationHours}t ${durationMinutes}min`}</TableCell>
                             <TableCell>
@@ -497,13 +503,13 @@ const InvoiceStudentPopover = ( {student, classes} : {student: Student, classes:
 
                         return (<div key={index}>
                         <p>
-                            Fra {formattedStartTime} til {formattedEndTime} <br/>
+                            Fra {formattedStartTime} til {formattedEndTime}{c.was_canselled? '*':''}<br/>
                         </p>
                         </div>)
                     })
                     }
                 </div>
-
+                <br/><p>* vil si at timen ble kansellert mindre enn 24 timer før avtalt oppstart</p>
             </div>
 
             <div className=" flex flex-row space-x-4 justify-start mt-5">
