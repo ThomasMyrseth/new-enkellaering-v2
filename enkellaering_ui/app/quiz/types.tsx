@@ -19,6 +19,7 @@ export type FullQuizType = {
 export type QuizType = {
     quiz_id :string;
     title :string;
+    image :string | null;
     pass_threshold :number;
     created_at :string;
 }

@@ -304,9 +304,11 @@ def get_all_quizzes(client: bigquery.Client):
     for row in results:
         quiz_id = row["quiz_id"]
         title = row["title"]
+        image = row["image"]
         pass_threshold = row["pass_threshold"]
+        created_at = row["created_at"]
 
-        formatted_quizzes.append({"quiz_id": quiz_id, "title": title, "pass_threshold": pass_threshold})
+        formatted_quizzes.append({"quiz_id": quiz_id, "title": title, "image": image,"pass_threshold": pass_threshold, "created_at": created_at})
 
     return formatted_quizzes
         
