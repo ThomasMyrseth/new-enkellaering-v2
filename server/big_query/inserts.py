@@ -306,4 +306,40 @@ def upsert_about_me_text(client: bigquery.Client, text: str, user_id: str, first
     return client.query(query, job_config=job_config, location="EU")
 
 
+def insert_quiz_result(user_id :str, quiz_id :str, passed :bool, number_of_corrects :int, number_of_questions :int, client :bigquery.Client):
+
+    query = f"""
+        INSERT INTO `{PROJECT_ID}.{USER_DATASET}.quiz_results`
+        (user_id, quiz_id, passed, number_of_corrects, number_of_questions, created_at)
+        VALUES (@user_id, @quiz_id, @passed, @number_of_corrects, @number_of_questions, CURRENT_TIMESTAMP())
+    """
+
+
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("user_id", "STRING", user_id),
+            bigquery.ScalarQueryParameter("quiz_id", "STRING", quiz_id),
+            bigquery.ScalarQueryParameter("passed", "BOOL", passed),
+            bigquery.ScalarQueryParameter("number_of_corrects", "INT64", number_of_corrects),
+            bigquery.ScalarQueryParameter("number_of_questions", "INT64", number_of_questions),
+        ]
+    )
+
+    try:
+        response = client.query(query, job_config=job_config, location="EU")
+        response.result()  # Ensure the query completes
+
+        # Debug response
+        print("Query executed successfully.")
+        if response.errors:
+            print("BigQuery errors:")
+            for error in response.errors:
+                print(error)
+            raise Exception("Error inserting new class into BigQuery")
+        
+        return True
+    except Exception as e:
+        print(f"Error executing query: {e}")
+        raise Exception(f"Error executing query: {e}")
+
     

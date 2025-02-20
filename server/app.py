@@ -1302,6 +1302,77 @@ def upload_notes_about_student_route(user_id):
 
 
 
+
+
+from big_query.gets import get_all_quizzes
+@app.route('/get-all-quizzes', methods=["GET"])
+@token_required
+def get_all_quizzes_route(user_id):
+    quizzes = get_all_quizzes(client=bq_client)
+
+    if not quizzes or len(quizzes)==0:
+        return jsonify({"message": "Error retrieving quizzes"}), 500
+    
+    return jsonify({"quizzes": quizzes}), 200
+
+
+
+from big_query.gets import get_quiz_meta_data
+@app.route('/get-quiz-meta-data', methods=["POST"])
+@token_required
+def get_quiz_meta_data_route(user_id):
+    data = request.get_json()
+    quiz_id = data.get('quiz_id')
+
+    quizzes = get_quiz_meta_data(quiz_id=quiz_id, client=bq_client)
+
+    if not quizzes or len(quizzes)==0:
+        return jsonify({"message": "Error retrieving quizzes"}), 500
+    
+    return jsonify({"quizzes": quizzes}), 200
+
+
+from big_query.gets import get_quiz
+
+@app.route('/get-quiz', methods=["POST"])
+@token_required
+def get_quiz_route(user_id):
+    data = request.get_json()
+    quiz_id = data.get('quiz_id')
+
+    if not quiz_id:
+        return jsonify({"message": "Missing quiz id"}), 400
+    
+    quiz = get_quiz(client=bq_client, quiz_id=quiz_id)
+
+    if not quiz or len(quiz)==0:
+        return jsonify({"message": "Error retrieving quiz"}), 500
+    
+    return jsonify({"quiz": quiz}), 200
+
+
+from big_query.inserts import insert_quiz_result
+
+@app.route('/submit-quiz', methods=["POST"])
+@token_required
+def submit_quiz_route(user_id):
+    data = request.get_json()
+    number_of_corrects :int = data.get('number_of_corrects') or 0
+    number_of_questions :int = data.get('number_of_questions') or 0
+    passed :bool = data.get('passed') or False
+    quiz_id :str = data.get('quiz_id') or ''
+
+    try:
+        insert_quiz_result(user_id=user_id, quiz_id=quiz_id, passed=passed, number_of_corrects=number_of_corrects, number_of_questions=number_of_questions, client=bq_client)
+        return jsonify({"message": "Quiz submitted successfully"}), 200
+
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
+
+
+
+    
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))  # Use PORT from the environment or default to 8080
     app.run(debug=True ,host="0.0.0.0", port=port)

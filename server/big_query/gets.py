@@ -10,6 +10,9 @@ PROJECT_ID = os.getenv('PROJECT_ID')
 USER_DATASET = os.getenv('USER_DATASET')
 CLASSES_DATASET = os.getenv('CLASSES_DATASET')
 NEW_STUDENTS_DATASET = os.getenv('NEW_STUDENTS_DATASET')
+QUIZ_DATASET = os.getenv('QUIZ_DATASET')
+
+
 
 
 
@@ -282,3 +285,86 @@ def get_all_about_me_texts(client: bigquery.Client):
 
     about_me_texts = [{"user_id": row["user_id"], "about_me": row["about_me"], "firstname" : row["firstname"], "lastname" : row["lastname"]} for row in results]
     return about_me_texts
+
+
+
+
+
+
+def get_all_quizzes(client: bigquery.Client):
+    query = f"""
+        SELECT * 
+        FROM `{PROJECT_ID}.{QUIZ_DATASET}.quizzes`
+    """
+
+    query_job = client.query(query, location="EU")
+    results = query_job.result()  # Fetch all rows
+
+    formatted_quizzes = []
+    for row in results:
+        quiz_id = row["quiz_id"]
+        title = row["title"]
+        pass_threshold = row["pass_threshold"]
+
+        formatted_quizzes.append({"quiz_id": quiz_id, "title": title, "pass_threshold": pass_threshold})
+
+    return formatted_quizzes
+        
+
+
+def get_quiz_meta_data(quiz_id :str, client: bigquery.Client):
+    query = f"""
+        SELECT * 
+        FROM `{PROJECT_ID}.{QUIZ_DATASET}.quizzes`
+        WHERE quiz_id = @quiz_id
+    """
+
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[bigquery.ScalarQueryParameter("quiz_id", "STRING", quiz_id)]
+    )
+
+    query_job = client.query(query, location="EU", job_config=job_config)
+    results = list(query_job.result())  # Fetch all rows
+
+    quiz_data = dict(results[0])
+
+    return quiz_data
+        
+
+
+def get_quiz(quiz_id :str, client: bigquery.Client):
+    query = f"""
+        SELECT * 
+        FROM `{PROJECT_ID}.{QUIZ_DATASET}.questions`
+        WHERE quiz_id = @quiz_id
+    """
+
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[bigquery.ScalarQueryParameter("quiz_id", "STRING", quiz_id)]
+    )
+
+    query_job = client.query(query, job_config=job_config)
+    results = query_job.result()  # Fetch all rows
+
+    formated_questions = []
+    for row in results:
+        question_id = row["question_id"]
+        question = row["question"]
+        options = row["options"]
+        correct_option = row["correct_option"]
+        time_limit = row["time_limit"]
+        image = row["image"]
+
+        formated_questions.append({
+            "quiz_id": quiz_id,
+            "question_id": question_id,
+            "question": question,
+            "options": options,
+            "correct_option": correct_option,
+            "time_limit": time_limit,
+            "image": image
+        })
+
+    return formated_questions
+
+        

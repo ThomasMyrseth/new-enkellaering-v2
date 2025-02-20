@@ -1,4 +1,6 @@
 
+"use client"
+
 import React from "react"
 import { useEffect, useState } from "react"
 import { QuizType } from "./types"
@@ -10,12 +12,12 @@ export default function QuizPage() {
     const baseUrl :string= process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8080'
     const router = useRouter()
     
-    const [quizes, setQuizes] = useState<QuizType[]>([])
+    const [quizzes, setQuizzes] = useState<QuizType[]>([])
 
-    //fetch the quizes
+    //fetch the quiszes
     useEffect(() => {
-        async function fetchQuizes() {
-            const res = await fetch(`${baseUrl}/get-all-quizes`, {
+        async function fetchQuizzes() {
+            const res = await fetch(`${baseUrl}/get-all-quizzes`, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
@@ -25,11 +27,11 @@ export default function QuizPage() {
 
             if (res.ok) {
                 const data = await res.json()
-                setQuizes(data.quizes)
+                setQuizzes(data.quizzes)
             }
         }
 
-        fetchQuizes()
+        fetchQuizzes()
     },[])
 
    const handleSetSelectedQuiz =(quizId :string) => {
@@ -39,8 +41,8 @@ export default function QuizPage() {
     //fetch the questions once quiz has been selected
     return (<>
         <h1>Velg hvilken quiz du skal ta. Testen vil starte umidelbart når du trykker på knappen</h1>
-        {quizes.map((quiz, index) => {
-            <Button onClick={() => handleSetSelectedQuiz(quiz.quizId)} key={index}>{quiz.title}</Button>
+        {quizzes.map((quiz, index) => {
+            return<Button onClick={() => handleSetSelectedQuiz(quiz.quiz_id)} key={index}>{quiz.title}</Button>
         })}
     </>)
 }

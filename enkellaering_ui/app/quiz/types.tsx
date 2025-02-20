@@ -1,21 +1,24 @@
 
 export type QuestionType = {
+    quiz_id :string;
+    question_id :string;
     question :string;
     options: string[];
-    correctOption: number;
+    correct_option: number;
     image :string;
-    timeLimit :number;
+    time_limit :number;
 }
 
 export type FullQuizType = {
-    quizId :string;
+    quiz_id :string;
     title :string;
-    passTreshold :number;
+    pass_threshold :number;
     questions :QuestionType[];
 }
 
 export type QuizType = {
-    quizId :string;
+    quiz_id :string;
     title :string;
-    passTreshold :number;
+    pass_threshold :number;
+    created_at :string;
 }

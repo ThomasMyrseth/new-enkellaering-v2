@@ -59,30 +59,36 @@ const Question = ({question, questionNumber, options, correctOption, image, time
 
 
 
-const Quiz = ({quizId, title, questions, passTreshold, baseUrl, token} : {quizId :string,title :string, questions :QuestionType[], passTreshold :number, baseUrl :string, token :string}) => {
-    let numberOfCorrects :number =0;
-    let numberOfQuestionsCompleted :number =0;
-    let passed :boolean = false;
-    let hasSubmitted :boolean = false;
+const Quiz = ({questions, passThreshold, quizId, title, baseUrl, token} : {questions :QuestionType[],passThreshold :number, quizId :string,title :string, baseUrl :string, token :string}) => {
+    const [numberOfCorrects, setNumberOfCorrects] = useState(0);
+    const [numberOfQuestionsCompleted, setNumberOfQuestionsCompleted] = useState(0);
+    const [passed, setPassed] = useState<boolean>(false)
+    const [hasSubmitted, setHasSubmitted] = useState<boolean>(false)
     const [currentQuestion, setCurrentQuestion] = useState<number>(0);
     const router = useRouter()
 
+
     //randomly reshufle the order of the questions
-    const shuffledQuestions = questions.sort(() => Math.random() - 0.5);
+    const shuffledQuestions = (questions).sort(() => Math.random() - 0.5);
 
     const incrementCorrectAnswer = (correct :boolean) => {
         if(correct){
-            numberOfCorrects++;
+            setNumberOfCorrects(numberOfCorrects+1);
         }
-        numberOfQuestionsCompleted++;
+        setNumberOfQuestionsCompleted(numberOfQuestionsCompleted + 1);
         setCurrentQuestion(currentQuestion + 1);
     }
 
     const handleSubmit = async () => {
-        if(numberOfCorrects / numberOfQuestionsCompleted >= passTreshold){
-            passed = true;
+        setHasSubmitted(true);
+
+        if(numberOfCorrects / numberOfQuestionsCompleted >= passThreshold){
+            setPassed(true)
         }
-        hasSubmitted = true;
+        else {
+            setPassed(false)
+            return;
+        }
 
         const res = await fetch(`${baseUrl}/submit-quiz`, {
             headers: {
@@ -109,15 +115,21 @@ const Quiz = ({quizId, title, questions, passTreshold, baseUrl, token} : {quizId
         <h1>{title}</h1>
         {
             shuffledQuestions.map((question, index) => {
-                return (<Question 
-                    question={question.question}
-                    questionNumber={index + 1}
-                    options={question.options}
-                    correctOption={question.correctOption}
-                    image={question.image}
-                    onSubmitAnswer={incrementCorrectAnswer} 
-                    timeLimit={question.timeLimit}
-                    key={index}/>)
+
+                if (index === currentQuestion) {
+                    return (<Question 
+                            question={question.question}
+                            questionNumber={index + 1}
+                            options={question.options}
+                            correctOption={question.correct_option}
+                            image={question.image}
+                            onSubmitAnswer={incrementCorrectAnswer} 
+                            timeLimit={question.time_limit}
+                            key={index}/>)
+                }
+                else {
+                    return null;
+                }
             })
         }
         {numberOfQuestionsCompleted === shuffledQuestions.length &&
