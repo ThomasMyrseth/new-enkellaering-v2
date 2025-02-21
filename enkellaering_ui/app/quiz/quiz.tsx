@@ -72,7 +72,7 @@ const Question: React.FC<QuestionProps> = ({
             key={index}
             className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-100 cursor-pointer"
           >
-            <RadioGroupItem value={option} id={`option-${index}`} className="mr-2" />
+            <RadioGroupItem value={String(index)} id={`option-${index}`} className="mr-2" />
             <Label htmlFor={`option-${index}`} className="text-lg">
               {option}
             </Label>
@@ -125,7 +125,7 @@ const Quiz: React.FC<QuizProps> = ({
 
   const incrementCorrectAnswer = (correct: boolean): void => {
     if (correct) {
-      setNumberOfCorrects((prev) => prev + 1);
+      setNumberOfCorrects(numberOfCorrects + 1);
     }
     setNumberOfQuestionsCompleted((prev) => prev + 1);
     setCurrentQuestion((prev) => prev + 1);
@@ -134,7 +134,7 @@ const Quiz: React.FC<QuizProps> = ({
   const handleSubmit = async (): Promise<void> => {
     setHasSubmitted(true);
 
-    if (numberOfCorrects / numberOfQuestionsCompleted >= passThreshold) {
+    if (numberOfCorrects / numberOfQuestionsCompleted >= passThreshold/100) {
       setPassed(true);
     } else {
       setPassed(false);
