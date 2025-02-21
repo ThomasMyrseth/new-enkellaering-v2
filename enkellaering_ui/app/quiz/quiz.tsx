@@ -118,10 +118,12 @@ const Quiz: React.FC<QuizProps> = ({
   const [passed, setPassed] = useState<boolean>(false);
   const [hasSubmitted, setHasSubmitted] = useState<boolean>(false);
   const [currentQuestion, setCurrentQuestion] = useState<number>(0);
+  const [shuffledQuestions, setShuffledQuestions] = useState<QuestionType[]>([])
   const router = useRouter();
 
-  // Randomly reshuffle the order of the questions
-  const shuffledQuestions: QuestionType[] = questions.sort(() => Math.random() - 0.5);
+  useEffect(() => {
+    setShuffledQuestions([...questions].sort(() => Math.random() - 0.5));
+  }, [questions]);
 
   const incrementCorrectAnswer = (correct: boolean): void => {
     if (correct) {
@@ -134,12 +136,17 @@ const Quiz: React.FC<QuizProps> = ({
   const handleSubmit = async (): Promise<void> => {
     setHasSubmitted(true);
 
-    if (numberOfCorrects / numberOfQuestionsCompleted >= passThreshold/100) {
-      setPassed(true);
-    } else {
-      setPassed(false);
-      return;
+    const calculatedPassed :boolean= numberOfCorrects / numberOfQuestionsCompleted >= passThreshold / 100;
+
+    setPassed(calculatedPassed)
+    
+    let passedNumber :number =1
+    if (calculatedPassed) {
+      passedNumber = 2
     }
+
+    console.log(passedNumber)
+
 
     const res = await fetch(`${baseUrl}/submit-quiz`, {
       headers: {
@@ -148,10 +155,10 @@ const Quiz: React.FC<QuizProps> = ({
       },
       method: "POST",
       body: JSON.stringify({
-        numberOfCorrects: numberOfCorrects,
-        numberOfQuestions: numberOfQuestionsCompleted,
-        passed: passed,
-        quizId: quizId,
+        number_of_corrects: numberOfCorrects,
+        number_of_questions: numberOfQuestionsCompleted,
+        passed_quiz: passedNumber,
+        quiz_id: quizId,
       }),
     });
 

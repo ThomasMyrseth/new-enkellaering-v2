@@ -35,6 +35,9 @@ import {
 } from "@/components/ui/popover"
 import { AlertDialog, AlertDialogDescription,AlertDialogCancel, AlertDialogAction, AlertDialogFooter,AlertDialogContent,  AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
+
+import QuizStatusPage from "./quiz";
+
 type Class = {
     comment: string; // Optional comment for the session
     created_at: string; // Timestamp when the record was created (ISO format)
@@ -92,7 +95,7 @@ type Teacher = {
     wants_more_students : boolean;
 }
 
-const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
+const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080/server";
 
 
 import { FileUploadForm } from "@/components/uploadTeacherImageForm";
@@ -102,7 +105,7 @@ export default function LaererPage() {
     const [classes, setClasses] = useState<Class[]>([])
     const [students, setStudents] = useState<Student[]>([])
 
-    const token = localStorage.getItem('token'); // Or any secure storage method
+    const token :string = localStorage.getItem('token') || ''
 
     useEffect(() => {
         async function fetchTeacherName() {
@@ -184,6 +187,8 @@ export default function LaererPage() {
     return (<div className="flex flex-col items-center justify-center w-full min-h-screen bg-slate-200 dark:bg-slate-900">
             <TeacherName teacher={teacher}/>
             <WantMoreStudents teacher={teacher}/>
+
+            <QuizStatusPage token={token} baseUrl={BASEURL}/>
 
             <DailyRevenueChart teacher={teacher}/>
             <br />
@@ -397,7 +402,6 @@ function AddNewClass({teacher}: {teacher: Teacher}) {
     const [wasCanselled, setWasCanselled] = useState<boolean>(false)
 
     const handleStudentSelect = (userId: string) => {
-        console.log("setting user id", userId)
         setSelectedStudentUserId(userId);
     };
 

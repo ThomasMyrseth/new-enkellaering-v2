@@ -18,7 +18,12 @@ export default function QuizPage() {
 
     //fetch token
     useEffect(() => {
-        setToken(localStorage.getItem('token'))
+        const token = localStorage.getItem('token')
+
+        if (!token) {
+            router.push('/login-laerer')
+        }
+        setToken(token)
     }, [])
 
     //fetch the quiszes

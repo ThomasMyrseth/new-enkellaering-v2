@@ -370,3 +370,49 @@ def get_quiz(quiz_id :str, client: bigquery.Client):
     return formated_questions
 
         
+
+
+def get_quiz_status(user_id :str, client: bigquery.Client):
+
+    #1 get all the quizzes
+    quiz_query = f"""
+        SELECT * 
+        FROM `{PROJECT_ID}.{QUIZ_DATASET}.quizzes`
+    """
+
+    quiz_query_job = client.query(quiz_query, location="EU")
+
+
+    #2 get all of the users attempts
+    quiz_results_query=f"""
+        SELECT * 
+        FROM `{PROJECT_ID}.{USER_DATASET}.quiz_results`
+        WHERE user_id = @user_id
+        """
+
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[bigquery.ScalarQueryParameter("user_id", "STRING", user_id)]
+    )
+
+    quiz_results_query_job = client.query(quiz_results_query, location="EU", job_config=job_config)
+
+    quizzes = [dict(row) for row in quiz_query_job.result()]
+    quiz_results = [dict(row) for row in quiz_results_query_job.result()]
+
+
+    
+    #3 JOIN the data based
+    joined_data = []
+
+    for quiz in quizzes:
+
+        potensial_quiz_result = {}
+        for quiz_result in quiz_results:
+            if (quiz_result["quiz_id"] == quiz["quiz_id"]):
+                potensial_quiz_result = quiz_result
+
+        joined_data.append({"quiz": quiz, "result": potensial_quiz_result})
+
+    return joined_data
+
+

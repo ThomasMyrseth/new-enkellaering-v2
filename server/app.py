@@ -223,7 +223,6 @@ def token_required(f):
             return jsonify({'error': 'Token is missing!'}), 401
 
         user_id = decode_token(token)
-        logging.info(f"token requored, user_id found is: {user_id}")
         if not user_id:
             logging.warning("Token is invalid or expired.")
             return jsonify({'error': 'Token is invalid or expired!'}), 401
@@ -556,8 +555,6 @@ def logout():
 @app.route('/fetch-classes-for-teacher', methods=["GET"])
 @token_required
 def fetch_classes_for_teacher(user_id):
-
-    print("session user id", session.get("user_i"))
 
     if not user_id:
         print("user id not found")
@@ -1357,10 +1354,23 @@ from big_query.inserts import insert_quiz_result
 @token_required
 def submit_quiz_route(user_id):
     data = request.get_json()
-    number_of_corrects :int = data.get('number_of_corrects') or 0
-    number_of_questions :int = data.get('number_of_questions') or 0
-    passed :bool = data.get('passed') or False
-    quiz_id :str = data.get('quiz_id') or ''
+    number_of_corrects :int = data.get('number_of_corrects') or None
+    number_of_questions :int = data.get('number_of_questions') or None
+    passed: int = data.get('passed_quiz') or None
+    quiz_id :str = data.get('quiz_id') or None
+
+    
+    if passed==1:
+        passed = False
+    elif passed==2:
+        passed = True
+    else:
+        passed = None
+
+
+    if not number_of_corrects or not number_of_questions or passed==None or not quiz_id or not user_id:
+        return jsonify({"message": "Missing required fields"}), 400
+
 
     try:
         insert_quiz_result(user_id=user_id, quiz_id=quiz_id, passed=passed, number_of_corrects=number_of_corrects, number_of_questions=number_of_questions, client=bq_client)
@@ -1370,6 +1380,22 @@ def submit_quiz_route(user_id):
         return jsonify({"message": str(e)}), 500
 
 
+from big_query.gets import get_quiz_status
+
+@app.route('/get-quiz-status', methods=["GET"])
+@token_required
+def get_quiz_status_route(user_id):
+    if not user_id:
+        return jsonify({"message": "User must authenticate"}), 401
+    
+    try: 
+        res = get_quiz_status(client=bq_client, user_id=user_id)
+
+        return jsonify({"quiz_status": res}), 200
+    
+    except Exception as e:
+        print(str(e))
+        return jsonify({"message": f"Error getting quiz status {str(e)}"}), 500
 
     
 
