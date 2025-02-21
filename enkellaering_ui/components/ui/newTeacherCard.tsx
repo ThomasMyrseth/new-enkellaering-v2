@@ -13,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Laptop, Terminal, Users } from "lucide-react"
+import { Switch } from "./switch";
  
 import {
   Alert,
@@ -24,25 +25,144 @@ import { cn } from "@/lib/utils";
 
 import { Button } from "./button";
 
-  
+import { useMediaQuery } from "@/hooks/use-media-query";
 
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command"
+import {
+  Drawer,
+  DrawerContent,
+  DrawerTrigger,
+} from "@/components/ui/drawer"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+
+type CardType = {
+    user_id :string //uuidV4
+    firstname: string; //Thomas
+    lastname: string; //Myrseth
+    location: string; //OSLO, TRONDHEIM, BERGEN, etc
+    qualifications: string[] //R1, Ungdomskole, Spansk
+    description: string; //Jeg heter Thomas og er ...
+    src: string; //bilde av meg
+    digitalTutouring: boolean; //true=Ja til digitalt, false=Nei til digitalt
+    physicalTutouring: boolean //true=Ja til fysisk, false= Nei til fysisk
+    available: boolean //true=Wants more students, false = Doesnt want more students
+}
+
+
+const cities :string[] = ['Oslo', 'Trondheim', 'Annet']
+const qualifications :string[] = ['1P', '1T', '2P', 'S1', 'S2', 'R1', 'R2', 'Matte ungdomskole', 'Annet']
+let cards: CardType[] = [
+    {
+        user_id: '1',
+      firstname: "Thomas",
+      lastname: "Myrseth",
+      location: "Oslo",
+      qualifications: ["R1", "Ungdomsskole", "Spansk"],
+      description: 
+        "Jeg heter Thomas og er en erfaren privatlærer med en dyp lidenskap for undervisning. Med mange års erfaring innen matematikk, ungdomsskolefag og språk, hjelper jeg studenter med å forstå komplekse konsepter på en enkel og engasjerende måte. \n\n" +
+        "Jeg har jobbet med elever på ulike nivåer, og jeg tilpasser undervisningen for å sikre at hver enkelt får den hjelpen de trenger for å lykkes. Enten det er forberedelser til eksamen, leksehjelp eller dybdelæring i spesifikke fag, er jeg her for å veilede og motivere elevene mine til å oppnå sitt fulle potensial.",
+      src: "https://assets.aceternity.com/demos/thomas.jpeg",
+      digitalTutouring: true,
+      physicalTutouring: true,
+      available: true,
+    },
+    {
+        user_id: '2',
+      firstname: "Lana",
+      lastname: "Del Rey",
+      location: "Los Angeles",
+      qualifications: ["Musikk", "Lyrikk", "Sangskriving"],
+      description: 
+        "Jeg heter Lana Del Rey, en amerikansk sanger og låtskriver kjent for min unike musikalske stil som kombinerer melankoli, vintage glamour og poetisk historiefortelling. Med en stemme som fanger lytteren, har jeg skapt en rekke ikoniske låter som reflekterer både mørke og drømmende følelser. \n\n" +
+        "Min musikk er sterkt påvirket av både klassiske Hollywood-ikoner og moderne popkultur, og gjennom årene har jeg bygget opp en dedikert fanskare verden over. Jeg elsker å formidle dype følelser gjennom lyrikk og melodi, og jeg finner inspirasjon i alt fra 50-tallets filmstjerner til den moderne livsstilen i Los Angeles.",
+      src: "https://assets.aceternity.com/demos/lana-del-rey.jpeg",
+      digitalTutouring: true,
+      physicalTutouring: false,
+      available: false,
+    },
+    {
+        user_id: '3',
+      firstname: "Babbu",
+      lastname: "Maan",
+      location: "Punjab",
+      qualifications: ["Musikk", "Sangskriving", "Poet"],
+      description: 
+        "Jeg heter Babbu Maan, en legendarisk Punjabi-sanger, låtskriver og skuespiller med en dyp lidenskap for å bevare og formidle den rike kulturen og arven fra Punjab. Gjennom min musikk forteller jeg historier om kjærlighet, livets utfordringer og samfunnets realiteter. \n\n" +
+        "Med en karriere som strekker seg over flere tiår, har jeg oppnådd en enorm popularitet både i India og blant Punjabi-samfunn over hele verden. Min musikk er kjent for sin ærlighet og evne til å berøre folks hjerter. Jeg bruker mine tekster til å gi stemme til de som ofte ikke blir hørt, og jeg brenner for å bringe Punjabi-kulturen til nye generasjoner. \n\n" +
+        "Jeg heter James Hetfield, grunnlegger, vokalist og rytmegitarist i Metallica, et av verdens mest innflytelsesrike heavy metal-band. Gjennom min musikk har jeg vært med på å definere og utvikle sjangeren, og Metallica har i over fire tiår vært en av de ledende aktørene innen rock og metal. \n\n" +
+        "Mine tekster og musikk utforsker temaer som kamp, indre demoner og samfunnets utfordringer, og jeg er kjent for min kraftige vokal og aggressive gitarspill. Metallica har solgt millioner av album og turnert verden over, og vår musikk fortsetter å inspirere nye generasjoner av rocke- og metalfans.",
+      src: "https://assets.aceternity.com/demos/babbu-maan.jpeg",
+      digitalTutouring: true,
+      physicalTutouring: true,
+      available: true,
+    },
+    {
+        user_id: '4',
+      firstname: "James",
+      lastname: "Hetfield",
+      location: "San Francisco",
+      qualifications: ["Gitar", "Sang", "Låtskriving"],
+      description: 
+        "Jeg heter James Hetfield, grunnlegger, vokalist og rytmegitarist i Metallica, et av verdens mest innflytelsesrike heavy metal-band. Gjennom min musikk har jeg vært med på å definere og utvikle sjangeren, og Metallica har i over fire tiår vært en av de ledende aktørene innen rock og metal. \n\n" +
+        "Mine tekster og musikk utforsker temaer som kamp, indre demoner og samfunnets utfordringer, og jeg er kjent for min kraftige vokal og aggressive gitarspill. Metallica har solgt millioner av album og turnert verden over, og vår musikk fortsetter å inspirere nye generasjoner av rocke- og metalfans.",
+      src: "https://assets.aceternity.com/demos/metallica.jpeg",
+      digitalTutouring: false,
+      physicalTutouring: true,
+      available: false,
+    },
+    {
+        user_id: '5',
+      firstname: "Himesh",
+      lastname: "Reshammiya",
+      location: "Mumbai",
+      qualifications: ["Musikkproduksjon", "Komponist", "Sanger", "bananavasking", "engelsk", "norsk"],
+      description: 
+        "Jeg heter Himesh Reshammiya, en av Indias mest anerkjente musikkomponister, sangere og skuespillere. Med en unik stil og en særegen stemme har jeg satt mitt preg på Bollywood-musikken, og mange av mine sanger har blitt store hits som folk fortsatt synger med på i dag. \n\n" +
+        "Min musikk kombinerer moderne og tradisjonelle elementer, og jeg har eksperimentert med ulike sjangere for å skape en frisk og innovativ lyd. Gjennom årene har jeg oppnådd suksess både som soloartist og som komponist for store Bollywood-filmer, og min evne til å skape fengende melodier har gitt meg en lojal fanskare både i India og internasjonalt.",
+      src: "https://assets.aceternity.com/demos/aap-ka-suroor.jpeg",
+      digitalTutouring: false,
+      physicalTutouring: false,
+      available: true,
+    },
+];
 
 export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
-  const [active, setActive] = useState<(CardType) | boolean | null>(null);
-  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
-  const id = useId();
-  const ref = useRef<HTMLDivElement>(null);
+    const [active, setActive] = useState<(CardType) | boolean | null>(null);
+    const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+    const id = useId();
+    const ref = useRef<HTMLDivElement>(null);
 
     const [errorMessage, setErrorMessage] = useState<boolean | null>(null);
     const [validPhone, setValidPhone] = useState<boolean | null>(null)
     const [phone, setPhone] = useState<string>("");
     const [isDisabled, setIsDisabled] = useState<boolean>()
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [selectedCard, setSelectedCard] = useState<CardType | null>(null);
 
+    // Filter states
+    const [filterLocation, setFilterLocation] = useState<string | null>(null);
+    const [filterQualification, setFilterQualification] = useState<string | null>(null);
+    const [filterDigital, setFilterDigital] = useState<boolean>(false);
+    const [filterPhysical, setFilterPhysical] = useState<boolean>(false);
+
+    // Apply filtering function
+    useEffect(() => {
+        cards = filterCards(cards, filterLocation, filterQualification, filterDigital, filterPhysical);
+    },[filterLocation, filterQualification, filterDigital, filterPhysical])
 
 
 
+    //submit new student
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 
         e.preventDefault();
@@ -108,6 +228,16 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
 
     return (
         <>
+        {/*Filtering */}
+        <ToggleFilterCards
+            passFilterDigital={setFilterDigital}
+            passFilterPhysical={setFilterPhysical}
+            passFilterLocation={setFilterLocation}
+            passFilterQualification={setFilterQualification}
+        />    
+
+
+
         {/* Toggle Button */}
         <div className="mb-4 flex justify-end">
             <button
@@ -405,120 +535,203 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
     );
 }
 
-export const CloseIcon = () => {
-  return (
-    <motion.svg
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0, transition: { duration: 0.05 } }}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="h-4 w-4 text-black"
-    >
-      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-      <path d="M18 6l-12 12" />
-      <path d="M6 6l12 12" />
-    </motion.svg>
-  );
+
+const ToggleFilterCards = ({
+    passFilterDigital,
+    passFilterPhysical,
+    passFilterLocation,
+    passFilterQualification,
+  }: {
+    passFilterDigital: (value: boolean) => void;
+    passFilterPhysical: (value: boolean) => void;
+    passFilterLocation: (value: string | null) => void;
+    passFilterQualification: (value: string | null) => void;
+  }) => {
+    const [filterDigital, setFilterDigital] = useState<boolean>(false);
+    const [filterPhysical, setFilterPhysical] = useState<boolean>(false);
+  
+    return (
+      <div className="filter-controls p-4 border-b">
+        <div className="flex items-center space-x-4">
+          {/* Digital Filter */}
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="digital-filter"
+              checked={filterDigital}
+              onCheckedChange={(value) => {
+                setFilterDigital(value);
+                passFilterDigital(value);
+              }}
+            />
+            <Label htmlFor="digital-filter">Kun digital</Label>
+          </div>
+  
+          {/* Physical Filter */}
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="physical-filter"
+              checked={filterPhysical}
+              onCheckedChange={(value) => {
+                setFilterPhysical(value);
+                passFilterPhysical(value);
+              }}
+            />
+            <Label htmlFor="physical-filter">Kun fysisk</Label>
+          </div>
+        </div>
+  
+        {/* Location Filter */}
+        <div className="mt-4">
+          <ComboBoxResponsive
+            values={cities}
+            placeholder="Søk etter by"
+            passSelectedValue={passFilterLocation}
+          />
+        </div>
+  
+        {/* Qualification Filter */}
+        <div className="mt-4">
+          <ComboBoxResponsive
+            values={qualifications}
+            placeholder="Søk etter fag"
+            passSelectedValue={passFilterQualification}
+          />
+        </div>
+      </div>
+    );
 };
 
-type CardType = {
-    user_id :string //uuidV4
-    firstname: string; //Thomas
-    lastname: string; //Myrseth
-    location: string; //OSLO, TRONDHEIM, BERGEN, etc
-    qualifications: string[] //R1, Ungdomskole, Spansk
-    description: string; //Jeg heter Thomas og er ...
-    src: string; //bilde av meg
-    digitalTutouring: boolean; //true=Ja til digitalt, false=Nei til digitalt
-    physicalTutouring: boolean //true=Ja til fysisk, false= Nei til fysisk
-    available: boolean //true=Wants more students, false = Doesnt want more students
+
+const filterCards = (
+    cards: CardType[], 
+    filterLocation: string | null, 
+    filterQualification: string | null, 
+    filterDigital: boolean, 
+    filterPhysical: boolean
+  ): CardType[] => {
+  
+    return cards.filter((card) => {
+      // Check location filter
+      if (filterLocation && card.location !== filterLocation) {
+        return false;
+      }
+      // Check qualification filter
+      if (filterQualification && !card.qualifications.includes(filterQualification)) {
+        return false;
+      }
+      // Filter for digital tutoring
+      if (filterDigital && !card.digitalTutouring) {
+        return false;
+      }
+      // Filter for physical tutoring
+      if (filterPhysical && !card.physicalTutouring) {
+        return false;
+      }
+      // If all conditions pass, include the card
+      return true;
+    });
+  };
+
+
+const CloseIcon = () => {
+    return (
+      <motion.svg
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0, transition: { duration: 0.05 } }}
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="h-4 w-4 text-black"
+      >
+        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+        <path d="M18 6l-12 12" />
+        <path d="M6 6l12 12" />
+      </motion.svg>
+    );
+};
+  
+const LabelInputContainer = ({ children }: { children: React.ReactNode }) => {
+return <div className="mb-4">{children}</div>;
+};
+
+
+const ComboBoxResponsive = ({ values, placeholder, passSelectedValue }: { values: string[], placeholder: string, passSelectedValue: (value :string | null) => void }) => {
+    const [open, setOpen] = useState(false);
+    const isDesktop = useMediaQuery("(min-width: 768px)");
+    const [selectedValue, setSelectedValue] = useState<string | null>(null);
+  
+    const handleSetSelectedValue = (value: string | null) => {
+      setSelectedValue(value);
+      setOpen(false);
+      passSelectedValue(value)
+    }
+    if (isDesktop) {
+      return (
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="w-[150px] justify-start">
+              {selectedValue ? selectedValue : placeholder}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[200px] p-0" align="start">
+            <StatusList values={values} setOpen={setOpen} setSelectedValue={() => handleSetSelectedValue(selectedValue)} />
+          </PopoverContent>
+        </Popover>
+      );
+    }
+  
+    return (
+      <Drawer open={open} onOpenChange={setOpen}>
+        <DrawerTrigger asChild>
+          <Button variant="outline" className="w-[150px] justify-start">
+            {selectedValue ? selectedValue : placeholder}
+          </Button>
+        </DrawerTrigger>
+        <DrawerContent>
+          <div className="mt-4 border-t">
+            <StatusList values={values} setOpen={setOpen} setSelectedValue={() => handleSetSelectedValue(selectedValue)} />
+          </div>
+        </DrawerContent>
+      </Drawer>
+    );
 }
 
-const cards: CardType[] = [
-    {
-        user_id: '1',
-      firstname: "Thomas",
-      lastname: "Myrseth",
-      location: "Oslo",
-      qualifications: ["R1", "Ungdomsskole", "Spansk"],
-      description: 
-        "Jeg heter Thomas og er en erfaren privatlærer med en dyp lidenskap for undervisning. Med mange års erfaring innen matematikk, ungdomsskolefag og språk, hjelper jeg studenter med å forstå komplekse konsepter på en enkel og engasjerende måte. \n\n" +
-        "Jeg har jobbet med elever på ulike nivåer, og jeg tilpasser undervisningen for å sikre at hver enkelt får den hjelpen de trenger for å lykkes. Enten det er forberedelser til eksamen, leksehjelp eller dybdelæring i spesifikke fag, er jeg her for å veilede og motivere elevene mine til å oppnå sitt fulle potensial.",
-      src: "https://assets.aceternity.com/demos/thomas.jpeg",
-      digitalTutouring: true,
-      physicalTutouring: true,
-      available: true,
-    },
-    {
-        user_id: '2',
-      firstname: "Lana",
-      lastname: "Del Rey",
-      location: "Los Angeles",
-      qualifications: ["Musikk", "Lyrikk", "Sangskriving"],
-      description: 
-        "Jeg heter Lana Del Rey, en amerikansk sanger og låtskriver kjent for min unike musikalske stil som kombinerer melankoli, vintage glamour og poetisk historiefortelling. Med en stemme som fanger lytteren, har jeg skapt en rekke ikoniske låter som reflekterer både mørke og drømmende følelser. \n\n" +
-        "Min musikk er sterkt påvirket av både klassiske Hollywood-ikoner og moderne popkultur, og gjennom årene har jeg bygget opp en dedikert fanskare verden over. Jeg elsker å formidle dype følelser gjennom lyrikk og melodi, og jeg finner inspirasjon i alt fra 50-tallets filmstjerner til den moderne livsstilen i Los Angeles.",
-      src: "https://assets.aceternity.com/demos/lana-del-rey.jpeg",
-      digitalTutouring: true,
-      physicalTutouring: false,
-      available: false,
-    },
-    {
-        user_id: '3',
-      firstname: "Babbu",
-      lastname: "Maan",
-      location: "Punjab",
-      qualifications: ["Musikk", "Sangskriving", "Poet"],
-      description: 
-        "Jeg heter Babbu Maan, en legendarisk Punjabi-sanger, låtskriver og skuespiller med en dyp lidenskap for å bevare og formidle den rike kulturen og arven fra Punjab. Gjennom min musikk forteller jeg historier om kjærlighet, livets utfordringer og samfunnets realiteter. \n\n" +
-        "Med en karriere som strekker seg over flere tiår, har jeg oppnådd en enorm popularitet både i India og blant Punjabi-samfunn over hele verden. Min musikk er kjent for sin ærlighet og evne til å berøre folks hjerter. Jeg bruker mine tekster til å gi stemme til de som ofte ikke blir hørt, og jeg brenner for å bringe Punjabi-kulturen til nye generasjoner. \n\n" +
-        "Jeg heter James Hetfield, grunnlegger, vokalist og rytmegitarist i Metallica, et av verdens mest innflytelsesrike heavy metal-band. Gjennom min musikk har jeg vært med på å definere og utvikle sjangeren, og Metallica har i over fire tiår vært en av de ledende aktørene innen rock og metal. \n\n" +
-        "Mine tekster og musikk utforsker temaer som kamp, indre demoner og samfunnets utfordringer, og jeg er kjent for min kraftige vokal og aggressive gitarspill. Metallica har solgt millioner av album og turnert verden over, og vår musikk fortsetter å inspirere nye generasjoner av rocke- og metalfans.",
-      src: "https://assets.aceternity.com/demos/babbu-maan.jpeg",
-      digitalTutouring: true,
-      physicalTutouring: true,
-      available: true,
-    },
-    {
-        user_id: '4',
-      firstname: "James",
-      lastname: "Hetfield",
-      location: "San Francisco",
-      qualifications: ["Gitar", "Sang", "Låtskriving"],
-      description: 
-        "Jeg heter James Hetfield, grunnlegger, vokalist og rytmegitarist i Metallica, et av verdens mest innflytelsesrike heavy metal-band. Gjennom min musikk har jeg vært med på å definere og utvikle sjangeren, og Metallica har i over fire tiår vært en av de ledende aktørene innen rock og metal. \n\n" +
-        "Mine tekster og musikk utforsker temaer som kamp, indre demoner og samfunnets utfordringer, og jeg er kjent for min kraftige vokal og aggressive gitarspill. Metallica har solgt millioner av album og turnert verden over, og vår musikk fortsetter å inspirere nye generasjoner av rocke- og metalfans.",
-      src: "https://assets.aceternity.com/demos/metallica.jpeg",
-      digitalTutouring: false,
-      physicalTutouring: true,
-      available: false,
-    },
-    {
-        user_id: '5',
-      firstname: "Himesh",
-      lastname: "Reshammiya",
-      location: "Mumbai",
-      qualifications: ["Musikkproduksjon", "Komponist", "Sanger", "bananavasking", "engelsk", "norsk"],
-      description: 
-        "Jeg heter Himesh Reshammiya, en av Indias mest anerkjente musikkomponister, sangere og skuespillere. Med en unik stil og en særegen stemme har jeg satt mitt preg på Bollywood-musikken, og mange av mine sanger har blitt store hits som folk fortsatt synger med på i dag. \n\n" +
-        "Min musikk kombinerer moderne og tradisjonelle elementer, og jeg har eksperimentert med ulike sjangere for å skape en frisk og innovativ lyd. Gjennom årene har jeg oppnådd suksess både som soloartist og som komponist for store Bollywood-filmer, og min evne til å skape fengende melodier har gitt meg en lojal fanskare både i India og internasjonalt.",
-      src: "https://assets.aceternity.com/demos/aap-ka-suroor.jpeg",
-      digitalTutouring: false,
-      physicalTutouring: false,
-      available: true,
-    },
-];
-
-
-const LabelInputContainer = ({ children }: { children: React.ReactNode }) => {
-  return <div className="mb-4">{children}</div>;
-};
-    
+function StatusList({
+    values,
+    setOpen,
+    setSelectedValue,
+  }: {
+    values: string[];
+    setOpen: (open: boolean) => void;
+    setSelectedValue: (value: string | null) => void;
+  }) {
+    return (
+      <Command>
+        <CommandInput placeholder="Filter..." />
+        <CommandList>
+          <CommandEmpty>No results found.</CommandEmpty>
+          <CommandGroup>
+            {values.map((value) => (
+              <CommandItem
+                key={value}
+                value={value}
+                onSelect={() => {
+                  setSelectedValue(value);
+                  setOpen(false);
+                }}
+              >
+                {value}
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        </CommandList>
+      </Command>
+    );
+}
