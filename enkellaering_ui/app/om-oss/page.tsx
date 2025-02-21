@@ -1,8 +1,9 @@
 "use client";
 import { SparklesCore } from "@/components/ui/sparkles";
-import { TeacherFocusCards } from "@/components/ui/teacherCards";
+//import { TeacherFocusCards } from "@/components/ui/teacherCards";
 import { TextGenerateEffect } from "@/components/ui/text-generate-effect";
 import React from "react";
+import { TeacherFocusCards } from "@/components/ui/newTeacherCard";
 
 export default function OmOssPage() {
   return (
@@ -10,7 +11,7 @@ export default function OmOssPage() {
       <SparklesHeadline />
       <div className="space-y-10 flex flex-col items-center justify-center w-full">
         <AboutEl />
-        <AboutTeachers />
+        <TeacherFocusCards/>
       </div>
     </div>
   );
