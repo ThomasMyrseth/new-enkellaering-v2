@@ -154,10 +154,12 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
     const [filterQualification, setFilterQualification] = useState<string | null>(null);
     const [filterDigital, setFilterDigital] = useState<boolean>(false);
     const [filterPhysical, setFilterPhysical] = useState<boolean>(false);
+    const [filteredCards, setFilteredCards] = useState<CardType[]>(cards); //default to cards, which os unfiltered
 
     // Apply filtering function
     useEffect(() => {
         cards = filterCards(cards, filterLocation, filterQualification, filterDigital, filterPhysical);
+        setFilteredCards(cards);
     },[filterLocation, filterQualification, filterDigital, filterPhysical])
 
 
@@ -307,9 +309,9 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
                             {active.qualifications.map((qualification :string, index :number) => {
                                 //order the qualifications alfabetically
                                 active.qualifications.sort();
-                                return(<>
+                                return(<div>
                                     <span key={index} className="rounded-lg bg-neutral-100 mx-1 p-2 text-xs">{qualification}</span>
-                                </>)
+                                </div>)
                             })}
                         </motion.p>
                         
@@ -332,7 +334,7 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
         {/* Card List */}
         {viewMode === "list" ? (
             <ul className="max-w-2xl mx-auto w-full gap-4">
-            {cards.map((card) => (<div className="flex flex-row items-center w-full justify-between">
+            {filteredCards.map((card :CardType) => (<div className="flex flex-row items-center w-full justify-between">
                 <motion.div
                     layoutId={`card-${card.firstname}-${id}`}
                     key={`card-${card.firstname}-${id}`}
@@ -681,7 +683,7 @@ const ComboBoxResponsive = ({ values, placeholder, passSelectedValue }: { values
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-[200px] p-0" align="start">
-            <StatusList values={values} setOpen={setOpen} setSelectedValue={() => handleSetSelectedValue(selectedValue)} />
+            <StatusList values={values} setOpen={setOpen} setSelectedValue={handleSetSelectedValue} />
           </PopoverContent>
         </Popover>
       );
@@ -696,7 +698,7 @@ const ComboBoxResponsive = ({ values, placeholder, passSelectedValue }: { values
         </DrawerTrigger>
         <DrawerContent>
           <div className="mt-4 border-t">
-            <StatusList values={values} setOpen={setOpen} setSelectedValue={() => handleSetSelectedValue(selectedValue)} />
+            <StatusList values={values} setOpen={setOpen} setSelectedValue={handleSetSelectedValue} />
           </div>
         </DrawerContent>
       </Drawer>
