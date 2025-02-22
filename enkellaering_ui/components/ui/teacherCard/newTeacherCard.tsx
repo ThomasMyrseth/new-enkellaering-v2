@@ -13,7 +13,6 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Laptop, Terminal, Users } from "lucide-react"
-import { Switch } from "./switch";
  
 import {
   Alert,
@@ -23,119 +22,12 @@ import {
 
 import { cn } from "@/lib/utils";
 
-import { Button } from "./button";
+import { Button } from "../button";
 
-import { useMediaQuery } from "@/hooks/use-media-query";
+import { CardType } from "./typesAndData";
+import { cards } from "./typesAndData";
 
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command"
-import {
-  Drawer,
-  DrawerContent,
-  DrawerTrigger,
-} from "@/components/ui/drawer"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-
-type CardType = {
-    user_id :string //uuidV4
-    firstname: string; //Thomas
-    lastname: string; //Myrseth
-    location: string; //OSLO, TRONDHEIM, BERGEN, etc
-    qualifications: string[] //R1, Ungdomskole, Spansk
-    description: string; //Jeg heter Thomas og er ...
-    src: string; //bilde av meg
-    digitalTutouring: boolean; //true=Ja til digitalt, false=Nei til digitalt
-    physicalTutouring: boolean //true=Ja til fysisk, false= Nei til fysisk
-    available: boolean //true=Wants more students, false = Doesnt want more students
-}
-
-
-const cities :string[] = ['Oslo', 'Trondheim', 'Annet']
-const qualifications :string[] = ['1P', '1T', '2P', 'S1', 'S2', 'R1', 'R2', 'Matte ungdomskole', 'Annet']
-let cards: CardType[] = [
-    {
-        user_id: '1',
-      firstname: "Thomas",
-      lastname: "Myrseth",
-      location: "Oslo",
-      qualifications: ["R1", "Ungdomsskole", "Spansk"],
-      description: 
-        "Jeg heter Thomas og er en erfaren privatlærer med en dyp lidenskap for undervisning. Med mange års erfaring innen matematikk, ungdomsskolefag og språk, hjelper jeg studenter med å forstå komplekse konsepter på en enkel og engasjerende måte. \n\n" +
-        "Jeg har jobbet med elever på ulike nivåer, og jeg tilpasser undervisningen for å sikre at hver enkelt får den hjelpen de trenger for å lykkes. Enten det er forberedelser til eksamen, leksehjelp eller dybdelæring i spesifikke fag, er jeg her for å veilede og motivere elevene mine til å oppnå sitt fulle potensial.",
-      src: "https://assets.aceternity.com/demos/thomas.jpeg",
-      digitalTutouring: true,
-      physicalTutouring: true,
-      available: true,
-    },
-    {
-        user_id: '2',
-      firstname: "Lana",
-      lastname: "Del Rey",
-      location: "Los Angeles",
-      qualifications: ["Musikk", "Lyrikk", "Sangskriving"],
-      description: 
-        "Jeg heter Lana Del Rey, en amerikansk sanger og låtskriver kjent for min unike musikalske stil som kombinerer melankoli, vintage glamour og poetisk historiefortelling. Med en stemme som fanger lytteren, har jeg skapt en rekke ikoniske låter som reflekterer både mørke og drømmende følelser. \n\n" +
-        "Min musikk er sterkt påvirket av både klassiske Hollywood-ikoner og moderne popkultur, og gjennom årene har jeg bygget opp en dedikert fanskare verden over. Jeg elsker å formidle dype følelser gjennom lyrikk og melodi, og jeg finner inspirasjon i alt fra 50-tallets filmstjerner til den moderne livsstilen i Los Angeles.",
-      src: "https://assets.aceternity.com/demos/lana-del-rey.jpeg",
-      digitalTutouring: true,
-      physicalTutouring: false,
-      available: false,
-    },
-    {
-        user_id: '3',
-      firstname: "Babbu",
-      lastname: "Maan",
-      location: "Punjab",
-      qualifications: ["Musikk", "Sangskriving", "Poet"],
-      description: 
-        "Jeg heter Babbu Maan, en legendarisk Punjabi-sanger, låtskriver og skuespiller med en dyp lidenskap for å bevare og formidle den rike kulturen og arven fra Punjab. Gjennom min musikk forteller jeg historier om kjærlighet, livets utfordringer og samfunnets realiteter. \n\n" +
-        "Med en karriere som strekker seg over flere tiår, har jeg oppnådd en enorm popularitet både i India og blant Punjabi-samfunn over hele verden. Min musikk er kjent for sin ærlighet og evne til å berøre folks hjerter. Jeg bruker mine tekster til å gi stemme til de som ofte ikke blir hørt, og jeg brenner for å bringe Punjabi-kulturen til nye generasjoner. \n\n" +
-        "Jeg heter James Hetfield, grunnlegger, vokalist og rytmegitarist i Metallica, et av verdens mest innflytelsesrike heavy metal-band. Gjennom min musikk har jeg vært med på å definere og utvikle sjangeren, og Metallica har i over fire tiår vært en av de ledende aktørene innen rock og metal. \n\n" +
-        "Mine tekster og musikk utforsker temaer som kamp, indre demoner og samfunnets utfordringer, og jeg er kjent for min kraftige vokal og aggressive gitarspill. Metallica har solgt millioner av album og turnert verden over, og vår musikk fortsetter å inspirere nye generasjoner av rocke- og metalfans.",
-      src: "https://assets.aceternity.com/demos/babbu-maan.jpeg",
-      digitalTutouring: true,
-      physicalTutouring: true,
-      available: true,
-    },
-    {
-        user_id: '4',
-      firstname: "James",
-      lastname: "Hetfield",
-      location: "San Francisco",
-      qualifications: ["Gitar", "Sang", "Låtskriving"],
-      description: 
-        "Jeg heter James Hetfield, grunnlegger, vokalist og rytmegitarist i Metallica, et av verdens mest innflytelsesrike heavy metal-band. Gjennom min musikk har jeg vært med på å definere og utvikle sjangeren, og Metallica har i over fire tiår vært en av de ledende aktørene innen rock og metal. \n\n" +
-        "Mine tekster og musikk utforsker temaer som kamp, indre demoner og samfunnets utfordringer, og jeg er kjent for min kraftige vokal og aggressive gitarspill. Metallica har solgt millioner av album og turnert verden over, og vår musikk fortsetter å inspirere nye generasjoner av rocke- og metalfans.",
-      src: "https://assets.aceternity.com/demos/metallica.jpeg",
-      digitalTutouring: false,
-      physicalTutouring: true,
-      available: false,
-    },
-    {
-        user_id: '5',
-      firstname: "Himesh",
-      lastname: "Reshammiya",
-      location: "Mumbai",
-      qualifications: ["Musikkproduksjon", "Komponist", "Sanger", "bananavasking", "engelsk", "norsk"],
-      description: 
-        "Jeg heter Himesh Reshammiya, en av Indias mest anerkjente musikkomponister, sangere og skuespillere. Med en unik stil og en særegen stemme har jeg satt mitt preg på Bollywood-musikken, og mange av mine sanger har blitt store hits som folk fortsatt synger med på i dag. \n\n" +
-        "Min musikk kombinerer moderne og tradisjonelle elementer, og jeg har eksperimentert med ulike sjangere for å skape en frisk og innovativ lyd. Gjennom årene har jeg oppnådd suksess både som soloartist og som komponist for store Bollywood-filmer, og min evne til å skape fengende melodier har gitt meg en lojal fanskare både i India og internasjonalt.",
-      src: "https://assets.aceternity.com/demos/aap-ka-suroor.jpeg",
-      digitalTutouring: false,
-      physicalTutouring: false,
-      available: true,
-    },
-];
+import { ToggleFilterCards, filterCards } from "./filter";
 
 export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
     const [active, setActive] = useState<(CardType) | boolean | null>(null);
@@ -158,8 +50,8 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
 
     // Apply filtering function
     useEffect(() => {
-        cards = filterCards(cards, filterLocation, filterQualification, filterDigital, filterPhysical);
-        setFilteredCards(cards);
+        const c :CardType[] = filterCards(cards, filterLocation, filterQualification, filterDigital, filterPhysical);
+        setFilteredCards(c);
     },[filterLocation, filterQualification, filterDigital, filterPhysical])
 
 
@@ -231,23 +123,15 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
     return (
         <>
         {/*Filtering */}
-        <ToggleFilterCards
-            passFilterDigital={setFilterDigital}
-            passFilterPhysical={setFilterPhysical}
-            passFilterLocation={setFilterLocation}
-            passFilterQualification={setFilterQualification}
-        />    
-
-
-
-        {/* Toggle Button */}
-        <div className="mb-4 flex justify-end">
-            <button
-            onClick={() => setViewMode(viewMode === "list" ? "grid" : "list")}
-            className="px-4 py-2 bg-blue-500 text-white rounded"
-            >
-            Switch to {viewMode === "list" ? "Grid" : "List"} view
-            </button>
+        <div className="bg-neutral-100 dark:bg-black p-4 rounded-xl">
+          <ToggleFilterCards
+              passFilterDigital={setFilterDigital}
+              passFilterPhysical={setFilterPhysical}
+              passFilterLocation={setFilterLocation}
+              passFilterQualification={setFilterQualification}
+              viewMode={viewMode}
+              setViewMode={setViewMode}
+          />   
         </div>
 
         {/* Modal for Expanded Card */}
@@ -330,10 +214,11 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
             ) : null}
         </AnimatePresence>
 
- 
+        <div className="bg-neutral-100 p-4 dark:bg-black rounded-xl">
         {/* Card List */}
         {viewMode === "list" ? (
             <ul className="max-w-2xl mx-auto w-full gap-4">
+            {filteredCards.length === 0 && <h3 className="text-black w-full text-center dark:text-white">Vi har desverre ingen lærere som møter filtrene dine.</h3>}
             {filteredCards.map((card :CardType) => (<div className="flex flex-row items-center w-full justify-between">
                 <motion.div
                     layoutId={`card-${card.firstname}-${id}`}
@@ -362,6 +247,7 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
                         <motion.p
                             layoutId={`description-${card.firstname}-${id}`}
                             className="w-60 text-neutral-600 dark:text-neutral-400 text-center md:text-left overflow-x-scroll scrollbar-hide"
+                            key = {card.firstname}
                         >
                             {card.qualifications.map((qualification :string, index :number) => {
                                 
@@ -385,7 +271,7 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
                 <Button 
                     onClick={() =>setSelectedCard(card)}
                     disabled={!card.physicalTutouring && !card.digitalTutouring}
-                    className={`${(!card.physicalTutouring && !card.digitalTutouring)? 'bg-neutral-400 text-neutral-100':''}`}
+                    className={`min-w-32 ${(!card.physicalTutouring && !card.digitalTutouring)? 'bg-neutral-400 text-neutral-100':''}`}
                 >
                     Bestill {card.firstname}
                 </Button>
@@ -396,7 +282,7 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
         
         (
             <ul className="max-w-2xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 items-start gap-4">
-            {cards.map((card) => (<div className=" flex flex-col">
+            {filteredCards.map((card) => (<div className=" flex flex-col">
                 <motion.div
                 layoutId={`card-${card.firstname}-${id}`}
                 key={card.firstname}
@@ -419,10 +305,8 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
                             className="font-medium text-neutral-800 dark:text-neutral-200 text-center md:text-left text-base"
                         >
                             {card.firstname}
+                            <span className="text-xs font-light"> {card.location}</span>
                         </motion.h3>
-                        <motion.p>
-                            {card.location}
-                        </motion.p>
                         <motion.p
                             layoutId={`description-${card.firstname}-${id}`}
                             className="w-40 text-neutral-600 dark:text-neutral-400 text-center md:text-left overflow-x-scroll scrollbar-hide"
@@ -438,10 +322,10 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
                             })}
                         </motion.p>
                         <div className="flex flex-row">
-                            <motion.p className={`rounded-lg m-2 p-1 text-white ${card.digitalTutouring? 'text-emerald-400': 'text-rose-400'}`}>
+                            <motion.p className={`rounded-lg m-2 p-1 ${card.digitalTutouring? 'text-emerald-400': 'text-rose-400'}`}>
                                 <Laptop/> digital
                             </motion.p>
-                            <motion.p className={`rounded-lg m-2 p-1 text-white ${card.physicalTutouring? 'text-emerald-400': 'text-rose-400'}`}>
+                            <motion.p className={`rounded-lg m-2 p-1 ${card.physicalTutouring? 'text-emerald-400': 'text-rose-400'}`}>
                                <Users/> fysisk
                             </motion.p>
                         </div>
@@ -459,7 +343,7 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
             </div>))}
             </ul>
         )}
-
+        </div>
 
 
         {selectedCard && (
@@ -538,101 +422,6 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
 }
 
 
-const ToggleFilterCards = ({
-    passFilterDigital,
-    passFilterPhysical,
-    passFilterLocation,
-    passFilterQualification,
-  }: {
-    passFilterDigital: (value: boolean) => void;
-    passFilterPhysical: (value: boolean) => void;
-    passFilterLocation: (value: string | null) => void;
-    passFilterQualification: (value: string | null) => void;
-  }) => {
-    const [filterDigital, setFilterDigital] = useState<boolean>(false);
-    const [filterPhysical, setFilterPhysical] = useState<boolean>(false);
-  
-    return (
-      <div className="filter-controls p-4 border-b">
-        <div className="flex items-center space-x-4">
-          {/* Digital Filter */}
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="digital-filter"
-              checked={filterDigital}
-              onCheckedChange={(value) => {
-                setFilterDigital(value);
-                passFilterDigital(value);
-              }}
-            />
-            <Label htmlFor="digital-filter">Kun digital</Label>
-          </div>
-  
-          {/* Physical Filter */}
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="physical-filter"
-              checked={filterPhysical}
-              onCheckedChange={(value) => {
-                setFilterPhysical(value);
-                passFilterPhysical(value);
-              }}
-            />
-            <Label htmlFor="physical-filter">Kun fysisk</Label>
-          </div>
-        </div>
-  
-        {/* Location Filter */}
-        <div className="mt-4">
-          <ComboBoxResponsive
-            values={cities}
-            placeholder="Søk etter by"
-            passSelectedValue={passFilterLocation}
-          />
-        </div>
-  
-        {/* Qualification Filter */}
-        <div className="mt-4">
-          <ComboBoxResponsive
-            values={qualifications}
-            placeholder="Søk etter fag"
-            passSelectedValue={passFilterQualification}
-          />
-        </div>
-      </div>
-    );
-};
-
-
-const filterCards = (
-    cards: CardType[], 
-    filterLocation: string | null, 
-    filterQualification: string | null, 
-    filterDigital: boolean, 
-    filterPhysical: boolean
-  ): CardType[] => {
-  
-    return cards.filter((card) => {
-      // Check location filter
-      if (filterLocation && card.location !== filterLocation) {
-        return false;
-      }
-      // Check qualification filter
-      if (filterQualification && !card.qualifications.includes(filterQualification)) {
-        return false;
-      }
-      // Filter for digital tutoring
-      if (filterDigital && !card.digitalTutouring) {
-        return false;
-      }
-      // Filter for physical tutoring
-      if (filterPhysical && !card.physicalTutouring) {
-        return false;
-      }
-      // If all conditions pass, include the card
-      return true;
-    });
-  };
 
 
 const CloseIcon = () => {
@@ -664,76 +453,4 @@ return <div className="mb-4">{children}</div>;
 };
 
 
-const ComboBoxResponsive = ({ values, placeholder, passSelectedValue }: { values: string[], placeholder: string, passSelectedValue: (value :string | null) => void }) => {
-    const [open, setOpen] = useState(false);
-    const isDesktop = useMediaQuery("(min-width: 768px)");
-    const [selectedValue, setSelectedValue] = useState<string | null>(null);
-  
-    const handleSetSelectedValue = (value: string | null) => {
-      setSelectedValue(value);
-      setOpen(false);
-      passSelectedValue(value)
-    }
-    if (isDesktop) {
-      return (
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger asChild>
-            <Button variant="outline" className="w-[150px] justify-start">
-              {selectedValue ? selectedValue : placeholder}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-[200px] p-0" align="start">
-            <StatusList values={values} setOpen={setOpen} setSelectedValue={handleSetSelectedValue} />
-          </PopoverContent>
-        </Popover>
-      );
-    }
-  
-    return (
-      <Drawer open={open} onOpenChange={setOpen}>
-        <DrawerTrigger asChild>
-          <Button variant="outline" className="w-[150px] justify-start">
-            {selectedValue ? selectedValue : placeholder}
-          </Button>
-        </DrawerTrigger>
-        <DrawerContent>
-          <div className="mt-4 border-t">
-            <StatusList values={values} setOpen={setOpen} setSelectedValue={handleSetSelectedValue} />
-          </div>
-        </DrawerContent>
-      </Drawer>
-    );
-}
 
-function StatusList({
-    values,
-    setOpen,
-    setSelectedValue,
-  }: {
-    values: string[];
-    setOpen: (open: boolean) => void;
-    setSelectedValue: (value: string | null) => void;
-  }) {
-    return (
-      <Command>
-        <CommandInput placeholder="Filter..." />
-        <CommandList>
-          <CommandEmpty>No results found.</CommandEmpty>
-          <CommandGroup>
-            {values.map((value) => (
-              <CommandItem
-                key={value}
-                value={value}
-                onSelect={() => {
-                  setSelectedValue(value);
-                  setOpen(false);
-                }}
-              >
-                {value}
-              </CommandItem>
-            ))}
-          </CommandGroup>
-        </CommandList>
-      </Command>
-    );
-}

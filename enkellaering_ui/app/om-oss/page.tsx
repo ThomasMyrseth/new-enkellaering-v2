@@ -3,7 +3,7 @@ import { SparklesCore } from "@/components/ui/sparkles";
 //import { TeacherFocusCards } from "@/components/ui/teacherCards";
 import { TextGenerateEffect } from "@/components/ui/text-generate-effect";
 import React from "react";
-import { TeacherFocusCards } from "@/components/ui/newTeacherCard";
+import { TeacherFocusCards } from "@/components/ui/teacherCard/newTeacherCard";
 
 export default function OmOssPage() {
   const baseUrl :string = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8080/server';
