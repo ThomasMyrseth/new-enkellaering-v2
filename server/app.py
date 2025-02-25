@@ -1399,6 +1399,8 @@ def get_quiz_status_route(user_id):
 
 
 from big_query.inserts import insert_review
+from big_query.deletes import delete_review
+
 @app.route('/upload-review', methods=["POST"])
 @token_required
 def upload_review_route(user_id):
@@ -1412,13 +1414,18 @@ def upload_review_route(user_id):
     name = data.get('name') or "Anonym"
 
     if not (teacher_user_id and rating and comment):
-        return jsonify({"message", "Missing required fields"}), 403
+        return jsonify({"message": "Missing required fields"}), 403
 
+    try:
+        delete_review(user_id, teacher_user_id, bq_client)
+    except Exception as e:
+        raise Exception(f"Error deleting old review: {e}")
+    
     try:
         insert_review(student_user_id=user_id, teacher_user_id=teacher_user_id, rating=rating, comment=comment, name=name, bq_client=bq_client)
         return jsonify({"message": "Inserted review succesfully"}), 200
     except Exception as e:
-        return jsonify({"message": f"error inserting review {e}"})
+        return jsonify({"message": f"error inserting review {e}"}), 500
 
 
 if __name__ == "__main__":

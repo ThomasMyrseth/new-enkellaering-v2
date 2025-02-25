@@ -55,8 +55,7 @@ def delete_review(student_user_id: str, teacher_user_id: str, bq_client=None):
     try:
         response = bq_client.query(query, job_config=job_config, location="EU")
         response.result()  # Wait for query to complete
-        print("Review successfully deleted.")
         return True
     except Exception as e:
         print(f"Error executing delete query: {e}")
-        raise
+        raise Exception(f"Error deleting old review {e}")

@@ -343,13 +343,9 @@ def insert_quiz_result(user_id :str, quiz_id :str, passed :bool, number_of_corre
         raise Exception(f"Error executing query: {e}")
 
 
-from big_query.deletes import delete_review
+
 from uuid import uuid4
 def insert_review(student_user_id :str, teacher_user_id :str, rating :int, comment :str, name :str, bq_client = None):
-    #delete the old revire associsted with teacher and student user ids
-    delete_review(student_user_id, teacher_user_id, bq_client)
-
-    #insert the new review
     row_id = str(uuid4())
 
     query = f"""
@@ -363,11 +359,11 @@ def insert_review(student_user_id :str, teacher_user_id :str, rating :int, comme
     job_config = bigquery.QueryJobConfig(
         query_parameters=[
             bigquery.ScalarQueryParameter("id", "STRING", row_id),
-            bigquery.ScalarQueryParameterType("teacher_user_id", "STRING", teacher_user_id),
-            bigquery.ScalarQueryParameterType("student_user_id", "STRING", student_user_id),
-            bigquery.ScalarQueryParameterType("student_name", "STRING", name),
-            bigquery.ScalarQueryParameterType("rating", "INT64", rating),
-            bigquery.ScalarQueryParameterType("comment", "STRING", comment)
+            bigquery.ScalarQueryParameter("teacher_user_id", "STRING", teacher_user_id),
+            bigquery.ScalarQueryParameter("student_user_id", "STRING", student_user_id),
+            bigquery.ScalarQueryParameter("student_name", "STRING", name),
+            bigquery.ScalarQueryParameter("rating", "INT64", rating),
+            bigquery.ScalarQueryParameter("comment", "STRING", comment)
         ]
     )
 
