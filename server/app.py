@@ -1428,6 +1428,16 @@ def upload_review_route(user_id):
         return jsonify({"message": f"error inserting review {e}"}), 500
 
 
+from big_query.gets import get_all_reviews
+@app.route('/get-all-reviews', methods=["GET"])
+def get_all_reviews_route():
+    try:
+        data = get_all_reviews()
+        return jsonify({"reviews": data}), 200
+    except Exception as e:
+        return jsonify({"message": f"Error receiving all reviews {e}"}), 500
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))  # Use PORT from the environment or default to 8080
     app.run(debug=True ,host="0.0.0.0", port=port)

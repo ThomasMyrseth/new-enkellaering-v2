@@ -416,3 +416,19 @@ def get_quiz_status(user_id :str, client: bigquery.Client):
     return joined_data
 
 
+def get_all_reviews(client: bigquery.Client):
+    if not client:
+        raise ValueError("BigQuery client is required")
+
+    query = f"""
+        SELECT *
+        FROM `{USER_DATASET}.reviews`
+    """
+
+    try:
+        res = client.query(query).result()
+        rows = [dict(row) for row in res]  # Convert each row to a dictionary
+        return rows
+    except Exception as e:
+        print(f"Error fetching reviews: {e}")
+        return []
