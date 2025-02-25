@@ -42,6 +42,16 @@ export type Teacher = {
     notes :string;
 }
 
+export type Review = {
+    id :string; //id of the review
+    teacher_user_id :string; //teacher user id
+    student_user_id :string; //the one leaving the revie
+    student_name :string //the name to be displayed
+    created_at :string;
+    rating :number //1-5
+    comment :string;
+}
+
 export type Classes = {
     teacher_user_id :string;
     student_user_id :string;

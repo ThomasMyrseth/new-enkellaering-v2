@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Laptop, Terminal, Users } from "lucide-react"
+import { Laptop, Terminal, Users, Star } from "lucide-react"
  
 import {
   Alert,
@@ -87,7 +87,7 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
             },
             body: JSON.stringify({
                 "phone": phone,
-                "prefered_teacher": selectedCard.user_id
+                "prefered_teacher": selectedCard.teacher.user_id
             })
         })
 
@@ -152,7 +152,7 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
             {active && typeof active === "object" ? (
             <div className="fixed inset-0 grid place-items-center z-10">
                 <motion.button
-                key={`button-${active.firstname}-${id}`}
+                key={`button-${active.teacher.firstname}-${id}`}
                 layout
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -163,17 +163,17 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
                 <CloseIcon />
                 </motion.button>
                 <motion.div
-                layoutId={`card-${active.firstname}-${id}`}
+                layoutId={`card-${active.teacher.firstname}-${id}`}
                 ref={ref}
-                className="w-full max-w-[500px] h-full md:h-fit md:max-h-[90%] flex flex-col bg-white dark:bg-neutral-900 sm:rounded-3xl overflow-hidden"
+                className="w-full max-w-[500px] h-full md:h-fit md:max-h-[90%] flex flex-col bg-white dark:bg-neutral-900 sm:rounded-3xl overflow-y-scroll"
                 >
-                <motion.div layoutId={`image-${active.firstname}-${id}`}>
+                <motion.div layoutId={`image-${active.teacher.firstname}-${id}`}>
                     <Image
                     priority
                     width={200}
                     height={200}
                     src={active.src}
-                    alt={active.firstname}
+                    alt={active.teacher.firstname}
                     className="w-full h-80 lg:h-80 sm:rounded-tr-lg sm:rounded-tl-lg object-cover object-top"
                     />
                 </motion.div>
@@ -181,19 +181,19 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
                     <div className="m-4">
                     <div className="flex flex-row items-center justify-between pb-4">
                         <motion.h3
-                        layoutId={`title-${active.firstname}-${id}`}
+                        layoutId={`title-${active.teacher.firstname}-${id}`}
                         className="font-bold text-neutral-700 dark:text-neutral-200"
                         >
-                        {active.firstname}
+                        {active.teacher.firstname}
                         </motion.h3>
                         <motion.p
-                            layoutId={`description-${active.firstname}-${id}`}
-                            className="w-60 text-neutral-600 dark:text-neutral-400 text-center md:text-left overflow-x-scroll scrollbar-hide"
+                            layoutId={`description-${active.teacher.firstname}-${id}`}
+                            className="flex flex-row w-60 text-neutral-600 dark:text-neutral-400 text-center md:text-left overflow-x-scroll scrollbar-hide"
                         >
                             {active.qualifications.map((qualification :string, index :number) => {
                                 //order the qualifications alfabetically
                                 active.qualifications.sort();
-                                return(<div>
+                                return(<div className="m-2">
                                     <span key={index} className="rounded-lg bg-neutral-100 mx-1 p-2 text-xs">{qualification}</span>
                                 </div>)
                             })}
@@ -201,12 +201,32 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
                         
                     
                     </div>
+                    <div className="">
                         <motion.p
                         layoutId={`description-${active.description}-${id}`}
-                        className="overflow-y-scroll h-56 scrollbar-hide text-neutral-600 dark:text-neutral-400"
+                        className="h-56 text-neutral-600 dark:text-neutral-400"
                         >
                         {active.description}
                         </motion.p>
+
+                        <div className=""> {/* Wrapping div for scrolling */}
+                            {active.reviews.length === 0 ? (
+                                <span>{active.teacher.firstname} har ingen omtaler enda</span>
+                            ) : (
+                                <div className="space-y-4 "> {/* Added spacing between reviews */}
+                                    {active.reviews.map((review) => (
+                                        <div key={review.id} className="flex flex-col bg-neutral-100 p-4 rounded-xl">
+                                            <div className="flex flex-row items-center mb-4">
+                                                <span className="text-lg mr-4">{review.student_name!==""? review.student_name : "Anonym"}</span>
+                                                <RenderStars rating={review.rating}/>
+                                            </div>
+                                            <p className="text-neutral-800">{review.comment}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
                     </div>
                 </div>
                 </motion.div>
@@ -219,35 +239,49 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
         {viewMode === "list" ? (
             <ul className="max-w-2xl mx-auto w-full gap-4">
             {filteredCards.length === 0 && <h3 className="text-black w-full text-center dark:text-white">Vi har desverre ingen lærere som møter filtrene dine.</h3>}
-            {filteredCards.map((card :CardType) => (<div className="flex flex-row items-center w-full justify-between">
+            {filteredCards.map((card :CardType) => {
+
+                let avgRating :number =0
+                //avoid divinding by zero is card.reviews===0
+                if (card.reviews.length!==0) {
+                    card.reviews.map( (review) => {
+                        avgRating += review.rating
+                    })
+                    avgRating = Math.round(avgRating/card.reviews.length)
+                }
+
+                return(<div className="flex flex-row items-center w-full justify-between">
                 <motion.div
-                    layoutId={`card-${card.firstname}-${id}`}
-                    key={`card-${card.firstname}-${id}`}
+                    layoutId={`card-${card.teacher.user_id}-${id}`}
+                    key={`card-${card.teacher.firstname}-${id}`}
                     onClick={() => setActive(card)}
                     className="p-4 flex flex-col justify-between items-center hover:bg-neutral-50 dark:hover:bg-neutral-800 rounded-xl cursor-pointer"
                 >
                     <div className="flex gap-4 flex-col md:flex-row">
-                        <motion.div layoutId={`image-${card.firstname}-${id}`}>
+                        <motion.div layoutId={`image-${card.teacher.firstname}-${id}`}>
                         <Image
                             width={100}
                             height={100}
                             src={card.src}
-                            alt={card.firstname}
+                            alt={card.teacher.firstname}
                             className="h-40 w-40 md:h-14 md:w-14 rounded-lg object-cover object-top"
                         />
                         </motion.div>
                         <div className="flex flex-row items-center ">
                         <motion.h3
-                            layoutId={`title-${card.firstname}-${id}`}
+                            layoutId={`title-${card.teacher.firstname}-${id}`}
                             className="flex flex-col w-28 font-bold text-neutral-800 dark:text-neutral-200 text-center md:text-left"
                         >
-                            {card.firstname}
+                            {card.teacher.firstname}
                             <span className="text-xs font-light">{card.location}</span>
+                            <span>
+                                <RenderStars rating = {avgRating}/>
+                            </span>
                         </motion.h3>
                         <motion.p
-                            layoutId={`description-${card.firstname}-${id}`}
+                            layoutId={`description-${card.teacher.firstname}-${id}`}
                             className="w-60 text-neutral-600 dark:text-neutral-400 text-center md:text-left overflow-x-scroll scrollbar-hide"
-                            key = {card.firstname}
+                            key = {card.teacher.firstname}
                         >
                             {card.qualifications.map((qualification :string, index :number) => {
                                 
@@ -273,42 +307,69 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
                     disabled={!card.physicalTutouring && !card.digitalTutouring}
                     className={`min-w-32 ${(!card.physicalTutouring && !card.digitalTutouring)? 'bg-neutral-400 text-neutral-100':''}`}
                 >
-                    Bestill {card.firstname}
+                    Bestill {card.teacher.firstname}
                 </Button>
-            </div>))}
+            </div>)})}
             </ul>
         ) : 
         
         
         (
             <ul className="max-w-2xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 items-start gap-4">
-            {filteredCards.map((card) => (<div className=" flex flex-col">
+            {filteredCards.map((card) => {
+    
+
+                let avgRating :number =0
+                //avoid divinding by zero is card.reviews===0
+                if (card.reviews.length!==0) {
+                    card.reviews.map( (review) => {
+                        avgRating += review.rating
+                    })
+                    avgRating = Math.round(avgRating/card.reviews.length)
+                }
+
+                const RenderStars = ({rating} : {rating :number}) => {
+
+                    return (
+                    <div className="flex flex-row">
+                        {Array.from({ length: 5 }, (_, index) => (
+                            <Star
+                                key={index}
+                                fill={index < rating ? "currentColor" : "none"} // Fill only up to avgRating
+                                stroke="none"
+                                className="text-black w-3 h-3"
+                            />))}
+
+                    </div>)
+                };
+
+                return(<div className=" flex flex-col">
                 <motion.div
-                layoutId={`card-${card.firstname}-${id}`}
-                key={card.firstname}
+                layoutId={`card-${card.teacher.firstname}-${id}`}
+                key={card.teacher.firstname}
                 onClick={() => setActive(card)}
                 className="p-4 flex flex-col hover:bg-neutral-50 dark:hover:bg-neutral-800 rounded-xl cursor-pointer"
                 >
                 <div className="flex flex-col w-full">
-                    <motion.div layoutId={`image-${card.firstname}-${id}`}>
+                    <motion.div layoutId={`image-${card.teacher.firstname}-${id}`}>
                     <Image
                         width={100}
                         height={100}
                         src={card.src}
-                        alt={card.firstname}
+                        alt={card.teacher.firstname}
                         className="h-60 w-full rounded-lg object-cover object-top"
                     />
                     </motion.div>
                     <div className="flex justify-center items-center flex-col ">
                         <motion.h3
-                            layoutId={`title-${card.firstname}-${id}`}
+                            layoutId={`title-${card.teacher.firstname}-${id}`}
                             className="font-medium text-neutral-800 dark:text-neutral-200 text-center md:text-left text-base"
                         >
-                            {card.firstname}
-                            <span className="text-xs font-light"> {card.location}</span>
+                            {card.teacher.firstname} <br/>
+                            <span className="flex flex-row items-center text-xs font-light"> <span className="mr-2">{card.location}</span> <RenderStars rating={avgRating}/></span>
                         </motion.h3>
                         <motion.p
-                            layoutId={`description-${card.firstname}-${id}`}
+                            layoutId={`description-${card.teacher.firstname}-${id}`}
                             className="w-40 text-neutral-600 dark:text-neutral-400 text-center md:text-left overflow-x-scroll scrollbar-hide"
                         >
                             {card.qualifications.map((qualification :string, index :number) => {
@@ -337,10 +398,10 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
                     disabled={!card.physicalTutouring && !card.digitalTutouring}
                     className={`${(!card.physicalTutouring && !card.digitalTutouring)? 'bg-neutral-400 text-neutral-100':''}`}
                 >
-                    Bestill {card.firstname}
+                    Bestill {card.teacher.firstname}
                 </Button>
 
-            </div>))}
+            </div>)})}
             </ul>
         )}
         </div>
@@ -350,7 +411,7 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
         <Dialog open={selectedCard?true:false} onOpenChange={() => setSelectedCard(null)}>
             <DialogContent onClick={(e) => e.stopPropagation()}>
                 <DialogHeader>
-                    <DialogTitle>Bestill {selectedCard.firstname}</DialogTitle>
+                    <DialogTitle>Bestill {selectedCard.teacher.firstname}</DialogTitle>
                     <DialogDescription>
                     Vi ringer dere tilbake innen kort tid, normalt 24 timer, med informasjon om oppstart
                     </DialogDescription>
@@ -422,6 +483,21 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
 }
 
 
+
+const RenderStars = ({rating} : {rating :number}) => {
+
+    return (
+    <div className="flex flex-row">
+        {Array.from({ length: 5 }, (_, index) => (
+            <Star
+                key={index}
+                fill={index < rating ? "currentColor" : "none"} // Fill only up to avgRating
+                stroke="none"
+                className="text-black w-3 h-3"
+            />))}
+
+    </div>)
+};
 
 
 const CloseIcon = () => {
