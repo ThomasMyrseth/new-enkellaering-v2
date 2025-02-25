@@ -2,9 +2,10 @@
 import { useEffect, useState } from "react";
 import { CardBody, CardContainer, CardItem } from "@/components/ui/3d-card";
 import Image from "next/image";
+import LeaveReview from "./review";
 
 
-const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
+const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080/server";
 
 type Student = {
     user_id: string,
@@ -56,32 +57,28 @@ type Classes = {
 };
 
 export default function MinSideStudentPage() {
-    const token = localStorage.getItem('token')
-    
+    const token = localStorage.getItem('token') || ''
     const [student, setStudent] = useState<Student>()
+    const [teacher, setTeacher] = useState<Teacher>()
+
+
 
     useEffect( () => {
-        async function fetchStudent() {
-            const response = await fetch(`${BASEURL}/get-student`, {
-                method: "GET",
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                },
-            })
-
-            if (!response.ok) {
-                alert("failed to fetch student: " + response.statusText)
+        async function fetchData() {
+            const s = await fetchStudent(token)
+            const t = await fetchTeacher(token)
+    
+            if (t) {
+                setTeacher(t)
             }
-
-
-            const data = await response.json()
-            setStudent(data.student) //returns a single student
+            if (s) {
+                setStudent(s)
+            }
         }
-
-        fetchStudent()
+        fetchData()
     },[])
 
-    if (!student) {
+    if (!student || !teacher) {
         return (<>
             <p>Loading...</p>
         </>)
@@ -90,11 +87,14 @@ export default function MinSideStudentPage() {
         <div className="flex flex-col items-center justify-center  w-full min-h-screen bg-slate-200 dark:bg-slate-900">
             <IsActive student={student}/>
             <StudentName student={student} />
-            <IsActive student={student}/>
-            <MyTeacher />
-            <IsActive student={student}/>
-            <PreviousClasses student={student} />
-            <IsActive student={student}/>
+            <div className="md:w-4/5 flex flex-col items-center justify-center">
+                <IsActive student={student}/>
+                <MyTeacher teacher={teacher}/>
+                <IsActive student={student}/>
+                <PreviousClasses student={student} />
+                <IsActive student={student}/>
+                <LeaveReview baseUrl={BASEURL} token={token} teacherUserId={teacher.user_id} teacherName={teacher.firstname} firstnameParent={student.firstname_parent} />
+            </div>
 
         </div>
     );
@@ -130,48 +130,56 @@ function StudentName({student} : {student: Student}) {
     </>)
 }
 
-function MyTeacher() {
-    const token = localStorage.getItem('token')
-    const [loading, setLoading] = useState<boolean>(true)
-    const [teacher, setTeacher] = useState<Teacher>()
-    const [hasTeacher, setHasTeacher] = useState<boolean>(false)
 
-    useEffect( () => {
-        async function fetchTeacher() {
-            const response = await fetch(`${BASEURL}/get-teacher-for-student`, {
-                method: "GET",
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            })
+async function fetchTeacher(token :string) {
+    const response = await fetch(`${BASEURL}/get-teacher-for-student`, {
+        method: "GET",
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    })
 
-            setLoading(false)
-
-            if (!response.ok) {
-                return null
-            }
-
-            const data = await response.json()
-            const teacher = data.teacher
-            console.log(teacher)
-            
-            if (!teacher || Object.keys(teacher).length === 0) {
-                console.log("Student doesn't have a teacher yet");
-                setHasTeacher(false);
-            } else {
-                setHasTeacher(true);
-                setTeacher(teacher);
-            }
+    if (!response.ok) {
+        return null
     }
-    fetchTeacher()
-    },[])
 
-    if (loading) {
-        return <p>Loading...</p>
+    const data = await response.json()
+    const teacher = data.teacher
+    console.log(teacher)
+    
+    if (!teacher || Object.keys(teacher).length === 0) {
+        return false;
+    } else {
+        return teacher
+    }
+}
+
+async function fetchStudent(token :string) {
+    const response = await fetch(`${BASEURL}/get-student`, {
+        method: "GET",
+        headers: {
+            'Authorization': `Bearer ${token}`
+        },
+    })
+
+    if (!response.ok) {
+        return false;
     }
 
 
-    return(<div className="w-3/4 sm:w-full overflow-hidden">
+    const data = await response.json()
+    return data.student
+}
+
+function MyTeacher( {teacher} : {teacher :Teacher}) {
+    const [hasTeacher, setHasTeacher] = useState<boolean>(true)
+
+    if (!teacher) {
+        setHasTeacher(false)
+    }
+
+
+    return(<div className="w-full overflow-hidden">
         <CardContainer className="inter-var">
             <CardBody className="bg-gray-50 relative group/card  dark:hover:shadow-2xl dark:hover:shadow-emerald-500/[0.1] dark:bg-black dark:border-white/[0.2] border-black/[0.1] w-auto sm:w-[30rem] h-auto rounded-xl p-6 border  ">
                 <CardItem
@@ -333,7 +341,7 @@ function PreviousClasses({student} : {student : Student}) {
     }
 
       
-    return (<div className="flex flex-col justify-center items-center w-3/4 bg-white dark:bg-black rounded-lg p-4">
+    return (<div className="flex flex-col justify-center items-center w-full bg-white dark:bg-black rounded-lg p-4">
         <h2>En oversikt over tidligere timer</h2>
         <div className="m-4 p-4 rounded-sm bg-neutral-100 dark:bg-neutral-900">
         <p className="text-sm text-neutral-500 dark:text-neutral-200">De siste fire ukene har dere totalt hatt {hoursOfClassesLastFourWeeks} timer
