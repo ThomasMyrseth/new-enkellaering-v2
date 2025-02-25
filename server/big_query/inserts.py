@@ -342,4 +342,48 @@ def insert_quiz_result(user_id :str, quiz_id :str, passed :bool, number_of_corre
         print(f"Error executing query: {e}")
         raise Exception(f"Error executing query: {e}")
 
-    
+
+from big_query.deletes import delete_review
+from uuid import uuid4
+def insert_review(student_user_id :str, teacher_user_id :str, rating :int, comment :str, name :str, bq_client = None):
+    #delete the old revire associsted with teacher and student user ids
+    delete_review(student_user_id, teacher_user_id, bq_client)
+
+    #insert the new review
+    row_id = str(uuid4())
+
+    query = f"""
+        INSERT INTO `{USER_DATASET}.reviews`
+        (id, teacher_user_id, student_user_id, student_name, rating, comment, created_at)
+
+        VALUES (@id, @teacher_user_id, @student_user_id, @student_name, @rating, @comment, CURRENT_TIMESTAMP())
+    """
+
+
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("id", "STRING", row_id),
+            bigquery.ScalarQueryParameterType("teacher_user_id", "STRING", teacher_user_id),
+            bigquery.ScalarQueryParameterType("student_user_id", "STRING", student_user_id),
+            bigquery.ScalarQueryParameterType("student_name", "STRING", name),
+            bigquery.ScalarQueryParameterType("rating", "INT64", rating),
+            bigquery.ScalarQueryParameterType("comment", "STRING", comment)
+        ]
+    )
+
+    try:
+        response = client.query(query, job_config=job_config, location="EU")
+        response.result()  # Ensure the query completes
+
+        # Debug response
+        print("Query executed successfully.")
+        if response.errors:
+            print("BigQuery errors:")
+            for error in response.errors:
+                print(error)
+            raise Exception("Error inserting new review into BigQuery")
+        
+        return True
+    except Exception as e:
+        print(f"Error executing query: {e}")
+        raise Exception(f"Error executing query: {e}")

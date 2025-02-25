@@ -22,17 +22,17 @@ const LeaveReview = ({token, baseUrl, teacherUserId, teacherName, firstnameParen
         setSuccess(false);
 
         try {
-        const response = await fetch(`${baseUrl}/reviews`, {
+        const response = await fetch(`${baseUrl}/upload-review`, {
             method: "POST",
             headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify({
-            teacherUserId,
-            rating,
-            comment,
-            name,
+                teacher_user_id: teacherUserId,
+                rating: rating,
+                comment: comment,
+                name: name,
             }),
         });
 
@@ -132,7 +132,7 @@ const LeaveReview = ({token, baseUrl, teacherUserId, teacherName, firstnameParen
                     : "inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-slate-950 px-3 py-1 text-sm font-medium text-white backdrop-blur-3xl"
                 )}
             >
-                {isSending ? "Submitting..." : "Submit Review"}
+                {isSending ? "Sender..." : "Send"}
             </span>
             </button>
         </form>

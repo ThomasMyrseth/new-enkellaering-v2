@@ -1397,7 +1397,29 @@ def get_quiz_status_route(user_id):
         print(str(e))
         return jsonify({"message": f"Error getting quiz status {str(e)}"}), 500
 
-    
+
+from big_query.inserts import insert_review
+@app.route('/upload-review', methods=["POST"])
+@token_required
+def upload_review_route(user_id):
+    if not user_id:
+        return jsonify({"message": "Unauthorized"}), 401
+
+    data = request.get_json()
+    teacher_user_id = data.get('teacher_user_id')
+    rating = data.get('rating')
+    comment = data.get('comment')
+    name = data.get('name') or "Anonym"
+
+    if not (teacher_user_id and rating and comment):
+        return jsonify({"message", "Missing required fields"}), 403
+
+    try:
+        insert_review(student_user_id=user_id, teacher_user_id=teacher_user_id, rating=rating, comment=comment, name=name, bq_client=bq_client)
+        return jsonify({"message": "Inserted review succesfully"}), 200
+    except Exception as e:
+        return jsonify({"message": f"error inserting review {e}"})
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))  # Use PORT from the environment or default to 8080

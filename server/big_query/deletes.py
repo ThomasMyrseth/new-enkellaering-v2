@@ -34,3 +34,29 @@ def hideNewStudent(new_student_id, admin_user_id, client=None):
     
     job_config = bigquery.QueryJobConfig(query_parameters=query_params)
     return client.query(query, job_config=job_config)
+
+
+def delete_review(student_user_id: str, teacher_user_id: str, bq_client=None):
+    if bq_client is None:
+        raise ValueError("BigQuery client is required")
+
+    query = f"""
+        DELETE FROM `{USER_DATASET}.reviews`
+        WHERE student_user_id = @student_user_id AND teacher_user_id = @teacher_user_id
+    """
+
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("student_user_id", "STRING", student_user_id),
+            bigquery.ScalarQueryParameter("teacher_user_id", "STRING", teacher_user_id),
+        ]
+    )
+
+    try:
+        response = bq_client.query(query, job_config=job_config, location="EU")
+        response.result()  # Wait for query to complete
+        print("Review successfully deleted.")
+        return True
+    except Exception as e:
+        print(f"Error executing delete query: {e}")
+        raise
