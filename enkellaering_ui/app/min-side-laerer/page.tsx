@@ -36,6 +36,7 @@ import {
 import { AlertDialog, AlertDialogDescription,AlertDialogCancel, AlertDialogAction, AlertDialogFooter,AlertDialogContent,  AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 type Class = {
+    class_id :string;
     comment: string; // Optional comment for the session
     created_at: string; // Timestamp when the record was created (ISO format)
     started_at: string; // Timestamp for when the session started (ISO format)
@@ -1026,6 +1027,7 @@ import {
 } from "@/components/ui/table"
 
 
+import { DeleteClass } from "./deleteClass";
 
 const PreviousClasses =  ({student, teacher, allClasses}  : {student :FullStudent, teacher :Teacher, allClasses :Class[]})  => {     
 
@@ -1076,6 +1078,7 @@ const PreviousClasses =  ({student, teacher, allClasses}  : {student :FullStuden
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Beløp</TableHead>
                 <TableHead>Kommentar</TableHead>
+                <TableHead>Slett time</TableHead>
             </TableRow>
         </TableHeader>
         <TableBody>
@@ -1095,6 +1098,7 @@ const PreviousClasses =  ({student, teacher, allClasses}  : {student :FullStuden
                         <TableCell>{c.paid_teacher ? <p className="text-green-400">Betalt</p> : <p className="text-red-400">Ubetalt</p>}</TableCell>
                         <TableCell className="text-right">{amount}</TableCell>
                         <TableCell>{c.comment}</TableCell>
+                        <TableCell><DeleteClass classId={c.class_id} hasPaid={c.paid_teacher} hasInvoiced={c.invoiced_student}/></TableCell>
                     </TableRow>
                 )
             })}

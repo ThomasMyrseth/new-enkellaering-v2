@@ -1301,6 +1301,28 @@ def upload_notes_about_student_route(user_id):
 
 
 
+from big_query.deletes import delete_class
+@app.route('/delete-class', methods=["POST"])
+@token_required
+def delete_class_route(user_id):
+    if not user_id:
+        return jsonify({"message": "Unauthenticaterd"}), 400
+
+    data = request.get_json()
+    class_id = data.get('class_id')
+
+    if not class_id:
+        return jsonify({"message": "missing class id field"}), 401
+
+    try:
+        res = delete_class(teacher_user_id=user_id, class_id=class_id, client=bq_client)
+        res.result()  # Wait for query to complete
+
+        return jsonify({"message": "Class successfully deleted"}), 200
+    except Exception as e:
+        return jsonify({"message": f"Error deleting class: {str(e)}"}), 500
+
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))  # Use PORT from the environment or default to 8080
