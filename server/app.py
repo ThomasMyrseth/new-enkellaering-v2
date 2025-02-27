@@ -1432,7 +1432,7 @@ from big_query.gets import get_all_reviews
 @app.route('/get-all-reviews', methods=["GET"])
 def get_all_reviews_route():
     try:
-        data = get_all_reviews()
+        data = get_all_reviews(client=bq_client)
         return jsonify({"reviews": data}), 200
     except Exception as e:
         return jsonify({"message": f"Error receiving all reviews {e}"}), 500
