@@ -24,7 +24,7 @@ function Prices() {
           translateZ="50"
           className="flex flex-col w-full items-center justify-center font-bold text-neutral-600 dark:text-white"
         >
-        <p className="w-full text-center text-3xl relative bg-clip-text text-transparent bg-no-repeat bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500 py-4">540 kroner per time<br/><span className="font-light">- uansett hva</span></p>
+        <p className="w-full text-center text-3xl relative bg-clip-text text-transparent bg-no-repeat bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500 py-4">540 kroner per time<br/><span className="font-light">- uansett hva*</span></p>
         </CardItem>
         <CardItem
           as="p"
@@ -57,6 +57,10 @@ function Prices() {
             <p className="text-neutral-500 text-sm dark:text-neutral-300">
               * Alle timer må avbestilles minst én virkedag (24 timer) før. 
               Dersom avbestillingen skjer etter dette vil dere bli fakturert for hele den planlagte tiden. Avbestillinger skjer ved å kontakte deres lærer per SMS.</p>
+            
+            <br/>
+            <p className="text-neutral-500 text-sm dark:text-neutral-300">
+              * Dersom du ønsker å ha med deg en venn, eller være to personer på privatundervisning samtidig, gjelder samlet pris på <span className="font-bold">700kr per 60 minutter</span>. Alle andre vilkår gjelder som vanlig.</p>
           </CardItem>
         </div>
       </CardBody>
