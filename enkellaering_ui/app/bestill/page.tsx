@@ -31,7 +31,7 @@ function Prices() {
           translateZ="60"
           className="text-neutral-500 text-sm max-w-sm mt-2 dark:text-neutral-300"
         >
-          Uavhengig av om dere øsnker fysisk eller digital undervisning, en innspurt til eksamen eller et maraton ut skoleåret tar vi den samme prisen.
+          Uavhengig av om dere ønsker fysisk eller digital undervisning, en innspurt til eksamen eller et maraton ut skoleåret tar vi den samme prisen*.
         </CardItem>
         <CardItem translateZ="100" className="w-full mt-4">
           <Image
