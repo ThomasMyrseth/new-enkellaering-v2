@@ -13,7 +13,7 @@ import {
  
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
 
-export const FileUploadForm = ({firstname, lastname} : {firstname :string, lastname: string}) => {
+export const FileUploadForm = ({firstname, lastname, title} : {firstname? :string, lastname?: string, title :string}) => {
     const token = localStorage.getItem('token')
 
     const [files, setFiles] = useState<File[]>([]);
@@ -42,8 +42,8 @@ export const FileUploadForm = ({firstname, lastname} : {firstname :string, lastn
         const formData = new FormData();
         formData.append("about_me", aboutMe);
         formData.append("file", files[0]); // Add the first file
-        formData.append("firstname", firstname)
-        formData.append("lastname", lastname)
+        formData.append("firstname", firstname || "")
+        formData.append("lastname", lastname || "")
 
         console.log("formdata is: ", formData)
       
@@ -111,7 +111,7 @@ export const FileUploadForm = ({firstname, lastname} : {firstname :string, lastn
 
         <form className="m-8 flex flex-col space-y-10 items-center justify-center" onSubmit={handleSubmit}>
             <h2 className="font-bold text-xl">Last opp en kort beskrivelse av deg som skal vises frem på nettsiden</h2>
-            <FileUpload onChange={handleFileUpload} />
+            <FileUpload onChange={handleFileUpload} title={title}/>
             <Textarea 
                 rows={10}
                 placeholder="Skriv litt om deg selv og hvordan du underviser"

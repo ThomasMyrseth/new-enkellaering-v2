@@ -432,3 +432,27 @@ def get_all_reviews(client: bigquery.Client):
     except Exception as e:
         print(f"Error fetching reviews: {e}")
         return []
+    
+
+def is_user_admin(client: bigquery.Client, user_id: str):
+    query = f"""
+    SELECT * FROM `{PROJECT_ID}.{USER_DATASET}.teachers`
+    WHERE user_id = @user_id
+    """
+    query_params = [bigquery.ScalarQueryParameter("user_id", "STRING", user_id)]
+    job_config = bigquery.QueryJobConfig(query_parameters=query_params)
+
+    try:
+        response = client.query(query, job_config=job_config)
+        results = list(response.result())  # Convert iterator to list
+        
+        if not results:
+            return False
+        
+        row =  dict(results[0])  # Convert first row to dictionary
+
+        return row["admin"] or False
+
+    except Exception as e:
+        print(f"Error fetching teacher: {e}")
+        return False

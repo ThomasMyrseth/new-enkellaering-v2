@@ -13,6 +13,7 @@ PROJECT_ID = os.getenv('PROJECT_ID')
 USER_DATASET = os.getenv('USER_DATASET')
 CLASSES_DATASET = os.getenv('CLASSES_DATASET')
 NEW_STUDENTS_DATASET = os.getenv('NEW_STUDENTS_DATASET')
+QUIZ_DATASET = os.getenv('QUIZ_DATASET')
 
 
 def insert_teacher(client: bigquery.Client, teacher: Teachers):
@@ -383,3 +384,67 @@ def insert_review(student_user_id :str, teacher_user_id :str, rating :int, comme
     except Exception as e:
         print(f"Error executing query: {e}")
         raise Exception(f"Error executing query: {e}")
+    
+
+
+
+from uuid import uuid4
+from google.cloud import storage
+
+def insert_quiz(title :str, image_path :str,  extension :str, pass_treshold :int, bq_client = None):
+    
+    if bq_client is None:
+        bq_client = bigquery.Client.from_service_account_json("google_service_account.json")
+
+    
+    # Initialize GCS client
+    storage_client = storage.Client()
+    bucket_name = "enkellaering_images"
+    destination_blob_name = f"quiz_covers/{title.replace(' ', '_')}{extension}"
+
+    bucket = storage_client.bucket(bucket_name)
+    blob = bucket.blob(destination_blob_name)
+
+    try:
+        blob.upload_from_filename(image_path)
+    except Exception as e:
+        raise Exception(f"Error uploading image to bucket: {e}")
+
+    image_url = f"https://storage.googleapis.com/{bucket_name}/{destination_blob_name}"
+
+
+
+    #2 insert the quiz metadata into the sql database
+    query = f"""
+        INSERT INTO `{QUIZ_DATASET}.quizzes`
+        (quiz_id, title, image, pass_threshold, created_at)
+
+        values (@quiz_id, @title, @image, @pass_threshold, CURRENT_TIMESTAMP())
+
+    """
+
+
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("quiz_id", "STRING", str(uuid4())),
+            bigquery.ScalarQueryParameter("title", "STRING", title),
+            bigquery.ScalarQueryParameter("image", "STRING", image_url),
+            bigquery.ScalarQueryParameter("pass_threshold", "FLOAT", pass_treshold)
+        ]
+    )
+
+    try:
+        response = client.query(query, job_config=job_config, location="EU")
+        response.result()  # Ensure the query completes
+
+        # Debug response
+        if response.errors:
+            raise Exception("Error inserting new review into BigQuery")
+        
+        return True
+    except Exception as e:
+        print(f"Error executing query: {e}")
+        raise Exception(f"Error executing query: {e}")
+    
+
+

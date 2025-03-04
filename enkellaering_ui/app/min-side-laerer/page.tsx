@@ -196,7 +196,7 @@ export default function LaererPage() {
             <br/>
             <YourStudent teacher={teacher} classes={classes} students={students}/>
             <br/>
-            <FileUploadForm firstname={teacher.firstname} lastname={teacher.lastname}/>
+            <FileUploadForm firstname={teacher.firstname} lastname={teacher.lastname} title={"Last opp et bilde av deg"}/>
 
         <div className="p-4 m-4">
         </div>

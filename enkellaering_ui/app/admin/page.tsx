@@ -9,6 +9,7 @@ import { NewStudentsWorkflow } from "./newStudentsWorkflow";
 import { PreviousClassesForEachTeacher } from "./previousClassesForEachTeacher";
 import { PreviousClassesForEachStudent } from "./previousClassesForEachStudent";
 import { NewStudentsWithoutTeacherPage } from "./studentsWithoutTeacher";
+import Quiz from "./quiz/main";
 
 import { Teacher } from "./types";
 
@@ -72,6 +73,7 @@ export default function AdminPage() {
     return (<div className="flex flex-col items-center justify-center w-full space-y-10 min-h-screen">
         <TeacherName teacher={teacher}/>
         <div className="flex flex-col items-center justify-center w-full md:w-3/4 max-w-screen-lg space-y-10 mx-auto px-4">
+          <Quiz/>
           <DailyRevenueChart />
           <PreviousClassesForEachTeacher />
           <PreviousClassesForEachStudent />

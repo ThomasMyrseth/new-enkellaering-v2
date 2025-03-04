@@ -1398,6 +1398,58 @@ def get_quiz_status_route(user_id):
         return jsonify({"message": f"Error getting quiz status {str(e)}"}), 500
 
 
+
+from big_query.inserts import insert_quiz
+from big_query.gets import is_user_admin
+
+@app.route('/upload-quiz', methods=["POST"])
+@token_required
+def upload_quiz_route(user_id):
+
+    if not user_id:
+        return jsonify({"messsage": "User must authenticate"}), 401
+    
+    is_admin = is_user_admin(client=bq_client, user_id=user_id)
+    if not is_admin:
+        return jsonify({"message": "User is not admin"}), 401
+
+    if "image" not in request.files:
+        return jsonify({"message": "No file uploaded"}), 400
+
+    file = request.files["image"]
+    mimetype = file.mimetype
+    file_extension = mimetypes.guess_extension(mimetype)
+
+    title = request.form.get("title")  
+    pass_treshold = request.form.get("pass_treshold")
+
+    if not title or not pass_treshold:
+        return jsonify({"error": "Missing fields"}), 400
+    
+
+    #temporary storing the image
+    temp_filename = f"/tmp/{uuid4()}{file_extension}"
+    file.save(temp_filename)
+
+
+    #inserting the quiz
+
+    try:
+        insert_quiz(title=title, image_path=temp_filename, extension=file_extension, pass_treshold=pass_treshold, bq_client=bq_client)
+        return jsonify({"message": "Quiz inserted successfully"}), 200
+
+    except Exception as e:
+        print(f"Error inserting quiz {e}")
+        return jsonify({"message": f"Error inserting quiz: {e}"}), 500
+
+
+
+
+
+
+
+
+
 from big_query.inserts import insert_review
 from big_query.deletes import delete_review
 
