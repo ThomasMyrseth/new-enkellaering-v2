@@ -450,4 +450,37 @@ def insert_quiz(title :str, image_path :str,  extension :str, pass_treshold :int
         raise Exception(f"Error executing query: {e}")
     
 
+from uuid import uuid4
+from google.cloud import storage
+
+def upload_image(image_title :str, image_path :str,  extension :str):
+    # Initialize GCS client
+    storage_client = storage.Client()
+    bucket_name = "enkellaering_images"
+    destination_blob_name = f"quiz_images/quiz_id/{image_title.replace(' ', '_')}{extension}"
+
+    bucket = storage_client.bucket(bucket_name)
+    blob = bucket.blob(destination_blob_name)
+
+    try:
+        blob.upload_from_filename(image_path)
+    except Exception as e:
+        raise Exception(f"Error uploading image to bucket: {e}")
+
+    image_url = f"https://storage.googleapis.com/{bucket_name}/{destination_blob_name}"
+
+    return image_url
+
+def insert_quiz_questions(questions :list, bq_client = None):
+
+    if bq_client is None:
+        bq_client = bigquery.Client.from_service_account_json("google_service_account.json")
+
+    table_id = "quizzes.questions"
+
+    errors = bq_client.insert_rows_json(table_id, questions)
+    if errors:
+        raise Exception("Batch insert failed")
+    
+    return True
 

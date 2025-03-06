@@ -74,7 +74,7 @@ export function MakeQuizForm() {
                 setSuccess(false)
                 return
             }
-            console.log("redirecting to:", data.url);
+
             router.push(data.url);
         }
     };

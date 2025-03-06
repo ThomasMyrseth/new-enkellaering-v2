@@ -18,7 +18,7 @@ export function MakeQuizForm( {onGoToNextQuestion} : {onGoToNextQuestion: (file:
 
     const [file, setFile] = useState<File | null>(null);
     const [question, setQuestion] = useState<string>("");
-    const [options, setOptions] = useState<string[]>([])
+    const [options, setOptions] = useState<string[]>(["Alternativ 1", "Alternativ 2", "Alternativ 3", "Alternativ 4"])
     const [correctOption, setCorrectOption] = useState<0|1|2|3>(0)
     const [timelimit, setTimelimit] = useState<number>(30)
     const [success, setSuccess] = useState<boolean>()
@@ -37,11 +37,12 @@ export function MakeQuizForm( {onGoToNextQuestion} : {onGoToNextQuestion: (file:
     }
 
 
-    const handleSetOptions = (value: string, index: number) => {
-        setOptions((prevOptions) =>
-            prevOptions.map((option, i) => (i === index ? value : option))
-        );
+    const handleOptionChange = (value: string, index :number) => {
+        const newOptions = [...options];
+        newOptions[index] = value;
+        setOptions(newOptions);
     };
+    
 
     const handleButtonClick = () => {
         if (!file || !timelimit || !question || !options || correctOption === undefined) {
@@ -100,7 +101,7 @@ export function MakeQuizForm( {onGoToNextQuestion} : {onGoToNextQuestion: (file:
             <RadioGroupItem value="0"/>
             <Input
                 value={options[0]}
-                onChange={(e) => handleSetOptions(e.target.value, 0)}
+                onChange={(e) => handleOptionChange(e.target.value, 0)}
                 placeholder="Alternativ 1"
                 />
           </LabelInputContainer>
@@ -109,7 +110,7 @@ export function MakeQuizForm( {onGoToNextQuestion} : {onGoToNextQuestion: (file:
             <RadioGroupItem value="1"/>
             <Input
                 value={options[1]}
-                onChange={(e) => handleSetOptions(e.target.value, 1)}
+                onChange={(e) => handleOptionChange(e.target.value, 1)}
                 placeholder="Alternativ 2"
                 />
           </LabelInputContainer>
@@ -118,7 +119,7 @@ export function MakeQuizForm( {onGoToNextQuestion} : {onGoToNextQuestion: (file:
             <RadioGroupItem value="2"/>
             <Input
                 value={options[2]}
-                onChange={(e) => handleSetOptions(e.target.value, 2)}
+                onChange={(e) => handleOptionChange(e.target.value, 2)}
                 placeholder="Alternativ 3"
                 />
           </LabelInputContainer>
@@ -127,7 +128,7 @@ export function MakeQuizForm( {onGoToNextQuestion} : {onGoToNextQuestion: (file:
             <RadioGroupItem value="3"/>
             <Input
                 value={options[3]}
-                onChange={(e) => handleSetOptions(e.target.value, 3)}
+                onChange={(e) => handleOptionChange(e.target.value, 3)}
                 placeholder="Alternativ 4"
                 />
           </LabelInputContainer>

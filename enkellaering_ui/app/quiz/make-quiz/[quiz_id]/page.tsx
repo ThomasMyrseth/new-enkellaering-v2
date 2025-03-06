@@ -1,20 +1,22 @@
 "use client"
-import { useState, useEffect, useId } from "react"
+import { useState } from "react"
 import { useParams } from 'next/navigation';
+import { v4 as uuidv4 } from 'uuid';
 
 import { MakeQuizForm } from "./newQuestionForm"
 import { CountQuestions } from "./countQuestions";
 import { QuestionWithFileType } from "../../types"
+import { SaveQuiz } from "./saveQuiz";
 
 
 export default function MakeQuizPage() {
 
     const [questions, setQuestion] = useState<QuestionWithFileType[]>([])
     const { quiz_id } = useParams() as { quiz_id: string };
-    const question_id: string = useId(); // Move it to the top
 
 
     const handleAddQuestion = (file :File, timelimit :number, question :string, options :string[], correct : 0|1|2|3) => {
+        const uniqueId = uuidv4();
 
         console.log("quizId: ", quiz_id)
         console.log("file: ", file)
@@ -29,7 +31,7 @@ export default function MakeQuizPage() {
         }
         const q :QuestionWithFileType = {
             quiz_id: quiz_id,
-            question_id: question_id,
+            question_id: uniqueId,
             question: question,
             options: options,
             correct_option: correct,
@@ -42,8 +44,9 @@ export default function MakeQuizPage() {
         return true
     }
 
-    return(<>
+    return(<div className="w-full flex flex-col space-y-4">
         <CountQuestions questions={questions}/>
         <MakeQuizForm onGoToNextQuestion={handleAddQuestion}/>
-    </>)
+        <SaveQuiz questions={questions}/>
+    </div>)
 }

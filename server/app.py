@@ -1443,6 +1443,101 @@ def upload_quiz_route(user_id):
         return jsonify({"message": f"Error inserting quiz: {e}"}), 500
 
 
+from flask import request, jsonify
+import json
+from big_query.inserts import upload_image, insert_quiz_questions
+import tempfile
+import os
+@app.route('/upload-questions', methods=["POST"])
+@token_required
+def upload_questions_route(user_id):
+
+    if not user_id:
+        return jsonify({"messsage": "User must authenticate"}), 401
+    
+    is_admin = is_user_admin(client=bq_client, user_id=user_id)
+    if not is_admin:
+        return jsonify({"message": "User is not admin"}), 401
+
+
+    # Retrieve the questions JSON from the form data.
+    questions_json = request.form.get('questions')
+    if not questions_json:
+        return jsonify({"error": "Missing questions data"}), 400
+
+    try:
+        questions = json.loads(questions_json)
+    except json.JSONDecodeError:
+        return jsonify({"error": "Invalid JSON for questions"}), 400
+
+    # Retrieve uploaded images.
+    # Since your front-end appends files with keys like "image_0", "image_1", etc.,
+    # you can iterate through request.files to process each file.
+    images = {}
+    for key in request.files:
+        file = request.files[key]
+        images[key] = file  # You could also process and store the file as required.
+
+    #match each image with its questionID
+    matched_images = {}
+    for i, question in enumerate(questions):
+        image_key = f"image_{i}"
+        if image_key in images:
+            q_id = question["question_id"]
+            matched_images[q_id] = images[image_key]
+        else:
+            # Optionally log that no image was uploaded for this question
+            app.logger.info(f"No image uploaded for question {question['question_id']}")
+
+
+
+    #upload each image to the bucket, by first storing them locally
+    try:
+        uploaded_image_urls = {}
+        for q_id, file in matched_images.items():
+            suffix = os.path.splitext(file.filename)[1] if file.filename else ""
+            with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+                temp_path = tmp.name
+                file.save(temp_path)
+            # Pass the temporary file path to your upload function
+            url = upload_image(image_title=q_id, image_path=temp_path, extension=suffix)
+            uploaded_image_urls[q_id] = url
+            os.remove(temp_path)
+    except Exception as e:
+        print(f"error uploading images {e}")
+        return jsonify({"message": f"Error uploading images {e}"})
+
+    #upload the questions to bigquery with the imageUrls above  
+    formatted_questions = []
+    for i in range(len(questions)):
+        image_url = uploaded_image_urls.get(q_id, "no image")  # Use empty string or another default if no image
+        question = questions[i]
+
+        q = {
+            "question_id": question['question_id'],
+            "quiz_id": question['quiz_id'],
+            "question": question['question'],
+            "options": question['options'], #this is a list
+            "correct_option": question['correct_option'],
+            "image": image_url,
+            "time_limit": question['time_limit'],
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+
+        formatted_questions.append(q)
+    
+    try:
+        insert_quiz_questions(questions=formatted_questions, bq_client=bq_client)
+        return jsonify({"message": "Questions uploaded successfully"}), 200
+    
+    except Exception as e:
+        print(f"Error saving questions to big query {e}")
+        return jsonify({"message": f"Error saving questions to big query {e}"}), 500
+
+
+
+
+
 
 
 
