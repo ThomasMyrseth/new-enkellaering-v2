@@ -415,6 +415,9 @@ def insert_quiz(title :str, image_path :str,  extension :str, pass_treshold :int
 
 
     #2 insert the quiz metadata into the sql database
+
+    quiz_id = str(uuid4())
+
     query = f"""
         INSERT INTO `{QUIZ_DATASET}.quizzes`
         (quiz_id, title, image, pass_threshold, created_at)
@@ -426,7 +429,7 @@ def insert_quiz(title :str, image_path :str,  extension :str, pass_treshold :int
 
     job_config = bigquery.QueryJobConfig(
         query_parameters=[
-            bigquery.ScalarQueryParameter("quiz_id", "STRING", str(uuid4())),
+            bigquery.ScalarQueryParameter("quiz_id", "STRING", quiz_id),
             bigquery.ScalarQueryParameter("title", "STRING", title),
             bigquery.ScalarQueryParameter("image", "STRING", image_url),
             bigquery.ScalarQueryParameter("pass_threshold", "FLOAT", pass_treshold)
@@ -441,7 +444,7 @@ def insert_quiz(title :str, image_path :str,  extension :str, pass_treshold :int
         if response.errors:
             raise Exception("Error inserting new review into BigQuery")
         
-        return True
+        return quiz_id #this is the URL of the quiz
     except Exception as e:
         print(f"Error executing query: {e}")
         raise Exception(f"Error executing query: {e}")

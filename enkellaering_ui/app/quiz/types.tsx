@@ -9,6 +9,17 @@ export type QuestionType = {
     time_limit :number;
 }
 
+
+export type QuestionWithFileType = {
+    quiz_id :string;
+    question_id :string;
+    question :string;
+    options: string[];
+    correct_option: number;
+    image :File | null;
+    time_limit :number;
+}
+
 export type FullQuizType = {
     quiz_id :string;
     title :string;

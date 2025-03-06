@@ -64,9 +64,18 @@ export function MakeQuizForm() {
 
         if (!res.ok) {
             setSuccess(false)
+            return
         }
         else {
-            router.push(res.url)
+
+            const data = await res.json();
+
+            if (!data || !data.url) {
+                setSuccess(false)
+                return
+            }
+            console.log("redirecting to:", data.url);
+            router.push(data.url);
         }
     };
 

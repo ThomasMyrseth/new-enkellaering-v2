@@ -1435,8 +1435,8 @@ def upload_quiz_route(user_id):
     #inserting the quiz
 
     try:
-        insert_quiz(title=title, image_path=temp_filename, extension=file_extension, pass_treshold=pass_treshold, bq_client=bq_client)
-        return jsonify({"message": "Quiz inserted successfully"}), 200
+        quiz_id = insert_quiz(title=title, image_path=temp_filename, extension=file_extension, pass_treshold=pass_treshold, bq_client=bq_client)
+        return jsonify({"url": f"/quiz/make-quiz/{quiz_id}"}), 200
 
     except Exception as e:
         print(f"Error inserting quiz {e}")
