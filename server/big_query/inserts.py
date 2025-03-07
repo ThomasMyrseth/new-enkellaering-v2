@@ -391,7 +391,7 @@ def insert_review(student_user_id :str, teacher_user_id :str, rating :int, comme
 from uuid import uuid4
 from google.cloud import storage
 
-def insert_quiz(title :str, image_path :str,  extension :str, pass_treshold :int, bq_client = None):
+def insert_quiz(title :str, content: str, image_path :str,  extension :str, pass_treshold :int, number_of_questions :int, bq_client = None):
     
     if bq_client is None:
         bq_client = bigquery.Client.from_service_account_json("google_service_account.json")
@@ -420,9 +420,9 @@ def insert_quiz(title :str, image_path :str,  extension :str, pass_treshold :int
 
     query = f"""
         INSERT INTO `{QUIZ_DATASET}.quizzes`
-        (quiz_id, title, image, pass_threshold, created_at)
+        (quiz_id, title, content, image, pass_threshold, number_of_questions, created_at)
 
-        values (@quiz_id, @title, @image, @pass_threshold, CURRENT_TIMESTAMP())
+        values (@quiz_id, @title, @content, @image, @pass_threshold, @number_of_questions, CURRENT_TIMESTAMP())
 
     """
 
@@ -431,8 +431,10 @@ def insert_quiz(title :str, image_path :str,  extension :str, pass_treshold :int
         query_parameters=[
             bigquery.ScalarQueryParameter("quiz_id", "STRING", quiz_id),
             bigquery.ScalarQueryParameter("title", "STRING", title),
+            bigquery.ScalarQueryParameter("content", "STRING", content),
             bigquery.ScalarQueryParameter("image", "STRING", image_url),
-            bigquery.ScalarQueryParameter("pass_threshold", "FLOAT", pass_treshold)
+            bigquery.ScalarQueryParameter("pass_threshold", "FLOAT", pass_treshold),
+            bigquery.ScalarQueryParameter("number_of_questions", "INT64", number_of_questions)
         ]
     )
 
@@ -453,11 +455,11 @@ def insert_quiz(title :str, image_path :str,  extension :str, pass_treshold :int
 from uuid import uuid4
 from google.cloud import storage
 
-def upload_image(image_title :str, image_path :str,  extension :str):
+def upload_image(image_title :str, quiz_id :str, image_path :str,  extension :str):
     # Initialize GCS client
     storage_client = storage.Client()
     bucket_name = "enkellaering_images"
-    destination_blob_name = f"quiz_images/quiz_id/{image_title.replace(' ', '_')}{extension}"
+    destination_blob_name = f"quiz_images/{quiz_id}/{image_title.replace(' ', '_')}{extension}"
 
     bucket = storage_client.bucket(bucket_name)
     blob = bucket.blob(destination_blob_name)

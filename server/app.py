@@ -1421,9 +1421,11 @@ def upload_quiz_route(user_id):
     file_extension = mimetypes.guess_extension(mimetype)
 
     title = request.form.get("title")  
+    content = request.form.get("content")
     pass_treshold = request.form.get("pass_treshold")
+    number_of_questions = request.form.get('number_of_questions')
 
-    if not title or not pass_treshold:
+    if not title or not pass_treshold or not content or not number_of_questions:
         return jsonify({"error": "Missing fields"}), 400
     
 
@@ -1435,7 +1437,7 @@ def upload_quiz_route(user_id):
     #inserting the quiz
 
     try:
-        quiz_id = insert_quiz(title=title, image_path=temp_filename, extension=file_extension, pass_treshold=pass_treshold, bq_client=bq_client)
+        quiz_id = insert_quiz(title=title, content=content, image_path=temp_filename, extension=file_extension, pass_treshold=pass_treshold, number_of_questions=number_of_questions, bq_client=bq_client)
         return jsonify({"url": f"/quiz/make-quiz/{quiz_id}"}), 200
 
     except Exception as e:
@@ -1483,8 +1485,10 @@ def upload_questions_route(user_id):
     for i, question in enumerate(questions):
         image_key = f"image_{i}"
         if image_key in images:
-            q_id = question["question_id"]
-            matched_images[q_id] = images[image_key]
+            question_id = question["question_id"]
+            quiz_id = question["quiz_id"]
+            image_title = f"{quiz_id}-----{question_id}"
+            matched_images[image_title] = images[image_key]
         else:
             # Optionally log that no image was uploaded for this question
             app.logger.info(f"No image uploaded for question {question['question_id']}")
@@ -1494,14 +1498,17 @@ def upload_questions_route(user_id):
     #upload each image to the bucket, by first storing them locally
     try:
         uploaded_image_urls = {}
-        for q_id, file in matched_images.items():
+        for image_title, file in matched_images.items():
+            question_id = image_title.split("-----")[1]
+            quiz_id = image_title.split("-----")[0]
+
             suffix = os.path.splitext(file.filename)[1] if file.filename else ""
             with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
                 temp_path = tmp.name
                 file.save(temp_path)
             # Pass the temporary file path to your upload function
-            url = upload_image(image_title=q_id, image_path=temp_path, extension=suffix)
-            uploaded_image_urls[q_id] = url
+            url = upload_image(image_title=question_id, quiz_id=quiz_id, image_path=temp_path, extension=suffix)
+            uploaded_image_urls[question_id] = url
             os.remove(temp_path)
     except Exception as e:
         print(f"error uploading images {e}")
@@ -1510,7 +1517,7 @@ def upload_questions_route(user_id):
     #upload the questions to bigquery with the imageUrls above  
     formatted_questions = []
     for i in range(len(questions)):
-        image_url = uploaded_image_urls.get(q_id, "no image")  # Use empty string or another default if no image
+        image_url = uploaded_image_urls.get(question_id, "no image")  # Use empty string or another default if no image
         question = questions[i]
 
         q = {
@@ -1534,6 +1541,39 @@ def upload_questions_route(user_id):
         print(f"Error saving questions to big query {e}")
         return jsonify({"message": f"Error saving questions to big query {e}"}), 500
 
+
+from big_query.deletes import delete_quizzes
+
+@app.route('/delete-quiz', methods=["POST"])
+@token_required
+def delete_quiz_route(user_id):
+    admin = is_user_admin(client=bq_client, user_id=user_id)
+    if not admin:
+        return jsonify({"message": "User is not admin"}), 401
+    
+    data = request.get_json()
+    quiz_ids = data.get('quiz_ids')
+
+    if not data or not quiz_ids:
+        return jsonify({"message": "Missing required fields"}), 400
+    
+
+    try:
+        delete_quizzes(admin_user_id=user_id, quiz_ids=quiz_ids, bq_client=bq_client)
+        return jsonify({"message": "Quizzes deleted successfully"}), 200
+    except Exception as e:
+        print(f"Error deleting quiz {e}")
+        return jsonify({"message": f"Error deleting quizzes {e}"}), 500
+
+
+
+from big_query.gets import is_user_admin
+
+@app.route('/is-admin', methods=["GET"])
+@token_required
+def is_admin_route(user_id):
+    res = is_user_admin(client=bq_client, user_id=user_id)
+    return jsonify({"is_admin": res}), 200 # true or false
 
 
 

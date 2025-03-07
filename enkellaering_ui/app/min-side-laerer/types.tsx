@@ -26,6 +26,7 @@ export type QuizResult = {
     pass_threshold: number;
     quiz_id: string;
     title: string;
+    content: string;
   };
   
   export type QuizStatus = {

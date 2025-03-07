@@ -9,6 +9,7 @@ import { Slider } from "@/components/ui/slider"
 import { FileUpload } from "@/components/ui/file-upload";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 
 
 
@@ -20,6 +21,8 @@ export function MakeQuizForm() {
     const [passTreshold, setPassTreshold] = useState<number[]>([80])
     const [files, setFiles] = useState<File[]>([]);
     const [title, setTitle] = useState<string>("");
+    const [content, setContent] = useState<string>("")
+    const [numberOfQuestions, setNumberOfQuestions] = useState<number[]>([10]);
     const [allValid, setAllValid] = useState<boolean | null>(null)
     const [success, setSuccess] = useState<boolean | null>(null)
 
@@ -32,6 +35,9 @@ export function MakeQuizForm() {
         setTitle(value)
     }
 
+    const handleSetContent = (value :string) => {
+      setContent(value)
+    }
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -49,7 +55,9 @@ export function MakeQuizForm() {
 
         const formData = new FormData();
         formData.append("title", title);
+        formData.append("content", content)
         formData.append("pass_treshold", passTreshold[0].toString()); 
+        formData.append("number_of_questions", numberOfQuestions[0].toString()); 
         formData.append("image", files[0]); 
 
 
@@ -115,6 +123,7 @@ export function MakeQuizForm() {
             />
           </LabelInputContainer>
         </div>
+
         <LabelInputContainer className="mb-4">
             <div className="flex flex-row justify-between">
                 <Label>Sett bestått-grensen i prosent</Label>
@@ -122,6 +131,27 @@ export function MakeQuizForm() {
             </div>
             <Slider defaultValue={[33]} onValueChange={setPassTreshold} value={passTreshold} max={100} min={0} step={1} />
         </LabelInputContainer>
+
+        <LabelInputContainer className="mb-4">
+            <div className="flex flex-row justify-between">
+                <Label>Hvor mange spørsmål skal quizzen være på?</Label>
+                <Label>{numberOfQuestions[0]}</Label>
+            </div>
+            <Slider defaultValue={[10]} onValueChange={setNumberOfQuestions} value={numberOfQuestions} max={30} min={0} step={1} />
+        </LabelInputContainer>
+
+        <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2 mb-4">
+          <LabelInputContainer>
+            <Label htmlFor="firstname">Beskrivelse av quizzen</Label>
+            <Textarea 
+                id="content" 
+                placeholder="Dette er en quiz i matte r1. Den er på 10 spørsmål i tilfeldig rekkefølge. Hvert spørsmål har en tidsgrense som varierer avhengig av vanskelighetsgraden. Du må bestå minst 90% av oppgavene. Alle oppgaver er flervalg"
+                rows={6}
+                value={content} 
+                onChange={(e) => handleSetContent(e.target.value)} 
+            />
+          </LabelInputContainer>
+        </div>
 
         <div className="w-full max-w-4xl mx-auto min-h-96 border border-dashed bg-white dark:bg-black border-neutral-200 dark:border-neutral-800 rounded-lg">
             <FileUpload onChange={handleFileUpload} title="Last opp et forsidebilde til quizzen"/>

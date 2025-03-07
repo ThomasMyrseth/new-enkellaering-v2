@@ -290,7 +290,7 @@ const fetchCards = async (token :string, baseUrl :string) => {
                 src: quiz.image,
                 ctaText: ctaText,
                 ctaLink: `/quiz/${quiz.quiz_id}`,
-                content: () => {return <h1>Dette er content</h1>}
+                content: () => {return <p>{quiz.content}</p>}
         }
 
         cards.push(card)

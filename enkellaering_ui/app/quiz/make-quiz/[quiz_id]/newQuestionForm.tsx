@@ -1,14 +1,10 @@
 "use client";
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
 
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { Slider } from "@/components/ui/slider"
 import { FileUpload } from "@/components/ui/file-upload";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 
@@ -18,7 +14,7 @@ export function MakeQuizForm( {onGoToNextQuestion} : {onGoToNextQuestion: (file:
 
     const [file, setFile] = useState<File | null>(null);
     const [question, setQuestion] = useState<string>("");
-    const [options, setOptions] = useState<string[]>(["Alternativ 1", "Alternativ 2", "Alternativ 3", "Alternativ 4"])
+    const [options, setOptions] = useState<string[]>(["", "", "", ""])
     const [correctOption, setCorrectOption] = useState<0|1|2|3>(0)
     const [timelimit, setTimelimit] = useState<number>(30)
     const [success, setSuccess] = useState<boolean>()
