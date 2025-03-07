@@ -23,7 +23,7 @@ export const SaveQuiz = ( {questions} : {questions : QuestionWithFileType[]}) =>
             saveToDB( { questions })
         }
         catch(error){
-            toast("En feil skjedde mens vi lagret quizzen")
+            toast(`En feil skjedde mens vi lagret quizzen ${error}`)
             setSuccess(false)
         }
 
