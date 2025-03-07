@@ -10,6 +10,7 @@ const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
 type Card = {
     title: string,
     description: string,
+    onClick: () => void,
     src: string
 }
 

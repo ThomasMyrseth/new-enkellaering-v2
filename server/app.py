@@ -742,14 +742,9 @@ def get_all_classes_route(user_id):
     }), 200
 
 @app.route('/get-all-teachers', methods=["GET"])
-@token_required
-def get_all_teachers_route(user_id):
-    admin_user_id = user_id
-
-    if not admin_user_id:
-        return jsonify({"message": "Missing admin user id"}), 400
+def get_all_teachers_route():
     
-    res = get_all_teachers(client=bq_client, admin_user_id=admin_user_id)
+    res = get_all_teachers(client=bq_client)
 
     if not res or res.errors:
         print("Error fetching teachers")

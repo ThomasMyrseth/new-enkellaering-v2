@@ -17,17 +17,11 @@ QUIZ_DATASET = os.getenv('QUIZ_DATASET')
 
 
 
-def get_all_teachers(client: bigquery.Client, admin_user_id: str):
+def get_all_teachers(client: bigquery.Client):
     query = f"""
     SELECT * FROM `{PROJECT_ID}.{USER_DATASET}.teachers`
-    WHERE EXISTS (
-        SELECT 1 FROM `{PROJECT_ID}.{USER_DATASET}.teachers`
-        WHERE user_id = @admin_user_id AND admin = TRUE
-    )
     """
-    query_params = [bigquery.ScalarQueryParameter("admin_user_id", "STRING", admin_user_id)]
-    job_config = bigquery.QueryJobConfig(query_parameters=query_params)
-    return client.query(query, job_config=job_config)
+    return client.query(query)
 
 
 def get_all_students(client: bigquery.Client, admin_user_id: str):

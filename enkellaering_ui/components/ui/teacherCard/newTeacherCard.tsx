@@ -25,9 +25,9 @@ import { cn } from "@/lib/utils";
 import { Button } from "../button";
 
 import { CardType } from "./typesAndData";
-import { cards } from "./typesAndData";
 
 import { ToggleFilterCards, filterCards } from "./filter";
+import { getTeacherCards } from "./getteachersAndReviews";
 
 export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
     const [active, setActive] = useState<(CardType) | boolean | null>(null);
@@ -46,7 +46,24 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
     const [filterQualification, setFilterQualification] = useState<string | null>(null);
     const [filterDigital, setFilterDigital] = useState<boolean>(false);
     const [filterPhysical, setFilterPhysical] = useState<boolean>(false);
-    const [filteredCards, setFilteredCards] = useState<CardType[]>(cards); //default to cards, which os unfiltered
+    const [filteredCards, setFilteredCards] = useState<CardType[]>([]); //default to cards, which os unfiltered
+    const [cards, setCards] = useState<CardType[]>([])
+
+    //fetch the cards from database
+    useEffect( () => {
+        async function fetchCards() {
+            const cards = await getTeacherCards()
+            if (!cards) {
+                return
+            }
+            else {
+                setFilteredCards(cards)
+                setCards(cards)
+            }
+        }
+        fetchCards()
+    },[])
+
 
     // Apply filtering function
     useEffect(() => {
@@ -240,7 +257,6 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
             <ul className="max-w-2xl mx-auto w-full gap-4">
             {filteredCards.length === 0 && <h3 className="text-black w-full text-center dark:text-white">Vi har desverre ingen lærere som møter filtrene dine.</h3>}
             {filteredCards.map((card :CardType, index) => {
-
                 let avgRating :number =0
                 //avoid divinding by zero is card.reviews===0
                 if (card.reviews.length!==0) {
