@@ -1,5 +1,6 @@
 "use client"
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { LampContainer } from "@/components/ui/lamp";
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
@@ -34,7 +35,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { AlertDialog, AlertDialogDescription,AlertDialogCancel, AlertDialogAction, AlertDialogFooter,AlertDialogContent,  AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-
+import { toast } from "sonner";
 
 import QuizStatusPage from "./quiz";
 
@@ -104,6 +105,7 @@ export default function LaererPage() {
     const [teacher, setTeacher] = useState<Teacher>()
     const [classes, setClasses] = useState<Class[]>([])
     const [students, setStudents] = useState<Student[]>([])
+    const router = useRouter()
 
     const token :string = localStorage.getItem('token') || ''
 
@@ -122,7 +124,7 @@ export default function LaererPage() {
             }
 
             else {
-                alert(response.statusText)
+                router.push('/login-laerer')
             }
         }
 
@@ -136,7 +138,6 @@ export default function LaererPage() {
             })
 
             if(!response.ok) {
-                alert("En feil har skjedd, prøv igjen")
                 return null;
             }
 
@@ -279,7 +280,6 @@ function DailyRevenueChart({ teacher }: { teacher: Teacher }) {
                 })
 
                 if (!response.ok) {
-                    alert("An error happened while fetching revenue")
                 }
 
                 const data = await response.json()
@@ -289,7 +289,6 @@ function DailyRevenueChart({ teacher }: { teacher: Teacher }) {
 
             }
             catch {
-                alert("An error happened while fetching revenue")
             }
         }
         fetchRevenue()
@@ -515,7 +514,6 @@ function SelectStudent({ onStudentSelect} : {onStudentSelect: (user_id:string)=>
                 }
             }
             else {
-                alert(response.statusText)
             }
         }
         fetchStudents()
@@ -783,7 +781,7 @@ function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUse
         setIsSendButtonDisabled(true); // Prevent multiple clicks right away
 
         if (!teacher || !started_at || !ended_at || !comment || !selectedStudentUserId) {
-            alert("All fields must be filled in.");
+            alert("Fyll ut alle felter");
             setUploadSuccessfull(false);
             setIsSendButtonDisabled(false);
             return;
@@ -814,7 +812,7 @@ function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUse
 
     const uploadClass = async() => {
         if (!teacher || !started_at || !ended_at || !comment || !selectedStudentUserId) {
-            alert("All fields must be filled in.");
+            alert("Alle felter må være utfylt");
             setUploadSuccessfull(false);
             return true;
         }
@@ -837,16 +835,17 @@ function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUse
             });
     
             if (!response.ok) {
-                alert("An error occurred. Please try again.");
+                alert("En feil skjedde prøv igjen");
                 setUploadSuccessfull(false);
                 return true;
             } else {
                 setUploadSuccessfull(true);
+                toast("Ny time lastet opp")
                 return true;
             }
         } catch (error) {
             console.error("Error uploading class:", error);
-            alert("An error occurred. Please try again.");
+            alert("En feil skjedde prøv igjen");
             setUploadSuccessfull(false);
             setIsSendButtonDisabled(false);
             return true;
@@ -1188,7 +1187,7 @@ const setWantMoreStudents = async (yesOrNo: boolean) => {
     });
 
     if (!response.ok) {
-        alert("Error toggling wether you want more students");
+        alert("En feil skjedde når du satte om du ønsker flere elever eller ei");
     }
 
     return true;
