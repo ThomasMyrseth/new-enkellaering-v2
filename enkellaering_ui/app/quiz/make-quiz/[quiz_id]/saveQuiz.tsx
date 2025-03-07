@@ -1,7 +1,6 @@
 "use client"
 import { useState } from "react";
 import { QuestionWithFileType } from "../../types"
-import { toast } from "sonner"
 
 import {
     AlertDialog,
@@ -13,23 +12,18 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export const SaveQuiz = ( {questions} : {questions : QuestionWithFileType[]}) => {
     const [success, setSuccess] = useState<boolean | null>(null)
-    const [valid, setValid] = useState<boolean | null>(null)
 
     const handleButtonClick = () => {
-        const valid :boolean = validateQuestions(questions)
-
-        if (!valid) {
-            setValid(false)
-            return
-        }
 
         try{
             saveToDB( { questions })
         }
         catch(error){
+            toast("En feil skjedde mens vi lagret quizzen")
             setSuccess(false)
         }
 
@@ -44,22 +38,6 @@ export const SaveQuiz = ( {questions} : {questions : QuestionWithFileType[]}) =>
                 <AlertDialogTitle>Failed to save the questions</AlertDialogTitle>
                 <AlertDialogDescription>
                   The quiz was not saved, all data has been lost. Please try again.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Ok</AlertDialogCancel>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        }
-
-        {valid===false && 
-            <AlertDialog>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>The questions are not valid</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Please try making the quiz again
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -120,8 +98,3 @@ const saveToDB = async ({ questions }: { questions: QuestionWithFileType[] }) =>
     throw new Error('Failed to save the questions');
   }
 };
-
-
-function validateQuestions(questions : QuestionWithFileType[]) {
-    return true;
-}

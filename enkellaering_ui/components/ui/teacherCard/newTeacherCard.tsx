@@ -193,7 +193,7 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
                             {active.qualifications.map((qualification :string, index :number) => {
                                 //order the qualifications alfabetically
                                 active.qualifications.sort();
-                                return(<div className="m-2">
+                                return(<div className="m-2" key={index}>
                                     <span key={index} className="rounded-lg bg-neutral-100 mx-1 p-2 text-xs">{qualification}</span>
                                 </div>)
                             })}
@@ -239,7 +239,7 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
         {viewMode === "list" ? (
             <ul className="max-w-2xl mx-auto w-full gap-4">
             {filteredCards.length === 0 && <h3 className="text-black w-full text-center dark:text-white">Vi har desverre ingen lærere som møter filtrene dine.</h3>}
-            {filteredCards.map((card :CardType) => {
+            {filteredCards.map((card :CardType, index) => {
 
                 let avgRating :number =0
                 //avoid divinding by zero is card.reviews===0
@@ -250,7 +250,7 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
                     avgRating = Math.round(avgRating/card.reviews.length)
                 }
 
-                return(<div className="flex flex-row items-center w-full justify-between">
+                return(<div className="flex flex-row items-center w-full justify-between" key={index}>
                 <motion.div
                     layoutId={`card-${card.teacher.user_id}-${id}`}
                     key={`card-${card.teacher.firstname}-${id}`}
@@ -316,7 +316,7 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
         
         (
             <ul className="max-w-2xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 items-start gap-4">
-            {filteredCards.map((card) => {
+            {filteredCards.map((card, index) => {
     
 
                 let avgRating :number =0
@@ -343,7 +343,7 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
                     </div>)
                 };
 
-                return(<div className=" flex flex-col">
+                return(<div className=" flex flex-col" key={index}>
                 <motion.div
                 layoutId={`card-${card.teacher.firstname}-${id}`}
                 key={card.teacher.firstname}
