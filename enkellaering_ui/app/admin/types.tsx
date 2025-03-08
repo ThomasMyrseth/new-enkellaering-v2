@@ -73,7 +73,8 @@ export type Classes = {
 
 export type NewStudent = {
     phone :string;
-    created_at: string
+    created_at: string;
+    preffered_teacher :string;
     has_called :boolean;
     called_at :string;
     has_answered: boolean;

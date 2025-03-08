@@ -149,6 +149,57 @@ class NewStudents:
         self.new_student_id = new_student_id
 
 
+
+
+class NewStudentWithPreferredTeacher:
+    def __init__(
+        self,
+        new_student_id: str,
+        phone: str,
+        teacher_called: bool,
+        created_at: datetime,
+        preferred_teacher: str,
+        teacher_answered: bool,
+        student_signed_up: bool,
+        from_referal: bool,
+        teacher_has_accepted: bool,
+        hidden: bool,
+        physical_or_digital: bool,
+        # Optional fields
+        called_at: Optional[datetime] = None,
+        answered_at: Optional[datetime] = None,
+        signed_up_at: Optional[datetime] = None,
+        teacher_accepted_at: Optional[datetime] = None,
+        referee_phone: Optional[str] = None,
+        referee_account_number: Optional[str] = None,
+        referee_name: Optional[str] = None,
+        paid_referee: Optional[bool] = None,
+        paid_referee_at: Optional[datetime] = None,
+        comments: Optional[str] = None,
+    ):
+        self.new_student_id = new_student_id
+        self.phone = phone
+        self.teacher_called = teacher_called
+        self.created_at = created_at
+        self.preferred_teacher = preferred_teacher
+        self.teacher_answered = teacher_answered
+        self.student_signed_up = student_signed_up
+        self.from_referal = from_referal
+        self.teacher_has_accepted = teacher_has_accepted
+        self.hidden = hidden
+        self.physical_or_digital = physical_or_digital
+        self.called_at = called_at
+        self.answered_at = answered_at
+        self.signed_up_at = signed_up_at
+        self.teacher_accepted_at = teacher_accepted_at
+        self.referee_phone = referee_phone
+        self.referee_account_number = referee_account_number
+        self.referee_name = referee_name
+        self.paid_referee = paid_referee
+        self.paid_referee_at = paid_referee_at
+        self.comments = comments
+
+
 # CLASSES table
 class Classes:
     def __init__(

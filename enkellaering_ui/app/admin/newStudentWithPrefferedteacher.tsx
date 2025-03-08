@@ -1,5 +1,8 @@
 "use client"
 
+import React from "react"
+import { useState, useEffect } from "react"
+import { NewStudent, Teacher } from "./types"
 import {
     Table,
     TableBody,
@@ -9,7 +12,9 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
-
+import { Textarea } from "@/components/ui/textarea"
+import { Button } from "@/components/ui/button"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import {
     AlertDialog,
     AlertDialogAction,
@@ -21,165 +26,17 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
   } from "@/components/ui/alert-dialog"
-  
-import { useEffect, useState } from "react"
-import { NewStudent, Teacher } from "./types";
 
-const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
-
-
-
-
-
-
-
-
-
-
-export function NewStudentsWorkflow() {
-    const token = localStorage.getItem('token')
-    const [loading, setLoading] = useState<boolean>(true)
-    const [newStudents, setNewStudents] = useState<NewStudent[]>()
-
-    //get all new students
-    useEffect( () => {
-        async function getNewStudents() {
-            const response = await fetch(`${BASEURL}/get-new-students`, {
-                method: "GET",
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            })
-
-            if (!response.ok) {
-                alert("Error fetching new students " + response.statusText)
-                return null
-            }
-
-            const data = await response.json()
-            const newStudents :NewStudent[] = data.new_students
-
-            if (newStudents.length===0) {
-                setLoading(false)
-                setNewStudents([])
-                return null
-            }
-
-            else {
-                setNewStudents(newStudents)
-                setLoading(false)
-            }
-        }
-
-        getNewStudents()
-    },[token])
-
-    if (loading ) {
-        return <p>Loading...</p>
-    }
-
-    if (!newStudents) {
-        return <p>No new students found</p>
-    }
-
-
-    return (<NewStudentTable newStudents={newStudents}/>)
-    
+export const NewStudentWithPrefferedTeacher = () => {
 
 }
 
 
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Textarea } from "@/components/ui/textarea"
-import { Button } from "@/components/ui/button"
 
 
-const NewStudentTable =( {newStudents} : {newStudents : NewStudent[]})  => {
-    const [teachers, setTeachers] = useState<Teacher[]>([])
+function NewStudentWithPrefferedTeacherRow({ ns, teachers }: { ns: NewStudent, teachers :Teacher[] }) {
     const token = localStorage.getItem('token')
-
-    //order newStudents by created_at
-    newStudents.sort((a, b) => {
-        const dateA = new Date(a.created_at);
-        const dateB = new Date(b.created_at);
-        return dateB.getTime() - dateA.getTime();
-    });
-
-    //remove new students who have a preffered teacher
-    newStudents = newStudents.filter(ns => !ns.preffered_teacher)
-
-
-    //get all the teachers and pass it to newStudentRow
-    useEffect( () => {
-        async function getAllTeachers() {
-
-            const response = await fetch(`${BASEURL}/get-all-teachers`, {
-                method: "GET",
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            })
-
-            if (!response.ok) {
-                alert("Error fetching teachers " + response.statusText)
-                setTeachers([])
-                return null
-            }
-
-            const data = await response.json()
-            const teachers :Teacher[] = data.teachers
-
-            if (teachers.length===0) {
-                alert("No teachers found")
-                setTeachers([])
-                return null
-            }
-
-            else {
-                setTeachers(teachers)
-            }
-        }
-
-        getAllTeachers()
-    },[token])
-
-    return (<div className=" w-full sm:w-full bg-white dark:bg-black rounded-sm shadow-lg flex flex-col items-center justify-center">
-        <Table>
-                <TableCaption>Arbeidsoversikt for ny elev</TableCaption>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Telefonnummer & dato opprettet</TableHead>
-                            <TableHead>Jeg har ringt</TableHead>
-                            <TableHead>Ny elev har svart</TableHead>
-
-                            <TableHead>Ny elev har opprettet konto</TableHead>
-
-                            <TableHead>Læreren er</TableHead>
-
-                            <TableHead>Ny elev er en referanse</TableHead>
-                            <TableHead>Referansen er betalt</TableHead>
-                            <TableHead>Ny elev har fullført oppstart</TableHead>
-                            <TableHead>Kommentarer</TableHead>
-                            <TableHead>Lagre</TableHead>
-                            <TableHead>Slett ny elev</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {newStudents.map( ns => {
-                            if (ns.hidden) {
-                                return null
-                            }
-                            console.log(ns)
-                            return <NewStudentRow key={ns.new_student_id} ns={ns} teachers={teachers}/>
-                        })}
-                    </TableBody>
-                </Table>   
-    </div>)
-}
-
-
-function NewStudentRow({ ns, teachers }: { ns: NewStudent, teachers :Teacher[] }) {
-    const token = localStorage.getItem('token')
+    const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8080'
 
     const [hasCalled, setHasCalled] = useState<boolean>(ns.has_called)
     const [calledAt, setCalledAt] = useState<Date>(new Date(ns.called_at))
@@ -345,7 +202,7 @@ function NewStudentRow({ ns, teachers }: { ns: NewStudent, teachers :Teacher[] }
 
 
         <TableCell className="min-w-80">
-            <SetTeacherCombobox teachers={teachers} passSelectedTeacher={handleAssignTeacher} ns={ns}/>
+            Sett lører
         </TableCell>
 
 
@@ -402,98 +259,3 @@ function NewStudentRow({ ns, teachers }: { ns: NewStudent, teachers :Teacher[] }
     </TableRow>
     )
 }
-
-
-import { cn } from "@/lib/utils"
-import { Check, ChevronsUpDown } from "lucide-react"
-
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-
-
-const SetTeacherCombobox = ({ ns, teachers, passSelectedTeacher }: { 
-    ns: NewStudent, 
-    teachers: Teacher[], 
-    passSelectedTeacher: (userId: string) => void 
-  }) => {
-    const [teacherUserId, setTeacherUserId] = useState<string | null>(
-      ns.assigned_teacher_user_id || null
-    );
-    const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(
-      teachers.find((teacher) => teacher.user_id === ns.assigned_teacher_user_id) || null
-    );
-    const [open, setOpen] = useState<boolean>(false);
-  
-    useEffect(() => {
-      setTeacherUserId(ns.assigned_teacher_user_id || null);
-      setSelectedTeacher(
-        teachers.find((teacher) => teacher.user_id === ns.assigned_teacher_user_id) || null
-      );
-    }, [ns.assigned_teacher_user_id, teachers]);
-  
-    const getTeacherName = (teacher: Teacher | null) =>
-      teacher ? `${teacher.firstname} ${teacher.lastname}` : "Ingen lærer tildelt";
-  
-    const handleSelectTeacher = (userId: string) => {
-      setTeacherUserId(userId);
-      const selectedTeacher = teachers.find((teacher) => teacher.user_id === userId) || null;
-      setSelectedTeacher(selectedTeacher);
-      passSelectedTeacher(userId);
-    };
-  
-    return (
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            role="combobox"
-            aria-expanded={open}
-            className="w-[200px] justify-between"
-            disabled={!ns.has_signed_up || teachers.length === 0}
-          >
-            {getTeacherName(selectedTeacher)}
-            <ChevronsUpDown className="opacity-50" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-[200px] p-0">
-          <Command>
-            <CommandInput placeholder="Søk etter lærer..." />
-            <CommandList>
-              <CommandEmpty>Ingen lærere funnet</CommandEmpty>
-              <CommandGroup>
-                {teachers.map((teacher) => (
-                  <CommandItem
-                    key={teacher.user_id}
-                    value={teacher.user_id}
-                    onSelect={(currentValue) => {
-                      handleSelectTeacher(currentValue);
-                      setOpen(false);
-                    }}
-                  >
-                    {getTeacherName(teacher)}
-                    <Check
-                      className={cn(
-                        "ml-auto",
-                        teacherUserId === teacher.user_id ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
-    );
-  };

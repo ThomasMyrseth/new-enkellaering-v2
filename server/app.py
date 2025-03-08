@@ -1041,7 +1041,6 @@ import pytz
 def submit_new_student_route():
     data = request.get_json()
     phone = data.get("phone")
-    preffered_teacher = data.get("preffered_teacher")
     norway_tz = pytz.timezone("Europe/Oslo")
 
 
@@ -1051,7 +1050,7 @@ def submit_new_student_route():
     ns = NewStudents(
         new_student_id=str(uuid.uuid4()),
         phone=phone,
-        preffered_teacher=preffered_teacher or '',
+        preffered_teacher= '',
         created_at=datetime.now(norway_tz),
         has_called=False,
         called_at=None,
@@ -1082,6 +1081,59 @@ def submit_new_student_route():
     
     print("response: ", res.result())
     return jsonify({"message": "New student successfully inserted"}), 200
+    
+
+from big_query.bq_types import NewStudentWithPreferredTeacher
+from big_query.inserts import insert_new_student_with_preferred_teacher
+
+@app.route('/submit-new-student-with-preffered-teacher', methods = ["POST"])
+def submit_new_student_with_preffered_route():
+    data = request.get_json()
+    phone = data.get("phone")
+    physical_or_digital = data.get("physical_or_digital") #TRUE=physical
+    preffered_teacher = data.get("preffered_teacher")
+
+
+    if not phone:
+        return jsonify({"message": "Missing phone number"}), 400
+
+
+    ns  = NewStudentWithPreferredTeacher(
+        new_student_id=str(uuid.uuid4()),
+        phone=phone,
+        teacher_called=False,  # Renamed from has_called
+        created_at=datetime.now(pytz.timezone("Europe/Oslo")),
+        preferred_teacher=preffered_teacher or '',
+        teacher_answered=False,  # Renamed from has_answered
+        student_signed_up=False,  # Renamed from has_signed_up
+        from_referal=False,
+        teacher_has_accepted=False,  # Renamed from has_assigned_teacher
+        hidden=False,
+        physical_or_digital=physical_or_digital,
+        # Optional fields
+        called_at=None,
+        answered_at=None,
+        signed_up_at=None,
+        teacher_accepted_at=None,  # Renamed from assigned_teacher_at
+        referee_phone=None,
+        referee_account_number=None,  # Newly added field
+        referee_name=None,
+        paid_referee=False,
+        paid_referee_at=None,
+        comments=None
+    )
+
+    try:
+        res = insert_new_student_with_preferred_teacher(client=bq_client, new_student=ns)
+
+        if not res or res.errors:
+            raise(Exception(f"An error occured inserting new student {res.errors}"))
+    
+        return jsonify({"message": "New student successfully inserted"}), 200
+
+    except Exception as e:
+        print(f"Error adding nee student with preffered teacher {e}")
+        return jsonify({"message": str(e)}), 500
     
 
     

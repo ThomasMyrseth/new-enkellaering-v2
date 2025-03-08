@@ -13,7 +13,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Laptop, Terminal, Users, Star } from "lucide-react"
- 
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import {
   Alert,
   AlertDescription,
@@ -38,6 +38,7 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
     const [errorMessage, setErrorMessage] = useState<boolean | null>(null);
     const [validPhone, setValidPhone] = useState<boolean | null>(null)
     const [phone, setPhone] = useState<string>("");
+    const [digitalOrPhysical, setDigitalOrPhysical] = useState<boolean>(false) //digital=FALSE physical=TRUE
     const [isDisabled, setIsDisabled] = useState<boolean>()
     const [selectedCard, setSelectedCard] = useState<CardType | null>(null);
 
@@ -97,14 +98,15 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
             return;
         }
 
-        const response = await fetch(`${baseUrl}/submit-new-student`, {
+        const response = await fetch(`${baseUrl}/submit-new-student-with-preffered-teacher`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
                 "phone": phone,
-                "preffered_teacher": selectedCard.teacher.user_id
+                "preffered_teacher": selectedCard.teacher.user_id,
+                "physical_or_digital": digitalOrPhysical
             })
         })
 
@@ -463,15 +465,29 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
                     }}
                 >
                     <LabelInputContainer>
-                    <Label htmlFor="phone">Ditt telefonnummer</Label>
-                    <Input
-                        id="phone"
-                        placeholder="12345678"
-                        type="tel"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        className={cn(errorMessage ? "border-red-500" : "")}
-                    />
+                        <Label htmlFor="phone">Ditt telefonnummer</Label>
+                        <Input
+                            id="phone"
+                            placeholder="12345678"
+                            type="tel"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            className={cn(errorMessage ? "border-red-500" : "")}
+                        />
+                    </LabelInputContainer>
+
+                    <LabelInputContainer>
+                        <Label htmlFor="phone">Ønsker dere digital eller fysisk undervisning?</Label>
+                        <RadioGroup defaultValue="digital" value={digitalOrPhysical ? "physical" : "digital"} onValueChange={(value) => setDigitalOrPhysical(value === "physical")}>
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="digital" id="digital" />
+                                <Label htmlFor="digital">Digital</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="physical" id="physical" />
+                                <Label htmlFor="physical">Fysisk</Label>
+                            </div>
+                        </RadioGroup>
                     </LabelInputContainer>
                     <button
                     type="submit"

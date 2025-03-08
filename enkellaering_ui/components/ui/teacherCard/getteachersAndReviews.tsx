@@ -96,7 +96,7 @@ const buildTeacherCards = (teachers: ExpandedTeacher[], reviews: Review[], image
             description: imageAndAboutMe.about_me || '',
             src: imageAndAboutMe.image || '',
             qualifications: qualificationTitles,
-            digitalTutouring: teacher.digital_tutouring || false,
+            digitalTutouring: teacher.digital_tutouring || true,
             physicalTutouring: teacher.physical_tutouring || false,
         }
 

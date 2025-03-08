@@ -199,6 +199,94 @@ def insert_new_student(client: bigquery.Client, new_student: NewStudents):
     return client.query(query, job_config=job_config, location='EU')
 
 
+from google.cloud import bigquery
+from big_query.bq_types import NewStudentWithPreferredTeacher
+
+def insert_new_student_with_preferred_teacher(client: bigquery.Client, new_student: NewStudentWithPreferredTeacher):
+    query = f"""
+        INSERT INTO `{NEW_STUDENTS_DATASET}.new_students_with_preferred_teacher` (
+            new_student_id,
+            phone,
+            teacher_called,
+            created_at,
+            preferred_teacher,
+            teacher_answered,
+            student_signed_up,
+            from_referal,
+            teacher_has_accepted,
+            hidden,
+            physical_or_digital,
+            called_at,
+            answered_at,
+            signed_up_at,
+            teacher_accepted_at,
+            referee_phone,
+            referee_account_number,
+            referee_name,
+            paid_referee,
+            paid_referee_at,
+            comments
+        )
+        VALUES (
+            @new_student_id,
+            @phone,
+            @teacher_called,
+            @created_at,
+            @preferred_teacher,
+            @teacher_answered,
+            @student_signed_up,
+            @from_referal,
+            @teacher_has_accepted,
+            @hidden,
+            @physical_or_digital,
+            @called_at,
+            @answered_at,
+            @signed_up_at,
+            @teacher_accepted_at,
+            @referee_phone,
+            @referee_account_number,
+            @referee_name,
+            @paid_referee,
+            @paid_referee_at,
+            @comments
+        )
+    """
+    
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("new_student_id", "STRING", new_student.new_student_id),
+            bigquery.ScalarQueryParameter("phone", "STRING", new_student.phone),
+            bigquery.ScalarQueryParameter("teacher_called", "BOOL", new_student.teacher_called),
+            bigquery.ScalarQueryParameter("created_at", "TIMESTAMP", new_student.created_at),
+            bigquery.ScalarQueryParameter("preferred_teacher", "STRING", new_student.preferred_teacher),
+            bigquery.ScalarQueryParameter("teacher_answered", "BOOL", new_student.teacher_answered),
+            bigquery.ScalarQueryParameter("student_signed_up", "BOOL", new_student.student_signed_up),
+            bigquery.ScalarQueryParameter("from_referal", "BOOL", new_student.from_referal),
+            bigquery.ScalarQueryParameter("teacher_has_accepted", "BOOL", new_student.teacher_has_accepted),
+            bigquery.ScalarQueryParameter("hidden", "BOOL", new_student.hidden),
+            bigquery.ScalarQueryParameter("physical_or_digital", "BOOL", new_student.physical_or_digital),
+            bigquery.ScalarQueryParameter("called_at", "TIMESTAMP", new_student.called_at if new_student.called_at else None),
+            bigquery.ScalarQueryParameter("answered_at", "TIMESTAMP", new_student.answered_at if new_student.answered_at else None),
+            bigquery.ScalarQueryParameter("signed_up_at", "TIMESTAMP", new_student.signed_up_at if new_student.signed_up_at else None),
+            bigquery.ScalarQueryParameter("teacher_accepted_at", "TIMESTAMP", new_student.teacher_accepted_at if new_student.teacher_accepted_at else None),
+            bigquery.ScalarQueryParameter("referee_phone", "STRING", new_student.referee_phone if new_student.referee_phone else None),
+            bigquery.ScalarQueryParameter("referee_account_number", "STRING", new_student.referee_account_number if new_student.referee_account_number else None),
+            bigquery.ScalarQueryParameter("referee_name", "STRING", new_student.referee_name if new_student.referee_name else None),
+            bigquery.ScalarQueryParameter("paid_referee", "BOOL", new_student.paid_referee if new_student.paid_referee else None),
+            bigquery.ScalarQueryParameter("paid_referee_at", "TIMESTAMP", new_student.paid_referee_at if new_student.paid_referee_at else None),
+            bigquery.ScalarQueryParameter("comments", "STRING", new_student.comments if new_student.comments else None),
+        ]
+    )
+    
+    job = client.query(query, job_config=job_config, location='EU')
+    
+    try:
+        job.result()  # Ensure the query is executed
+    except Exception as e:
+        print(f"BigQuery Insert Error: {str(e)}")
+        return None  # Indicate failure
+
+    return job
 
 
 def insert_class(client: bigquery.Client, class_obj: Classes):
