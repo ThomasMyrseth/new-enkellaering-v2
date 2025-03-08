@@ -827,6 +827,51 @@ def get_new_students_route(user_id):
     }), 200
 
 
+
+
+
+from big_query.gets import get_all_new_students_with_preferred_teacher
+
+@app.route('/get-new-students-with-preferred-teacher', methods=["GET"])
+@token_required
+def get_new_students_with_preferred_teacher_route(user_id):
+    admin_user_id = user_id
+
+    if not admin_user_id:
+        return jsonify({
+            "message": "Missing admin user id"
+        }), 400
+
+    try:
+        res = get_all_new_students_with_preferred_teacher(client=bq_client, admin_user_id=admin_user_id)
+        result = res.result()
+
+        if not res or res.errors:
+            print(f"Error fetching new students {res.errors}")
+            raise(Exception(f"Error fetching new students {res.errors}"))
+    
+        new_students = [dict(row) for row in result]
+
+        if len(new_students)==0:
+            print("no new students found")
+            return jsonify({
+                "new_students": []
+            }), 200
+        
+        return jsonify({
+            "new_students": new_students
+        }), 200
+    
+    except Exception as e:
+        print(f"Error getting new students {e}")
+        return jsonify({
+            "message": f"Error getting new students {e}"
+        }), 500
+
+
+
+
+
 from big_query.bq_types import NewStudents
 from big_query.alters import alterNewStudent
 
@@ -963,6 +1008,56 @@ def validate_new_student_data(data: dict) -> tuple[bool, str]:
                 return False, f"Invalid type for field '{field}': Expected {field_type}, got {type(data[field])}"
 
     return True, None
+
+
+
+
+
+
+from big_query.alters import alterNewStudentWithPreferredTeacher
+@app.route('/update-new-student-with-preferred-teacher', methods=["POST"])
+@token_required
+def update_new_student_with_preferred_teacher(user_id):
+    teacher_user_id = user_id
+    data = request.get_json()
+    logging.info(f"Data from update-new-student-with-preferred-teacher: {data}")
+
+    # Validate required field
+    new_student_id = data.get("new_student_id")
+    if not new_student_id:
+        logging.error("Missing new_student_id")
+        return jsonify({"message": "Missing new_student_id"}), 400
+
+    # Build the updates dictionary.
+    # Here we set timestamp fields if the corresponding boolean is True.
+    update = {
+        "teacher_called": data.get("teacher_called"),
+        "called_at": datetime.now(timezone.utc).isoformat() if data.get("teacher_called") else None,
+        # Note: mapping 'student_answered' from the client to the table's 'teacher_answered'
+        "teacher_answered": data.get("student_answered"),
+        "answered_at": datetime.now(timezone.utc).isoformat() if data.get("student_answered") else None,
+        "teacher_has_accepted": data.get("teacher_has_accepted"),
+        "teacher_accepted_at": datetime.now(timezone.utc).isoformat() if data.get("teacher_has_accepted") else None,
+        "comments": data.get("comments"),
+    }
+
+    update = clean_updates(update)
+
+    try:
+        res = alterNewStudentWithPreferredTeacher(
+            client=bq_client,
+            new_student_id=new_student_id,
+            updates=update,
+            teacher_user_id=teacher_user_id
+        )
+        res.result()  # force execution to catch any errors
+    except Exception as e:
+        logging.error("BigQuery error while updating new student with preferred teacher:", e)
+        return jsonify({"message": "Error while updating new student"}), 500
+
+    return jsonify({"message": "Updated new student successfully"}), 200
+
+
 
 
 
@@ -1106,7 +1201,6 @@ def submit_new_student_with_preffered_route():
         preferred_teacher=preffered_teacher or '',
         teacher_answered=False,  # Renamed from has_answered
         student_signed_up=False,  # Renamed from has_signed_up
-        from_referal=False,
         teacher_has_accepted=False,  # Renamed from has_assigned_teacher
         hidden=False,
         physical_or_digital=physical_or_digital,
@@ -1115,11 +1209,6 @@ def submit_new_student_with_preffered_route():
         answered_at=None,
         signed_up_at=None,
         teacher_accepted_at=None,  # Renamed from assigned_teacher_at
-        referee_phone=None,
-        referee_account_number=None,  # Newly added field
-        referee_name=None,
-        paid_referee=False,
-        paid_referee_at=None,
         comments=None
     )
 

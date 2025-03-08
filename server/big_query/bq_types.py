@@ -161,7 +161,6 @@ class NewStudentWithPreferredTeacher:
         preferred_teacher: str,
         teacher_answered: bool,
         student_signed_up: bool,
-        from_referal: bool,
         teacher_has_accepted: bool,
         hidden: bool,
         physical_or_digital: bool,
@@ -170,11 +169,6 @@ class NewStudentWithPreferredTeacher:
         answered_at: Optional[datetime] = None,
         signed_up_at: Optional[datetime] = None,
         teacher_accepted_at: Optional[datetime] = None,
-        referee_phone: Optional[str] = None,
-        referee_account_number: Optional[str] = None,
-        referee_name: Optional[str] = None,
-        paid_referee: Optional[bool] = None,
-        paid_referee_at: Optional[datetime] = None,
         comments: Optional[str] = None,
     ):
         self.new_student_id = new_student_id
@@ -184,7 +178,6 @@ class NewStudentWithPreferredTeacher:
         self.preferred_teacher = preferred_teacher
         self.teacher_answered = teacher_answered
         self.student_signed_up = student_signed_up
-        self.from_referal = from_referal
         self.teacher_has_accepted = teacher_has_accepted
         self.hidden = hidden
         self.physical_or_digital = physical_or_digital
@@ -192,11 +185,6 @@ class NewStudentWithPreferredTeacher:
         self.answered_at = answered_at
         self.signed_up_at = signed_up_at
         self.teacher_accepted_at = teacher_accepted_at
-        self.referee_phone = referee_phone
-        self.referee_account_number = referee_account_number
-        self.referee_name = referee_name
-        self.paid_referee = paid_referee
-        self.paid_referee_at = paid_referee_at
         self.comments = comments
 
 

@@ -38,6 +38,7 @@ import { AlertDialog, AlertDialogDescription,AlertDialogCancel, AlertDialogActio
 import { toast } from "sonner";
 
 import QuizStatusPage from "./quiz";
+import NewStudentsWithPreferredTeacherWorkflowActions from "./newStudents"
 
 type Class = {
     comment: string; // Optional comment for the session
@@ -79,26 +80,9 @@ type Student = {
     is_active : boolean
 }
 
-type Teacher = {
-    user_id: string;
-    firstname: string;
-    lastname: string;
-    email: string;
-    phone: string;
-    address: string;
-    postal_code: string;
-    hourly_pay: string;
-    resgined: boolean;
-    additional_comments: string | null;
-    created_at: string;
-    admin: boolean;
-    resigned_at: string | null;
-    wants_more_students : boolean;
-}
-
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080/server";
 
-
+import { Teacher } from "../admin/types";
 import { FileUploadForm } from "@/components/uploadTeacherImageForm";
 
 export default function LaererPage() {
@@ -187,6 +171,7 @@ export default function LaererPage() {
 
     return (<div className="flex flex-col items-center justify-center w-full min-h-screen bg-slate-200 dark:bg-slate-900">
             <TeacherName teacher={teacher}/>
+            <NewStudentsWithPreferredTeacherWorkflowActions teacher={teacher}/>
             <WantMoreStudents teacher={teacher}/>
 
             <QuizStatusPage token={token} baseUrl={BASEURL}/>

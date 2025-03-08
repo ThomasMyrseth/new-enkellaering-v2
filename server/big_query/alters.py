@@ -284,3 +284,35 @@ def updateStudentNotes(admin_user_id :str, student_user_id :str, notes: str, cli
 
     # Run the query
     return client.query(query, job_config=job_config, location='EU')
+
+
+
+
+
+def alterNewStudentWithPreferredTeacher(client: bigquery.Client, new_student_id: str, teacher_user_id :str, updates: dict):
+    query = f"""
+        UPDATE `{NEW_STUDENTS_DATASET}.new_students_with_preferred_teacher`
+        SET
+            teacher_called = @teacher_called,
+            called_at = @called_at,
+            teacher_answered = @teacher_answered,
+            answered_at = @answered_at,
+            teacher_has_accepted = @teacher_has_accepted,
+            teacher_accepted_at = @teacher_accepted_at,
+            comments = @comments
+        WHERE new_student_id = @new_student_id
+        AND preferred_teacher= @teacher_user_id
+    """
+    params = [
+        bigquery.ScalarQueryParameter("teacher_called", "BOOL", updates.get("teacher_called")),
+        bigquery.ScalarQueryParameter("called_at", "TIMESTAMP", updates.get("called_at")),
+        bigquery.ScalarQueryParameter("teacher_answered", "BOOL", updates.get("teacher_answered")),
+        bigquery.ScalarQueryParameter("answered_at", "TIMESTAMP", updates.get("answered_at")),
+        bigquery.ScalarQueryParameter("teacher_has_accepted", "BOOL", updates.get("teacher_has_accepted")),
+        bigquery.ScalarQueryParameter("teacher_accepted_at", "TIMESTAMP", updates.get("teacher_accepted_at")),
+        bigquery.ScalarQueryParameter("comments", "STRING", updates.get("comments")),
+        bigquery.ScalarQueryParameter("new_student_id", "STRING", new_student_id),
+        bigquery.ScalarQueryParameter("teacher_user_id", "STRING", teacher_user_id)
+    ]
+    job_config = bigquery.QueryJobConfig(query_parameters=params)
+    return client.query(query, job_config=job_config)

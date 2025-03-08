@@ -96,3 +96,25 @@ export type NewStudent = {
     has_physical_tutoring: boolean | null
     hidden : boolean | null
 }
+
+export type NewStudentWithPreferredTeacher = {
+    new_student_id: string;
+    phone: string;
+    created_at: string;
+    preferred_teacher: string;
+
+    teacher_called: boolean;
+    called_at: string;
+    teacher_answered: boolean;
+    answered_at: string | null;
+
+    student_signed_up: boolean;
+    signed_up_at: string | null;
+
+    teacher_has_accepted: boolean;
+    teacher_accepted_at: string | null;
+
+    comments: string | null;
+    physical_or_digital: boolean;
+    hidden: boolean;
+};
