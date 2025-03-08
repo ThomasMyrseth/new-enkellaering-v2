@@ -1041,6 +1041,7 @@ import pytz
 def submit_new_student_route():
     data = request.get_json()
     phone = data.get("phone")
+    preffered_teacher = data.get("preffered_teacher")
     norway_tz = pytz.timezone("Europe/Oslo")
 
 
@@ -1050,6 +1051,7 @@ def submit_new_student_route():
     ns = NewStudents(
         new_student_id=str(uuid.uuid4()),
         phone=phone,
+        preffered_teacher=preffered_teacher or '',
         created_at=datetime.now(norway_tz),
         has_called=False,
         called_at=None,
@@ -1202,10 +1204,33 @@ def get_all_images_and_about_mes():
         if not images:
             return jsonify({"message": "Error getting images"}), 500
 
-        return jsonify({
-            "about_mes": about_mes,
-            "images": images
-        }), 200
+        formatted_data = []
+
+        for i in range(len(about_mes)):
+            a = about_mes[i]
+
+            about_me = a['about_me']
+            firstname = a['firstname']
+            lastname = a['lastname']
+            user_id = a['user_id']
+            image = ''
+            #find the image
+            for image in images:
+                image_user_id = image.split("/")[-2]
+                if image_user_id == user_id:
+                    image = image
+                    break #stop after the first match
+
+            f = {}
+            f['about_me'] = about_me
+            f['firstname'] = firstname
+            f['lastname'] = lastname
+            f['user_id'] = user_id
+            f['image'] = image
+
+            formatted_data.append(f)
+
+        return jsonify({"data": formatted_data}), 200
     
     except Exception as e:
         return jsonify({"message": str(e)}), 500
@@ -1618,6 +1643,18 @@ def get_all_reviews_route():
         return jsonify({"reviews": data}), 200
     except Exception as e:
         return jsonify({"message": f"Error receiving all reviews {e}"}), 500
+
+
+from big_query.gets import get_all_qualifications
+@app.route('/get-all-qualifications', methods=["GET"])
+def get_all_qualifications_route():
+    try:
+        qualifications = get_all_qualifications(bq_client=bq_client)
+        return jsonify({"qualifications": qualifications}), 200
+
+    except Exception as e:
+        return jsonify({"message": f"Error receiving all qualifications {e}"}), 500
+
 
 
 if __name__ == "__main__":

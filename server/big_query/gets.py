@@ -450,3 +450,51 @@ def is_user_admin(client: bigquery.Client, user_id: str):
     except Exception as e:
         print(f"Error fetching teacher: {e}")
         return False
+    
+
+def get_all_qualifications(bq_client :bigquery.Client):
+
+    query = f"""
+        SELECT *
+        FROM `{USER_DATASET}.quiz_results` AS qr
+        JOIN `{QUIZ_DATASET}.quizzes` AS q
+        ON qr.quiz_id = q.quiz_id
+    """
+
+    response = bq_client.query(query)
+    try:
+        data = response.result()
+        print("data: ", data)
+        formatted_data = [] 
+        for row in data:
+            user_id = row["user_id"]
+            quiz_id = row["quiz_id"]
+            passed = row["passed"]
+            number_of_corrects = row["number_of_corrects"]
+            number_of_questions = row["number_of_questions"]
+            created_at = row["created_at"]
+            title = row["title"]
+            image = row["image"]
+            pass_threshold = row["pass_threshold"]
+            content = row["content"]
+
+            f = {
+                "user_id": user_id,
+                "quiz_id": quiz_id,
+                "passed": passed,
+                "number_of_corrects": number_of_corrects,
+                "number_of_questions": number_of_questions,
+                "created_at": created_at,
+                "title": title,
+                "image": image,
+                "pass_threshold": pass_threshold,
+                "content": content
+            }
+
+            formatted_data.append(f)
+
+        return formatted_data
+    
+    except Exception as e:
+        print(f"Error fetching qualifications: {e}")
+        raise(f"Error getting qualifications {e}")

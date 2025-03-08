@@ -104,7 +104,7 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
             },
             body: JSON.stringify({
                 "phone": phone,
-                "prefered_teacher": selectedCard.teacher.user_id
+                "preffered_teacher": selectedCard.teacher.user_id
             })
         })
 

@@ -1,39 +1,23 @@
 import { Review } from "@/app/admin/types";
-import { CardType, ExpandedTeacher } from "./typesAndData";
+import { CardType, ExpandedTeacher, AboutMe, Qualification } from "./typesAndData";
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080";
 
 const getAllTeachers = async (): Promise<ExpandedTeacher[]> => {
     try {
-        const [teachersResponse, extraDataResponse] = await Promise.all([
+        const [teachersResponse] = await Promise.all([
             fetch(`${BASEURL}/get-all-teachers`),
-            fetch(`${BASEURL}/get-all-teacher-images-and-about-mes`)
         ]);
 
-        if (!teachersResponse.ok || !extraDataResponse.ok) {
-            throw new Error("Failed to fetch teachers or extra data");
+        if (!teachersResponse.ok) {
+            throw new Error("Failed to fetch teachers");
         }
 
         const teachersData = await teachersResponse.json();
-        const extraData = await extraDataResponse.json();
 
         const teachers = teachersData.teachers || [];
-        const aboutMes = extraData.about_mes || [];
-        const images = extraData.images || [];
 
-        console.log(aboutMes)
-
-        // Merge the about me text and image URL with the teacher data
-        return teachers.map((teacher: ExpandedTeacher) => {
-            const aboutMeEntry = aboutMes.find((entry: any) => entry.user_id === teacher.user_id);
-            const imageEntry = images.find((img: any) => img.user_id === teacher.user_id);
-
-            return {
-                ...teacher,
-                aboutMeText: aboutMeEntry ? aboutMeEntry.text : "",
-                imageUrl: imageEntry ? imageEntry.url : "https://assets.aceternity.com/default-avatar.jpg"
-            };
-        });
+        return teachers
     } catch (error) {
         console.error("Error fetching teachers:", error);
         return [];
@@ -54,32 +38,78 @@ const getAllReviews = async (): Promise<Review[]> => {
     }
 };
 
+const getAllImagesAndAboutMes = async () => {
+    try {
+        const response = await fetch(`${BASEURL}/get-all-teacher-images-and-about-mes`);
+        if (!response.ok) {
+            throw new Error("Failed to fetch teacher images and about mes");
+        }
+        const data = await response.json();
+        const aboutMes = data.data || [];
+
+        return aboutMes || [];
+    } catch (error) {
+        console.error("Error fetching reviews:", error);
+        return []
+    }
+}
+
 const getAllQualifications = async () => {
+    try{
+        const response = await fetch(`${BASEURL}/get-all-qualifications`);
+        if (!response.ok) {
+            throw new Error("Failed to fetch qualifications");
+        }
+        const data = await response.json();
+        return data.qualifications || [];
+    }
 
+    catch(error) {
+        console.error("Error fetching qualifications:", error);
+        return [];
+    }
 }
 
-const getAllImagesAndAboutMes = asunc () => {
-    
-}
+const buildTeacherCards = (teachers: ExpandedTeacher[], reviews: Review[], imagesAndAboutMes: AboutMe[], qualifications: Qualification[]): CardType[] => {
+    const cards :CardType[] = [];
 
-const buildTeacherCards = (teachers: ExpandedTeacher[], reviews: Review[]): CardType[] => {
-    return teachers.map((teacher) => {
-        const teacherReviews = reviews.filter((review) => review.teacher_user_id === teacher.user_id);
-        return {
-            teacher,
+
+    const fallbackAboutMe: AboutMe = {
+        about_me: "Jeg har ikke skrevet noe enda",
+        image: "https://storage.googleapis.com/enkellaering_images/teacher_images/3X1qF0ltcoYNtHzzcylnI89hIV53/3X1qF0ltcoYNtHzzcylnI89hIV53-profile_picture.png",
+        user_id: '0',
+        firstname: 'Enkel',
+        lastname: 'Læring'
+      };
+      
+    console.log(imagesAndAboutMes)
+    teachers.map((teacher) => {
+        const teacherReviews :Review[]= reviews.filter((review) => review.teacher_user_id === teacher.user_id);
+        const imageAndAboutMe :AboutMe= imagesAndAboutMes.find((i) => i.user_id === teacher.user_id) || fallbackAboutMe;
+        const teacherQualifications :Qualification[]= qualifications.filter((qualification) => qualification.user_id === teacher.user_id);
+        const qualificationTitles :string[]= teacherQualifications.map((qualification) => qualification.title);
+        
+        const card :CardType = {
+            teacher: teacher,
             reviews: teacherReviews,
-            location: teacher.address || "Ukjent",
-            qualifications: ["R1", "Ungdomsskole", "Spansk"], // Replace with actual logic if available
-            description: teacher.about_me_text || `Jeg heter ${teacher.firstname} og er en erfaren privatlærer.`,
-            src: teacher.image_url, // Use the image from the API
-            digitalTutouring: true, // Replace with actual data if available
-            physicalTutouring: true, // Replace with actual data if available
-        };
+            location: teacher.location,
+            description: imageAndAboutMe.about_me || '',
+            src: imageAndAboutMe.image || '',
+            qualifications: qualificationTitles,
+            digitalTutouring: teacher.digital_tutouring || false,
+            physicalTutouring: teacher.physical_tutouring || false,
+        }
+
+        cards.push(card);
     });
+
+    return cards
 };
 
 export const getTeacherCards = async (): Promise<CardType[]> => {
     const teachers = await getAllTeachers();
     const reviews = await getAllReviews();
-    return buildTeacherCards(teachers, reviews);
+    const imagesAndAboutMes = await getAllImagesAndAboutMes();
+    const qualifications = await getAllQualifications();
+    return buildTeacherCards(teachers, reviews, imagesAndAboutMes, qualifications);
 };

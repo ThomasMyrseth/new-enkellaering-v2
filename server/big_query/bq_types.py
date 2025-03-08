@@ -105,6 +105,7 @@ class NewStudents:
         phone: str,
         has_called: bool,
         created_at: datetime,
+        preffered_teacher :str,
         has_answered: bool,
         has_signed_up: bool,
         from_referal: bool,
@@ -129,6 +130,7 @@ class NewStudents:
         self.has_called = has_called
         self.called_at = called_at
         self.created_at = created_at
+        self.preffered_teacher = preffered_teacher
         self.has_answered = has_answered
         self.answered_at = answered_at
         self.has_signed_up = has_signed_up

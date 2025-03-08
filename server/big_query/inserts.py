@@ -160,27 +160,17 @@ def insert_referral(client: bigquery.Client, referral: Referrals):
 
 def insert_new_student(client: bigquery.Client, new_student: NewStudents):
 
-    print(new_student.phone)
-    print(new_student.has_called)
-    print(new_student.created_at)
-    print(new_student.has_answered)
-    print(new_student.has_signed_up)
-    print(new_student.from_referal)
-    print(new_student.has_assigned_teacher)
-    print(new_student.has_finished_onboarding)
-    print(new_student.new_student_id)
-
 
     query = f"""
         INSERT INTO `{PROJECT_ID}.{NEW_STUDENTS_DATASET}.new_students` (
             phone, has_called, called_at, has_answered, answered_at, has_signed_up, signed_up_at,
             from_referal, referee_phone, referee_name, has_assigned_teacher, assigned_teacher_at,
-            has_finished_onboarding, finished_onboarding_at, comments, new_student_id, created_at
+            has_finished_onboarding, finished_onboarding_at, comments, new_student_id, preffered_teacher, created_at
         )
         VALUES (
             @phone, @has_called, @called_at, @has_answered, @answered_at, @has_signed_up, @signed_up_at,
             @from_referal, @referee_phone, @referee_name, @has_assigned_teacher, @assigned_teacher_at,
-            @has_finished_onboarding, @finished_onboarding_at, @comments, @new_student_id, @created_at
+            @has_finished_onboarding, @finished_onboarding_at, @comments, @new_student_id, @preffered_teacher, @created_at
         )
     """
     job_config = bigquery.QueryJobConfig(
@@ -201,6 +191,7 @@ def insert_new_student(client: bigquery.Client, new_student: NewStudents):
             bigquery.ScalarQueryParameter("finished_onboarding_at", "TIMESTAMP", new_student.finished_onboarding_at),
             bigquery.ScalarQueryParameter("comments", "STRING", new_student.comments),
             bigquery.ScalarQueryParameter("new_student_id", "STRING", new_student.new_student_id),
+            bigquery.ScalarQueryParameter("preffered_teacher", "STRING", new_student.preffered_teacher),
             bigquery.ScalarQueryParameter("created_at", "TIMESTAMP", new_student.created_at),
         ]
     )

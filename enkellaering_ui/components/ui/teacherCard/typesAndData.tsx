@@ -20,6 +20,7 @@ export type ExpandedTeacher = {
     phone: string;
     address: string;
     postal_code: string;
+    location :string;
     hourly_pay: string;
     resgined: boolean;
     additional_comments: string | null;
@@ -30,6 +31,29 @@ export type ExpandedTeacher = {
     notes :string;
     about_me_text: string,
     image_url :string;
+    digital_tutouring :boolean;
+    physical_tutouring :boolean;
+}
+
+export type Qualification = {
+    content :string;
+    created_at :string;
+    image :string;
+    number_of_corrects :number;
+    number_of_questions :number;
+    pass_threshold :number;
+    passed :boolean;
+    quiz_id :string;
+    title :string;
+    user_id :string;
+}
+
+export type AboutMe = {
+    user_id :string;
+    about_me :string;
+    firstname :string;
+    lastname :string;
+    image :string;
 }
 
 

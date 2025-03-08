@@ -32,6 +32,7 @@ export type Teacher = {
     phone: string;
     address: string;
     postal_code: string;
+    location :string;
     hourly_pay: string;
     resgined: boolean;
     additional_comments: string | null;
@@ -40,6 +41,8 @@ export type Teacher = {
     resigned_at: string | null;
     wants_more_students :boolean;
     notes :string;
+    digital_tutouring :boolean;
+    physical_tutouring :boolean;
 }
 
 export type Review = {
