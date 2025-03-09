@@ -272,7 +272,7 @@ def get_current_teacher(user_id):
 
 
 
-
+from big_query.inserts import insert_new_student_order
 @app.route('/signup', methods=['POST'])
 def register():
     data = request.json
@@ -299,6 +299,7 @@ def register():
         postal_code = data.get("postal_code")
         est_hours_per_week = float(data.get("hours_per_week")) or 2
         has_physical_tutoring = data.get("has_physical_tutoring", True)  # Default to True
+        preferred_teacher = data.get('selected_teacher_user_id') or ''
 
         # Validate required fields
         if not all([firstname_parent, lastname_parent, email_parent, phone_parent, firstname_student, lastname_student]):
@@ -326,12 +327,16 @@ def register():
             address=address,
             postal_code=postal_code,
             est_hours_per_week = est_hours_per_week,
-            has_physical_tutoring=has_physical_tutoring
+            has_physical_tutoring=has_physical_tutoring,
         )
 
         # Insert the new student into the database
         print(f"Inserting student {user_id} into the database.")
         insert_student(client=bq_client, student=new_student)
+
+        if preferred_teacher:
+            insert_new_student_order(student_user_id=user_id, teacher_user_id=preferred_teacher, accept=False, physical_or_digital=None, bq_client=bq_client)
+        
 
         #check if the phoneNumber exisist in new_students table
         res = get_new_student_by_phone(client=bq_client, phone=phone_parent)
@@ -1014,48 +1019,6 @@ def validate_new_student_data(data: dict) -> tuple[bool, str]:
 
 
 
-from big_query.alters import alterNewStudentWithPreferredTeacher
-@app.route('/update-new-student-with-preferred-teacher', methods=["POST"])
-@token_required
-def update_new_student_with_preferred_teacher(user_id):
-    teacher_user_id = user_id
-    data = request.get_json()
-    logging.info(f"Data from update-new-student-with-preferred-teacher: {data}")
-
-    # Validate required field
-    new_student_id = data.get("new_student_id")
-    if not new_student_id:
-        logging.error("Missing new_student_id")
-        return jsonify({"message": "Missing new_student_id"}), 400
-
-    # Build the updates dictionary.
-    # Here we set timestamp fields if the corresponding boolean is True.
-    update = {
-        "teacher_called": data.get("teacher_called"),
-        "called_at": datetime.now(timezone.utc).isoformat() if data.get("teacher_called") else None,
-        # Note: mapping 'student_answered' from the client to the table's 'teacher_answered'
-        "teacher_answered": data.get("student_answered"),
-        "answered_at": datetime.now(timezone.utc).isoformat() if data.get("student_answered") else None,
-        "teacher_has_accepted": data.get("teacher_has_accepted"),
-        "teacher_accepted_at": datetime.now(timezone.utc).isoformat() if data.get("teacher_has_accepted") else None,
-        "comments": data.get("comments"),
-    }
-
-    update = clean_updates(update)
-
-    try:
-        res = alterNewStudentWithPreferredTeacher(
-            client=bq_client,
-            new_student_id=new_student_id,
-            updates=update,
-            teacher_user_id=teacher_user_id
-        )
-        res.result()  # force execution to catch any errors
-    except Exception as e:
-        logging.error("BigQuery error while updating new student with preferred teacher:", e)
-        return jsonify({"message": "Error while updating new student"}), 500
-
-    return jsonify({"message": "Updated new student successfully"}), 200
 
 
 
@@ -1795,6 +1758,106 @@ def get_all_qualifications_route():
 
     except Exception as e:
         return jsonify({"message": f"Error receiving all qualifications {e}"}), 500
+
+
+
+from big_query.inserts import insert_new_student_order
+
+@app.route('/request-new-teacher', methods=["POST"])
+@token_required
+def request_new_teacher_route(user_id):
+    data = request.get_json()
+    teacher_user_id = data.get('teacher_user_id')
+    physical_or_digital = data.get('physical_or_digital') or False
+
+    if not user_id or not teacher_user_id or physical_or_digital==None:
+        return jsonify({"message": "Missing required fields"}), 400
+    
+    try:
+        res =  insert_new_student_order(student_user_id=user_id, teacher_user_id=teacher_user_id, accept=None, physical_or_digital=physical_or_digital, bq_client=bq_client)
+        if res:
+            return jsonify({"message": "inserted new student order"}), 200
+        
+    except Exception as e:
+        print(f"error requesting new teacher {e}")
+        return jsonify({"message": f"Error inserting new student order {e}"}), 500
+
+
+from big_query.gets import get_new_orders
+@app.route('/get-new-orders', methods=['GET'])
+@token_required
+def get_new_teachers_route(user_id):
+    student_user_id = user_id
+
+    if not student_user_id:
+        return jsonify({"message": "Unauthorized"}), 401
+
+    try:
+        teachers = get_new_orders(student_user_id=student_user_id, client=bq_client)
+        return {"teachers": teachers}, 200
+    
+    except Exception as e:
+        print(f"error getting new teachers {e}")
+        return jsonify({"message": f"Error getting new teachers {e}"}), 500
+    
+
+from big_query.alters import cansel_new_order
+
+@app.route('/cansel-order', methods=["POST"])
+@token_required
+def cansel_new_order_route(user_id):
+    student_user_id = user_id
+    if not student_user_id:
+        return jsonify({"message": "Unauthorized"}), 401
+
+    data = request.get_json()
+    row_id = data.get('row_id')
+    if not row_id:
+        print("missing row id")
+        return jsonify({"message": "Missing row id"}), 400
+
+    try:
+        response = cansel_new_order(row_id=row_id, client=bq_client)
+
+        if (response):
+            return jsonify({"message": "Succesfully hid a row"}), 200
+        raise(Exception("Error hiding a row"))
+    
+    except Exception as e:
+        print(f"error hiding a row {e}")
+        return jsonify({f"message": "Error hiding a row {e}"}), 500
+
+
+from big_query.alters import update_new_order
+@app.route('/update-order', methods=["POST"])
+@token_required
+def update_order_data_route(user_id):
+    student_user_id = user_id
+
+    if not student_user_id:
+        return jsonify({"message": "Unauthorized"}), 401
+    
+    data = request.get_json()
+    row_id= data.get('row_id')
+    teacher_accepted_student = data.get('teacher_accepted_student')
+    physical_or_digital = data.get('physical_or_digital')
+    meeting_location = data.get('meeting_location')
+
+    if not row_id:
+        return jsonify({"message": "Missing row id"}), 400
+    
+    try:
+        res = update_new_order(row_id=row_id, teacher_accepted_student=teacher_accepted_student, physical_or_digital=physical_or_digital, preferred_location=meeting_location, client=bq_client)
+        if res:
+            return jsonify({"message": "Updated new order"}), 200
+        
+        raise(Exception("Error updating new order"))
+    
+    except Exception as e:
+        print(f"error updating new order {e}")
+        return jsonify({"message": f"Error updating new order {e}"}), 500
+
+
 
 
 

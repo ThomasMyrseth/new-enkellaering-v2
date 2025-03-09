@@ -511,3 +511,59 @@ def get_all_qualifications(bq_client :bigquery.Client):
     except Exception as e:
         print(f"Error fetching qualifications: {e}")
         raise(f"Error getting qualifications {e}")
+    
+
+
+def get_new_orders(student_user_id :str, client: bigquery.Client):
+    query = f"""
+        SELECT *
+        FROM `{USER_DATASET}.teacher_student` AS ts
+        JOIN `{USER_DATASET}.teachers` AS t
+        ON t.user_id = ts.teacher_user_id
+        WHERE student_user_id = @student_user_id
+    """
+
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("student_user_id", "STRING", student_user_id)
+        ]
+    )
+
+    try:
+        response = client.query(query, job_config=job_config)
+        results = response.result()
+        
+        formatted_data = []
+        for row in results:
+            formatted_data.append({
+                "teacher": {
+                    "user_id": row.user_id,
+                    "firstname": row.firstname,
+                    "lastname": row.lastname,
+                    "email": row.email,
+                    "phone": row.phone,
+                    "address": row.address,
+                    "postal_code": row.postal_code,
+                    "hourly_pay": row.hourly_pay,
+                    "resigned": row.resigned,
+                    "additional_comments": row.additional_comments,
+                    "created_at": row.created_at,
+                    "admin": row.admin,
+                    "resigned_at": row.resigned_at
+                },
+                "order": {
+                    "row_id": row.row_id,
+                    "teacher_user_id": row.teacher_user_id,
+                    "student_user_id": row.student_user_id,
+                    "teacher_accepted_student": row.teacher_accepted_student,
+                    "physical_or_digital": row.physical_or_digital,
+                    "preferred_location": row.preferred_location,
+                    "created_at": row.created_at,
+                    "hidden": row.hidden
+                }
+            })
+        
+        return formatted_data
+    
+    except Exception as e:
+        raise RuntimeError(f"Error getting teacher orders: {e}")

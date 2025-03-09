@@ -19,6 +19,7 @@ export type Student = {
 
     est_hours_per_week :number
     is_active :boolean
+    notes :string
 }
 
 export type Teacher = {
@@ -55,4 +56,20 @@ export type Review = {
     created_at :string;
     rating :number //1-5
     comment :string;
+}
+
+export type TeacherOrder = {
+    row_id :string;
+    teacher_user_id :string;
+    student_user_id :string;
+    teacher_accepted_student :boolean | null;
+    physical_or_digital :boolean;
+    preferred_location :string;
+    created_at :string;
+    hidden :boolean;
+}
+
+export type TeacherOrderJoinTeacher = {
+    teacher :Teacher;
+    order :TeacherOrder;
 }

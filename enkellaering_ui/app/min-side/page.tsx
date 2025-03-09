@@ -4,6 +4,7 @@ import { CardBody, CardContainer, CardItem } from "@/components/ui/3d-card";
 import Image from "next/image";
 import LeaveReview from "./review";
 import { Student, Teacher, Classes } from "./types";
+import { StudentOrderActions } from "./newStudents/studentOrders";
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080/server";
 
@@ -40,6 +41,7 @@ export default function MinSideStudentPage() {
             <IsActive student={student}/>
             <StudentName student={student} />
             <div className="md:w-4/5 flex flex-col items-center justify-center">
+                <StudentOrderActions student={student} />
                 <IsActive student={student}/>
                 <MyTeacher teacher={teacher}/>
                 <IsActive student={student}/>

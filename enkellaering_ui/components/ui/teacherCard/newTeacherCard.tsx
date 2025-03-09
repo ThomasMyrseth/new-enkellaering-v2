@@ -19,6 +19,7 @@ import {
   AlertDescription,
   AlertTitle,
 } from "@/components/ui/alert"
+import { useRouter } from "next/navigation";
 
 import { cn } from "@/lib/utils";
 
@@ -29,11 +30,13 @@ import { CardType } from "./typesAndData";
 import { ToggleFilterCards, filterCards } from "./filter";
 import { getTeacherCards } from "./getteachersAndReviews";
 
+
 export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
     const [active, setActive] = useState<(CardType) | boolean | null>(null);
     const [viewMode, setViewMode] = useState<"list" | "grid">("list");
     const id = useId();
     const ref = useRef<HTMLDivElement>(null);
+    const router = useRouter()
 
     const [errorMessage, setErrorMessage] = useState<boolean | null>(null);
     const [validPhone, setValidPhone] = useState<boolean | null>(null)
@@ -75,49 +78,11 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
 
 
     //submit new student
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = (teacher_user_id :string) => {
 
-        e.preventDefault();
         setErrorMessage(null);
 
-        //stop user from spamming button
-        setIsDisabled(true)
-        setTimeout(() => {
-            setIsDisabled(false)
-        }, 5000); //5 seconds
-
-        if (phone.length!=8) {
-            setValidPhone(false)
-            return
-        }
-        else {
-            setValidPhone(true)
-        }
-
-        if (!selectedCard) {
-            return;
-        }
-
-        const response = await fetch(`${baseUrl}/submit-new-student-with-preffered-teacher`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                "phone": phone,
-                "preffered_teacher": selectedCard.teacher.user_id,
-                "physical_or_digital": digitalOrPhysical
-            })
-        })
-
-        if (!response.ok) {
-            setErrorMessage(true)
-            alert("En feil har skjedd. Venligst prøv igjen!")
-        }
-        else {
-            setErrorMessage(false) //we have success
-            setPhone('')
-        }
+        router.push(`/bestill-laerer?teacher_user_id=${teacher_user_id}`)  
     }
     //togle main modal
     useEffect(() => {
@@ -321,7 +286,7 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
                     </div>
                 </motion.div>
                 <Button 
-                    onClick={() =>setSelectedCard(card)}
+                    onClick={() => handleSubmit(card.teacher.user_id)}
                     disabled={!card.physicalTutouring && !card.digitalTutouring}
                     className={`min-w-32 ${(!card.physicalTutouring && !card.digitalTutouring)? 'bg-neutral-400 text-neutral-100':''}`}
                 >
@@ -423,92 +388,6 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
             </ul>
         )}
         </div>
-
-
-        {selectedCard && (
-        <Dialog open={selectedCard?true:false} onOpenChange={() => setSelectedCard(null)}>
-            <DialogContent onClick={(e) => e.stopPropagation()}>
-                <DialogHeader>
-                    <DialogTitle>Bestill {selectedCard.teacher.firstname}</DialogTitle>
-                    <DialogDescription>
-                    Vi ringer dere tilbake innen kort tid, normalt 24 timer, med informasjon om oppstart
-                    </DialogDescription>
-                </DialogHeader>
-
-                {errorMessage === false && (
-                    <Alert>
-                    <Terminal className="h-4 w-4" />
-                    <AlertTitle className="text-green-400">Tusen takk!</AlertTitle>
-                    <AlertDescription>
-                        Vi har mottatt telefonnummeret ditt. Vi ringer deg innen kort tid
-                    </AlertDescription>
-                    </Alert>
-                )}
-
-                {validPhone === false && (
-                    <Alert>
-                    <Terminal className="h-4 w-4" />
-                    <AlertTitle className="text-red-400">Skrev du noe feil?</AlertTitle>
-                    <AlertDescription>
-                        Sjekk at nummeret er på 8 siffer, uten mellomrom, uten landskode
-                    </AlertDescription>
-                    </Alert>
-                )}
-
-                <form
-                    className="my-8 flex flex-col"
-                    onSubmit={(e) => {
-                    e.preventDefault();
-                    // Stop propagation so the click isn’t interpreted as outside the modal
-                    e.stopPropagation();
-                    handleSubmit(e);
-                    }}
-                >
-                    <LabelInputContainer>
-                        <Label htmlFor="phone">Ditt telefonnummer</Label>
-                        <Input
-                            id="phone"
-                            placeholder="12345678"
-                            type="tel"
-                            value={phone}
-                            onChange={(e) => setPhone(e.target.value)}
-                            className={cn(errorMessage ? "border-red-500" : "")}
-                        />
-                    </LabelInputContainer>
-
-                    <LabelInputContainer>
-                        <Label htmlFor="phone">Ønsker dere digital eller fysisk undervisning?</Label>
-                        <RadioGroup defaultValue="digital" value={digitalOrPhysical ? "physical" : "digital"} onValueChange={(value) => setDigitalOrPhysical(value === "physical")}>
-                            <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="digital" id="digital" />
-                                <Label htmlFor="digital">Digital</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="physical" id="physical" />
-                                <Label htmlFor="physical">Fysisk</Label>
-                            </div>
-                        </RadioGroup>
-                    </LabelInputContainer>
-                    <button
-                    type="submit"
-                    disabled={isDisabled}
-                    className="relative inline-flex h-12 overflow-hidden rounded-full p-[5px] dark:p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50"
-                    >
-                    <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
-                    <span
-                        className={`${
-                        isDisabled
-                            ? "bg-slate-400"
-                            : "inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-slate-950 px-3 py-1 text-sm font-medium text-white backdrop-blur-3xl"
-                        }`}
-                    >
-                        Send inn
-                    </span>
-                    </button>
-                </form>
-                </DialogContent>
-        </Dialog>
-        )}
 
         </>
     );

@@ -547,3 +547,27 @@ def insert_quiz_questions(questions :list, bq_client = None):
     
     return True
 
+
+
+
+def insert_new_student_order(student_user_id: str, teacher_user_id: str, accept: bool, physical_or_digital: bool, bq_client: bigquery.Client):
+    table_id = "enkel-laering.users.teacher_student"
+
+    row_id = str(uuid4())  # Ensure UUID is a string
+    row = {
+        "row_id": row_id,
+        "student_user_id": student_user_id,
+        "teacher_user_id": teacher_user_id,
+        "teacher_accepted_student": accept,
+        "physical_or_digital": physical_or_digital,
+        "preferred_location": None,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+
+    # Insert the row into BigQuery
+    errors = bq_client.insert_rows_json(table_id, [row])  # No 'selected_fields'
+
+    if errors:
+        raise Exception(f"Batch insert failed: {errors}")
+
+    return True

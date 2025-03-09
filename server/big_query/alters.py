@@ -289,30 +289,64 @@ def updateStudentNotes(admin_user_id :str, student_user_id :str, notes: str, cli
 
 
 
-def alterNewStudentWithPreferredTeacher(client: bigquery.Client, new_student_id: str, teacher_user_id :str, updates: dict):
+def cansel_new_order(row_id :str, client: bigquery.Client):
     query = f"""
-        UPDATE `{NEW_STUDENTS_DATASET}.new_students_with_preferred_teacher`
-        SET
-            teacher_called = @teacher_called,
-            called_at = @called_at,
-            teacher_answered = @teacher_answered,
-            answered_at = @answered_at,
-            teacher_has_accepted = @teacher_has_accepted,
-            teacher_accepted_at = @teacher_accepted_at,
-            comments = @comments
-        WHERE new_student_id = @new_student_id
-        AND preferred_teacher= @teacher_user_id
+        UPDATE `{USER_DATASET}.teacher_student`
+        SET hidden=TRUE
+        WHERE row_id = @row_id
     """
-    params = [
-        bigquery.ScalarQueryParameter("teacher_called", "BOOL", updates.get("teacher_called")),
-        bigquery.ScalarQueryParameter("called_at", "TIMESTAMP", updates.get("called_at")),
-        bigquery.ScalarQueryParameter("teacher_answered", "BOOL", updates.get("teacher_answered")),
-        bigquery.ScalarQueryParameter("answered_at", "TIMESTAMP", updates.get("answered_at")),
-        bigquery.ScalarQueryParameter("teacher_has_accepted", "BOOL", updates.get("teacher_has_accepted")),
-        bigquery.ScalarQueryParameter("teacher_accepted_at", "TIMESTAMP", updates.get("teacher_accepted_at")),
-        bigquery.ScalarQueryParameter("comments", "STRING", updates.get("comments")),
-        bigquery.ScalarQueryParameter("new_student_id", "STRING", new_student_id),
-        bigquery.ScalarQueryParameter("teacher_user_id", "STRING", teacher_user_id)
-    ]
-    job_config = bigquery.QueryJobConfig(query_parameters=params)
-    return client.query(query, job_config=job_config)
+    
+
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("row_id", "STRING", row_id)
+        ]
+    )
+
+    try:
+        query_job = client.query(query, job_config=job_config)
+        query_job.result()  # Wait for the query to complete
+
+        if query_job.errors:
+            raise RuntimeError(f"Error hiding new student: {query_job.errors}")
+        
+        return True
+    except Exception as e:
+        print(f"Error hiding new student: {e}")
+        raise RuntimeError(f"Error hiding new student: {query_job.errors}")
+
+
+
+
+
+
+def update_new_order(row_id :str, teacher_accepted_student :bool, physical_or_digital :bool, preferred_location :str, client: bigquery.Client):
+    query = f"""
+        UPDATE `{USER_DATASET}.teacher_student`
+        SET teacher_accepted_student = @teacher_accepted_student,
+            physical_or_digital = @physical_or_digital,
+            preferred_location = @preferred_location
+        WHERE row_id = @row_id
+    """
+    
+
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("row_id", "STRING", row_id),
+            bigquery.ScalarQueryParameter("teacher_accepted_student", "BOOL", teacher_accepted_student or None),
+            bigquery.ScalarQueryParameter("physical_or_digital", "BOOL", physical_or_digital or None),
+            bigquery.ScalarQueryParameter("preferred_location", "STRING", preferred_location or None)
+        ]
+    )
+
+    try:
+        query_job = client.query(query, job_config=job_config)
+        query_job.result()  # Wait for the query to complete
+
+        if query_job.errors:
+            raise RuntimeError(f"Error updating new order: {query_job.errors}")
+        
+        return True
+    except Exception as e:
+        print(f"Error updating new order: {e}")
+        raise RuntimeError(f"Error updating new order: {query_job.errors}")
