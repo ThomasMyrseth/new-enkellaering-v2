@@ -840,31 +840,21 @@ from big_query.gets import get_all_new_students_with_preferred_teacher
 @app.route('/get-new-students-with-preferred-teacher', methods=["GET"])
 @token_required
 def get_new_students_with_preferred_teacher_route(user_id):
-    admin_user_id = user_id
-
-    if not admin_user_id:
-        return jsonify({
-            "message": "Missing admin user id"
-        }), 400
+    teacher_user_id = user_id
 
     try:
-        res = get_all_new_students_with_preferred_teacher(client=bq_client, admin_user_id=admin_user_id)
-        result = res.result()
-
-        if not res or res.errors:
-            print(f"Error fetching new students {res.errors}")
-            raise(Exception(f"Error fetching new students {res.errors}"))
+        res = get_all_new_students_with_preferred_teacher(client=bq_client, teacher_user_id=teacher_user_id)
     
-        new_students = [dict(row) for row in result]
 
-        if len(new_students)==0:
+
+        if len(res)==0:
             print("no new students found")
             return jsonify({
                 "new_students": []
             }), 200
         
         return jsonify({
-            "new_students": new_students
+            "new_students": res
         }), 200
     
     except Exception as e:

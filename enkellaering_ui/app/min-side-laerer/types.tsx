@@ -33,3 +33,12 @@ export type QuizResult = {
     quiz: Quiz;
     result: QuizResult| null;
   };
+
+
+import { TeacherOrder } from "../min-side/types";
+import { Student } from "../admin/types";
+
+export type NewTeacherOrder = {
+  order :TeacherOrder;
+  student :Student;
+}

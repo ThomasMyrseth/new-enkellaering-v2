@@ -320,32 +320,41 @@ def cansel_new_order(row_id :str, client: bigquery.Client):
 
 
 
-def update_new_order(row_id :str, teacher_accepted_student :bool, physical_or_digital :bool, preferred_location :str, client: bigquery.Client):
-    query = f"""
-        UPDATE `{USER_DATASET}.teacher_student`
-        SET teacher_accepted_student = @teacher_accepted_student,
-            physical_or_digital = @physical_or_digital,
-            preferred_location = @preferred_location
-        WHERE row_id = @row_id
-    """
+def update_new_order(row_id: str, client: bigquery.Client, teacher_accepted_student: bool = None, physical_or_digital: bool = None, preferred_location: str = None):
+    query = f"UPDATE `{USER_DATASET}.teacher_student` SET "
+    query_params = []
     
+    if teacher_accepted_student is not None:
+        query += "teacher_accepted_student = @teacher_accepted_student, "
+        query_params.append(bigquery.ScalarQueryParameter("teacher_accepted_student", "BOOL", teacher_accepted_student))
 
-    job_config = bigquery.QueryJobConfig(
-        query_parameters=[
-            bigquery.ScalarQueryParameter("row_id", "STRING", row_id),
-            bigquery.ScalarQueryParameter("teacher_accepted_student", "BOOL", teacher_accepted_student or None),
-            bigquery.ScalarQueryParameter("physical_or_digital", "BOOL", physical_or_digital or None),
-            bigquery.ScalarQueryParameter("preferred_location", "STRING", preferred_location or None)
-        ]
-    )
+    if physical_or_digital is not None:
+        query += "physical_or_digital = @physical_or_digital, "
+        query_params.append(bigquery.ScalarQueryParameter("physical_or_digital", "BOOL", physical_or_digital))
+
+    if preferred_location is not None:
+        query += "preferred_location = @preferred_location, "
+        query_params.append(bigquery.ScalarQueryParameter("preferred_location", "STRING", preferred_location))
+
+    # Remove the trailing comma and space
+    query = query.rstrip(", ")
+
+    # Ensure at least one field is updated
+    if not query_params:
+        raise ValueError("No fields provided for update")
+
+    query += " WHERE row_id = @row_id"
+    query_params.append(bigquery.ScalarQueryParameter("row_id", "STRING", row_id))
+
+    job_config = bigquery.QueryJobConfig(query_parameters=query_params)
 
     try:
         query_job = client.query(query, job_config=job_config)
         query_job.result()  # Wait for the query to complete
 
-        if query_job.errors:
+        if not query_job or query_job.errors:
             raise RuntimeError(f"Error updating new order: {query_job.errors}")
-        
+
         return True
     except Exception as e:
         print(f"Error updating new order: {e}")

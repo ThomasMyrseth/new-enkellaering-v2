@@ -38,7 +38,7 @@ import { AlertDialog, AlertDialogDescription,AlertDialogCancel, AlertDialogActio
 import { toast } from "sonner";
 
 import QuizStatusPage from "./quiz";
-import NewStudentsWithPreferredTeacherWorkflowActions from "./newStudents"
+import { NewStudentsWithPreferredTeacherWorkflowActions, UnacceptedStudentsTable} from "./newStudents"
 
 type Class = {
     comment: string; // Optional comment for the session
@@ -172,6 +172,9 @@ export default function LaererPage() {
     return (<div className="flex flex-col items-center justify-center w-full min-h-screen bg-slate-200 dark:bg-slate-900">
             <TeacherName teacher={teacher}/>
             <NewStudentsWithPreferredTeacherWorkflowActions teacher={teacher}/>
+            <br/>
+            <UnacceptedStudentsTable teacher={teacher}/>
+
             <WantMoreStudents teacher={teacher}/>
 
             <QuizStatusPage token={token} baseUrl={BASEURL}/>

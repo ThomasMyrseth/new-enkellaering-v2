@@ -117,17 +117,66 @@ def get_all_new_students(client: bigquery.Client, admin_user_id: str):
     return client.query(query, job_config=job_config, location='EU')
 
 
-def get_all_new_students_with_preferred_teacher(client: bigquery.Client, admin_user_id: str):
+def get_all_new_students_with_preferred_teacher(client: bigquery.Client, teacher_user_id: str):
     query = f"""
-    SELECT * FROM `{PROJECT_ID}.{NEW_STUDENTS_DATASET}.new_students_with_preferred_teacher`
-    WHERE EXISTS (
-        SELECT 1 FROM `{PROJECT_ID}.{USER_DATASET}.teachers`
-        WHERE user_id = @admin_user_id AND admin = TRUE
-    )
+    SELECT * 
+    FROM `{PROJECT_ID}.{USER_DATASET}.teacher_student` AS ts
+    JOIN `{PROJECT_ID}.{USER_DATASET}.students`AS s
+    ON ts.student_user_id = s.user_id
+    WHERE ts.teacher_user_id = @teacher_user_id
     """
-    query_params = [bigquery.ScalarQueryParameter("admin_user_id", "STRING", admin_user_id)]
+    query_params = [bigquery.ScalarQueryParameter("teacher_user_id", "STRING", teacher_user_id)]
     job_config = bigquery.QueryJobConfig(query_parameters=query_params)
-    return client.query(query, job_config=job_config, location='EU')
+    
+    try:
+        response = client.query(query, job_config=job_config)
+        results = response.result()
+
+        
+        if not response or response.errors:
+            print(f"Error fetching new students {response.errors}")
+            raise(Exception(f"Error fetching new students {response.errors}"))
+        
+        formatted_data = []
+        for row in results:
+            formatted_data.append({
+                "student": {
+                    "user_id": row.user_id,
+                    "firstname_parent": row.firstname_parent,
+                    "lastname_parent": row.lastname_parent,
+                    "email_parent": row.email_parent,
+                    "phone_parent": row.phone_parent,
+                    "firstname_student": row.firstname_student,
+                    "lastname_student": row.lastname_student,
+                    "phone_student": row.phone_student,
+                    "address": row.address,
+                    "postal_code": row.postal_code,
+                    "main_subjects": row.main_subjects,
+                    "has_physical_tutoring": row.has_physical_tutoring,
+                    "additional_comments": row.additional_comments,
+                    "est_hours_per_week": row.est_hours_per_week,
+                    #"your_teacher": row.your_teacher,
+                    "is_active": row.is_active,
+                    "wants_more_students": row.wants_more_students,
+                    "notes": row.notes,
+                    "created_at": row.created_at
+                },
+                "order": {
+                    "row_id": row.row_id,
+                    "teacher_user_id": row.teacher_user_id,
+                    "student_user_id": row.student_user_id,
+                    "teacher_accepted_student": row.teacher_accepted_student,
+                    "physical_or_digital": row.physical_or_digital,
+                    "preferred_location": row.preferred_location,
+                    "created_at": row.created_at,
+                    "hidden": row.hidden
+                }
+            })
+
+        return formatted_data
+
+    except Exception as e:
+        raise RuntimeError(f"Error getting students with preferred teacher: {e}")
 
 def get_new_student_by_phone(client: bigquery.Client, phone: str):
     print("phone: ", phone)

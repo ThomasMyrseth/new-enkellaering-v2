@@ -207,10 +207,12 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@/components/ui/accordion";
+import { useRouter } from "next/navigation";
 
 
 function PreviousClasses({student} : {student : Student}) {     
     const token = localStorage.getItem('token') 
+    const router = useRouter()
 
     const [classes, setClasses] = useState<Classes[]>();
     const [firstTenClasses, setFirstTenclasses] = useState<Classes[]>()
@@ -225,6 +227,10 @@ function PreviousClasses({student} : {student : Student}) {
 
     //get classes for student
     useEffect( () => {
+        if (!token) {
+            router.push('/login')
+        }
+
         async function fetchClasses() {
             const response = await fetch(`${BASEURL}/get-classes-for-student`, {
                 method: "GET",
