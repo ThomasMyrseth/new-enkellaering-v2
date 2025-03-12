@@ -2,16 +2,14 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-import QuizStatusPage from "./quiz";
-import { NewStudentsWithPreferredTeacherWorkflowActions, UnacceptedStudentsTable} from "./newStudents"
 import { Classes } from "../admin/types";
 import { Teacher, Student } from "../admin/types";
 import { AddNewClass } from "./addNewClass";
 
-
-
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080/server";
 
+import { NewStudentsWithPreferredTeacherWorkflowActions, UnacceptedStudentsTable} from "./newStudents"
+import QuizStatusPage from "./quiz";
 import { FileUploadForm } from "@/components/uploadTeacherImageForm";
 import { YourStudent } from "./yourStudents";
 import { TeacherName  } from "./teacherName";
@@ -27,74 +25,22 @@ export default function LaererPage() {
     const token :string = localStorage.getItem('token') || ''
 
     useEffect(() => {
-        async function fetchTeacherName() {
-            const response = await fetch(`${BASEURL}/get-teacher`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            })
+        async function getData() {
+            const students = await fetchStudents(token)
+            const classes = await fetchClasses(token)
+            const teacher = await fetchTeacherName(token)
 
-            if (response.ok) {
-                const data = await response.json()
-                setTeacher(data.teacher)
-            }
-
-            else {
+            if (!teacher) {
                 router.push('/login-laerer')
-            }
-        }
-
-        //get classes for teacher
-        async function fetchClasses() {
-            const response = await fetch(`${BASEURL}/get-classes-for-teacher`, {
-                method: "GET",
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                },
-            })
-
-            if(!response.ok) {
-                return null;
+                return
             }
 
-            const data = await response.json()
-            const classes = data.classes
-
+            setTeacher(teacher)
             setClasses(classes)
-        }
-
-
-        async function fetchStudents() {
-            const response = await fetch(`${BASEURL}/get-students`, {
-                method: "GET",
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            })
-
-            const r = await response.json()
-
-            let students = r.students
-
-            //order the students alfabetically
-            students = students.sort( (a :Student, b :Student) => {
-                const nameA = a.firstname_parent.toUpperCase()
-                const nameB = b.firstname_parent.toUpperCase()
-                if (nameA < nameB) {
-                    return -1
-                }
-                if (nameA > nameB) {
-                    return 1
-                }
-                return 0
-            })
             setStudents(students)
         }
 
-        fetchStudents()
-        fetchClasses()
-        fetchTeacherName()
+        getData()
     
     },[])
 
@@ -129,6 +75,70 @@ export default function LaererPage() {
 
 
 
+async function fetchTeacherName(token :string) {
+    const response = await fetch(`${BASEURL}/get-teacher`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    })
+
+    if (response.ok) {
+        const data = await response.json()
+        return data.teacher
+    }
+
+    else {
+        return false
+    }
+}
+
+//get classes for teacher
+async function fetchClasses(token :string) {
+    const response = await fetch(`${BASEURL}/get-classes-for-teacher`, {
+        method: "GET",
+        headers: {
+            'Authorization': `Bearer ${token}`
+        },
+    })
+
+    if(!response.ok) {
+        return null;
+    }
+
+    const data = await response.json()
+    const classes = data.classes
+
+    return classes
+}
+
+
+async function fetchStudents(token :string) {
+    const response = await fetch(`${BASEURL}/get-students`, {
+        method: "GET",
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    })
+
+    const r = await response.json()
+
+    let students = r.students
+
+    //order the students alfabetically
+    students = students.sort( (a :Student, b :Student) => {
+        const nameA = a.firstname_parent.toUpperCase()
+        const nameB = b.firstname_parent.toUpperCase()
+        if (nameA < nameB) {
+            return -1
+        }
+        if (nameA > nameB) {
+            return 1
+        }
+        return 0
+    })
+    return students
+}
 
 
 
