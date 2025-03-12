@@ -291,7 +291,7 @@ export function UnacceptedStudentsTable ( {teacher}: {teacher :Teacher}) {
           {orders.map((ns) => {
 
             //remove student that belong in another table
-            if (ns.order.teacher_accepted_student===true || ns.order.teacher_accepted_student===null) return null;
+            if (ns.order.teacher_accepted_student===true || ns.order.teacher_accepted_student===null || ns.order.hidden) return null;
 
             return (
               <UnaccpetedStudentsRow

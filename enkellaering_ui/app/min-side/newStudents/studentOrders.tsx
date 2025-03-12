@@ -29,6 +29,7 @@ import { TeacherOrder, TeacherOrderJoinTeacher } from "../types";
 import { getNewTeachers, canselNewOrder } from "./getPushData";
 import { useRouter } from "next/navigation";
 import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080";
 
@@ -139,7 +140,7 @@ function StudentOrderActionsTableRow({order}: {order: TeacherOrderJoinTeacher;})
       alert("Error saving updates to new student");
       return;
     }
-    alert("Oppdateringer lagret");
+    toast("Oppdateringer lagret");
   };
 
   // Delete/hide the new student record.
@@ -156,7 +157,7 @@ function StudentOrderActionsTableRow({order}: {order: TeacherOrderJoinTeacher;})
       alert("Error deleting new student");
       return;
     }
-    alert("Eleven er slettet");
+    toast("Eleven er slettet");
   };
 
   return (
