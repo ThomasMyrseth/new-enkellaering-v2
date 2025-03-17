@@ -6,13 +6,13 @@ import React from "react";
 import { TeacherFocusCards } from "@/components/ui/teacherCard/newTeacherCard";
 
 export default function OmOssPage() {
-  const baseUrl :string = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8080/server';
+
   return (
     <div className="flex flex-col items-center justify-center w-full max-w-[100vw] py-4 px-4 md:px-6 lg:px-8 m-0 lg:py-10 min-h-screen space-y-10">
       <SparklesHeadline />
       <div className="space-y-10 flex flex-col items-center justify-center w-full">
         <AboutEl />
-        <TeacherFocusCards baseUrl={baseUrl}/>
+        <TeacherFocusCards />
       </div>
     </div>
   );

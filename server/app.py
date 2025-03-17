@@ -1766,12 +1766,14 @@ def request_new_teacher_route(user_id):
     data = request.get_json()
     teacher_user_id = data.get('teacher_user_id')
     physical_or_digital = data.get('physical_or_digital') or False
+    address = data.get('address') or ''
+    comments = data.get('comments') or ''
 
     if not user_id or not teacher_user_id or physical_or_digital==None:
         return jsonify({"message": "Missing required fields"}), 400
     
     try:
-        res =  insert_new_student_order(student_user_id=user_id, teacher_user_id=teacher_user_id, accept=None, physical_or_digital=physical_or_digital, bq_client=bq_client)
+        res =  insert_new_student_order(student_user_id=user_id, teacher_user_id=teacher_user_id, accept=None, physical_or_digital=physical_or_digital, location=address, comments=comments, bq_client=bq_client)
         if res:
             return jsonify({"message": "inserted new student order"}), 200
         
@@ -1839,6 +1841,7 @@ def update_order_data_route(user_id):
     teacher_accepted_student = data.get('teacher_accepted_student')
     physical_or_digital = data.get('physical_or_digital')
     meeting_location = data.get('meeting_location')
+    comments = data.get('comments')
 
     if not row_id:
         return jsonify({"message": "Missing row id"}), 400

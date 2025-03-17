@@ -65,6 +65,7 @@ export type TeacherOrder = {
     teacher_accepted_student :boolean | null;
     physical_or_digital :boolean;
     preferred_location :string;
+    order_comments :string;
     created_at :string;
     hidden :boolean;
 }

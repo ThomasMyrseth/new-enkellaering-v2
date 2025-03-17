@@ -92,6 +92,7 @@ const StudentOrderActionsTable = ({
             <TableHead>Kontaktinfo</TableHead>
             <TableHead>Fysisk eller digital undervisning</TableHead>
             <TableHead>Foretrukket oppmøtested</TableHead>
+            <TableHead>Kommentarer fra deg til læreren</TableHead>
             <TableHead>Læreren har akseptert deg</TableHead>
             <TableHead>Lagre</TableHead>
             <TableHead>Kanseller bestilling</TableHead>
@@ -121,6 +122,7 @@ function StudentOrderActionsTableRow({order}: {order: TeacherOrderJoinTeacher;})
 
   // Set up state for actions. Adjust the defaults based on your data.
     const [physicalOrDigital, setPhysicalOrDigital] = useState<boolean>(order.order.physical_or_digital)
+    const [comments, setComments] = useState<string>(order.order.order_comments)
     const [meetingLocation, setMeetingLocation] = useState<string>(order.order.preferred_location)
 
   // Save changes to the new student record.
@@ -135,7 +137,8 @@ function StudentOrderActionsTableRow({order}: {order: TeacherOrderJoinTeacher;})
         row_id: order.order.row_id,
         physical_or_digital: physicalOrDigital,
         meeting_location: meetingLocation,
-      }),
+        comments: comments
+      }), 
     });
 
     if (!response.ok) {
@@ -200,6 +203,14 @@ function StudentOrderActionsTableRow({order}: {order: TeacherOrderJoinTeacher;})
           disabled={physicalOrDigital===false} //do not show with digital
           value={meetingLocation}
           onChange={(e) => setMeetingLocation(e.target.value)}
+          rows={4}
+        />
+      </TableCell>
+      <TableCell>
+        <Textarea
+          placeholder="Kommentar"
+          value={comments}
+          onChange={(e) => setComments(e.target.value)}
           rows={4}
         />
       </TableCell>

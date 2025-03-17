@@ -320,7 +320,7 @@ def cansel_new_order(row_id :str, client: bigquery.Client):
 
 
 
-def update_new_order(row_id: str, client: bigquery.Client, teacher_accepted_student: bool = None, physical_or_digital: bool = None, preferred_location: str = None):
+def update_new_order(row_id: str, client: bigquery.Client, teacher_accepted_student: bool = None, physical_or_digital: bool = None, preferred_location: str = None, comments :str = None):
     query = f"UPDATE `{USER_DATASET}.teacher_student` SET "
     query_params = []
     
@@ -335,6 +335,10 @@ def update_new_order(row_id: str, client: bigquery.Client, teacher_accepted_stud
     if preferred_location is not None:
         query += "preferred_location = @preferred_location, "
         query_params.append(bigquery.ScalarQueryParameter("preferred_location", "STRING", preferred_location))
+
+    if comments is not None:
+        query += "order_comments = @order_comments, "
+        query_params.append(bigquery.ScalarQueryParameter("order_comments", "STRING", comments))
 
     # Remove the trailing comma and space
     query = query.rstrip(", ")

@@ -97,6 +97,7 @@ const NewStudentWithPreferredTeacherActionsTable = ({
             <TableHead>Kontaktinfo (forelder)</TableHead>
             <TableHead>Undervisningsform</TableHead>
             <TableHead>Foretrukket møtested</TableHead>
+            <TableHead>Kommentar fra elev</TableHead>
             <TableHead>Jeg takker ja/nei</TableHead>
           </TableRow>
         </TableHeader>
@@ -182,6 +183,10 @@ function NewStudentWithPreferredTeacherActionsRow({ns,}: {ns: NewTeacherOrder;})
         {ns.order.physical_or_digital===true && ns.order.preferred_location}
         {ns.order.physical_or_digital===true && !ns.order.preferred_location && "Ikke noe foretrukket oppmøtested"}
         {ns.order.physical_or_digital===null && ""}
+      </TableCell>
+
+      <TableCell>
+        {ns.order.order_comments}
       </TableCell>
 
 

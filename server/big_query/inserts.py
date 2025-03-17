@@ -559,7 +559,7 @@ def insert_quiz_questions(questions :list, bq_client = None):
 
 
 
-def insert_new_student_order(student_user_id: str, teacher_user_id: str, accept: bool, physical_or_digital: bool, bq_client: bigquery.Client):
+def insert_new_student_order(student_user_id: str, teacher_user_id: str, accept: bool, physical_or_digital: bool, location :str, comments :str, bq_client: bigquery.Client):
     table_id = "enkel-laering.users.teacher_student"
 
     row_id = str(uuid4())  # Ensure UUID is a string
@@ -569,7 +569,8 @@ def insert_new_student_order(student_user_id: str, teacher_user_id: str, accept:
         "teacher_user_id": teacher_user_id,
         "teacher_accepted_student": accept,
         "physical_or_digital": physical_or_digital,
-        "preferred_location": None,
+        "preferred_location": location,
+        "order_comments": comments,
         "created_at": datetime.now(timezone.utc).isoformat()
     }
 

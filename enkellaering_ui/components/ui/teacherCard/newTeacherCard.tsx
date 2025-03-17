@@ -42,16 +42,29 @@ import { ToggleFilterCards, filterCards } from "./filter";
 import { getTeacherCards } from "./getteachersAndReviews";
 import Link from "next/link";
 
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+  } from "@/components/ui/popover"
+import { PopoverClose } from "@radix-ui/react-popover";
+import { Teacher } from "@/app/admin/types";
+import { Textarea } from "../textarea";
+  
 
-export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
+export function TeacherFocusCards() {
     const [active, setActive] = useState<(CardType) | boolean | null>(null);
     const [viewMode, setViewMode] = useState<"list" | "grid">("list");
     const id = useId();
     const ref = useRef<HTMLDivElement>(null);
     const router = useRouter()
 
-    const [selectedCard, setSelectedCard] = useState<CardType | null>(null);
     const [showLoginAlert, setShowLoginAlert] = useState<boolean>(false)
+    const [showOrderPopover, setShowOrderPopover] = useState<boolean>(false)
+    const [orderedTeacher, setOrderedTeacher] = useState<CardType>()
+    const [wantPhysicalOrDigital, setWantPhysicalOrDigital] = useState<boolean | null>(null)
+    const [address, setAddress] = useState<string>('')
+    const [comments, setComments] = useState<string>('')
 
     // Filter states
     const [filterLocation, setFilterLocation] = useState<string | null>(null);
@@ -84,10 +97,8 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
     },[filterLocation, filterQualification, filterDigital, filterPhysical])
 
 
+    const handleOrderClick = (card :CardType) => {
 
-    //submit new student
-    const handleSubmit = (teacher_user_id :string) => {
-        //check if the user is logged in
         const token :string|null= localStorage.getItem('token') || null;
         const isTeacher = localStorage.getItem('isTeacher')
         if (!token || !isTeacher) {
@@ -95,7 +106,31 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
             return;
         }
 
-        router.push(`/bestill-laerer?teacher_user_id=${teacher_user_id}`)  
+        if (card.teacher.digital_tutouring && !card.teacher.physical_tutouring) {
+            setWantPhysicalOrDigital(false) //digital
+        }
+        if (card.teacher.physical_tutouring && !card.teacher.digital_tutouring) {
+            setWantPhysicalOrDigital(true) //physical
+        }
+
+
+        setOrderedTeacher(card)
+        setShowOrderPopover(true)
+    }
+    //submit new student
+    const handleSubmit = () => {
+
+        const token :string|null= localStorage.getItem('token') || null;
+        const isTeacher = localStorage.getItem('isTeacher')
+        if (!token || !isTeacher) {
+            setShowLoginAlert(true)
+            return;
+        }
+        
+        if (!orderedTeacher) {
+            alert('Klarte ikke å bestille lærer. Prøv igjen')
+        }
+        router.push(`/bestill-laerer?teacher_user_id=${orderedTeacher?.teacher.user_id}&physical_or_digital=${wantPhysicalOrDigital}&address=${address}&comments=${comments}`)
     }
 
 
@@ -138,6 +173,30 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
         </AlertDialogContent>
         </AlertDialog>
 
+        {/*Order popover*/}
+        <AlertDialog open={showOrderPopover}>
+        <AlertDialogTitle>Bestill {orderedTeacher?.teacher.firstname}</AlertDialogTitle>
+            <AlertDialogContent>
+                {orderedTeacher?.teacher.digital_tutouring && orderedTeacher.teacher.physical_tutouring &&
+                    <RadioGroup>
+                        <Label>Ønsker dere fysisk eller digital undervisning?</Label>
+                        <RadioGroupItem value="Fysisk" checked={wantPhysicalOrDigital===true}/>
+                        <RadioGroupItem value="Digitalt" checked={wantPhysicalOrDigital===false}/>
+                    </RadioGroup>
+                }
+                <p>Jeg ønsker {orderedTeacher?.teacher.physical_tutouring? 'fysisk' : 'digital'} undervisning med {orderedTeacher?.teacher.firstname}</p>
+                <div>
+                    <Label>Hvor ønsker du å møte {orderedTeacher?.teacher.firstname}?</Label>
+                    <Input value={address} defaultValue="Hjemmeveien 3 eller Deichman Bjørvika" onChange={(e) => setAddress(e.target.value)}/>
+                </div>
+                <div>
+                    <Label>Har du noe du vil si til {orderedTeacher?.teacher.firstname}?</Label>
+                    <Textarea rows={2} value={comments} onChange={(e) => setComments(e.target.value)}/>
+                </div>
+                <Button onClick={handleSubmit}>Bestill</Button>
+                <AlertDialogCancel onClick={() => setShowOrderPopover(false)}>Angre</AlertDialogCancel>
+            </AlertDialogContent>
+        </AlertDialog>
 
         {/*Filtering */}
         <div className="bg-neutral-100 dark:bg-black p-4 rounded-xl">
@@ -319,7 +378,7 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
                     </div>
                 </motion.div>
                 <Button 
-                    onClick={() => handleSubmit(card.teacher.user_id)}
+                    onClick={() => handleOrderClick(card)}
                     disabled={!card.teacher.physical_tutouring && !card.teacher.digital_tutouring}
                     className={`min-w-32 ${(!card.teacher.physical_tutouring && !card.teacher.digital_tutouring)? 'bg-neutral-400 text-neutral-100':''}`}
                 >
@@ -410,7 +469,7 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
                 </div>
                 </motion.div>
                 <Button 
-                    onClick={() =>setSelectedCard(card)}
+                    onClick={() => handleOrderClick(card)}
                     disabled={!card.teacher.physical_tutouring && !card.teacher.digital_tutouring}
                     className={`${(!card.teacher.physical_tutouring && !card.teacher.digital_tutouring)? 'bg-neutral-400 text-neutral-100':''}`}
                 >
