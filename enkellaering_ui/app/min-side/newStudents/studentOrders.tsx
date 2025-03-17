@@ -66,7 +66,9 @@ export function StudentOrderActions( {student} : {student :Student}) {
     }
 
 
-  return <StudentOrderActionsTable orders={orders}/>;
+  return <div className="rounded-lg">
+    <StudentOrderActionsTable orders={orders}/>
+  </div>
 }
 
 const StudentOrderActionsTable = ({
