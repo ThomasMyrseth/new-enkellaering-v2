@@ -19,6 +19,17 @@ import {
   AlertDescription,
   AlertTitle,
 } from "@/components/ui/alert"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+  } from "@/components/ui/alert-dialog"
 import { useRouter } from "next/navigation";
 
 import { cn } from "@/lib/utils";
@@ -29,6 +40,7 @@ import { CardType } from "./typesAndData";
 
 import { ToggleFilterCards, filterCards } from "./filter";
 import { getTeacherCards } from "./getteachersAndReviews";
+import Link from "next/link";
 
 
 export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
@@ -38,12 +50,8 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
     const ref = useRef<HTMLDivElement>(null);
     const router = useRouter()
 
-    const [errorMessage, setErrorMessage] = useState<boolean | null>(null);
-    const [validPhone, setValidPhone] = useState<boolean | null>(null)
-    const [phone, setPhone] = useState<string>("");
-    const [digitalOrPhysical, setDigitalOrPhysical] = useState<boolean>(false) //digital=FALSE physical=TRUE
-    const [isDisabled, setIsDisabled] = useState<boolean>()
     const [selectedCard, setSelectedCard] = useState<CardType | null>(null);
+    const [showLoginAlert, setShowLoginAlert] = useState<boolean>(false)
 
     // Filter states
     const [filterLocation, setFilterLocation] = useState<string | null>(null);
@@ -79,11 +87,20 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
 
     //submit new student
     const handleSubmit = (teacher_user_id :string) => {
-
-        setErrorMessage(null);
+        //check if the user is logged in
+        const token :string|null= localStorage.getItem('token') || null;
+        const isTeacher = localStorage.getItem('isTeacher')
+        if (!token || !isTeacher) {
+            setShowLoginAlert(true)
+            return;
+        }
 
         router.push(`/bestill-laerer?teacher_user_id=${teacher_user_id}`)  
     }
+
+
+
+    
     //togle main modal
     useEffect(() => {
         function onKeyDown(event: KeyboardEvent) {
@@ -106,6 +123,22 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
 
     return (
         <>
+        {/*Login alert dialog*/}
+        <AlertDialog open={showLoginAlert}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+            <AlertDialogTitle>Logg inn før du bestiller!</AlertDialogTitle>
+            <AlertDialogDescription>
+                Før du kan bestille er du nødt til å <Link href="/login" className="underline">logge inn</Link> eller <Link href="/signup" className="underline">opprette en konto</Link>
+            </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setShowLoginAlert(false)}>Gå tilbake</AlertDialogCancel>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+        </AlertDialog>
+
+
         {/*Filtering */}
         <div className="bg-neutral-100 dark:bg-black p-4 rounded-xl">
           <ToggleFilterCards
@@ -168,7 +201,7 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
                         layoutId={`title-${active.teacher.firstname}-${id}`}
                         className="font-bold text-neutral-700 dark:text-neutral-200"
                         >
-                        {active.teacher.firstname}
+                        {active.teacher.firstname} {active.teacher.location}
                         </motion.h3>
                         <motion.p
                             layoutId={`description-${active.teacher.firstname}-${id}`}
@@ -256,7 +289,7 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
                             className="flex flex-col w-28 font-bold text-neutral-800 dark:text-neutral-200 text-center md:text-left"
                         >
                             {card.teacher.firstname}
-                            <span className="text-xs font-light">{card.location}</span>
+                            <span className="text-xs font-light">{card.teacher.location}</span>
                             <span>
                                 <RenderStars rating = {avgRating}/>
                             </span>
@@ -276,10 +309,10 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
                                 </>)
                             })}
                         </motion.p>
-                        <motion.p className={`font-light text-xs rounded-lg m-2 p-1 ${card.digitalTutouring? 'text-emerald-400': 'text-rose-400'}`}>
+                        <motion.p className={`font-light text-xs rounded-lg m-2 p-1 ${card.teacher.digital_tutouring? 'text-emerald-400': 'text-rose-400'}`}>
                         <Laptop/> digital
                         </motion.p>
-                        <motion.p className={`font-light text-xs rounded-lg p-1 m-1 ${card.physicalTutouring? 'text-emerald-400': 'text-rose-400'}`}>
+                        <motion.p className={`font-light text-xs rounded-lg p-1 m-1 ${card.teacher.physical_tutouring? 'text-emerald-400': 'text-rose-400'}`}>
                             <Users/> fysisk
                         </motion.p>
                         </div>
@@ -287,8 +320,8 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
                 </motion.div>
                 <Button 
                     onClick={() => handleSubmit(card.teacher.user_id)}
-                    disabled={!card.physicalTutouring && !card.digitalTutouring}
-                    className={`min-w-32 ${(!card.physicalTutouring && !card.digitalTutouring)? 'bg-neutral-400 text-neutral-100':''}`}
+                    disabled={!card.teacher.physical_tutouring && !card.teacher.digital_tutouring}
+                    className={`min-w-32 ${(!card.teacher.physical_tutouring && !card.teacher.digital_tutouring)? 'bg-neutral-400 text-neutral-100':''}`}
                 >
                     Bestill {card.teacher.firstname}
                 </Button>
@@ -349,7 +382,7 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
                             className="font-medium text-neutral-800 dark:text-neutral-200 text-center md:text-left text-base"
                         >
                             {card.teacher.firstname} <br/>
-                            <span className="flex flex-row items-center text-xs font-light"> <span className="mr-2">{card.location}</span> <RenderStars rating={avgRating}/></span>
+                            <span className="flex flex-row items-center text-xs font-light"> <span className="mr-2">{card.teacher.location}</span> <RenderStars rating={avgRating}/></span>
                         </motion.h3>
                         <motion.p
                             layoutId={`description-${card.teacher.firstname}-${id}`}
@@ -366,10 +399,10 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
                             })}
                         </motion.p>
                         <div className="flex flex-row">
-                            <motion.p className={`rounded-lg m-2 p-1 ${card.digitalTutouring? 'text-emerald-400': 'text-rose-400'}`}>
+                            <motion.p className={`rounded-lg m-2 p-1 ${card.teacher.digital_tutouring? 'text-emerald-400': 'text-rose-400'}`}>
                                 <Laptop/> digital
                             </motion.p>
-                            <motion.p className={`rounded-lg m-2 p-1 ${card.physicalTutouring? 'text-emerald-400': 'text-rose-400'}`}>
+                            <motion.p className={`rounded-lg m-2 p-1 ${card.teacher.physical_tutouring? 'text-emerald-400': 'text-rose-400'}`}>
                                <Users/> fysisk
                             </motion.p>
                         </div>
@@ -378,8 +411,8 @@ export function TeacherFocusCards({baseUrl} : {baseUrl :string}) {
                 </motion.div>
                 <Button 
                     onClick={() =>setSelectedCard(card)}
-                    disabled={!card.physicalTutouring && !card.digitalTutouring}
-                    className={`${(!card.physicalTutouring && !card.digitalTutouring)? 'bg-neutral-400 text-neutral-100':''}`}
+                    disabled={!card.teacher.physical_tutouring && !card.teacher.digital_tutouring}
+                    className={`${(!card.teacher.physical_tutouring && !card.teacher.digital_tutouring)? 'bg-neutral-400 text-neutral-100':''}`}
                 >
                     Bestill {card.teacher.firstname}
                 </Button>

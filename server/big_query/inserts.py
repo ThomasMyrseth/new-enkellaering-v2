@@ -1,5 +1,5 @@
 from google.cloud import bigquery
-from big_query.bq_types import Teachers, Students, Referrals, NewStudents, Classes
+from big_query.bq_types import Teacher, Students, Referrals, NewStudents, Classes
 from dotenv import load_dotenv
 import os
 from datetime import datetime, timezone
@@ -16,7 +16,7 @@ NEW_STUDENTS_DATASET = os.getenv('NEW_STUDENTS_DATASET')
 QUIZ_DATASET = os.getenv('QUIZ_DATASET')
 
 
-def insert_teacher(client: bigquery.Client, teacher: Teachers):
+def insert_teacher(client: bigquery.Client, teacher: Teacher):
     query = f"""
         INSERT INTO `{USER_DATASET}.teachers` (
             user_id,
@@ -32,7 +32,10 @@ def insert_teacher(client: bigquery.Client, teacher: Teachers):
             created_at,
             admin,
             resigned_at,
-            wants_more_students
+            wants_more_students,
+            location,
+            digital_tutouring,
+            physical_tutouring
         )
         VALUES (
             @user_id,
@@ -43,12 +46,15 @@ def insert_teacher(client: bigquery.Client, teacher: Teachers):
             @address,
             @postal_code,
             @hourly_pay,
+            @resigned,
             @additional_comments,
             @created_at,
             @admin,
-            @resigned,
             @resigned_at,
-            TRUE
+            @wants_more_students,
+            @location,
+            @digital_tutouring,
+            @physical_tutouring
         )
     """
     job_config = bigquery.QueryJobConfig(
@@ -61,16 +67,19 @@ def insert_teacher(client: bigquery.Client, teacher: Teachers):
             bigquery.ScalarQueryParameter("address", "STRING", teacher.address),
             bigquery.ScalarQueryParameter("postal_code", "STRING", teacher.postal_code),
             bigquery.ScalarQueryParameter("hourly_pay", "STRING", teacher.hourly_pay),
-            bigquery.ScalarQueryParameter("additional_comments", "STRING", teacher.additional_comments),    
+            bigquery.ScalarQueryParameter("resigned", "BOOL", teacher.resigned),
+            bigquery.ScalarQueryParameter("additional_comments", "STRING", teacher.additional_comments),
             bigquery.ScalarQueryParameter("created_at", "TIMESTAMP", teacher.created_at),
             bigquery.ScalarQueryParameter("admin", "BOOL", teacher.admin),
-            bigquery.ScalarQueryParameter("resigned", "BOOL", teacher.resigned),
             bigquery.ScalarQueryParameter("resigned_at", "TIMESTAMP", teacher.resigned_at),
+            bigquery.ScalarQueryParameter("wants_more_students", "BOOL", True),
+            bigquery.ScalarQueryParameter("location", "STRING", teacher.location),
+            bigquery.ScalarQueryParameter("digital_tutouring", "BOOL", teacher.digital_tutouring),
+            bigquery.ScalarQueryParameter("physical_tutouring", "BOOL", teacher.physical_tutouring),
         ]
     )
-    response =  client.query(query, job_config=job_config, location='EU')
+    response = client.query(query, job_config=job_config, location='EU')
     print(response.result())
-
 
 def insert_student(client: bigquery.Client, student: Students):
     query = f"""

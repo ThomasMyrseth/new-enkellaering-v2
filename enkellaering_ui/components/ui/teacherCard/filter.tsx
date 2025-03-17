@@ -123,7 +123,7 @@ export const filterCards = (
   
     return cards.filter((card) => {
       // Check location filter
-      if (filterLocation && card.location !== filterLocation) {
+      if (filterLocation && card.teacher.location !== filterLocation) {
         return false;
       }
       // Check qualification filter
@@ -131,11 +131,11 @@ export const filterCards = (
         return false;
       }
       // Filter for digital tutoring
-      if (filterDigital && !card.digitalTutouring) {
+      if (filterDigital && !card.teacher.digital_tutouring) {
         return false;
       }
       // Filter for physical tutoring
-      if (filterPhysical && !card.physicalTutouring) {
+      if (filterPhysical && !card.teacher.physical_tutouring) {
         return false;
       }
       // If all conditions pass, include the card

@@ -4,7 +4,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 import os
 import uuid
-from big_query.bq_types import Students, Teachers
+from big_query.bq_types import Students, Teacher
 from flask.sessions import SessionInterface, SessionMixin
 from flask_cors import CORS
 from dotenv import load_dotenv
@@ -398,13 +398,16 @@ def register_teacher():
         admin = False
         resigned_at = None
         additional_comments = data.get("additional_comments") or ""
+        location = data.get('location')
+        physical = data.get('physical_tutouring')
+        digital = data.get('digital_tutouring')
 
         # Validate required fields
         if not all([firstname, lastname, email, phone]):
             return jsonify({"error": "All required fields must be filled."}), 400
 
         # Create a new teacher object
-        new_teacher = Teachers(
+        new_teacher = Teacher(
             user_id=user_id,
             firstname=firstname,
             lastname=lastname,
@@ -417,7 +420,10 @@ def register_teacher():
             created_at=created_at,
             admin=admin,
             resigned_at=resigned_at,
-            additional_comments=additional_comments
+            additional_comments=additional_comments,
+            location=location,
+            physical_tutouring=physical,
+            digital_tutouring=digital
         )
 
         # Insert the new teacher into the database
@@ -662,13 +668,14 @@ def get_teacher_for_student_route(user_id):
     data = res.result()
     teacher_data = [dict(row) for row in data]  # Assuming multiple rows, adjust as needed
 
+
     if len(teacher_data)==0:
         return jsonify({
-            "teacher": []
+            "teachers": []
         }), 200
 
     return jsonify({
-        "teacher": teacher_data[0]
+        "teachers": teacher_data
     }), 200
 
 @app.route('/get-classes-for-student', methods=["GET"])

@@ -16,7 +16,7 @@ const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080/serve
 export default function MinSideStudentPage() {
     const token = localStorage.getItem('token') || ''
     const [student, setStudent] = useState<Student>()
-    const [teacher, setTeacher] = useState<Teacher>()
+    const [teachers, setTeachers] = useState<Teacher[]>()
 
 
     //fetch data
@@ -26,7 +26,7 @@ export default function MinSideStudentPage() {
             const t = await fetchTeacher(token)
     
             if (t) {
-                setTeacher(t)
+                setTeachers(t)
             }
             if (s) {
                 setStudent(s)
@@ -35,7 +35,7 @@ export default function MinSideStudentPage() {
         fetchData()
     },[])
 
-    if (!student || !teacher) {
+    if (!student || !teachers) {
         return (<>
             <p>Loading...</p>
         </>)
@@ -47,11 +47,13 @@ export default function MinSideStudentPage() {
             <div className="flex flex-col items-center justify-center m-4">
                 <StudentOrderActions student={student} />
                 <IsActive student={student}/>
-                <MyTeacher teacher={teacher}/>
+                {teachers.map((t: Teacher) => {
+                    return <MyTeacher teacher={t} />;
+                })}
                 <IsActive student={student}/>
                 <PreviousClasses student={student} />
                 <IsActive student={student}/>
-                <LeaveReview baseUrl={BASEURL} token={token} teacherUserId={teacher.user_id} teacherName={teacher.firstname} firstnameParent={student.firstname_parent} />
+                {/* <LeaveReview baseUrl={BASEURL} token={token} teacherUserId={teacher.user_id} teacherName={teacher.firstname} firstnameParent={student.firstname_parent} /> */}
             </div>
 
         </div>
@@ -74,13 +76,12 @@ async function fetchTeacher(token :string) {
     }
 
     const data = await response.json()
-    const teacher = data.teacher
-    console.log(teacher)
+    const teachers : Teacher[]= data.teachers
     
-    if (!teacher || Object.keys(teacher).length === 0) {
+    if (!teachers || Object.keys(teachers).length === 0) {
         return false;
     } else {
-        return teacher
+        return teachers
     }
 }
 

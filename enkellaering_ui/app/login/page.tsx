@@ -42,6 +42,7 @@ export default function LoginForm() {
           
           localStorage.setItem('token', data.token)
           localStorage.setItem('isAuthenticated', 'true');
+          localStorage.setItem('isTeacher', 'false')
 
           router.push(`/min-side`);
         }).catch(err => {

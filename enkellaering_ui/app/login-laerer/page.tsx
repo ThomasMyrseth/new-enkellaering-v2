@@ -43,6 +43,7 @@ export default function LoginForm() {
         console.log("pushing to /min-side-laerer")
         localStorage.setItem('isAuthenticated', 'true');
         localStorage.setItem('token', data.token)
+        localStorage.setItem('isTeacher', 'true')
 
         router.push('/min-side-laerer')
       } else {

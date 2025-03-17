@@ -273,11 +273,12 @@ def get_teacher_by_email(client: bigquery.Client, email):
 
 def get_teacher_for_student(client: bigquery.Client, student_user_id):
     query = f"""
-        SELECT teachers.*
-        FROM {USER_DATASET}.teachers
-        JOIN {USER_DATASET}.students 
-        ON teachers.user_id = students.your_teacher
-        WHERE students.user_id = @student_user_id
+        SELECT t.*
+        FROM {USER_DATASET}.teachers AS t
+        JOIN {USER_DATASET}.teacher_student AS ts
+        ON t.user_id = ts.teacher_user_id
+        WHERE ts.student_user_id = @student_user_id
+        AND ts.teacher_accepted_student=TRUE
     """
 
     job_config = bigquery.QueryJobConfig(

@@ -1,39 +1,27 @@
 from typing import Optional
 from datetime import datetime
-from google.cloud import bigquery
+from dataclasses import dataclass, field
 
+@dataclass
+class Teacher:
+    user_id: str                       # REQUIRED
+    firstname: str                     # REQUIRED
+    lastname: str                      # REQUIRED
+    email: str                         # REQUIRED
+    phone: Optional[str] = None        # NULLABLE
+    address: Optional[str] = None      # NULLABLE
+    postal_code: Optional[str] = None  # NULLABLE
+    hourly_pay: Optional[str] = None   # NULLABLE
+    additional_comments: Optional[str] = None  # NULLABLE
+    created_at: Optional[datetime] = field(default_factory=datetime.utcnow)  # NULLABLE, default CURRENT_TIMESTAMP()
+    admin: Optional[bool] = False      # NULLABLE, default FALSE
+    resigned: bool = False
+    resigned_at: Optional[datetime] = None  # NULLABLE
+    wants_more_students: Optional[bool] = True  # NULLABLE, default TRUE
+    location: Optional[str] = None     # NULLABLE; City the teacher resides in
+    digital_tutouring: Optional[bool] = None  # NULLABLE; TRUE if the teacher can tutor digitally (must have an ipad)
+    physical_tutouring: Optional[bool] = None # NULLABLE; TRUE if the teacher is willing to meet student in person
 
-# TEACHERS table
-class Teachers:
-    def __init__(
-        self,
-        user_id: str,
-        firstname: str,
-        lastname: str,
-        email: str,
-        phone: str,
-        address: str,
-        postal_code: str,
-        hourly_pay: str,
-        resigned: bool,
-        additional_comments: str,
-        created_at: Optional[datetime] = None,
-        admin: Optional[bool] = None,
-        resigned_at: Optional[datetime] = None,
-    ):
-        self.user_id = user_id
-        self.firstname = firstname
-        self.lastname = lastname
-        self.email = email
-        self.phone = phone
-        self.address = address
-        self.postal_code = postal_code
-        self.hourly_pay = hourly_pay
-        self.resigned = resigned
-        self.created_at = created_at or datetime.now()
-        self.admin = admin
-        self.resigned_at = resigned_at
-        self.additional_comments = additional_comments or ""
 
 # STUDENTS table
 class Students:
