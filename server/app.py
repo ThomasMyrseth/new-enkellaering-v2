@@ -1390,9 +1390,10 @@ def set_student_to_active_route(user_id):
 @token_required
 def toggle_want_more_students_route(user_id):
     data = request.get_json()
-    wants_more_students = data.get('wants_more_students') or False
+    physical = data.get('physical')
+    digital = data.get('digital')
 
-    res = toggleWantMoreStudents(client=bq_client, wants_more_students=wants_more_students, teacher_user_id=user_id)
+    res = toggleWantMoreStudents(client=bq_client, physical=physical, digital=digital, teacher_user_id=user_id)
 
     if not res or res.errors:
         print("Error setting student to active", res.errors)
@@ -1849,6 +1850,42 @@ def update_order_data_route(user_id):
     
     try:
         res = update_new_order(row_id=row_id, teacher_accepted_student=teacher_accepted_student, physical_or_digital=physical_or_digital, preferred_location=meeting_location, client=bq_client)
+        if res:
+            return jsonify({"message": "Updated new order"}), 200
+        
+        raise(Exception("Error updating new order"))
+    
+    except Exception as e:
+        print(f"error updating new order {e}")
+        return jsonify({"message": f"Error updating new order {e}"}), 500
+
+
+from big_query.alters import update_teacher_profile
+@app.route('/update-teacher-profile', methods=["POST"])
+@token_required
+def update_teacher_profile_route(user_id):
+    teacher_user_id = user_id
+
+    if not teacher_user_id:
+        return jsonify({"message": "Unauthorized"}), 401
+    
+    data = request.get_json()
+    firstname = data.get('firstname')
+    lastname = data.get('lastname')
+    email = data.get('email')
+    phone = data.get('phone')
+    address = data.get('address')
+    postal_code = data.get('postal_code')
+    additional_comments = data.get('additional_comments')
+    location = data.get('location')
+    physical = data.get('physical_tutouring')
+    digital = data.get('digital_tutouring')
+
+    if not (firstname and lastname and email and phone and address and postal_code):
+        return jsonify({"message": "Missing required fields"}), 400
+    
+    try:
+        res = update_teacher_profile(client=bq_client, teacher_user_id=teacher_user_id, firstname=firstname, lastname=lastname, email=email, phone=phone, address=address, postal_code=postal_code, additional_comments=additional_comments, location=location, physical=physical, digital=digital)
         if res:
             return jsonify({"message": "Updated new order"}), 200
         

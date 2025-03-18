@@ -234,18 +234,20 @@ def setStudentToActive(client: bigquery.Client, student_user_id: str, admin_user
 
 
 
-def toggleWantMoreStudents(client: bigquery.Client, wants_more_students :bool, teacher_user_id: str):
+def toggleWantMoreStudents(client: bigquery.Client, physical :bool, digital: bool, teacher_user_id: str):
     query = f"""
         UPDATE `{USER_DATASET}.teachers`
         SET
-            wants_more_students = @wants_more_students
+            digital_tutouring = @digital_tutouring,
+            physical_tutouring = @physical_tutouring
         WHERE user_id = @teacher_user_id
     """
 
     # Define query parameters
     job_config = bigquery.QueryJobConfig(
         query_parameters=[
-            bigquery.ScalarQueryParameter("wants_more_students", "BOOL", wants_more_students),
+            bigquery.ScalarQueryParameter("digital_tutouring", "BOOL", digital),
+            bigquery.ScalarQueryParameter("physical_tutouring", "BOOL", physical),
             bigquery.ScalarQueryParameter("teacher_user_id", "STRING", teacher_user_id),
         ]
     )
@@ -363,3 +365,56 @@ def update_new_order(row_id: str, client: bigquery.Client, teacher_accepted_stud
     except Exception as e:
         print(f"Error updating new order: {e}")
         raise RuntimeError(f"Error updating new order: {query_job.errors}")
+    
+
+
+
+def update_teacher_profile(
+    client: bigquery.Client,
+    teacher_user_id: str,
+    firstname: str,
+    lastname: str,
+    email: str,
+    phone: str,
+    address: str,
+    postal_code: str,
+    additional_comments: str = None,
+    location: str = None,
+    physical: bool = None,
+    digital: bool = None
+):
+    query = f"""
+        UPDATE `{USER_DATASET}.teachers`
+        SET
+            firstname = @firstname,
+            lastname = @lastname,
+            email = @email,
+            phone = @phone,
+            address = @address,
+            postal_code = @postal_code,
+            additional_comments = @additional_comments,
+            location = @location,
+            physical_tutouring = @physical_tutouring,
+            digital_tutouring = @digital_tutouring
+        WHERE user_id = @teacher_user_id
+    """
+
+    # Define query parameters
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("firstname", "STRING", firstname),
+            bigquery.ScalarQueryParameter("lastname", "STRING", lastname),
+            bigquery.ScalarQueryParameter("email", "STRING", email),
+            bigquery.ScalarQueryParameter("phone", "STRING", phone),
+            bigquery.ScalarQueryParameter("address", "STRING", address),
+            bigquery.ScalarQueryParameter("postal_code", "STRING", postal_code),
+            bigquery.ScalarQueryParameter("additional_comments", "STRING", additional_comments),
+            bigquery.ScalarQueryParameter("location", "STRING", location),
+            bigquery.ScalarQueryParameter("physical_tutouring", "BOOL", physical),
+            bigquery.ScalarQueryParameter("digital_tutouring", "BOOL", digital),
+            bigquery.ScalarQueryParameter("teacher_user_id", "STRING", teacher_user_id),
+        ]
+    )
+
+    # Run the query
+    return client.query(query, job_config=job_config, location='EU')

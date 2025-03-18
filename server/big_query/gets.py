@@ -169,7 +169,8 @@ def get_all_new_students_with_preferred_teacher(client: bigquery.Client, teacher
                     "physical_or_digital": row.physical_or_digital,
                     "preferred_location": row.preferred_location,
                     "created_at": row.created_at,
-                    "hidden": row.hidden
+                    "hidden": row.hidden,
+                    "order_comments": row.order_comments
                 }
             })
 

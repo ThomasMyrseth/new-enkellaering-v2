@@ -15,6 +15,7 @@ import { YourStudent } from "./yourStudents";
 import { TeacherName  } from "./teacherName";
 import { WantMoreStudents } from "./wantsMoreStudents";
 import { DailyRevenueChart } from "./revenueChart";
+import { ProfileForm } from "./changeProfileInfo";
 
 export default function LaererPage() {
     const [teacher, setTeacher] = useState<Teacher>()
@@ -54,6 +55,7 @@ export default function LaererPage() {
             <br/>
             <UnacceptedStudentsTable teacher={teacher}/>
 
+            <ProfileForm teacher={teacher}/>
             <WantMoreStudents teacher={teacher}/>
 
             <QuizStatusPage token={token} baseUrl={BASEURL}/>
