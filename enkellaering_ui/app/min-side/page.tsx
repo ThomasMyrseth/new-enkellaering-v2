@@ -3,12 +3,12 @@ import { useEffect, useState } from "react";
 
 import LeaveReview from "./review";
 import { Student, Teacher } from "../admin/types";
-import { StudentOrderActions } from "./newStudents/studentOrders";
 
 import { StudentName } from "./studentName";
 import { IsActive } from "./isActive";
 import { MyTeacher } from "./myTeacher";
 import { PreviousClasses } from "./previousClasses";
+import OrderCardsCarouselDemo from "./newStudents/orderCards";
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080/server";
 
@@ -45,15 +45,16 @@ export default function MinSideStudentPage() {
             <IsActive student={student}/>
             <StudentName student={student} />
             <div className="flex flex-col items-center justify-center m-4">
-                <StudentOrderActions student={student} />
                 <IsActive student={student}/>
+                <OrderCardsCarouselDemo/>
                 {teachers.map((t: Teacher) => {
                     return <MyTeacher teacher={t} />;
                 })}
                 <IsActive student={student}/>
                 <PreviousClasses student={student} />
                 <IsActive student={student}/>
-                {/* <LeaveReview baseUrl={BASEURL} token={token} teacherUserId={teacher.user_id} teacherName={teacher.firstname} firstnameParent={student.firstname_parent} /> */}
+    
+                <LeaveReview baseUrl={BASEURL} token={token} teachers={teachers} student={student} />
             </div>
 
         </div>

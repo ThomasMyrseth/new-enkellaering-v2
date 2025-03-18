@@ -43,28 +43,40 @@ const canselNewOrder = async (BASEURL :string, token :string, row_id :string) :P
 };
 
 
-// // Update a new order
-// const updateNewStudent = async (BASEURL: string, token: string, studentOrder: TeacherOrder): Promise<boolean> => {
-//     try {
-//         const res = await fetch(`${BASEURL}/update-new-student-order`, {
-//             method: "POST",
-//             headers: {
-//                 "Content-Type": "application/json",
-//                 "Authorization": `Bearer ${token}`
-//             },
-//             body: JSON.stringify({ student_order: studentOrder })
-//         });
 
-//         if (!res.ok) {
-//             throw new Error(`Failed to update student order: ${res.status} ${res.statusText}`);
-//         }
+// Define an interface for the teacher image and about me object.
+export interface TeacherImageAndAboutMe {
+    about_me: string;
+    firstname: string;
+    lastname: string;
+    user_id: string;
+    image: string;
+  }
+  
+  // Get all teacher images and about me texts.
+const getAllTeacherImagesAndAboutMes = async (
+    BASEURL: string,
+    token: string
+  ): Promise<TeacherImageAndAboutMe[]> => {
+    try {
+      const res = await fetch(`${BASEURL}/get-all-teacher-images-and-about-mes`, {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+  
+      if (!res.ok) {
+        throw new Error(
+          `Failed to fetch teacher images and about me: ${res.status} ${res.statusText}`
+        );
+      }
+  
+      const data = await res.json();
+      return (data.data as TeacherImageAndAboutMe[]) || [];
+    } catch (e: any) {
+      throw new Error(`Failed to get teacher images and about me: ${e.message}`);
+    }
+};
 
-//         return true;
-//     } catch (e: any) {
-//         throw new Error(`Failed to update new student: ${e.message}`);
-//     }
-// };
-
-
-
-export { getNewTeachers, canselNewOrder };
+export { getNewTeachers, canselNewOrder, getAllTeacherImagesAndAboutMes };
