@@ -58,6 +58,7 @@ export function TeacherFocusCards() {
     const id = useId();
     const ref = useRef<HTMLDivElement>(null);
     const router = useRouter()
+    const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8080'
 
     const [showLoginAlert, setShowLoginAlert] = useState<boolean>(false)
     const [showOrderPopover, setShowOrderPopover] = useState<boolean>(false)
@@ -113,13 +114,13 @@ export function TeacherFocusCards() {
             setWantPhysicalOrDigital(true) //physical
         }
 
-
         setOrderedTeacher(card)
         setShowOrderPopover(true)
     }
+
     //submit new student
     const handleSubmit = () => {
-
+        console.log("\n\nsubmitting new order\n\n")
         const token :string|null= localStorage.getItem('token') || null;
         const isTeacher = localStorage.getItem('isTeacher')
         if (!token || !isTeacher) {
@@ -129,8 +130,19 @@ export function TeacherFocusCards() {
         
         if (!orderedTeacher) {
             alert('Klarte ikke å bestille lærer. Prøv igjen')
+            return;
         }
-        router.push(`/bestill-laerer?teacher_user_id=${orderedTeacher?.teacher.user_id}&physical_or_digital=${wantPhysicalOrDigital}&address=${address}&comments=${comments}`)
+
+        if (wantPhysicalOrDigital===null) {
+            alert("Velg om dere ønsker digital eller fysisk undervisning")
+            return;
+        }
+        try {
+            submitNewRequest(BASEURL, token, orderedTeacher.teacher.user_id, wantPhysicalOrDigital, address, comments, router)
+        }
+        catch {
+            alert("Klarte ikke å bestille, prøv igjen.")
+        }
     }
 
 
@@ -527,9 +539,35 @@ const CloseIcon = () => {
     );
 };
   
-const LabelInputContainer = ({ children }: { children: React.ReactNode }) => {
-return <div className="mb-4">{children}</div>;
-};
 
+
+const submitNewRequest = async (BASEURL: string, token: string, teacher_user_id: string, physical_or_digital :boolean, address :string, comments :string, router : ReturnType<typeof useRouter>) => {
+
+    try {
+        const res = await fetch(`${BASEURL}/request-new-teacher`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify(
+                {teacher_user_id: teacher_user_id,
+                physical_or_digital: physical_or_digital,
+                address: address,
+                comments: comments
+            })
+        });
+
+        if (!res.ok) {
+            console.log(`request failed: ${res.status} - ${res.statusText}`)
+            throw new Error(`Error fetching: ${res.status} - ${res.statusText}`);
+        }
+
+        router.push('/min-side')
+    } catch (error) {
+        console.error("Request failed:", error);
+        throw new Error("Failed to submit new teacher request");
+    }
+};
 
 

@@ -612,6 +612,7 @@ def get_new_orders(student_user_id :str, client: bigquery.Client):
                     "physical_or_digital": row.physical_or_digital,
                     "preferred_location": row.preferred_location,
                     "created_at": row.created_at,
+                    "order_comments": row.order_comments,
                     "hidden": row.hidden
                 }
             })

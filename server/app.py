@@ -1763,6 +1763,7 @@ from big_query.inserts import insert_new_student_order
 @app.route('/request-new-teacher', methods=["POST"])
 @token_required
 def request_new_teacher_route(user_id):
+    print("\n\nrewuesting new teacher \n\n")
     data = request.get_json()
     teacher_user_id = data.get('teacher_user_id')
     physical_or_digital = data.get('physical_or_digital') or False

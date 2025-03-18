@@ -1,4 +1,4 @@
-import { Teacher, TeacherOrder, TeacherOrderJoinTeacher } from "../types";
+import { TeacherOrderJoinTeacher } from "../types";
 
 // Get all the new orders
 const getNewTeachers = async (BASEURL: string, token: string): Promise<TeacherOrderJoinTeacher[]> => {
