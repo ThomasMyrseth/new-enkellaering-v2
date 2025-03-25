@@ -6,7 +6,7 @@ import { Student, Teacher } from "../admin/types";
 
 import { StudentName } from "./studentName";
 import { IsActive } from "./isActive";
-import { MyTeacher } from "./myTeacher";
+import { MyTeachers } from "./myTeacher";
 import { PreviousClasses } from "./previousClasses";
 import OrderCardsCarouselDemo from "./newStudents/orderCards";
 
@@ -47,9 +47,7 @@ export default function MinSideStudentPage() {
             <div className="flex flex-col items-center justify-center m-4">
                 <IsActive student={student}/>
                 <OrderCardsCarouselDemo/>
-                {teachers.map((t: Teacher) => {
-                    return <MyTeacher teacher={t} />;
-                })}
+                <MyTeachers teachers={teachers} />;
                 <IsActive student={student}/>
                 <PreviousClasses student={student} />
                 <IsActive student={student}/>

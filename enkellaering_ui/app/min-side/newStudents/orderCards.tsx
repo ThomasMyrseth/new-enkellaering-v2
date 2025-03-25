@@ -31,6 +31,7 @@ export default function OrderCardsCarouselDemo() {
                     return {
                       teacherOrder: order,
                       imageURL: foundImage ? foundImage.image : "/placeholder-image.webp", // Provide a default value if no image is found.
+                      handleDelete: deleteOrder
                     };
                 });
 
@@ -48,16 +49,30 @@ export default function OrderCardsCarouselDemo() {
         fetchOrders()
     },[])
 
-  const cards = orders.map((order) => (
-    <OrderCard key={order.teacherOrder.order.row_id} order={order} />
-  ));
+    //pass this fucntion to every card
+    const deleteOrder = (rowId: string) => {
+      setOrders((prevOrders) =>
+        prevOrders.filter(
+          (order) => order.teacherOrder.order.row_id !== rowId
+        )
+      );
+    };
 
-  return (
-    <div className="w-full h-full py-20">
-      <h2 className="max-w-7xl pl-4 mx-auto text-xl md:text-5xl font-bold text-neutral-800 dark:text-neutral-200 font-sans">
-        Order Dashboard
-      </h2>
-      <Carousel items={cards} />
-    </div>
-  );
+    let cards = orders
+      .map((order: Order) => {
+        if (order.teacherOrder.order.hidden) {
+          return null;
+        }
+        return <OrderCard key={order.teacherOrder.order.row_id} order={order} handleUIDelete={deleteOrder}/>;
+      })
+      .filter((card): card is JSX.Element => card !== null);
+
+      return (
+        <div className="w-full">
+          <h2 className="text-center mx-auto text-xl md:text-5xl font-bold text-neutral-800 dark:text-neutral-200 font-sans">
+            Dine bestillinger
+          </h2>
+          <Carousel items={cards} handleDelete={deleteOrder}/>
+        </div>
+      );
 }

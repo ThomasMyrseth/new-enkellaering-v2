@@ -26,13 +26,11 @@ interface Order {
   imageURL: string;
 }
 
-interface OrderCardProps {
-  order: Order;
-}
+
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080";
 
-export default function OrderCard({ order }: OrderCardProps) {
+export default function OrderCard({ order, handleUIDelete }: {order: Order, handleUIDelete :(rowId :string) => void}) {
   const router = useRouter();
   // State for the editable fields
   const [physicalOrDigital, setPhysicalOrDigital] = useState<boolean>(
@@ -98,6 +96,10 @@ export default function OrderCard({ order }: OrderCardProps) {
 
   // Delete/hide the order.
   const handleDelete = async () => {
+
+    //update the UI
+    handleUIDelete(order.teacherOrder.order.row_id)
+
     const token = localStorage.getItem("token");
     if (!token) {
       router.push("/login");

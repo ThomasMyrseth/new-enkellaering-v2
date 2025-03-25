@@ -5,14 +5,27 @@ import { useState } from "react";
 import React from "react";
 import { CardBody, CardContainer, CardItem } from "@/components/ui/3d-card";
 import Image  from "next/image";
+import { Carousel } from "@/components/ui/apple-cards-carousel";
 
-export function MyTeacher( {teacher} : {teacher :Teacher}) {
-    const [hasTeacher, setHasTeacher] = useState<boolean>(true)
+export function MyTeachers( {teachers} : {teachers :Teacher[]}) {
+    const cards = teachers.map((t: Teacher, index: number) => (
+        <TeacherCard teacher={t} key={index} />
+    ));
 
-    if (!teacher) {
-        setHasTeacher(false)
-    }
+    return (<>
+    {cards.length===1 &&       <h2 className="text-center mx-auto text-xl md:text-5xl font-bold text-neutral-800 dark:text-neutral-200 font-sans">
+        Din lærer</h2>}
+    {cards.length!==1 &&       <h2 className="text-center mx-auto text-xl md:text-5xl font-bold text-neutral-800 dark:text-neutral-200 font-sans">
+        Dine lærere</h2>}
+        <Carousel items={cards}/>
+    </>)
 
+
+    
+}
+
+const TeacherCard = ({teacher} : {teacher :Teacher}) => {
+    const hasTeacher :boolean = teacher !==null
 
     return(<div className="w-full overflow-hidden">
         <CardContainer className="inter-var">
@@ -23,7 +36,7 @@ export function MyTeacher( {teacher} : {teacher :Teacher}) {
                 >
                 {hasTeacher ? (
                     <>
-                        <span className="font-light">Deres lærer er</span> {teacher?.firstname} {teacher?.lastname}
+                        {teacher?.firstname} {teacher?.lastname}
                     </>
                 ) : (
                     <span>Dere har ikke fått oppsatt en lærer enda.</span>
