@@ -434,7 +434,9 @@ function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUse
 
         const response = await uploadClass()
 
-        setIsSendButtonDisabled(false)
+        if (response) {
+            setIsSendButtonDisabled(false)
+        }
     };
 
     const uploadClass = async() => {

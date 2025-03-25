@@ -19,16 +19,16 @@ import {
 } from "@/components/ui/accordion";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Student, Classes } from "../admin/types";
+import { Student, ClassesJoinTeacher } from "../admin/types";
 
 export function PreviousClasses({student} : {student : Student}) {     
     const token = localStorage.getItem('token') 
     const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8080' 
     const router = useRouter()
 
-    const [classes, setClasses] = useState<Classes[]>();
-    const [firstTenClasses, setFirstTenclasses] = useState<Classes[]>()
-    const [remainingClasses, setRemainingClasses] = useState<Classes[]>()
+    const [classes, setClasses] = useState<ClassesJoinTeacher[]>();
+    const [firstTenClasses, setFirstTenclasses] = useState<ClassesJoinTeacher[]>()
+    const [remainingClasses, setRemainingClasses] = useState<ClassesJoinTeacher[]>()
     const [loading, setLoading] = useState<boolean>(true)
     let totalAmount :number = 0
 
@@ -57,7 +57,6 @@ export function PreviousClasses({student} : {student : Student}) {
             }
 
             const data = await response.json()
-            console.log("classses:", data.classes)
             const classes = data.classes
 
             if (classes.length === 0) {
@@ -129,6 +128,7 @@ export function PreviousClasses({student} : {student : Student}) {
         <TableHeader>
             <TableRow>
                 <TableHead className="w-[100px]">Dato</TableHead>
+                <TableHead>Lærer</TableHead>
                 <TableHead>Varighet</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Beløp</TableHead>
@@ -148,6 +148,7 @@ export function PreviousClasses({student} : {student : Student}) {
                 return(
                     <TableRow key={index} className={`${c.was_canselled===true? 'bg-red-50 dark:bg-red-950' : ''}`}>
                         <TableCell className="font-medium">{c.started_at}</TableCell>
+                        <TableCell>{c.firstname} {c.lastname}</TableCell>
                         <TableCell>{`${durationHours}t ${Math.round(durationMinutes % 60)}min`}</TableCell>
                         <TableCell>{c.invoiced_student ? <p className="text-green-400">Fakturert</p> : <p className="text-red-400">Ufakturert</p>}</TableCell>
                         <TableCell className="text-right">{amount}</TableCell>

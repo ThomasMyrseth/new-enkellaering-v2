@@ -70,6 +70,46 @@ export type Classes = {
     was_canselled :boolean;
 };
 
+export type ClassesJoinTeacher = {
+    // Fields from the Classes table
+    teacher_user_id: string;
+    student_user_id: string;
+    created_at: string; // e.g. when the class was created
+    started_at: string;
+    ended_at: string;
+    comment: string;
+    paid_teacher: boolean;
+    invoiced_student: boolean;
+    paid_teacher_at: string | null;
+    invoiced_student_at: string | null;
+    class_id: string;
+    was_canselled: boolean;
+    
+    // Fields from the Teacher table
+    // Note: In your join result, "user_id" is the teacher id (same as teacher_user_id)
+    user_id: string;
+    firstname: string;
+    lastname: string;
+    email: string;
+    phone: string;
+    address: string;
+    postal_code: string;
+    location: string;
+    hourly_pay: string;
+    resigned: boolean;
+    additional_comments: string | null;
+    // Renamed teacher's creation date to avoid conflict with the class's created_at
+    created_at_1: string;
+    admin: boolean;
+    resigned_at: string | null;
+    wants_more_students: boolean;
+    notes?: string;
+    digital_tutouring: boolean | null;
+    physical_tutouring: boolean;
+  
+    // Additional field from the join
+    was_cancelles: boolean | null;
+};
 
 export type NewStudent = {
     phone :string;
