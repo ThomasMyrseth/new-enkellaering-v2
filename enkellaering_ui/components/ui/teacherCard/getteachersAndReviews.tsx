@@ -1,5 +1,6 @@
-import { Review } from "@/app/admin/types";
+import { Review, Teacher } from "@/app/admin/types";
 import { CardType, ExpandedTeacher, AboutMe, Qualification } from "./typesAndData";
+import { TeacherOrder, TeacherOrderJoinTeacher } from "@/app/min-side/types";
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080";
 
@@ -92,12 +93,9 @@ const buildTeacherCards = (teachers: ExpandedTeacher[], reviews: Review[], image
         const card :CardType = {
             teacher: teacher,
             reviews: teacherReviews,
-            location: teacher.location,
             description: imageAndAboutMe.about_me || '',
             src: imageAndAboutMe.image || '',
             qualifications: qualificationTitles,
-            digitalTutouring: teacher.digital_tutouring || true,
-            physicalTutouring: teacher.physical_tutouring || false,
         }
 
         cards.push(card);
@@ -112,4 +110,34 @@ export const getTeacherCards = async (): Promise<CardType[]> => {
     const imagesAndAboutMes = await getAllImagesAndAboutMes();
     const qualifications = await getAllQualifications();
     return buildTeacherCards(teachers, reviews, imagesAndAboutMes, qualifications);
+};
+
+export const getMyOrders = async () => {
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+        console.error("No token found in localStorage");
+        return [];
+    }
+
+    try {
+        const response = await fetch(`${BASEURL}/get-new-orders`, {
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error("Failed to fetch teacher images and about mes");
+        }
+
+        const data = await response.json();
+        console.log("Data from previous orders", data);
+        const teachers: TeacherOrderJoinTeacher[] = data.teachers || [];
+
+        return teachers;
+    } catch (error) {
+        console.error("Error fetching previous orders:", error);
+        return [];
+    }
 };

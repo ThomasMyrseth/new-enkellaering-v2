@@ -577,6 +577,7 @@ def get_new_orders(student_user_id :str, client: bigquery.Client):
         JOIN `{USER_DATASET}.teachers` AS t
         ON t.user_id = ts.teacher_user_id
         WHERE student_user_id = @student_user_id
+        AND teacher_accepted_student != TRUE
     """
 
     job_config = bigquery.QueryJobConfig(

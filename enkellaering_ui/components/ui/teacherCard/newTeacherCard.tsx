@@ -39,7 +39,7 @@ import { Button } from "../button";
 import { CardType } from "./typesAndData";
 
 import { ToggleFilterCards, filterCards } from "./filter";
-import { getTeacherCards } from "./getteachersAndReviews";
+import { getMyOrders, getTeacherCards } from "./getteachersAndReviews";
 import Link from "next/link";
 
 import {
@@ -50,6 +50,7 @@ import {
 import { PopoverClose } from "@radix-ui/react-popover";
 import { Teacher } from "@/app/admin/types";
 import { Textarea } from "../textarea";
+import { TeacherOrder, TeacherOrderJoinTeacher } from "@/app/min-side/types";
   
 
 export function TeacherFocusCards() {
@@ -73,7 +74,9 @@ export function TeacherFocusCards() {
     const [filterDigital, setFilterDigital] = useState<boolean>(false);
     const [filterPhysical, setFilterPhysical] = useState<boolean>(false);
     const [filteredCards, setFilteredCards] = useState<CardType[]>([]); //default to cards, which os unfiltered
+
     const [cards, setCards] = useState<CardType[]>([])
+    const [previousOrders, setPreviousOrders] = useState<TeacherOrderJoinTeacher[]>([])
 
     //fetch the cards from database
     useEffect( () => {
@@ -87,7 +90,28 @@ export function TeacherFocusCards() {
                 setCards(cards)
             }
         }
+
+        async function fetchPreviousOrders() {
+            const orders = await getMyOrders();
+            console.log("previous orders: ", orders)
+            if (!orders) {
+                return;
+            } else {
+                const sevenDaysAgo = new Date();
+                sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+                
+                //keep all the orders that are less than seven days old, or orders that are already accepted
+                //the student should not be able to reorder these
+                const filteredOrders = orders.filter((o) => {
+                    return new Date(o.order.created_at) < sevenDaysAgo || o.order.teacher_user_id;
+                });
+                
+                console.log("filered orders: ", filteredOrders)
+                setPreviousOrders(filteredOrders);
+            }
+        }
         fetchCards()
+        fetchPreviousOrders()
     },[])
 
 
@@ -390,10 +414,19 @@ export function TeacherFocusCards() {
                 </motion.div>
                 <Button 
                     onClick={() => handleOrderClick(card)}
-                    disabled={!card.teacher.physical_tutouring && !card.teacher.digital_tutouring}
-                    className={`min-w-32 ${(!card.teacher.physical_tutouring && !card.teacher.digital_tutouring)? 'bg-neutral-400 text-neutral-100':''}`}
+                    disabled={
+                        (!card.teacher.physical_tutouring && !card.teacher.digital_tutouring) ||
+                        !!previousOrders.find((p) => p.order.teacher_user_id === card.teacher.user_id)
+                    }
+                    className={`py-2min-w-32 w-fit min-h-14 ${   (!card.teacher.physical_tutouring && !card.teacher.digital_tutouring) ||
+                        !!previousOrders.find((p) => p.order.teacher_user_id === card.teacher.user_id)? 'bg-neutral-400 text-neutral-100':''}`}
                 >
-                    Bestill {card.teacher.firstname}
+                    {
+                    previousOrders.find((p) => p.order.teacher_user_id === card.teacher.user_id)
+                        ? <p className="text-xs whitespace-normal">Du har allerede bestilt {card.teacher.firstname} uken, eller så er {card.teacher.firstname} læreren din</p>
+                        : <p>Bestill {card.teacher.firstname}</p>
+                    }
+                                            
                 </Button>
             </div>)})}
             </ul>
