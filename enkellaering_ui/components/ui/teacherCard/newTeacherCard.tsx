@@ -120,7 +120,6 @@ export function TeacherFocusCards() {
 
     //submit new student
     const handleSubmit = () => {
-        console.log("\n\nsubmitting new order\n\n")
         const token :string|null= localStorage.getItem('token') || null;
         const isTeacher = localStorage.getItem('isTeacher')
         if (!token || !isTeacher) {

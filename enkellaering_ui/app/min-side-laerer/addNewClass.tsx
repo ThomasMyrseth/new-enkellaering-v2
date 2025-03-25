@@ -52,10 +52,10 @@ export function AddNewClass({teacher}: {teacher: Teacher}) {
 
     const handleSetSucces = (s :boolean) => {
         setSuccess(s)
-        setSelectedStudentUserId('')
-        setStartedAt(undefined)
-        setEndedAt(undefined)
-        setComment(undefined)
+        // setSelectedStudentUserId('')
+        // setStartedAt(undefined)
+        // setEndedAt(undefined)
+        // setComment(undefined)
     }
 
 
@@ -434,9 +434,7 @@ function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUse
 
         const response = await uploadClass()
 
-        if (response) {
-            setIsSendButtonDisabled(false)
-        }
+        setIsSendButtonDisabled(false)
     };
 
     const uploadClass = async() => {
@@ -466,9 +464,11 @@ function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUse
             if (!response.ok) {
                 alert("En feil skjedde prøv igjen");
                 setUploadSuccessfull(false);
+                setIsSendButtonDisabled(false)
                 return true;
             } else {
                 setUploadSuccessfull(true);
+                setIsSendButtonDisabled(false)
                 toast("Ny time lastet opp")
                 return true;
             }

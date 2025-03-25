@@ -291,8 +291,10 @@ def get_teacher_for_student(client: bigquery.Client, student_user_id):
 def get_classes_for_student(client: bigquery.Client, student_user_id):
     query = f"""
         SELECT *
-        FROM {CLASSES_DATASET}.classes
-        WHERE student_user_id = @student_user_id
+        FROM {CLASSES_DATASET}.classes AS c
+        JOIN {USER_DATASET}.teachers AS t
+        ON c.teacher_user_id = t.user_id
+        WHERE c.student_user_id = @student_user_id
     """
 
     job_config = bigquery.QueryJobConfig(

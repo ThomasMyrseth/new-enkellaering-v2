@@ -57,6 +57,7 @@ export function PreviousClasses({student} : {student : Student}) {
             }
 
             const data = await response.json()
+            console.log("classses:", data.classes)
             const classes = data.classes
 
             if (classes.length === 0) {
