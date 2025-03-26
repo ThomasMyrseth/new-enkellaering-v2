@@ -7,12 +7,8 @@ from big_query.bq_types import Students, Teacher
 from firebase_admin import auth
 import logging
 
-from big_query.gets import get_all_about_me_texts, get_all_students, get_student_by_email, get_all_new_students, get_teacher_by_user_id, get_classes_by_teacher, get_student_for_teacher, get_student_by_user_id, get_teacher_for_student, get_classes_for_student, get_all_classes, get_all_teachers, get_new_student_by_phone, get_classes_for_teacher
-from big_query.inserts import insert_student, insert_teacher
-from big_query.alters import setHasSignedUp
-
-from app import bq_client 
-from app import generate_token
+from .config import bq_client 
+from .config import generate_token
 
 PROJECT_ID = os.getenv('PROJECT_ID')
 USER_DATASET = os.getenv('USER_DATASET')
@@ -24,6 +20,10 @@ auth_bp = Blueprint('auth', __name__)
 
 
 from big_query.inserts import insert_new_student_order
+from big_query.gets import get_student_by_email
+from big_query.inserts import insert_student
+from big_query.gets import get_new_student_by_phone
+from big_query.alters import setHasSignedUp
 @auth_bp.route('/signup', methods=['POST'])
 def register():
     data = request.json
@@ -125,7 +125,7 @@ def register():
     
 
 
-
+from big_query.inserts import insert_teacher
 @auth_bp.route('/signup-teacher', methods=["POST"])
 def register_teacher():
     try:

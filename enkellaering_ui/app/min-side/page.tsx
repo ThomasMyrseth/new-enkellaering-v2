@@ -9,18 +9,26 @@ import { IsActive } from "./isActive";
 import { MyTeachers } from "./myTeacher";
 import { PreviousClasses } from "./previousClasses";
 import OrderCardsCarouselDemo from "./newStudents/orderCards";
+import { useRouter } from "next/navigation";
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080/server";
 
 
 export default function MinSideStudentPage() {
+    const router = useRouter()
     const token = localStorage.getItem('token') || ''
+    const isTeacher = localStorage.getItem('isTeacher')
     const [student, setStudent] = useState<Student>()
     const [teachers, setTeachers] = useState<Teacher[]>()
 
 
     //fetch data
     useEffect( () => {
+
+        if (!token || isTeacher === "true") {
+            router.push('/login')
+        }
+
         async function fetchData() {
             const s = await fetchStudent(token)
             const t = await fetchTeacher(token)

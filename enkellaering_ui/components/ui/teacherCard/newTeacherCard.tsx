@@ -54,6 +54,10 @@ import { TeacherOrder, TeacherOrderJoinTeacher } from "@/app/min-side/types";
   
 
 export function TeacherFocusCards() {
+    const hasToken = localStorage.getItem('token') 
+    const isTeacher = localStorage.getItem('isTeacher')==='true'
+    const isLoggedInStudent = hasToken && !isTeacher
+
     const [active, setActive] = useState<(CardType) | boolean | null>(null);
     const [viewMode, setViewMode] = useState<"list" | "grid">("list");
     const id = useId();
@@ -417,14 +421,15 @@ export function TeacherFocusCards() {
                     disabled={
                         (!card.teacher.physical_tutouring && !card.teacher.digital_tutouring) ||
                         !!previousOrders.find((p) => p.order.teacher_user_id === card.teacher.user_id)
+                        || !isLoggedInStudent
                     }
                     className={`py-2min-w-32 w-fit min-h-14 ${   (!card.teacher.physical_tutouring && !card.teacher.digital_tutouring) ||
-                        !!previousOrders.find((p) => p.order.teacher_user_id === card.teacher.user_id)? 'bg-neutral-400 text-neutral-100':''}`}
+                        !!previousOrders.find((p) => p.order.teacher_user_id === card.teacher.user_id) || !isLoggedInStudent ? 'bg-neutral-400 text-neutral-100':''}`}
                 >
                     {
                     previousOrders.find((p) => p.order.teacher_user_id === card.teacher.user_id)
                         ? <p className="text-xs whitespace-normal">Du har allerede bestilt {card.teacher.firstname} uken, eller så er {card.teacher.firstname} læreren din</p>
-                        : <p>Bestill {card.teacher.firstname}</p>
+                        : isLoggedInStudent ? <p>Bestill {card.teacher.firstname}</p> : <p className="text-xs">Logg inn for å bestille</p>
                     }
                                             
                 </Button>
