@@ -59,7 +59,8 @@ export function TeacherFocusCards() {
     const isLoggedInStudent = hasToken && !isTeacher
 
     const [active, setActive] = useState<(CardType) | boolean | null>(null);
-    const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+    const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
+
     const id = useId();
     const ref = useRef<HTMLDivElement>(null);
     const router = useRouter()
@@ -197,20 +198,6 @@ export function TeacherFocusCards() {
 
     return (
         <>
-        {/*Login alert dialog*/}
-        <AlertDialog open={showLoginAlert}>
-        <AlertDialogContent>
-            <AlertDialogHeader>
-            <AlertDialogTitle>Logg inn før du bestiller!</AlertDialogTitle>
-            <AlertDialogDescription>
-                Før du kan bestille er du nødt til å <Link href="/login" className="underline">logge inn</Link> eller <Link href="/signup" className="underline">opprette en konto</Link>
-            </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setShowLoginAlert(false)}>Gå tilbake</AlertDialogCancel>
-            </AlertDialogFooter>
-        </AlertDialogContent>
-        </AlertDialog>
 
         {/*Order popover*/}
         <AlertDialog open={showOrderPopover}>

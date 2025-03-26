@@ -30,6 +30,7 @@ app.config['SESSION_COOKIE_SAMESITE'] = 'None'
 #app.config['SESSION_COOKIE_DOMAIN'] = 'enkellaering-service-895641904484.europe-west2.run.app'
 app.config['SESSION_COOKIE_DOMAIN'] = 'localhost'
 
+
 CORS(app, resources={
     r"/*": {
         "origins": [
@@ -59,6 +60,8 @@ from server_routes.review import review_bp
 from server_routes.order import order_bp
 from server_routes.teacher_images_and_about_me import teacher_images_bp
 from server_routes.quiz import quiz_bp
+from server_routes.email import mail_bp
+
 
 app.register_blueprint(auth_bp, url_prefix="")
 app.register_blueprint(teacher_bp, url_prefix="")
@@ -69,6 +72,7 @@ app.register_blueprint(review_bp, url_prefix="")
 app.register_blueprint(order_bp, url_prefix="")
 app.register_blueprint(teacher_images_bp, url_prefix="")
 app.register_blueprint(quiz_bp, url_prefix="")
+app.register_blueprint(mail_bp, url_prefix="")
 
 
 

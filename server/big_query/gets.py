@@ -20,6 +20,7 @@ QUIZ_DATASET = os.getenv('QUIZ_DATASET')
 def get_all_teachers(client: bigquery.Client):
     query = f"""
     SELECT * FROM `{PROJECT_ID}.{USER_DATASET}.teachers`
+    WHERE resigned=FALSE
     """
     return client.query(query)
 
