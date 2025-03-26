@@ -17,38 +17,38 @@ NEW_STUDENTS_DATASET = os.getenv('NEW_STUDENTS_DATASET')
 
 def insert_teacher(client: bigquery.Client, teacher: Teachers):
     query = f"""
-        INSERT INTO `{USER_DATASET}.teachers` (
-            user_id,
-            firstname,
-            lastname,
-            email,
-            phone,
-            address,
-            postal_code,
-            hourly_pay,
-            resigned,
-            additional_comments,
-            created_at,
-            admin,
-            resigned_at,
-            wants_more_students
-        )
-        VALUES (
-            @user_id,
-            @firstname,
-            @lastname,
-            @email,
-            @phone,
-            @address,
-            @postal_code,
-            @hourly_pay,
-            @additional_comments,
-            @created_at,
-            @admin,
-            @resigned,
-            @resigned_at,
-            TRUE
-        )
+    INSERT INTO `{USER_DATASET}.teachers` (
+        user_id,
+        firstname,
+        lastname,
+        email,
+        phone,
+        address,
+        postal_code,
+        hourly_pay,
+        resigned,
+        additional_comments,
+        created_at,
+        admin,
+        resigned_at,
+        wants_more_students
+    )
+    VALUES (
+        @user_id,
+        @firstname,
+        @lastname,
+        @email,
+        @phone,
+        @address,
+        @postal_code,
+        @hourly_pay,
+        @resigned,
+        @additional_comments,
+        @created_at,
+        @admin,
+        @resigned_at,
+        TRUE
+    )
     """
     job_config = bigquery.QueryJobConfig(
         query_parameters=[
