@@ -519,10 +519,20 @@ export function TeacherFocusCards() {
                 </motion.div>
                 <Button 
                     onClick={() => handleOrderClick(card)}
-                    disabled={!card.teacher.physical_tutouring && !card.teacher.digital_tutouring}
-                    className={`${(!card.teacher.physical_tutouring && !card.teacher.digital_tutouring)? 'bg-neutral-400 text-neutral-100':''}`}
-                >
-                    Bestill {card.teacher.firstname}
+                    disabled={
+                        (!card.teacher.physical_tutouring && !card.teacher.digital_tutouring) ||
+                        !!previousOrders.find((p) => p.order.teacher_user_id === card.teacher.user_id)
+                        || !isLoggedInStudent
+                    }
+                    className={`py-2 w-full min-h-14 ${   (!card.teacher.physical_tutouring && !card.teacher.digital_tutouring) ||
+                        !!previousOrders.find((p) => p.order.teacher_user_id === card.teacher.user_id) || !isLoggedInStudent ? 'bg-neutral-400 text-neutral-100':''}`}
+                    >
+                    {
+                    previousOrders.find((p) => p.order.teacher_user_id === card.teacher.user_id)
+                        ? <p className="text-xs whitespace-normal">Du har allerede bestilt {card.teacher.firstname} uken, eller så er {card.teacher.firstname} læreren din</p>
+                        : isLoggedInStudent ? <p>Bestill {card.teacher.firstname}</p> : <p className="text-xs">Logg inn for å bestille</p>
+                    }
+                                            
                 </Button>
 
             </div>)})}
