@@ -334,6 +334,8 @@ def submit_new_student_with_preffered_route():
         comments=None
     )
 
+
+
     try:
         res = insert_new_student_with_preferred_teacher(client=bq_client, new_student=ns)
 
@@ -348,7 +350,7 @@ def submit_new_student_with_preffered_route():
     
 
     
-
+from .email import sendNewStudentToAdminMail
 @order_bp.route('/submit-new-referal', methods = ["POST"])
 def submit_new_referal_route():
     data = request.get_json()
@@ -383,6 +385,12 @@ def submit_new_referal_route():
         paid_referee=False,
         paid_referee_at=None
     )
+
+    try:
+        sendNewStudentToAdminMail(newStudentPhone=referal_phone)
+    except Exception as e:
+        return jsonify({"message": f"Error sending email about the new student: {e}"}), 500
+    
 
     res = insert_new_student(client=bq_client, new_student=ns)
 

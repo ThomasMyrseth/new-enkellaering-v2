@@ -30,126 +30,126 @@ def send_hello_email_route():
         return jsonify({"error": str(e)}), 500
 
 
-def sendNewStudentToTeacherMail(receipientTeacherMail: str, teacherName :str):
+import os
+import resend
+
+resend.api_key = os.getenv('RESEND_API_KEY')
+
+def sendNewStudentToTeacherMail(receipientTeacherMail: str, teachername :str):
     try:
-        # Ensure the API key is set
-        resend.api_key = os.environ.get('RESEND_API_KEY')
-        TEMPLATE_ID = os.environ.get('NEWSTUDENT_FOR_TEACHER_TEMPLATE_ID')
+        FROM_EMAIL = os.getenv("MAIL_USERNAME")
 
-        # Build the email parameters using the provided student name and teacher's email
-        params = {
-            "template_id": TEMPLATE_ID,  # Replace with your actual template ID
-            "to": [{
-                "email": receipientTeacherMail,
-                "name": teacherName  # You can modify this if you want to dynamically pass the teacher's name
-            }],
-            "variables": [
-                {
-                    "email": receipientTeacherMail,
-                }
-            ]
-        }
+        # HTML content adapted from your image template
+        html_content = f"""
+        <div style="font-family: sans-serif; background-color: #f9f9f9; padding: 30px;">
+            <h1>Hei {teachername}!</h1>
+            <h2>Du har fått en ny elev</h2>
+            <div style="background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                <p style="font-size: 16px;"><strong>En ny elev ønsker hjelp av deg!</strong></p>
+                <p style="color: #555;">Logg inn på Enkel Læring for å godkjenne eller avslå eleven</p>
+                <a href="https://enkellaering.no/minside" style="display:inline-block; margin-top: 15px; background-color:#6366F1; color:white; padding:10px 16px; border-radius:5px; text-decoration:none;">Logg inn</a>
+            </div>
+        </div>
+        """
 
-        # Send the email using the Resend API
-        email = resend.Emails.send(params)
-        print("✅ Email sent:", email)
-        return email  # Optionally, you can return a success message or the email object
+        # Send email with Resend
+        response = resend.Emails.send({
+            "from": FROM_EMAIL,
+            "to": receipientTeacherMail,
+            "subject": "Du har fått en ny elev",
+            "html": html_content
+        })
+
+        print("✅ Email sent:", response)
+        return response
 
     except Exception as e:
         print("❌ Failed to send email:", e)
-        # Depending on your application's design, you might want to re-raise the exception or return an error message.
         raise e
-    
 
-def sendAcceptOrRejectToStudentMail(studentName :str, teacherName :str, acceptOrReject :bool, receipientStudentMail :str):
+import os
+import resend
+
+resend.api_key = os.getenv('RESEND_API_KEY')
+
+def sendAcceptOrRejectToStudentMail(studentName: str, teacherName: str, acceptOrReject: bool, receipientStudentMail: str):
     try:
-        # Ensure the API key is set
-        resend.api_key = os.environ.get('RESEND_API_KEY')
-        TEMPLATE_ID = os.environ.get('TEACHER_ACCEPTED_YOU_FOR_STUDENT_TEMPLATE_ID')
-        
-        accept = 'godkjent' if acceptOrReject else 'avslått'
-        # Build the email parameters using the provided student name and teacher's email
-        params = {
-            "template_id": TEMPLATE_ID,  # Replace with your actual template ID
-            "to": [{
-                "email": receipientStudentMail,
-                "name": studentName  # You can modify this if you want to dynamically pass the teacher's name
-            }],
-            "variables": [
-                {
-                    "email": receipientStudentMail,
-                    "substitutions": [
-                        {
-                            "var": "teacherName",
-                            "value": teacherName
-                        },
-                        {
-                            "var": "studentName",
-                            "value": studentName
-                        },
-                        {
-                            "var": "acceptOrReject",
-                            "value": accept
-                        }
-                    ]
-                }
-            ]
-        }
+        FROM_EMAIL = os.getenv("MAIL_USERNAME")
+        accept_text = 'godkjent' if acceptOrReject else 'avslått'
 
-        # Send the email using the Resend API
-        email = resend.Emails.send(params)
-        print("✅ Email sent:", email)
-        return email  # Optionally, you can return a success message or the email object
+        # HTML email body, adapted to your template
+        html_content = f"""
+        <div style="font-family: sans-serif; background-color: #f9f9f9; padding: 30px;">
+            <h1>{teacherName} har {accept_text} deg som elev.</h1>
+            <div style="background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                <p style="font-size: 16px;"><strong>Hei {studentName}.</strong></p>
+                <p>{teacherName} har nå {accept_text} søknaden din om å få {teacherName} som lærer.</p>
+
+                {"<p>Dersom " + teacherName + " godtok vil hen kontakte dere per telefon i løpet av kort tid. Vi ber dere i så fall om å kansellere eventuelle andre bestillinger. Dette kan gjøres fra Min Side.</p>" if acceptOrReject else ""}
+                
+                {"<p>Dersom " + teacherName + " ikke godtok forespørselen deres kan dere forespørre en ny lærer på <a href='https://enkellaering.no/bestill'>enkellaering.no/bestill</a></p>" if not acceptOrReject else ""}
+                
+                <a href="https://enkellaering.no/minside" style="display:inline-block; margin-top: 15px; background-color:#6366F1; color:white; padding:10px 16px; border-radius:5px; text-decoration:none;">Gå til Min Side</a>
+            </div>
+        </div>
+        """
+
+        # Send the email
+        response = resend.Emails.send({
+            "from": FROM_EMAIL,
+            "to": receipientStudentMail,
+            "subject": f"{teacherName} har {accept_text} deg som elev",
+            "html": html_content
+        })
+
+        print("✅ Email sent:", response)
+        return response
 
     except Exception as e:
         print("❌ Failed to send email:", e)
-        # Depending on your application's design, you might want to re-raise the exception or return an error message.
         raise e
-    
+
+import os
+import resend
+
+resend.api_key = os.getenv("RESEND_API_KEY")
 
 def sendNewStudentToAdminMail(newStudentPhone: str):
-
-    #get the admin emais
     try:
         admins = get_all_admins()
-        emails = []
-        for admin in admins:
-            emails.append(admin['email'])
-
+        emails = [admin['email'] for admin in admins]
     except Exception as e:
         raise RuntimeError(f"Error getting the email of admins: {e}")
 
-    try:
-        resend.api_key = os.environ.get('RESEND_API_KEY')
-        TEMPLATE_ID = os.environ.get('NEW_STUDENT_FOR_ADMIN_TEMPLATE_ID')  # Set this in your .env
+    # Your sender email (must be verified with Resend)
+    FROM_EMAIL = os.getenv("MAIL_USERNAME")
 
-        # Build the variables for each recipient
-        variables = [
-            {
-                "email": email,
-                "substitutions": [
-                    { "var": "newStudentPhone", "value": newStudentPhone }
-                ]
-            }
-            for email in receipientMails
-        ]
+    # Email content (HTML)
+    html_content = f"""
+    <div style="font-family: sans-serif; background-color: #f9f9f9; padding: 30px;">
+      <h1>En ny elev la igjen nummeret sitt på nettsiden!</h1>
+      <div style="background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+        <p style="font-size: 16px;"><strong>{newStudentPhone}</strong> la igjen nummeret sitt.</p>
+        <p style="color: #555;">Logg inn på <code>/admin</code> for å følge opp eleven.</p>
+        <a href="https://enkellaering.no/admin" style="display:inline-block; margin-top: 15px; background-color:#6366F1; color:white; padding:10px 16px; border-radius:5px; text-decoration:none;">Logg inn</a>
+      </div>
+    </div>
+    """
 
-        params = {
-            "template_id": TEMPLATE_ID,
-            "to": [{"email": email, "name": "Admin"} for email in receipientMails],
-            "variables": variables
-        }
-
-        email = resend.Emails.send(params)
-        print("✅ Email sent:", email)
-        return email
-
-    except Exception as e:
-        print("❌ Failed to send admin email:", e)
-        raise e
-    
-
-
+    # Send individually (Resend doesn't support per-user vars in batch)
+    for email in emails:
+        try:
+            print("sending from: ", FROM_EMAIL)
+            response = resend.Emails.send({
+                "from": FROM_EMAIL,
+                "to": email,
+                "subject": "Ny elev har registrert seg",
+                "html": html_content
+            })
+            print(f"✅ Email sent to {email}")
+        except Exception as e:
+            print(f"❌ Failed to send to {email}: {e}")
+            raise e
 
 
 import locale
