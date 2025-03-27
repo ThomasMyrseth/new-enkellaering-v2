@@ -626,3 +626,96 @@ def get_new_orders(student_user_id :str, client: bigquery.Client):
     
     except Exception as e:
         raise RuntimeError(f"Error getting teacher orders: {e}")
+
+
+from datetime import datetime, timedelta
+from google.cloud import bigquery
+
+def get_students_with_few_classes(days: int):
+    
+    try:
+        # Calculate the threshold date (today minus the given number of days)
+        threshold_date = (datetime.today() - timedelta(days=days)).date()
+
+        # Get dataset names from environment variables (or define them directly)
+        USER_DATASET = os.environ.get('USER_DATASET', 'users')
+        CLASSES_DATASET = os.environ.get('CLASSES_DATASET', 'classes')
+
+        # Build the query. Note that @date is a parameter placeholder.
+        query = f"""
+            SELECT 
+                s.*,
+                ts.*,
+                t.*,
+                lc.started_at AS last_class_started_at,
+                lc.class_id AS last_class_id
+            FROM `{USER_DATASET}.students` AS s
+            JOIN `{USER_DATASET}.teacher_student` AS ts
+              ON s.user_id = ts.student_user_id
+            JOIN `{USER_DATASET}.teachers` AS t
+              ON t.user_id = ts.teacher_user_id
+            LEFT JOIN (
+                SELECT * FROM (
+                    SELECT 
+                        c.*, 
+                        ROW_NUMBER() OVER (PARTITION BY c.student_user_id ORDER BY c.started_at DESC) AS rn
+                    FROM `{CLASSES_DATASET}.classes` c
+                )
+                WHERE rn = 1
+            ) lc
+              ON lc.student_user_id = s.user_id
+            WHERE s.user_id NOT IN (
+                SELECT student_user_id
+                FROM `{CLASSES_DATASET}.classes`
+                WHERE DATE(started_at) > @date
+            )
+            AND s.is_active = TRUE
+        """
+
+        # Create a BigQuery client
+        client = bigquery.Client()
+
+        # Set up the query configuration with the parameter
+        job_config = bigquery.QueryJobConfig(
+            query_parameters=[
+                bigquery.ScalarQueryParameter("date", "DATE", threshold_date)
+            ]
+        )
+
+        # Execute the query and wait for the result
+        query_job = client.query(query, job_config=job_config)
+        results = query_job.result()  # Waits for the job to complete
+
+        # Convert the results to a list of dictionaries
+        students = [dict(row) for row in results]
+        return students
+
+    except Exception as e:
+        raise RuntimeError(f"Error retrieving students with few classes: {e}")
+
+def get_all_admins():
+    
+    try:
+        # Get dataset names from environment variables (or define them directly)
+        USER_DATASET = os.environ.get('USER_DATASET', 'users')
+
+        # Build the query. Note that @date is a parameter placeholder.
+        query = f"""
+            SELECT *
+            FROM `{USER_DATASET}.teachers`
+            WHERE admin=TRUE
+        """
+
+        # Create a BigQuery client
+        client = bigquery.Client()
+
+        # Execute the query and wait for the result
+        query_job = client.query(query)
+        results = query_job.result()  # Waits for the job to complete
+
+        # Convert the results to a list of dictionaries
+        teachers = [dict(row) for row in results]
+        return teachers
+
+    except Exception as e:
+        raise RuntimeError(f"Error retrieving students with few classes: {e}")

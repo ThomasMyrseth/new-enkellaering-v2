@@ -247,6 +247,7 @@ def delete_new_student(user_id):
 import uuid
 import pytz
 from big_query.inserts import insert_new_student
+from .email import sendNewStudentToAdminMail
 @order_bp.route('/submit-new-student', methods = ["POST"])
 def submit_new_student_route():
     data = request.get_json()
@@ -289,6 +290,11 @@ def submit_new_student_route():
             "message": "An error occured while inserting new student"
         }), 500
     
+    try:
+        sendNewStudentToAdminMail(newStudentPhone=phone)
+    except Exception as e:
+        return jsonify({"message": f"Error sending email about the new student: {e}"}), 500
+    
     print("response: ", res.result())
     return jsonify({"message": "New student successfully inserted"}), 200
     
@@ -297,7 +303,6 @@ def submit_new_student_route():
 
 from big_query.bq_types import NewStudentWithPreferredTeacher
 from big_query.inserts import insert_new_student_with_preferred_teacher
-
 @order_bp.route('/submit-new-student-with-preffered-teacher', methods = ["POST"])
 def submit_new_student_with_preffered_route():
     data = request.get_json()
@@ -395,6 +400,8 @@ def submit_new_referal_route():
 
 
 from big_query.inserts import insert_new_student_order
+from .email import sendNewStudentToTeacherMail
+from big_query.gets import get_teacher_by_user_id
 
 @order_bp.route('/request-new-teacher', methods=["POST"])
 @token_required
@@ -409,6 +416,16 @@ def request_new_teacher_route(user_id):
     if not user_id or not teacher_user_id or physical_or_digital==None:
         return jsonify({"message": "Missing required fields"}), 400
     
+    try:
+        teacherItterator = get_teacher_by_user_id(client=bq_client, user_id=teacher_user_id)
+        teacher = next(teacherItterator, None)  # Returns the first row or None if the iterator is empty
+        if (teacher):
+            name = teacher['firstname'] + " " + teacher['lastname']
+            sendNewStudentToTeacherMail(teacherName=name, receipientTeacherMail=teacher['email'])
+    except Exception as e:
+        return jsonify({"messsage": f"Error sending email to teacher: {e}"}), 500
+
+
     try:
         res =  insert_new_student_order(student_user_id=user_id, teacher_user_id=teacher_user_id, accept=None, physical_or_digital=physical_or_digital, location=address, comments=comments, bq_client=bq_client)
         if res:
@@ -465,6 +482,9 @@ def cansel_new_order_route(user_id):
 
 
 from big_query.alters import update_new_order
+from .email import sendAcceptOrRejectToStudentMail
+from big_query.gets import get_student_by_user_id
+
 @order_bp.route('/update-order', methods=["POST"])
 @token_required
 def update_order_data_route(user_id):
@@ -478,7 +498,18 @@ def update_order_data_route(user_id):
     teacher_accepted_student = data.get('teacher_accepted_student')
     physical_or_digital = data.get('physical_or_digital')
     meeting_location = data.get('meeting_location')
-    comments = data.get('comments')
+    #comments = data.get('comments')
+
+    try:
+        query_job = get_student_by_user_id(client=bq_client, user_id=student_user_id)
+        first_student = next(query_job.result(), None)
+        
+        if not first_student:
+            raise RuntimeError('Could not get the student by userId')
+
+        sendAcceptOrRejectToStudentMail(studentName=first_student['firstname_parent'], acceptOrReject=teacher_accepted_student, receipientStudentMail=first_student['email_parent'])
+    except Exception as e:
+        return jsonify({"message": f"Error sending email to student {e}"}), 500
 
     if not row_id:
         return jsonify({"message": "Missing row id"}), 400
