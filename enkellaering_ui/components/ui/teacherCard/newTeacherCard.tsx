@@ -174,6 +174,15 @@ export function TeacherFocusCards() {
     }
 
 
+    //switch the radio
+    const handleSetWantsPhysicalOrDigital = (value :string) => {
+        if (value==='Fysisk') {
+            setWantPhysicalOrDigital(true)
+        }
+        else {
+            setWantPhysicalOrDigital(false)
+        }
+    }
 
     
     //togle main modal
@@ -204,10 +213,16 @@ export function TeacherFocusCards() {
         <AlertDialogTitle>Bestill {orderedTeacher?.teacher.firstname}</AlertDialogTitle>
             <AlertDialogContent>
                 {orderedTeacher?.teacher.digital_tutouring && orderedTeacher.teacher.physical_tutouring &&
-                    <RadioGroup>
+                    <RadioGroup onValueChange={handleSetWantsPhysicalOrDigital}>
                         <Label>Ønsker dere fysisk eller digital undervisning?</Label>
-                        <RadioGroupItem value="Fysisk" checked={wantPhysicalOrDigital===true}/>
-                        <RadioGroupItem value="Digitalt" checked={wantPhysicalOrDigital===false}/>
+                        <div className="flex space-x-2">
+                            <RadioGroupItem value="Fysisk" checked={wantPhysicalOrDigital===true}/>
+                            <Label>Fysisk</Label>
+                        </div>
+                        <div className="flex space-x-2">
+                            <RadioGroupItem value="Digitalt" checked={wantPhysicalOrDigital===false}/>
+                            <Label>Digital</Label>
+                        </div>
                     </RadioGroup>
                 }
                 <p>Jeg ønsker {orderedTeacher?.teacher.physical_tutouring? 'fysisk' : 'digital'} undervisning med {orderedTeacher?.teacher.firstname}</p>
@@ -584,8 +599,8 @@ const submitNewRequest = async (BASEURL: string, token: string, teacher_user_id:
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${token}`
             },
-            body: JSON.stringify(
-                {teacher_user_id: teacher_user_id,
+            body: JSON.stringify({
+                teacher_user_id: teacher_user_id,
                 physical_or_digital: physical_or_digital,
                 address: address,
                 comments: comments

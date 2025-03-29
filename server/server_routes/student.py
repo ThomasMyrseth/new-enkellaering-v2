@@ -111,24 +111,34 @@ def set_student_to_active_route(user_id):
     return jsonify({"message": "successfully set student to active"}), 200
 
 
-from big_query.alters import setYourTeacherByuserId
+from big_query.alters import changeTeacherByUserId, removeTeacherFromStudent
+from big_query.inserts import addTeacherToNewStudent
 @student_bp.route("/assign-teacher-for-student", methods=["POST"])
 @token_required
 def assign_teacher_for_student(user_id):
     data = request.get_json()
-    teacher_user_id = data.get('teacher_user_id')
+    new_teacher_user_id = data.get('teacher_user_id')
+    old_teacher_user_id = data.get('old_teacher_user_id')
     student_user_id = data.get('student_user_id')
 
-    if not teacher_user_id or not student_user_id:
+    if not student_user_id:
         return jsonify({"message": "Missing required fields"}), 400
     
     try:
-        response = setYourTeacherByuserId(client=bq_client, student_user_id=student_user_id, teacher_user_id=teacher_user_id, admin_user_id=user_id)
+        if not new_teacher_user_id:
+            print("\n\n\n removing teacher from student")
+            response = removeTeacherFromStudent(client=bq_client, student_user_id=student_user_id, teacher_user_id=old_teacher_user_id, admin_user_id=user_id)
+        elif not old_teacher_user_id:
+            print("\n\n\n adding teacher for student")
+            response = addTeacherToNewStudent(client=bq_client, student_user_id=student_user_id, teacher_user_id=new_teacher_user_id, admin_user_id=user_id)
+        else:
+            print("\n\n\n changing teacher for student")
+            response = changeTeacherByUserId(client=bq_client, student_user_id=student_user_id, teacher_user_id=new_teacher_user_id, admin_user_id=user_id, old_teacher_user_id=old_teacher_user_id)
 
         response.result()
         return jsonify({"message": "Teacher assigned successfully"}), 200
     except Exception as e:
-        return jsonify({"An error occured"}), 500
+        return jsonify({"message": f"An error occured {e}"}), 500
     
 
 

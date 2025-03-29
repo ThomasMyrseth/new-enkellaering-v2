@@ -8,7 +8,7 @@ import { AddNewClass } from "./addNewClass";
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080/server";
 
-import { NewStudentsWithPreferredTeacherWorkflowActions, UnacceptedStudentsTable} from "./newStudents"
+import { NewStudentsWithPreferredTeacherWorkflowActions} from "./newStudents"
 import QuizStatusPage from "./quiz";
 import { FileUploadForm } from "@/components/uploadTeacherImageForm";
 import { YourStudent } from "./yourStudents";
@@ -51,9 +51,9 @@ export default function LaererPage() {
 
     return (<div className="flex flex-col items-center justify-center w-full min-h-screen bg-slate-200 dark:bg-slate-900">
             <TeacherName teacher={teacher}/>
-            <NewStudentsWithPreferredTeacherWorkflowActions teacher={teacher}/>
+            <NewStudentsWithPreferredTeacherWorkflowActions/>
             <br/>
-            <UnacceptedStudentsTable teacher={teacher}/>
+            {/* <UnacceptedStudentsTable teacher={teacher}/> */}
 
             <ProfileForm teacher={teacher}/>
             <WantMoreStudents teacher={teacher}/>

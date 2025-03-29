@@ -1,291 +1,216 @@
 "use client"
 
-import React from "react"
-import { useState, useEffect } from "react"
-import { NewStudentWithPreferredTeacher, Teacher } from "./types"
+import React, { useState, useEffect } from "react"
+import { StudentsWithoutTeacher } from "./types"
 import {
-    Table,
-    TableBody,
-    TableCaption,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table"
-import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
-  } from "@/components/ui/alert-dialog"
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion"
+import { toast } from "sonner"
 
-
-
-  
-  
 export function NewStudentsWithPreferredTeacherWorkflow() {
-      const token = localStorage.getItem('token')
-      const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8080'
-      const [loading, setLoading] = useState<boolean>(true)
-      const [newStudents, setNewStudents] = useState<NewStudentWithPreferredTeacher[]>()
-  
-      //get all new students
-      useEffect( () => {
-          async function getNewStudents() {
-              const response = await fetch(`${BASEURL}/get-new-students-with-preferred-teacher`, {
-                  method: "GET",
-                  headers: {
-                      'Authorization': `Bearer ${token}`
-                  }
-              })
-  
-              if (!response.ok) {
-                  alert("Error fetching new students " + response.statusText)
-                  return null
-              }
-  
-              const data = await response.json()
-              const newStudents :NewStudentWithPreferredTeacher[] = data.new_students
-  
-              if (newStudents.length===0) {
-                  setLoading(false)
-                  setNewStudents([])
-                  return null
-              }
-  
-              else {
-                  setNewStudents(newStudents)
-                  setLoading(false)
-              }
-          }
-  
-          getNewStudents()
-      },[token])
-  
-      if (loading ) {
-          return <p>Loading...</p>
+  const token = localStorage.getItem("token")
+  const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080"
+  const [loading, setLoading] = useState<boolean>(true)
+  const [studentsWithoutTeacher, setStudentsWithoutTeacher] = useState<StudentsWithoutTeacher[]>([])
+
+  // get all new students
+  useEffect(() => {
+    async function getNewStudents() {
+      const response = await fetch(`${BASEURL}/get-new-students-with-preferred-teacher`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (!response.ok) {
+        alert("Error fetching new students " + response.statusText)
+        return null
       }
-  
-      if (!newStudents) {
-          return <p>No new students found</p>
-      }
-  
-  
-      return (<NewStudentWithPreferredTeacherTable newStudents={newStudents}/>)
-      
-  
-}
 
+      const data = await response.json()
+      const s = data.students_without_teacher
 
-const NewStudentWithPreferredTeacherTable =( {newStudents} : {newStudents : NewStudentWithPreferredTeacher[]})  => {
-    const token = localStorage.getItem('token')
-    const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8080'
-
-    const [teachers, setTeachers] = useState<Teacher[]>([])
-
-    //order newStudents by created_at
-    newStudents.sort((a, b) => {
-        const dateA = new Date(a.created_at);
-        const dateB = new Date(b.created_at);
-        return dateB.getTime() - dateA.getTime();
-    });
-
-
-    //get all the teachers and pass it to newStudentRow
-    useEffect( () => {
-        async function getAllTeachers() {
-
-            const response = await fetch(`${BASEURL}/get-all-teachers`, {
-                method: "GET",
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            })
-
-            if (!response.ok) {
-                alert("Error fetching teachers " + response.statusText)
-                setTeachers([])
-                return null
-            }
-
-            const data = await response.json()
-            const teachers :Teacher[] = data.teachers
-
-            if (teachers.length===0) {
-                alert("No teachers found")
-                setTeachers([])
-                return null
-            }
-
-            else {
-                setTeachers(teachers)
-            }
-        }
-
-        getAllTeachers()
-    },[token])
-
-    return (<div className=" w-full sm:w-full bg-white dark:bg-black rounded-sm shadow-lg flex flex-col items-center justify-center">
-        <Table>
-                <TableCaption>Arbeidsoversikt for ny elev som har bestilt en lærer</TableCaption>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Telefonnummer & dato opprettet</TableHead>
-                            <TableHead>Lærer har ringt</TableHead>
-                            <TableHead>Elev har svart</TableHead>
-                            <TableHead>Lærer takker ja/nei</TableHead>
-
-
-                            <TableHead>Ny elev har opprettet konto</TableHead>
-
-                            <TableHead>Læreren navn og tlf</TableHead>
-
-                            <TableHead>Ny elev har fullført oppstart</TableHead>
-
-                            <TableHead>Kommentarer</TableHead>
-                            <TableHead>Lagre</TableHead>
-                            <TableHead>Slett ny elev</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {newStudents.map( ns => {
-                            if (ns.hidden) {
-                                return null
-                            }
-                            return <NewStudentWithPreferredTeacherRow key={ns.new_student_id} ns={ns} teachers={teachers}/>
-                        })}
-                    </TableBody>
-                </Table>   
-    </div>)
-}
-
-
-function NewStudentWithPreferredTeacherRow({ ns, teachers }: { ns: NewStudentWithPreferredTeacher, teachers :Teacher[] }) {
-    const token = localStorage.getItem('token')
-    const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8080'
-    
-    const [comments, setComments] = useState<string>(ns.comments || '')
-
-
-
-
-
-
-
-    const handleSaveClick = async () => {
-
-        const response = await fetch(`${BASEURL}/update-new-student`, {
-            method: "POST",
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json' // Added Content-Type header
-            },
-            body: JSON.stringify({
-                "new_student_id": ns.new_student_id,
-                "comments": comments || null,
-            })
-        })
-
-        if (!response.ok) {
-            alert("Error while saving updates to new student")
-            return null;
-        }
-        else {
-            alert("Oppdateringer lagret")
-        }
-        
+      setStudentsWithoutTeacher(s)
+      setLoading(false)
     }
 
-    const handleDelete = async () => {
+    getNewStudents()
+  }, [token])
 
-        const response = await fetch(`${BASEURL}/hide-new-student`, {
-            method: "POST",
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json' // Added Content-Type header
-            },
-            body: JSON.stringify({
-                new_student_id : ns.new_student_id
-            })
-        })
+  if (loading) {
+    return <p className="w-full rounded-lg bg-white dark:bg-black m-4 p-4 shadow-lg">Loading...</p>
+  }
 
-        if (!response.ok) {
-            alert("Error while deleting new student")
-            return null;
-        }
-        else {
-            alert("Eleven er slettet")
-        }
+  if (!studentsWithoutTeacher || studentsWithoutTeacher.length === 0) {
+    return <p className="w-full rounded-lg bg-white dark:bg-black m-4 p-4 shadow-lg text-center">No new students found</p>
+  }
 
+  return <NewStudentsAccordion studentsWithoutTeacher={studentsWithoutTeacher} />
+}
+
+type NewStudentsAccordionProps = {
+  studentsWithoutTeacher: StudentsWithoutTeacher[]
+}
+
+const NewStudentsAccordion = ({ studentsWithoutTeacher }: NewStudentsAccordionProps) => {
+  // Group orders by student (assuming "user_id" uniquely identifies the student)
+  const grouped = studentsWithoutTeacher.reduce((acc, order) => {
+    const key = order.user_id
+    if (!acc[key]) {
+      acc[key] = []
     }
+    acc[key].push(order)
+    return acc
+  }, {} as Record<string, StudentsWithoutTeacher[]>)
 
-    return(
-            <TableRow>
-                <TableCell>
-                    {ns.phone} <br />
-                    {new Intl.DateTimeFormat("nb-NO", { day: "2-digit", month: "long", year: "numeric" }).format(new Date(ns.created_at))}
-                </TableCell>
-                <TableCell>
-                    <span className={ns.teacher_called ? "text-green-400" : "text-red-400"}>
-                        {ns.teacher_called ? "Ja" : "Nei"}
-                    </span>
-                </TableCell>
-                <TableCell>
-                    <span className={ns.teacher_answered ? "text-green-400" : "text-red-400"}>
-                        {ns.teacher_answered ? "Ja" : "Nei"}
-                    </span>
-                </TableCell>
-                <TableCell>
-                    <span className={ns.teacher_has_accepted ? "text-green-400" : "text-red-400"}>
-                        {ns.teacher_has_accepted ? "Ja" : "Nei"}
-                    </span>
-                </TableCell>
-                <TableCell>
-                    <span className={ns.student_signed_up ? "text-green-400" : "text-red-400"}>
-                        {ns.student_signed_up ? "Ja" : "Nei"}
-                    </span>
-                </TableCell>
-                <TableCell>
-                    {teachers.find(t => t.user_id === ns.preferred_teacher)
-                        ? `${teachers.find(t => t.user_id === ns.preferred_teacher)?.firstname || "Ukjent"} ${teachers.find(t => t.user_id === ns.preferred_teacher)?.lastname || ""}`
-                        : "Ukjent"}
-                    <br />
-                    {teachers.find(t => t.user_id === ns.preferred_teacher)?.phone || "Ingen tlf"}
-                </TableCell>
-                <TableCell>
-                    <span className={ns.teacher_has_accepted ? "text-green-400" : "text-red-400"}>
-                        {ns.teacher_has_accepted ? "Ja" : "Nei"}
-                    </span>
-                </TableCell>
-                <TableCell>
-                    <Textarea placeholder="Noter ned viktig info" value={comments} onChange={(e) => setComments(e.target.value)} rows={4} />
-                </TableCell>
-                <TableCell>
-                    <Button onClick={handleSaveClick}>Lagre</Button>
-                </TableCell>
-                <TableCell>
-                    <AlertDialog>
-                        <AlertDialogTrigger><Button className="bg-red-400">Slett</Button></AlertDialogTrigger>
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                                <AlertDialogTitle>Er du sikker?</AlertDialogTitle>
-                                <AlertDialogDescription>Dette kan ikke angres.</AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                                <AlertDialogCancel>Kanseler</AlertDialogCancel>
-                                <AlertDialogAction onClick={handleDelete}>Slett</AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
-                </TableCell>
-            </TableRow>
-    )
+  const studentGroups = Object.values(grouped)
+
+  return (
+    <Accordion type="multiple" className="w-full rounded-lg bg-white dark:bg-black m-4 p-4 shadow-lg">
+      {studentGroups.map((orders) => (
+        <AccordionItem key={orders[0].row_id} value={orders[0].row_id}>
+          <AccordionTrigger className="w-full h-full p-4 bg-muted">
+            <div className="flex flex-row justify-between items-center w-full pr-2">
+              <p className="text-start">
+                {orders[0].firstname_parent} {orders[0].lastname_parent} <br />
+                {orders[0].phone_parent}
+              </p>
+              <div className="flex flex-col text-end">
+                <p className="text-neutral-400">
+                  {(() => {
+                    const earliestTimestamp = Math.min(...orders.map(order => new Date(order.created_at).getTime()));
+                    const earliestDate = new Date(earliestTimestamp);
+                    return new Intl.DateTimeFormat("nb-NO", {
+                      day: "2-digit",
+                      month: "long",
+                      year: "numeric",
+                    }).format(earliestDate);
+                  })()}
+                </p>
+              </div>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent>
+            <StudentTeacherOrdersTable orders={orders} />
+          </AccordionContent>
+        </AccordionItem>
+      ))}
+    </Accordion>
+  )
+}
+
+type StudentTeacherOrdersTableProps = {
+  orders: StudentsWithoutTeacher[]
+}
+
+const StudentTeacherOrdersTable = ({ orders }: StudentTeacherOrdersTableProps) => {
+  return (
+    <div className="">
+      <Table>
+        <TableCaption>Lærerbestillinger for denne eleven</TableCaption>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Lærer status</TableHead>
+            <TableHead>Tlf</TableHead>
+            <TableHead>Hvordan</TableHead>
+            <TableHead>Hvor</TableHead>
+            <TableHead>Kommentarer</TableHead>
+            <TableHead>Lærer</TableHead>
+            <TableHead>Handling</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {orders.map((order) => (
+            <TeacherOrderRow key={order.row_id} order={order} />
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  )
+}
+
+const TeacherOrderRow = ({ order }: { order: StudentsWithoutTeacher }) => {
+  const token = localStorage.getItem("token")
+  const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080"
+
+  const handleDelete = async () => {
+    const response = await fetch(`${BASEURL}/hide-new-student`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        row_id: order.row_id,
+      }),
+    })
+
+    if (!response.ok) {
+      alert("Error while deleting new student")
+    } else {
+      toast("Eleven er slettet")
+    }
+  }
+
+  return (
+    <TableRow>
+      <TableCell>
+        {order.teacher_accepted_student === false 
+          ? <span className="inline-block h-4 w-4 rounded-full bg-red-500"/> 
+          : <span className="inline-block h-4 w-4 rounded-full bg-orange-400"/>}
+      </TableCell>
+      <TableCell>{order.phone_parent}</TableCell>
+      <TableCell>{order.physical_or_digital ? "Fysisk" : "Digitalt"}</TableCell>
+      <TableCell>{order.physical_or_digital ? order.preferred_location : "Digitalt"}</TableCell>
+      <TableCell>
+        <p className="h-20 overflow-y-scroll">{order.order_comments || ""}</p>
+      </TableCell>
+      <TableCell>
+        {order.firstname} {order.lastname} <br />
+        {order.phone}
+      </TableCell>
+      <TableCell>
+        <AlertDialog>
+          <AlertDialogTrigger>
+            <Button className="bg-red-400">Slett</Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Er du sikker?</AlertDialogTitle>
+              <AlertDialogDescription>Dette kan ikke angres.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Kanseler</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete}>Slett</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </TableCell>
+    </TableRow>
+  )
 }

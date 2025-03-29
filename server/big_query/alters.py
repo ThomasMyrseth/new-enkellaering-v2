@@ -103,12 +103,13 @@ def setYourTeacher(client :bigquery.Client, phone: str, your_teacher :str):
 
     return client.query(query, job_config=job_config)
 
-def setYourTeacherByuserId (client: bigquery.Client, student_user_id: str, teacher_user_id: str, admin_user_id :str):
+def changeTeacherByUserId (client: bigquery.Client, student_user_id: str, teacher_user_id: str, admin_user_id :str, old_teacher_user_id :str):
     query = f"""
-        UPDATE `{USER_DATASET}.students`
+        UPDATE `{USER_DATASET}.teacher_student`
         SET
-            your_teacher = @your_teacher
-        WHERE user_id = @user_id
+            teacher_user_id = @teacher_user_id
+        WHERE student_user_id = @student_user_id
+        AND teacher_user_id = @teacher_user_id
         AND EXISTS (
             SELECT 1
             FROM `{USER_DATASET}.teachers`
@@ -125,7 +126,29 @@ def setYourTeacherByuserId (client: bigquery.Client, student_user_id: str, teach
     return client.query(query, job_config=job_config)
 
 
+def removeTeacherFromStudent (client: bigquery.Client, student_user_id: str, teacher_user_id: str, admin_user_id :str):
+    query = f"""
+        UPDATE `{USER_DATASET}.teacher_student`
+        SET hidden=TRUE
+        WHERE student_user_id = @student_user_id
+        AND teacher_user_id = @teacher_user_id
+        AND EXISTS (
+            SELECT 1
+            FROM `{USER_DATASET}.teachers`
+            WHERE user_id = @admin_user_id
+        )"""
+    
+    params = [ bigquery.ScalarQueryParameter("teacher_user_id", "STRING", teacher_user_id),
+               bigquery.ScalarQueryParameter("student_user_id", "STRING", student_user_id),
+               bigquery.ScalarQueryParameter("admin_user_id", "STRING", admin_user_id)
+            ]
+    
+    job_config = bigquery.QueryJobConfig(query_parameters=params)
 
+    try:
+        return client.query(query, job_config=job_config)
+    except Exception as e:
+        raise(RuntimeError(f"error removing teacher from student {e}"))
 
 
 def setClassesToInvoiced(client: bigquery.Client, class_ids: list, admin_user_id: str):
@@ -323,6 +346,11 @@ def cansel_new_order(row_id :str, client: bigquery.Client):
 
 
 def update_new_order(row_id: str, client: bigquery.Client, teacher_accepted_student: bool = None, physical_or_digital: bool = None, preferred_location: str = None, comments :str = None):
+    print(row_id)
+    print(teacher_accepted_student)
+    print(physical_or_digital)
+    print(preferred_location)
+    print(comments)
     query = f"UPDATE `{USER_DATASET}.teacher_student` SET "
     query_params = []
     

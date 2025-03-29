@@ -260,31 +260,34 @@ const InactiveStudents = ( {students} : {students : Student[]}) => {
     </>)
 }
 
-const assignTeacher = async (teacherUserId: string, studentUserId: string): Promise<void> => {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
-    const token = localStorage.getItem('token')
 
-
+const assignTeacher = async (
+    teacherUserId: string | null, 
+    studentUserId: string, 
+    oldTeacherUserId: string | null
+  ): Promise<void> => {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+    const token = localStorage.getItem('token');
+  
     const response = await fetch(`${baseUrl}/assign-teacher-for-student`, {
-        method: "POST",
-        headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json' // Added Content-Type header
-        },
-        body: JSON.stringify({
-            teacher_user_id: teacherUserId,
-            student_user_id: studentUserId
-        })
-    })
-
+      method: "POST",
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        teacher_user_id: teacherUserId,
+        student_user_id: studentUserId,
+        old_teacher_user_id: oldTeacherUserId
+      })
+    });
+  
     if (!response.ok) {
-        alert("Error while assigning teacher to student")
+      alert("Error while assigning teacher to student");
+    } else {
+      alert("Læreren er blitt tildelt til eleven");
     }
-    
-    else {
-        alert("Læreren er blitt tildelt til eleven")
-    }
-}
+};
 
 const handleSetActive = async (student: Student) => {
     const token = localStorage.getItem('token')
@@ -313,15 +316,22 @@ const handleSetActive = async (student: Student) => {
     }
 }
 
-const SetTeacherCombobox = ({student, teachers, passSelectedTeacher }: { 
+const SetTeacherCombobox = ({
+    student,
+    teachers,
+    passSelectedTeacher
+  }: { 
     student: Student, 
     teachers: Teacher[], 
-    passSelectedTeacher: (teacherUserId: string, studentUserId :string) => void 
-    
-    }) => {
-        
+    passSelectedTeacher: (teacherUserId: string | null, studentUserId: string, oldTeacherUserId: string | null) => void 
+  }) => {
+    // Capture the original teacher from the student as the old teacher
+    const oldTeacher = student.your_teacher || null;
+  
     const [teacherUserId, setTeacherUserId] = useState<string | null>(student.your_teacher || null);
-    const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(teachers.find((teacher) => teacher.user_id === student.your_teacher) || null);
+    const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(
+      teachers.find((teacher) => teacher.user_id === student.your_teacher) || null
+    );
     const [open, setOpen] = useState<boolean>(false);
   
     useEffect(() => {
@@ -334,11 +344,12 @@ const SetTeacherCombobox = ({student, teachers, passSelectedTeacher }: {
     const getTeacherName = (teacher: Teacher | null) =>
       teacher ? `${teacher.firstname} ${teacher.lastname}` : "Ingen lærer tildelt";
   
-    const handleSelectTeacher = (userId: string) => {
+    const handleSelectTeacher = (userId: string | null) => {
       setTeacherUserId(userId);
-      const selectedTeacher = teachers.find((teacher) => teacher.user_id === userId) || null;
-      setSelectedTeacher(selectedTeacher);
-      passSelectedTeacher(userId, student.user_id);
+      const selected = userId ? (teachers.find((teacher) => teacher.user_id === userId) || null) : null;
+      setSelectedTeacher(selected);
+      // Pass the new teacher, student id, and old teacher id to the assign function
+      passSelectedTeacher(userId, student.user_id, oldTeacher);
     };
   
     return (
@@ -359,6 +370,23 @@ const SetTeacherCombobox = ({student, teachers, passSelectedTeacher }: {
             <CommandList>
               <CommandEmpty>Ingen lærer er tildelt</CommandEmpty>
               <CommandGroup>
+                {/* Option to remove teacher */}
+                <CommandItem
+                  key="no-teacher"
+                  value="no-teacher"
+                  onSelect={() => {
+                    handleSelectTeacher(null);
+                    setOpen(false);
+                  }}
+                >
+                  Ingen lærer
+                  <Check
+                    className={cn(
+                      "ml-auto",
+                      teacherUserId === null ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                </CommandItem>
                 {teachers.map((teacher) => (
                   <CommandItem
                     key={teacher.user_id}

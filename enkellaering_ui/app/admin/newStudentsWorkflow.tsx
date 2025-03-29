@@ -351,7 +351,9 @@ function NewStudentRow({ ns, teachers }: { ns: NewStudent, teachers :Teacher[] }
 
         <TableCell className="min-w-60">
             {fromReferal ? (
-                <span className="text-gray-400">Fra {ns.referee_name} <br/> tlf: {refereePhone}</span>
+                <span className="text-gray-400">Fra {ns.referee_name} <br/> tlf: {refereePhone}
+                <br/> kontoNr: {ns.referee_account_number}
+                </span>
             ) : (
                 <span className="text-gray-400">Nei</span>
 

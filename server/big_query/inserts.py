@@ -124,7 +124,7 @@ def insert_student(client: bigquery.Client, student: Students):
         raise e
 
 
-def insert_referral(client: bigquery.Client, referral: Referrals):
+def NOTINUSE_insert_referral(client: bigquery.Client, referral: Referrals):
     # Check for matching student to populate referee_user_id
     referee_query = f"""
         SELECT user_id FROM `{PROJECT_ID}.{USER_DATASET}.STUDENTS`
@@ -174,12 +174,12 @@ def insert_new_student(client: bigquery.Client, new_student: NewStudents):
         INSERT INTO `{PROJECT_ID}.{NEW_STUDENTS_DATASET}.new_students` (
             phone, has_called, called_at, has_answered, answered_at, has_signed_up, signed_up_at,
             from_referal, referee_phone, referee_name, has_assigned_teacher, assigned_teacher_at,
-            has_finished_onboarding, finished_onboarding_at, comments, new_student_id, preffered_teacher, created_at
+            has_finished_onboarding, finished_onboarding_at, comments, new_student_id, preffered_teacher, created_at, referee_account_number
         )
         VALUES (
             @phone, @has_called, @called_at, @has_answered, @answered_at, @has_signed_up, @signed_up_at,
             @from_referal, @referee_phone, @referee_name, @has_assigned_teacher, @assigned_teacher_at,
-            @has_finished_onboarding, @finished_onboarding_at, @comments, @new_student_id, @preffered_teacher, @created_at
+            @has_finished_onboarding, @finished_onboarding_at, @comments, @new_student_id, @preffered_teacher, @created_at, @referee_account_number
         )
     """
     job_config = bigquery.QueryJobConfig(
@@ -202,6 +202,7 @@ def insert_new_student(client: bigquery.Client, new_student: NewStudents):
             bigquery.ScalarQueryParameter("new_student_id", "STRING", new_student.new_student_id),
             bigquery.ScalarQueryParameter("preffered_teacher", "STRING", new_student.preffered_teacher),
             bigquery.ScalarQueryParameter("created_at", "TIMESTAMP", new_student.created_at),
+            bigquery.ScalarQueryParameter("referee_account_number", "STRING", new_student.referee_account_number)
         ]
     )
     
@@ -571,7 +572,8 @@ def insert_new_student_order(student_user_id: str, teacher_user_id: str, accept:
         "physical_or_digital": physical_or_digital,
         "preferred_location": location,
         "order_comments": comments,
-        "created_at": datetime.now(timezone.utc).isoformat()
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "hidden": False
     }
 
     # Insert the row into BigQuery
@@ -581,3 +583,36 @@ def insert_new_student_order(student_user_id: str, teacher_user_id: str, accept:
         raise Exception(f"Batch insert failed: {errors}")
 
     return True
+
+
+
+
+def addTeacherToNewStudent(client: bigquery.Client, student_user_id: str, teacher_user_id: str, admin_user_id: str):
+    query = f"""
+        INSERT INTO `{USER_DATASET}.teacher_student`
+            (row_id, teacher_user_id, student_user_id, teacher_accepted_student, physical_or_digital, preferred_location, created_at, hidden, order_comments)
+        SELECT 
+            GENERATE_UUID(), @teacher_user_id, @student_user_id, FALSE, NULL, NULL, CURRENT_TIMESTAMP(), FALSE, ""
+        FROM UNNEST([1])
+        WHERE EXISTS (
+            SELECT 1
+            FROM `{USER_DATASET}.teachers`
+            WHERE user_id = @admin_user_id
+        )
+    """
+    
+    params = [
+        bigquery.ScalarQueryParameter("teacher_user_id", "STRING", teacher_user_id),
+        bigquery.ScalarQueryParameter("student_user_id", "STRING", student_user_id),
+        bigquery.ScalarQueryParameter("admin_user_id", "STRING", admin_user_id)
+    ]
+    
+    job_config = bigquery.QueryJobConfig(query_parameters=params)
+    
+    try:
+        return client.query(query, job_config=job_config)
+    except Exception as e:
+        print(f"Error in addTeacherToNewStudent: {e}")
+        raise e
+
+

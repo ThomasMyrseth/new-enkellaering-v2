@@ -36,6 +36,9 @@ export default function MinSideStudentPage() {
             if (t) {
                 setTeachers(t)
             }
+            else {
+                setTeachers([])
+            }
             if (s) {
                 setStudent(s)
             }

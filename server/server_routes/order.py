@@ -50,26 +50,23 @@ def get_new_students_route(user_id):
 
 
 
-from big_query.gets import get_all_new_students_with_preferred_teacher
+from big_query.gets import get_all_students_without_teacher
 
 @order_bp.route('/get-new-students-with-preferred-teacher', methods=["GET"])
 @token_required
 def get_new_students_with_preferred_teacher_route(user_id):
-    teacher_user_id = user_id
 
     try:
-        res = get_all_new_students_with_preferred_teacher(client=bq_client, teacher_user_id=teacher_user_id)
+        res = get_all_students_without_teacher(client=bq_client, admin_user_id=user_id)
     
-
-
         if len(res)==0:
             print("no new students found")
             return jsonify({
-                "new_students": []
+                "students_without_teacher": []
             }), 200
         
         return jsonify({
-            "new_students": res
+            "students_without_teacher": res
         }), 200
     
     except Exception as e:
@@ -77,6 +74,32 @@ def get_new_students_with_preferred_teacher_route(user_id):
         return jsonify({
             "message": f"Error getting new students {e}"
         }), 500
+
+
+from big_query.gets import get_new_orders_for_teacher
+@order_bp.route('/get-new-students-for-teacher', methods=["GET"])
+@token_required
+def get_new_orders_for_teacher_route(user_id):
+
+    try:
+        res = get_new_orders_for_teacher(client=bq_client, teacher_user_id=user_id)
+    
+        if len(res)==0:
+            print("no new students found")
+            return jsonify({
+                "new_orders": []
+            }), 200
+        
+        return jsonify({
+            "new_orders": res
+        }), 200
+    
+    except Exception as e:
+        print(f"Error getting new students {e}")
+        return jsonify({
+            "message": f"Error getting new students {e}"
+        }), 500
+
 
 
 
@@ -231,11 +254,11 @@ def delete_new_student(user_id):
     data = request.get_json()
 
     # Extract fields
-    new_student_id = data.get("new_student_id")
+    row_id = data.get("row_id")
 
     # Perform the update
     try:
-        res = hideNewStudent(client=bq_client, new_student_id=new_student_id, admin_user_id=admin_user_id)
+        res = hideNewStudent(client=bq_client, row_id=row_id, admin_user_id=admin_user_id)
         res.result()  # Force query execution to detect any errors
     except Exception as e:
         logging.error("BigQuery error:", e)
@@ -357,10 +380,11 @@ def submit_new_referal_route():
     referal_phone= data.get("referal_phone")
     referee_phone = data.get("referee_phone")
     referee_name = data.get("referee_name")
+    account_number = data.get("account_number")
     norway_tz = pytz.timezone("Europe/Oslo")
 
 
-    if not (referal_phone and referee_phone and referee_name):
+    if not (referal_phone and referee_phone and referee_name and account_number):
         return jsonify({"message": "Missing fields for adding new referal"}), 400
     
     ns = NewStudents(
@@ -383,7 +407,9 @@ def submit_new_referal_route():
         finished_onboarding_at=None,
         comments=None,
         paid_referee=False,
-        paid_referee_at=None
+        paid_referee_at=None,
+        referee_account_number = account_number,
+        preffered_teacher=None
     )
 
     try:
@@ -414,7 +440,6 @@ from big_query.gets import get_teacher_by_user_id
 @order_bp.route('/request-new-teacher', methods=["POST"])
 @token_required
 def request_new_teacher_route(user_id):
-    print("\n\nrewuesting new teacher \n\n")
     data = request.get_json()
     teacher_user_id = data.get('teacher_user_id')
     physical_or_digital = data.get('physical_or_digital') or False
@@ -429,8 +454,9 @@ def request_new_teacher_route(user_id):
         teacher = next(teacherItterator, None)  # Returns the first row or None if the iterator is empty
         if (teacher):
             name = teacher['firstname'] + " " + teacher['lastname']
-            sendNewStudentToTeacherMail(teacherName=name, receipientTeacherMail=teacher['email'])
+            sendNewStudentToTeacherMail(receipientTeacherMail=teacher['email'], teachername=name)
     except Exception as e:
+        print(f"Error sending email to teacher {e}")
         return jsonify({"messsage": f"Error sending email to teacher: {e}"}), 500
 
 
@@ -490,8 +516,6 @@ def cansel_new_order_route(user_id):
 
 
 from big_query.alters import update_new_order
-from .email import sendAcceptOrRejectToStudentMail
-from big_query.gets import get_student_by_user_id
 
 @order_bp.route('/update-order', methods=["POST"])
 @token_required
@@ -503,27 +527,16 @@ def update_order_data_route(user_id):
     
     data = request.get_json()
     row_id= data.get('row_id')
-    teacher_accepted_student = data.get('teacher_accepted_student')
     physical_or_digital = data.get('physical_or_digital')
     meeting_location = data.get('meeting_location')
     #comments = data.get('comments')
 
-    try:
-        query_job = get_student_by_user_id(client=bq_client, user_id=student_user_id)
-        first_student = next(query_job.result(), None)
-        
-        if not first_student:
-            raise RuntimeError('Could not get the student by userId')
-
-        sendAcceptOrRejectToStudentMail(studentName=first_student['firstname_parent'], acceptOrReject=teacher_accepted_student, receipientStudentMail=first_student['email_parent'])
-    except Exception as e:
-        return jsonify({"message": f"Error sending email to student {e}"}), 500
-
     if not row_id:
+        print("missing row id")
         return jsonify({"message": "Missing row id"}), 400
     
     try:
-        res = update_new_order(row_id=row_id, teacher_accepted_student=teacher_accepted_student, physical_or_digital=physical_or_digital, preferred_location=meeting_location, client=bq_client)
+        res = update_new_order(row_id=row_id, physical_or_digital=physical_or_digital, preferred_location=meeting_location, client=bq_client)
         if res:
             return jsonify({"message": "Updated new order"}), 200
         
@@ -533,3 +546,67 @@ def update_order_data_route(user_id):
         print(f"error updating new order {e}")
         return jsonify({"message": f"Error updating new order {e}"}), 500
 
+
+from .email import sendAcceptOrRejectToStudentMail
+@order_bp.route('/teacher-accepts', methods=["POST"])
+@token_required
+def teacher_accepts_route(user_id):
+    teacher_user_id = user_id
+
+    if not teacher_user_id:
+        return jsonify({"message": "Unauthorized"}), 401
+    
+    data = request.get_json()
+    row_id= data.get('row_id')
+    student_user_id = data.get('student_user_id')
+    firstname = data.get('firstname_student')
+    mail = data.get('mail_student')
+
+    teacher_firstname = data.get('firstname_teacher')
+    teacher_lastname = data.get('lastname_teacher')
+    accept = data.get('accept')
+    if (accept)=='Yes':
+        accept = True
+    else:
+        accept = False
+    
+    if not (row_id and student_user_id and firstname and teacher_firstname and teacher_lastname and mail):
+        print("missing fields")
+        print("row_id", row_id)
+        print(student_user_id)
+        print(firstname)
+        print(teacher_firstname)
+        print(teacher_lastname)
+        print(mail)
+        return jsonify({"message": "Missing fields"}), 400
+    
+    try:
+        name = teacher_firstname + " " + teacher_lastname
+        sendAcceptOrRejectToStudentMail(studentName=firstname, teacherName=name, acceptOrReject=accept, receipientStudentMail=mail)
+    except Exception as e:
+        print(f"Error sending email: {e}")
+        return jsonify({"message": f"Error sending email {e}"})
+    
+    try:
+        res = update_new_order(row_id=row_id, teacher_accepted_student=accept, client=bq_client)
+        if res:
+            return jsonify({"message": "Updated new order"}), 200
+        
+        raise(Exception("Error updating new order"))
+    
+    except Exception as e:
+        print(f"error updating new order {e}")
+        return jsonify({"message": f"Error updating new order {e}"}), 500
+
+
+from big_query.deletes import hideOldOrders
+@order_bp.route('/hide-old-orders', methods=['GET'])
+def hide_old_orders_route():
+    days = 7
+
+    try:
+        hideOldOrders(daysOld=days, client=bq_client)
+        return jsonify({"message": "Hid old orders!"}), 200
+    except Exception as e:
+        print(f"Error hiding old orders {e}")
+        return jsonify({"message": f"Error hiding old orders! {e}"}), 500

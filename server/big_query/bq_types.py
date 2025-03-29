@@ -111,6 +111,7 @@ class NewStudents:
         referee_name: Optional[str] = None,
         paid_referee: Optional[bool] = None,
         paid_referee_at: Optional[datetime] = None,
+        referee_account_number :Optional[str] = None,
         
         comments: Optional[str] = None,
     ):
@@ -134,6 +135,7 @@ class NewStudents:
         self.referee_name = referee_name
         self.paid_referee = paid_referee
         self.paid_referee_at = paid_referee_at
+        self.referee_account_number = referee_account_number
         self.new_student_id = new_student_id
 
 

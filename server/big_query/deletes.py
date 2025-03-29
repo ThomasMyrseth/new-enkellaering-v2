@@ -13,15 +13,15 @@ NEW_STUDENTS_DATASET = os.getenv('NEW_STUDENTS_DATASET')
 QUIZ_DATASET = os.getenv('QUIZ_DATASET')
 
 
-def hideNewStudent(new_student_id, admin_user_id, client=None):
+def hideNewStudent(row_id, admin_user_id, client=None):
 
     if not client:
         client = bigquery.Client.from_service_account_json('google_service_account.json')
     query = f"""
-        UPDATE `{NEW_STUDENTS_DATASET}.new_students`
+        UPDATE `{USER_DATASET}.teacher_student`
         SET hidden = TRUE
         WHERE
-            new_student_id = @new_student_id
+            row_id = @row_id
             AND EXISTS (
                 SELECT 1
                 FROM `{PROJECT_ID}.{USER_DATASET}.teachers`
@@ -31,7 +31,7 @@ def hideNewStudent(new_student_id, admin_user_id, client=None):
     """
 
     query_params = [bigquery.ScalarQueryParameter("admin_user_id", "STRING", admin_user_id),
-                    bigquery.ScalarQueryParameter("new_student_id", "STRING", new_student_id)]
+                    bigquery.ScalarQueryParameter("row_id", "STRING", row_id)]
     
     job_config = bigquery.QueryJobConfig(query_parameters=query_params)
     return client.query(query, job_config=job_config)
@@ -136,3 +136,22 @@ def delete_folder_from_bucket(storage_client, quiz_id: str, bucket_name = 'enkel
         return True
     except Exception as e:
         return False
+    
+
+def hideOldOrders(daysOld: int, client: bigquery.Client):
+    query = f"""
+        UPDATE `{USER_DATASET}.teacher_student`
+        SET hidden = TRUE
+        WHERE created_at < TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL @daysOld DAY)
+    """
+    query_params = [
+        bigquery.ScalarQueryParameter("daysOld", "INT64", daysOld)
+    ]
+    job_config = bigquery.QueryJobConfig(query_parameters=query_params)
+    try:
+        query_job = client.query(query, job_config=job_config, location="EU")
+        query_job.result()  # Wait for the query to complete
+        return True, "Old orders hidden successfully"
+    except Exception as e:
+        print(f"Error executing hideOldOrders: {e}")
+        raise Exception(f"Error hiding old orders: {e}")

@@ -75,12 +75,12 @@ export default function AdminPage() {
         <TeacherName teacher={teacher}/>
         <div className="flex flex-col items-center justify-center w-full md:w-3/4 max-w-screen-lg space-y-10 mx-auto px-4">
           <NewStudentsWithPreferredTeacherWorkflow />
-          {/* <Quiz/>
+          <Quiz/>
           <DailyRevenueChart />
           <PreviousClassesForEachTeacher />
           <PreviousClassesForEachStudent />
           <NewStudentsWorkflow />
-          <NewStudentsWithoutTeacherPage /> */}
+          {/* <NewStudentsWithoutTeacherPage /> */}
 
         </div>
         <div className="h-10"> </div>

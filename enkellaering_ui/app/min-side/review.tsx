@@ -20,7 +20,6 @@ const LeaveReview = ({
   teachers: Teacher[];
   student: Student;
 }) => {
-  const router = useRouter();
   const [rating, setRating] = useState<1 | 2 | 3 | 4 | 5>(5);
   const [comment, setComment] = useState<string>("");
   const [name, setName] = useState<string>(student.firstname_parent);
@@ -196,6 +195,9 @@ const ReviewTeacherCombobox: React.FC<ReviewTeacherComboboxProps> = ({
   const getTeacherName = (teacher: Teacher) =>
     `${teacher.firstname} ${teacher.lastname}`;
 
+  if (teachers.length === 0) {
+    return null;
+  }
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>

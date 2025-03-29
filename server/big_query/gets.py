@@ -74,8 +74,12 @@ def get_student_by_user_id(client: bigquery.Client, user_id: str):
         bigquery.ScalarQueryParameter("user_id", "STRING", user_id),
     ]
     job_config = bigquery.QueryJobConfig(query_parameters=query_params)
-
-    return client.query(query, job_config=job_config)
+    try:
+        return client.query(query, job_config=job_config)
+    
+    except Exception as e:
+        print(f"Error getting the student by the user id: {e}")
+        raise(RuntimeError(f"Error getting the student by the user id: {e}"))
 
 def get_all_referrals(client: bigquery.Client, admin_user_id: str):
     query = f"""
@@ -118,13 +122,64 @@ def get_all_new_students(client: bigquery.Client, admin_user_id: str):
     return client.query(query, job_config=job_config, location='EU')
 
 
-def get_all_new_students_with_preferred_teacher(client: bigquery.Client, teacher_user_id: str):
+def get_all_students_without_teacher(client: bigquery.Client, admin_user_id :str):
+    
     query = f"""
     SELECT * 
     FROM `{PROJECT_ID}.{USER_DATASET}.teacher_student` AS ts
     JOIN `{PROJECT_ID}.{USER_DATASET}.students`AS s
     ON ts.student_user_id = s.user_id
-    WHERE ts.teacher_user_id = @teacher_user_id
+    JOIN `{PROJECT_ID}.{USER_DATASET}.teachers` AS t
+    ON ts.teacher_user_id = t.user_id
+
+    WHERE ts.row_id NOT IN (
+        SELECT row_id
+        FROM `{PROJECT_ID}.{USER_DATASET}.teacher_student`
+        WHERE teacher_accepted_student=TRUE
+    )
+    AND EXISTS (
+        SELECT 1 FROM `{PROJECT_ID}.{USER_DATASET}.teachers`
+        WHERE user_id = @admin_user_id AND admin = TRUE
+    )
+    AND (ts.hidden IS NULL OR ts.hidden = FALSE)
+    """
+    query_params = [bigquery.ScalarQueryParameter("admin_user_id", "STRING", admin_user_id)]
+    job_config = bigquery.QueryJobConfig(query_parameters=query_params)
+    
+    try:
+        response = client.query(query, job_config=job_config)
+        results = response.result()
+
+        
+        if not response or response.errors:
+            print(f"Error fetching new students {response.errors}")
+            raise(Exception(f"Error fetching new students {response.errors}"))
+        
+        rows = [dict(row) for row in results]
+        return rows
+
+    except Exception as e:
+        raise RuntimeError(f"Error getting students with preferred teacher: {e}")
+
+
+
+def get_new_orders_for_teacher(client: bigquery.Client, teacher_user_id :str):
+    
+    query = f"""
+    SELECT * 
+    FROM `{PROJECT_ID}.{USER_DATASET}.teacher_student` AS ts
+    JOIN `{PROJECT_ID}.{USER_DATASET}.students`AS s
+    ON ts.student_user_id = s.user_id
+    JOIN `{PROJECT_ID}.{USER_DATASET}.teachers` AS t
+    ON ts.teacher_user_id = t.user_id
+    WHERE NOT EXISTS (
+        SELECT 1
+        FROM `{PROJECT_ID}.{USER_DATASET}.teacher_student` AS ts2
+        WHERE ts2.row_id = ts.row_id
+            AND ts2.teacher_accepted_student = TRUE
+    )
+    AND (ts.hidden IS NULL OR ts.hidden = FALSE)
+    AND ts.teacher_user_id = @teacher_user_id
     """
     query_params = [bigquery.ScalarQueryParameter("teacher_user_id", "STRING", teacher_user_id)]
     job_config = bigquery.QueryJobConfig(query_parameters=query_params)
@@ -138,47 +193,12 @@ def get_all_new_students_with_preferred_teacher(client: bigquery.Client, teacher
             print(f"Error fetching new students {response.errors}")
             raise(Exception(f"Error fetching new students {response.errors}"))
         
-        formatted_data = []
-        for row in results:
-            formatted_data.append({
-                "student": {
-                    "user_id": row.user_id,
-                    "firstname_parent": row.firstname_parent,
-                    "lastname_parent": row.lastname_parent,
-                    "email_parent": row.email_parent,
-                    "phone_parent": row.phone_parent,
-                    "firstname_student": row.firstname_student,
-                    "lastname_student": row.lastname_student,
-                    "phone_student": row.phone_student,
-                    "address": row.address,
-                    "postal_code": row.postal_code,
-                    "main_subjects": row.main_subjects,
-                    "has_physical_tutoring": row.has_physical_tutoring,
-                    "additional_comments": row.additional_comments,
-                    "est_hours_per_week": row.est_hours_per_week,
-                    #"your_teacher": row.your_teacher,
-                    "is_active": row.is_active,
-                    "wants_more_students": row.wants_more_students,
-                    "notes": row.notes,
-                    "created_at": row.created_at
-                },
-                "order": {
-                    "row_id": row.row_id,
-                    "teacher_user_id": row.teacher_user_id,
-                    "student_user_id": row.student_user_id,
-                    "teacher_accepted_student": row.teacher_accepted_student,
-                    "physical_or_digital": row.physical_or_digital,
-                    "preferred_location": row.preferred_location,
-                    "created_at": row.created_at,
-                    "hidden": row.hidden,
-                    "order_comments": row.order_comments
-                }
-            })
-
-        return formatted_data
+        rows = [dict(row) for row in results]
+        return rows
 
     except Exception as e:
         raise RuntimeError(f"Error getting students with preferred teacher: {e}")
+
 
 def get_new_student_by_phone(client: bigquery.Client, phone: str):
     print("phone: ", phone)
@@ -281,6 +301,7 @@ def get_teacher_for_student(client: bigquery.Client, student_user_id):
         ON t.user_id = ts.teacher_user_id
         WHERE ts.student_user_id = @student_user_id
         AND ts.teacher_accepted_student=TRUE
+        AND ts.hidden!=TRUE
     """
 
     job_config = bigquery.QueryJobConfig(
@@ -578,7 +599,8 @@ def get_new_orders(student_user_id :str, client: bigquery.Client):
         JOIN `{USER_DATASET}.teachers` AS t
         ON t.user_id = ts.teacher_user_id
         WHERE student_user_id = @student_user_id
-        AND teacher_accepted_student != TRUE
+        AND (ts.teacher_accepted_student IS NULL OR ts.teacher_accepted_student = FALSE)
+        AND (ts.hidden IS NULL OR ts.hidden = FALSE)
     """
 
     job_config = bigquery.QueryJobConfig(

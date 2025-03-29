@@ -11,6 +11,7 @@ import {
   AlertDescription,
   AlertTitle,
 } from "@/components/ui/alert"
+import { toast } from "sonner";
  
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
 
@@ -21,6 +22,7 @@ export default function ReferalForm() {
     const [referalPhone, setReferalPhone] = useState<string>("");
     const [refereePhone, setRefereePhone] = useState<string>("");
     const [refereeName, setRefereeName] = useState<string>("");
+    const [refereeAccountNumber, setRefereeAccountNumber] = useState<string>("")
     const [isSendDisabled, setIsSendDisabled] = useState<boolean>(false);
 
 
@@ -31,7 +33,7 @@ export default function ReferalForm() {
         setErrorMessage(null);
         setIsSendDisabled(true)
 
-        if (referalPhone.length!=8 || refereePhone.length!=8 || refereeName.length<3) {
+        if (referalPhone.length!=8 || refereePhone.length!=8 || refereeName.length<3 || refereeAccountNumber.length!==11) {
             setValidPhone(false)
             setIsSendDisabled(false)
             return
@@ -48,7 +50,8 @@ export default function ReferalForm() {
             body: JSON.stringify({
                 "referal_phone": referalPhone,
                 "referee_phone": refereePhone,
-                "referee_name": refereeName
+                "referee_name": refereeName,
+                "account_number": refereeAccountNumber
             })
         })
 
@@ -61,8 +64,7 @@ export default function ReferalForm() {
             setErrorMessage(false) //we have success
             setIsSendDisabled(false)
             setReferalPhone('')
-            setRefereePhone('')
-            setRefereeName('')
+            toast("Takk for at du vervet!")
         }
     }
 
@@ -129,6 +131,19 @@ export default function ReferalForm() {
             type="name"
             value={refereeName}
             onChange={(e) => setRefereeName(e.target.value)}
+            className={cn(errorMessage ? "border-red-500" : "")}
+          />
+        </LabelInputContainer>
+
+
+        <LabelInputContainer>
+          <Label htmlFor="name">Ditt kontonummer</Label>
+          <Input
+            id="name"
+            placeholder="1207.00.65543"
+            type="name"
+            value={refereeAccountNumber}
+            onChange={(e) => setRefereeAccountNumber(e.target.value)}
             className={cn(errorMessage ? "border-red-500" : "")}
           />
         </LabelInputContainer>
