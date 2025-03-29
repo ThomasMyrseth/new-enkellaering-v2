@@ -37,7 +37,11 @@ function calculatePayment(classSession: Classes, hourlyPay: number): number {
     const durationInHours = differenceInMilliseconds / (1000 * 60 * 60);
   
     // Calculate the payment
-    const payment = durationInHours * hourlyPay;
+    let payment = durationInHours * hourlyPay;
+    //bonus if this is a groupclass
+    if (classSession.groupclass) {
+        payment = durationInHours * (hourlyPay + 60)
+    }
   
     return Math.round(payment); // Optional: Round to the nearest integer
 }

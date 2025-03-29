@@ -68,6 +68,7 @@ export type Classes = {
     invoiced_student_at :string;
     class_id :string;
     was_canselled :boolean;
+    groupclass :boolean;
 };
 
 export type ClassesJoinTeacher = {
@@ -84,6 +85,7 @@ export type ClassesJoinTeacher = {
     invoiced_student_at: string | null;
     class_id: string;
     was_canselled: boolean;
+    groupclass :boolean;
     
     // Fields from the Teacher table
     // Note: In your join result, "user_id" is the teacher id (same as teacher_user_id)

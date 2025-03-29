@@ -189,7 +189,11 @@ const PreviousClasses =  ({student, teacher, allClasses}  : {student :FullStuden
                 const totalDurationMillis: number = endedAt.getTime() - startedAt.getTime();
                 const durationHours: number = Math.floor(totalDurationMillis / (1000 * 60 * 60)); // Whole hours
                 const durationMinutes: number = Math.round((totalDurationMillis % (1000 * 60 * 60)) / (1000 * 60)); // Remaining minutes
-                const amount: number = durationHours * parseInt(teacher.hourly_pay) + (durationMinutes / 60) * parseInt(teacher.hourly_pay); // Adding fractional hours
+
+                let amount: number = Math.round( durationHours * parseInt(teacher.hourly_pay) + (durationMinutes / 60) * parseInt(teacher.hourly_pay) ); // Adding fractional hours
+                if (c.groupclass) {
+                    amount = Math.round( durationHours * (parseInt(teacher.hourly_pay)+60) + (durationMinutes / 60) * (parseInt(teacher.hourly_pay)+60) )
+                }
 
                 return(
                     <TableRow key={index} className={`${c.was_canselled===true ? 'bg-red-50 dark:bg-red-950' : ''}`}>
@@ -217,7 +221,11 @@ const PreviousClasses =  ({student, teacher, allClasses}  : {student :FullStuden
                     const totalDurationMillis: number = endedAt.getTime() - startedAt.getTime();
                     const durationHours: number = Math.floor(totalDurationMillis / (1000 * 60 * 60));
                     const durationMinutes: number = Math.round((totalDurationMillis % (1000 * 60 * 60)) / (1000 * 60));
-                    const amount: number = durationHours * parseInt(teacher.hourly_pay) + (durationMinutes / 60) * parseInt(teacher.hourly_pay);
+
+                    let amount: number = Math.round( durationHours * parseInt(teacher.hourly_pay) + (durationMinutes / 60) * parseInt(teacher.hourly_pay) ); // Adding fractional hours
+                    if (c.groupclass) {
+                        amount = Math.round( durationHours * (parseInt(teacher.hourly_pay)+60) + (durationMinutes / 60) * (parseInt(teacher.hourly_pay)+60) )
+                    }
 
                     return (
                       <TableRow key={index} className={`${c.was_canselled ? 'bg-red-50 dark:bg-red-950' : ''}`}>

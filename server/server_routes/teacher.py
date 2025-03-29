@@ -52,7 +52,7 @@ def get_teacher_for_student_route(user_id):
     data = res.result()
     teacher_data = [dict(row) for row in data]  # Assuming multiple rows, adjust as needed
 
-
+    print("teacher data:",teacher_data)
     if len(teacher_data)==0:
         return jsonify({
             "teachers": []

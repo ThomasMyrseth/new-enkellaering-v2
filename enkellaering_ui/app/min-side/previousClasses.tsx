@@ -83,7 +83,12 @@ export function PreviousClasses({student} : {student : Student}) {
             const totalDurationMillis: number = new Date(c.ended_at).getTime() - new Date(c.started_at).getTime();
             const durationHours = (new Date(c.ended_at).getTime() - new Date(c.started_at).getTime()) / (1000 * 60 * 60)
             if (!c.invoiced_student) {
-                totalAmount += durationHours*540;
+                if (c.groupclass) {
+                    totalAmount += durationHours*350
+                }
+                else {
+                    totalAmount += durationHours*540;
+                }
             }
 
             //add it to the threeweek
@@ -143,7 +148,12 @@ export function PreviousClasses({student} : {student : Student}) {
                 const totalDurationMillis: number = endedAt.getTime() - startedAt.getTime();
                 const durationHours: number = Math.floor(totalDurationMillis / (1000 * 60 * 60)); // Whole hours
                 const durationMinutes: number = Math.round((totalDurationMillis % (1000 * 60 * 60)) / (1000 * 60)); // Remaining minutes
-                const amount: number = durationHours * 540 + (durationMinutes / 60) * 540; // Adding fractional hours
+
+                let amount: number = durationHours * 540 + (durationMinutes / 60) * 540; // Adding fractional hours
+
+                if (c.groupclass) {
+                    amount = durationHours * 350 + (durationMinutes / 60) * 350; // Adding fractional hours
+                }
 
                 return(
                     <TableRow key={index} className={`${c.was_canselled===true? 'bg-red-50 dark:bg-red-950' : ''}`}>
@@ -178,7 +188,12 @@ export function PreviousClasses({student} : {student : Student}) {
                     const totalDurationMillis: number = endedAt.getTime() - startedAt.getTime();
                     const durationHours: number = Math.floor(totalDurationMillis / (1000 * 60 * 60));
                     const durationMinutes: number = Math.round((totalDurationMillis % (1000 * 60 * 60)) / (1000 * 60));
-                    const amount: number = durationHours * 540 + (durationMinutes / 60) * 540;
+
+                    let amount: number = durationHours * 540 + (durationMinutes / 60) * 540; // Adding fractional hours
+                    if (c.groupclass) {
+                        amount = durationHours * 350 + (durationMinutes / 60) * 350; // Adding fractional hours
+                    }
+
 
                     return (
                       <TableRow key={index}>

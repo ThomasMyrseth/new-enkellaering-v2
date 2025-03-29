@@ -191,8 +191,11 @@ export function PreviousClassesForEachStudent() {
                 const durationHours: number = Math.floor(totalDurationMillis / (1000 * 60 * 60));
                 const durationMinutes: number = Math.round((totalDurationMillis % (1000 * 60 * 60)) / (1000 * 60));
                 const totalDurationHours: number = durationHours + durationMinutes / 60; // Combine fractional hours
-            
-                const invoiceAmount: number = totalDurationHours * 540;
+                
+                let invoiceAmount: number = totalDurationHours * 540;
+                if (c.groupclass) {
+                    invoiceAmount = totalDurationHours * 350
+                }
              
                 if (!c.invoiced_student) {
                     totalUninvoicedHoursStudent += totalDurationHours; // Add fractional hours directly
@@ -311,7 +314,10 @@ export function PreviousClassesForEachStudent() {
                         const durationMinutes: number = Math.round((totalDurationMillis % (1000 * 60 * 60)) / (1000 * 60));
                         const totalDurationHours: number = durationHours + durationMinutes / 60; // Combine fractional hours
                     
-                        const invoiceAmount: number = Math.round(totalDurationHours * 540);
+                        let invoiceAmount: number = Math.round(totalDurationHours * 540);
+                        if (c.groupclass) {
+                            invoiceAmount = Math.round(durationHours*350)
+                        }
                         
                         return (
                         <TableRow key={index} className={`${c.was_canselled===true? 'bg-red-50 dark:bg-red-950' : ''}`}>
@@ -404,7 +410,12 @@ const InvoiceStudentPopover = ( {student, classes} : {student: Student, classes:
         const durationHours = (new Date(endTime).getTime() - new Date(startTime).getTime()) / (1000 * 60 * 60);
 
         totalNumberOfHours += durationHours;
-        totalInvoiceAmmount += durationHours * 540;
+
+        let thisClass :number = durationHours*540
+        if (c.groupclass) {
+            thisClass = durationHours*350
+        }
+        totalInvoiceAmmount += thisClass
     });
 
     //now round of total values

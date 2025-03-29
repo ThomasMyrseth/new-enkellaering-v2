@@ -262,6 +262,7 @@ def get_student_for_teacher(client :bigquery.Client, teacher_user_id: str):
             ON s.user_id = ts.student_user_id
             WHERE teacher_user_id = @teacher_user_id
             AND ts.teacher_accepted_student = TRUE
+            AND (ts.hidden IS NULL OR ts.hidden!=TRUE)
         """
     
     query_params = [bigquery.ScalarQueryParameter("teacher_user_id", "STRING", teacher_user_id)]
@@ -301,7 +302,7 @@ def get_teacher_for_student(client: bigquery.Client, student_user_id):
         ON t.user_id = ts.teacher_user_id
         WHERE ts.student_user_id = @student_user_id
         AND ts.teacher_accepted_student=TRUE
-        AND ts.hidden!=TRUE
+        AND (ts.hidden IS NULL OR ts.hidden!=TRUE)
     """
 
     job_config = bigquery.QueryJobConfig(

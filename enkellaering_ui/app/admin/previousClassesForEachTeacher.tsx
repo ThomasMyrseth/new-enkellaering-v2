@@ -212,8 +212,6 @@ export function PreviousClassesForEachTeacher() {
 
             //go through all this teachers students and add up estimated hours per week
             students.map( (student :Student ) => {
-                console.log("student: ", student.your_teacher)
-                console.log("teacher: ", ct.teacher.user_id, "\n\n")
                 if (student.your_teacher === ct.teacher.user_id && student.is_active) {
                     estTotalHoursLastFourWeeks += student.est_hours_per_week;
                 }
@@ -223,8 +221,15 @@ export function PreviousClassesForEachTeacher() {
                 const startedAt: Date = new Date(c.started_at);
                 const endedAt: Date = new Date(c.ended_at);
                 const totalDurationMillis: number = endedAt.getTime() - startedAt.getTime();
-                const invoiceAmount: number = (totalDurationMillis / (1000 * 60 * 60)) * 540
-                const toTeacherAmmount :number = totalDurationMillis / (1000 * 60 * 60) * teacherHourlyPay
+
+                let invoiceAmount: number = (totalDurationMillis / (1000 * 60 * 60)) * 540
+                if (c.groupclass) {
+                    invoiceAmount = (totalDurationMillis / (1000 * 60 * 60)) * 350
+                }
+                let toTeacherAmmount :number = totalDurationMillis / (1000 * 60 * 60) * teacherHourlyPay
+                if (c.groupclass) {
+                    toTeacherAmmount = totalDurationMillis / (1000 * 60 * 60) * (teacherHourlyPay+60)
+                }
 
                 //add up to see how many hours the teacher has had the last four weeks
                 if (new Date(c.started_at).getTime() > fourWeeksAgo.getTime()) {
@@ -385,8 +390,15 @@ export function PreviousClassesForEachTeacher() {
                                 const totalDurationMillis: number = endedAt.getTime() - startedAt.getTime();
                                 const durationHours: number = Math.floor(totalDurationMillis / (1000 * 60 * 60));
                                 const durationMinutes: number = Math.round((totalDurationMillis % (1000 * 60 * 60)) / (1000 * 60));
-                                const invoiceAmount: number = Math.round(totalDurationMillis / (1000 * 60 * 60) *540)
-                                const toTeacherAmmount :number = Math.round(totalDurationMillis / (1000 * 60 * 60) * teacherHourlyPay)
+
+                                let invoiceAmount: number = Math.round(totalDurationMillis / (1000 * 60 * 60) *540)
+                                if (c.groupclass) {
+                                    invoiceAmount = Math.round(totalDurationMillis / (1000 * 60 * 60) *350)
+                                }
+                                let toTeacherAmmount :number = Math.round(totalDurationMillis / (1000 * 60 * 60) * teacherHourlyPay)
+                                if (c.groupclass) {
+                                    toTeacherAmmount = Math.round(totalDurationMillis / (1000 * 60 * 60) * (teacherHourlyPay+60))
+                                }
 
                                 
                                 return (
@@ -475,7 +487,12 @@ const PayTeacherPopover = ( {teacher, classes} : {teacher: Teacher, classes: Cla
         durationHours = Math.round(durationHours * 10) / 10; // Rounds to one decimal place
 
         totalNumberOfHours += durationHours;
-        totalPaymentAmmount += Math.round(durationHours * parseInt(teacher.hourly_pay));
+
+        let thisClass = Math.round(durationHours * parseInt(teacher.hourly_pay))
+        if (c.groupclass) {
+            thisClass = Math.round(durationHours * (parseInt(teacher.hourly_pay)+60))
+        }
+        totalPaymentAmmount += thisClass
     });
 
     //round of final values

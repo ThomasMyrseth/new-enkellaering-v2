@@ -281,8 +281,12 @@ def insert_new_student_with_preferred_teacher(client: bigquery.Client, new_stude
     return job
 
 
-def insert_class(client: bigquery.Client, class_obj: Classes):
-    # Validate teacher exists
+from google.cloud import bigquery
+from datetime import datetime, timezone
+
+def insert_classes(client: bigquery.Client, classes: list[Classes]):
+    # Validate teacher exists (based on the first class in the list)
+    teacher_user_id = classes[0].teacher_user_id
     teacher_query = f"""
         SELECT user_id FROM `{PROJECT_ID}.{USER_DATASET}.teachers`
         WHERE user_id = @teacher_user_id
@@ -291,7 +295,7 @@ def insert_class(client: bigquery.Client, class_obj: Classes):
         teacher_query,
         job_config=bigquery.QueryJobConfig(
             query_parameters=[
-                bigquery.ScalarQueryParameter("teacher_user_id", "STRING", class_obj.teacher_user_id)
+                bigquery.ScalarQueryParameter("teacher_user_id", "STRING", teacher_user_id)
             ]
         ),
     )
@@ -300,48 +304,38 @@ def insert_class(client: bigquery.Client, class_obj: Classes):
     if not teacher_result:
         raise ValueError("Teacher does not exist")
 
-    query = f"""
-        INSERT INTO `{PROJECT_ID}.{CLASSES_DATASET}.classes` (
-            class_id, teacher_user_id, student_user_id, created_at, started_at, ended_at,
-            comment, paid_teacher, invoiced_student, was_canselled
-        )
-        VALUES (
-            @class_id, @teacher_user_id, @student_user_id, @created_at, @started_at, @ended_at,
-            @comment, @paid_teacher, @invoiced_student, @was_canselled
-        )
-    """
-    job_config = bigquery.QueryJobConfig(
-        query_parameters=[
-            bigquery.ScalarQueryParameter("class_id", "STRING", class_obj.class_id),
-            bigquery.ScalarQueryParameter("teacher_user_id", "STRING", class_obj.teacher_user_id),
-            bigquery.ScalarQueryParameter("student_user_id", "STRING", class_obj.student_user_id),
-            bigquery.ScalarQueryParameter("created_at", "TIMESTAMP", datetime.fromisoformat(class_obj.created_at.replace("Z", "")).replace(tzinfo=timezone.utc)),
-            bigquery.ScalarQueryParameter("started_at", "TIMESTAMP", datetime.fromisoformat(class_obj.started_at.replace("Z", "")).replace(tzinfo=timezone.utc)),
-            bigquery.ScalarQueryParameter("ended_at", "TIMESTAMP", datetime.fromisoformat(class_obj.ended_at.replace("Z", "")).replace(tzinfo=timezone.utc)),
-            bigquery.ScalarQueryParameter("comment", "STRING", class_obj.comment),
-            bigquery.ScalarQueryParameter("paid_teacher", "BOOL", class_obj.paid_teacher),
-            bigquery.ScalarQueryParameter("invoiced_student", "BOOL", class_obj.invoiced_student),
-            bigquery.ScalarQueryParameter("was_canselled", "BOOL", class_obj.was_canselled),
-        ]
+    # Prepare rows to insert
+    rows_to_insert = [
+        {
+            "class_id": cls.class_id[0] if isinstance(cls.class_id, tuple) else cls.class_id,
+            "teacher_user_id": cls.teacher_user_id,
+            "student_user_id": cls.student_user_id,
+            "created_at": datetime.fromisoformat(cls.created_at.replace("Z", "")).replace(tzinfo=timezone.utc).isoformat(),
+            "started_at": datetime.fromisoformat(cls.started_at.replace("Z", "")).replace(tzinfo=timezone.utc).isoformat(),
+            "ended_at": datetime.fromisoformat(cls.ended_at.replace("Z", "")).replace(tzinfo=timezone.utc).isoformat(),
+            "comment": cls.comment,
+            "paid_teacher": cls.paid_teacher,
+            "invoiced_student": cls.invoiced_student,
+            "was_canselled": cls.was_canselled,
+            "groupclass": cls.groupclass
+        }
+        for cls in classes
+    ]
+
+    print(rows_to_insert[0])
+
+    # Insert rows into BigQuery
+    errors = client.insert_rows_json(
+        f"{PROJECT_ID}.{CLASSES_DATASET}.classes",
+        json_rows=rows_to_insert,
     )
 
-    try:
-        response = client.query(query, job_config=job_config, location="EU")
-        response.result()  # Ensure the query completes
+    if errors:
+        print("BigQuery insertion errors:", errors)
+        raise Exception("Error inserting new class into BigQuery")
 
-        # Debug response
-        print("Query executed successfully.")
-        if response.errors:
-            print("BigQuery errors:")
-            for error in response.errors:
-                print(error)
-            raise Exception("Error inserting new class into BigQuery")
-        
-        return True
-    except Exception as e:
-        print(f"Error executing query: {e}")
-        raise Exception(f"Error executing query: {e}")
-    
+    print("Inserted all classes successfully.")
+    return True
 
 def upsert_about_me_text(client: bigquery.Client, text: str, user_id: str, firstname: str, lastname: str):
     query = f"""

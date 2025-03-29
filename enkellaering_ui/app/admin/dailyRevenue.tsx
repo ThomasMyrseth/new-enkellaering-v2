@@ -115,7 +115,12 @@ export function DailyRevenueChart() {
             const startedAtDate = new Date(c.started_at);
             const startedAtString = startedAtDate.toISOString().split("T")[0]; 
             if (startedAtString === thisDateString) {
-              totalPaymentToday += calculatePayment(c, 540);
+                if (c.groupclass) {
+                    totalPaymentToday += calculatePayment(c, 350)
+                }
+                else {
+                    totalPaymentToday += calculatePayment(c, 540);
+                }
             }
           });
       

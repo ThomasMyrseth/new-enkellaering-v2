@@ -167,46 +167,52 @@ def fetch_classes_for_teacher(user_id):
 
 from big_query.bq_types import Classes
 import uuid
-from big_query.inserts import insert_class
+from big_query.inserts import insert_classes
 @classes_bp.route('/upload-new-class', methods=["POST"])
 @token_required
 def upload_new_class(user_id):
     data = request.get_json()
-    teacher_user_id = data.get('teacher_user_id')
-    student_user_id = data.get('student_user_id')
+    teacher_user_id = user_id
+    student_user_ids = data.get('student_user_ids')
     started_at = data.get("started_at")
     ended_at = data.get("ended_at")
     comment = data.get("comment")
     was_canselled = data.get("was_canselled") or False
+    groupclass = data.get('groupclass')
     invoiced_student = False
     paid_teacher = False
     paid_teacher_at = None
     invoiced_student_at = None
 
-    if not(teacher_user_id and student_user_id and started_at and ended_at):
+    if not(teacher_user_id and student_user_ids and started_at and ended_at):
         return jsonify({"message": "Missing required fields"}), 400
     
-    new_class = Classes(
-        class_id=str(uuid.uuid4()),
-        teacher_user_id=teacher_user_id,
-        student_user_id=student_user_id,
-        created_at=datetime.now().isoformat(),
-        started_at=started_at,
-        ended_at=ended_at,
-        comment=comment,
-        paid_teacher=paid_teacher,
-        invoiced_student=invoiced_student,
-        paid_teacher_at=paid_teacher_at,
-        invoiced_student_at=invoiced_student_at,
-        was_canselled=was_canselled
-    )
+
+    classes :list[Classes] = []
+    for student_user_id in student_user_ids:
+        new_class = Classes(
+            class_id=str(uuid.uuid4()),
+            teacher_user_id=teacher_user_id,
+            student_user_id=student_user_id,
+            created_at=datetime.now().isoformat(),
+            started_at=started_at,
+            ended_at=ended_at,
+            comment=comment,
+            paid_teacher=paid_teacher,
+            invoiced_student=invoiced_student,
+            paid_teacher_at=paid_teacher_at,
+            invoiced_student_at=invoiced_student_at,
+            was_canselled=was_canselled,
+            groupclass=groupclass
+        )
+        classes.append(new_class)
 
     try:
-        response = insert_class(client=bq_client, class_obj=new_class)
+        response = insert_classes(client=bq_client, classes=classes)
         if response:
             print("inserted new class successfully")
             return jsonify({"message": "Class inserted successfully"}), 200
     except Exception as e:
-        print(f"error {e}")
+        print(f"error inserting new class: {e}")
         return jsonify({"message": f"Error inserting new class {e}"}), 500
 

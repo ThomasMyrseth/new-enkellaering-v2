@@ -60,13 +60,13 @@ export function TeacherFocusCards() {
 
     const [active, setActive] = useState<(CardType) | boolean | null>(null);
     const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
+    const [disableButton, setDisableButton] = useState<boolean>(false)
 
     const id = useId();
     const ref = useRef<HTMLDivElement>(null);
     const router = useRouter()
     const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8080'
 
-    const [showLoginAlert, setShowLoginAlert] = useState<boolean>(false)
     const [showOrderPopover, setShowOrderPopover] = useState<boolean>(false)
     const [orderedTeacher, setOrderedTeacher] = useState<CardType>()
     const [wantPhysicalOrDigital, setWantPhysicalOrDigital] = useState<boolean | null>(null)
@@ -132,7 +132,6 @@ export function TeacherFocusCards() {
         const token :string|null= localStorage.getItem('token') || null;
         const isTeacher = localStorage.getItem('isTeacher')
         if (!token || !isTeacher) {
-            setShowLoginAlert(true)
             return;
         }
 
@@ -151,13 +150,14 @@ export function TeacherFocusCards() {
     const handleSubmit = () => {
         const token :string|null= localStorage.getItem('token') || null;
         const isTeacher = localStorage.getItem('isTeacher')
+        setDisableButton(true)
         if (!token || !isTeacher) {
-            setShowLoginAlert(true)
             return;
         }
         
         if (!orderedTeacher) {
             alert('Klarte ikke å bestille lærer. Prøv igjen')
+            setDisableButton(false)
             return;
         }
 
@@ -167,8 +167,10 @@ export function TeacherFocusCards() {
         }
         try {
             submitNewRequest(BASEURL, token, orderedTeacher.teacher.user_id, wantPhysicalOrDigital, address, comments, router)
+            setDisableButton(false)
         }
         catch {
+            setDisableButton(false)
             alert("Klarte ikke å bestille, prøv igjen.")
         }
     }
@@ -424,6 +426,7 @@ export function TeacherFocusCards() {
                         (!card.teacher.physical_tutouring && !card.teacher.digital_tutouring) ||
                         !!previousOrders.find((p) => p.order.teacher_user_id === card.teacher.user_id)
                         || !isLoggedInStudent
+                        || disableButton
                     }
                     className={`py-2min-w-32 w-fit min-h-14 ${   (!card.teacher.physical_tutouring && !card.teacher.digital_tutouring) ||
                         !!previousOrders.find((p) => p.order.teacher_user_id === card.teacher.user_id) || !isLoggedInStudent ? 'bg-neutral-400 text-neutral-100':''}`}

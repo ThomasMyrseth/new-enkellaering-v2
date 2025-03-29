@@ -19,20 +19,62 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
 import { toast } from "sonner";
+import { Checkbox } from "@/components/ui/checkbox"
 
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8080';
 
 export function AddNewClass({teacher}: {teacher: Teacher}) {
-    const [selectedStudentUserId, setSelectedStudentUserId] = useState<string>()
+    const token = localStorage.getItem('token') || ''
+    const [students, setStudents] = useState<Student[]>([])
+    const [selectedStudentUserIds, setSelectedStudentUserIds] = useState<string[]>([])
     const [startedAt, setStartedAt] = useState<Date>()
     const [endedAt, setEndedAt] = useState<Date>()
     const [comment, setComment] = useState<string>()
     const [success, setSuccess] = useState<boolean>()
     const [wasCanselled, setWasCanselled] = useState<boolean>(false)
+    const [groupClass, setGroupClass] = useState<boolean>(false)
+
+
+    useEffect( () => {
+        async function fetchStudents() {
+            const response = await fetch(`${BASEURL}/get-students`, {
+                method: "GET",
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+
+            if (response.ok) {
+                const data = await response.json()
+
+                const students :Student[]= data.students.sort( (a :Student, b :Student) => {
+                    const nameA = a.firstname_parent.toUpperCase()
+                    const nameB = b.firstname_parent.toUpperCase()
+                    if (nameA < nameB) {
+                        return -1
+                    }
+                    if (nameA > nameB) {
+                        return 1
+                    }
+                    return 0
+                })
+                setStudents(students)
+            }
+            else {
+            }
+        }
+        fetchStudents()
+
+    },[token])
+
 
     const handleStudentSelect = (userId: string) => {
-        setSelectedStudentUserId(userId);
+        setSelectedStudentUserIds([...selectedStudentUserIds, userId]);
+    };
+
+    const handleStudentSelects = (userId: string[]) => {
+        setSelectedStudentUserIds([...selectedStudentUserIds, ...userId])
     };
 
     const handleStartDateSelect = (startDate :Date) => {
@@ -48,6 +90,10 @@ export function AddNewClass({teacher}: {teacher: Teacher}) {
 
     const handleSetCanselled = (canselled :boolean) => {
         setWasCanselled(canselled)
+    }
+
+    const handleSetGroupClass = (canselled :boolean) => {
+        setGroupClass(canselled)
     }
 
     const handleSetSucces = (s :boolean) => {
@@ -83,7 +129,13 @@ export function AddNewClass({teacher}: {teacher: Teacher}) {
             </AlertDialog>
         )}
         <div className="flex flex-col space-y-4 items-strech">
-            <SelectStudent onStudentSelect={handleStudentSelect} />
+            <GroupClass onGroupClass={handleSetGroupClass}/>
+            <br/>
+            {
+                groupClass? 
+                <SelectStudents onStudentSelect={handleStudentSelects} students={students}/>
+                :<SelectStudent onStudentSelect={handleStudentSelect} students={students}/>
+            }
             <br />
             <DateTimePicker onStartDateSelected={handleStartDateSelect} onEndDateSelected={handleEndDateSelect}/>
             <br />
@@ -96,8 +148,9 @@ export function AddNewClass({teacher}: {teacher: Teacher}) {
                 started_at={startedAt}
                 ended_at={endedAt}
                 comment={comment}
-                selectedStudentUserId={selectedStudentUserId}
+                selectedStudentUserIds={selectedStudentUserIds}
                 wasCanselled={wasCanselled}
+                groupClass={groupClass}
                 setUploadSuccessfull={handleSetSucces}
             />
         </div>
@@ -106,51 +159,8 @@ export function AddNewClass({teacher}: {teacher: Teacher}) {
 }
 
 
-function SelectStudent({ onStudentSelect} : {onStudentSelect: (user_id:string)=> void}) {
-    const token = localStorage.getItem('token')
-    const [students, setStudents] = useState<Student[]>([])
+function SelectStudent({ onStudentSelect, students} : {onStudentSelect: (user_id:string)=> void, students :Student[]}) {
     const [selectedStudentUserId, setSelectedStudentUserId] = useState<string | undefined>();
-
-
-    useEffect( () => {
-        async function fetchStudents() {
-            const response = await fetch(`${BASEURL}/get-students`, {
-                method: "GET",
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            })
-
-            if (response.ok) {
-                const data = await response.json()
-
-                const students :Student[]= data.students.sort( (a :Student, b :Student) => {
-                    const nameA = a.firstname_parent.toUpperCase()
-                    const nameB = b.firstname_parent.toUpperCase()
-                    if (nameA < nameB) {
-                        return -1
-                    }
-                    if (nameA > nameB) {
-                        return 1
-                    }
-                    return 0
-                })
-                setStudents(students)
-
-                // Automatically select the first student only once
-                if (data.students.length > 0) {
-                    const firstStudentId = data.students[0].user_id;
-                    setSelectedStudentUserId(firstStudentId);
-                    onStudentSelect(firstStudentId);
-                }
-            }
-            else {
-            }
-        }
-        fetchStudents()
-
-    },[token])
-
 
 
     const handleValueChange = (user_id: string) => {
@@ -190,6 +200,50 @@ function SelectStudent({ onStudentSelect} : {onStudentSelect: (user_id:string)=>
 const LabelInputContainer = ({ children }: { children: React.ReactNode }) => {
     return <div className="mb-4">{children}</div>;
 };
+
+function SelectStudents({ onStudentSelect, students} : {onStudentSelect: (user_id :string[])=> void, students :Student[]}) {
+    const [selectedStudentUserIds, setSelectedStudentUserIds] = useState<string[]>([]);
+
+
+    const toggleCheckbox = (userId: string, checked: boolean) => {
+        const updatedSelection = checked
+            ? [...selectedStudentUserIds, userId]
+            : selectedStudentUserIds.filter(id => id !== userId);
+
+        setSelectedStudentUserIds(updatedSelection);
+        onStudentSelect(updatedSelection);
+    };
+
+    
+    return (
+        <div className="w-full h-full flex flex-col items-center">
+            <h3 className="pb-4">Hvem hadde du i dag?</h3>
+            <div className="w-2/3 md:w-1/3 justify-start space-y-2">
+            {students.map((student: Student, index: number) => {
+                if (!student.is_active) return null;
+
+                const userId = student.user_id;
+                const isChecked = selectedStudentUserIds.includes(userId);
+
+                return (
+                    <div key={index} className="flex items-center space-x-2">
+                        <Checkbox
+                            id={userId}
+                            checked={isChecked}
+                            onCheckedChange={(checked: boolean) => toggleCheckbox(userId, checked)}
+                        />
+                        <Label htmlFor={userId}>
+                            <p>{student.firstname_parent} {student.lastname_parent}</p>
+                            <p className="text-sm text-neutral-600">& {student.firstname_student} {student.lastname_student}</p>
+                        </Label>
+                    </div>
+                );
+            })}
+            </div>
+        </div>
+    );
+}
+
 
 
 function AddComment({onAddComment} : {onAddComment: (comment: string) => void   }) {
@@ -239,6 +293,26 @@ function WasCanselled({onWasCanselled} : {onWasCanselled: (wasCanselled: boolean
     </div>
   </>)
 }
+
+function GroupClass({onGroupClass} : {onGroupClass: (onGroupClass: boolean) => void}) {
+    const [groupClass, setGroupClass] = useState<boolean>(false)
+
+    const handleToggle = () => {
+        setGroupClass(!groupClass)
+        onGroupClass(!groupClass)
+    }
+    
+    return(<>
+        <div className="w-full flex flex-col items-center space-x-2">
+            <div className="flex items-center space-x-2">
+                <Switch id="more-students" checked={groupClass} onCheckedChange={handleToggle}/>
+                <Label htmlFor="more-students" className={`${groupClass ? '' : 'text-neutral-400'}`}>Dette var en gruppetime</Label>
+            </div>
+    </div>
+  </>)
+}
+
+
 
 
 function DateTimePicker({onStartDateSelected, onEndDateSelected} : {onStartDateSelected: (date: Date) => void; onEndDateSelected: (date: Date) => void}) {
@@ -388,7 +462,7 @@ function DateTimePicker({onStartDateSelected, onEndDateSelected} : {onStartDateS
 }
 
 
-function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUserId, wasCanselled, setUploadSuccessfull} : {teacher: Teacher; started_at?: Date; ended_at?: Date; comment?: string, selectedStudentUserId?: string, wasCanselled :boolean, setUploadSuccessfull: (success: boolean) => void}) {
+function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUserIds, wasCanselled, groupClass, setUploadSuccessfull} : {teacher: Teacher; started_at?: Date; ended_at?: Date; comment?: string, selectedStudentUserIds: string[], wasCanselled :boolean, groupClass :boolean, setUploadSuccessfull: (success: boolean) => void}) {
     const token = localStorage.getItem('token')
     const [durationInHours, setDurationInHours] = useState<number | undefined>()
     const [allValid, setAllValid] = useState<boolean>(false)
@@ -397,19 +471,19 @@ function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUse
     const [isSendButtonDisabled, setIsSendButtonDisabled] = useState(false);
 
     useEffect( () => {
-        if (teacher && started_at && ended_at && comment && selectedStudentUserId) {
+        if (teacher && started_at && ended_at && comment && selectedStudentUserIds) {
             setAllValid(true)
         }
         else {
             setAllValid(false)
         }
-    },[teacher, started_at, ended_at, comment, selectedStudentUserId])
+    },[teacher, started_at, ended_at, comment, selectedStudentUserIds])
 
     const handleSendClick = async () => {
         //avoid spamming
         setIsSendButtonDisabled(true); // Prevent multiple clicks right away
 
-        if (!teacher || !started_at || !ended_at || !comment || !selectedStudentUserId) {
+        if (!teacher || !started_at || !ended_at || !comment || !selectedStudentUserIds) {
             alert("Fyll ut alle felter");
             setUploadSuccessfull(false);
             setIsSendButtonDisabled(false);
@@ -440,7 +514,7 @@ function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUse
     };
 
     const uploadClass = async() => {
-        if (!teacher || !started_at || !ended_at || !comment || !selectedStudentUserId) {
+        if (!teacher || !started_at || !ended_at || !comment || !selectedStudentUserIds) {
             alert("Alle felter må være utfylt");
             setUploadSuccessfull(false);
             return true;
@@ -454,12 +528,12 @@ function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUse
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                teacher_user_id: teacher.user_id,
-                student_user_id: selectedStudentUserId,
+                student_user_ids: selectedStudentUserIds,
                 started_at: started_at.toISOString(),
                 ended_at: ended_at.toISOString(),
                 comment: comment,
-                was_canselled: wasCanselled
+                was_canselled: wasCanselled,
+                groupclass : groupClass,
             }),
             });
     
@@ -470,7 +544,7 @@ function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUse
                 return true;
             } else {
                 setUploadSuccessfull(true);
-                setIsSendButtonDisabled(false)
+                setIsSendButtonDisabled(false),
                 toast("Ny time lastet opp")
                 return true;
             }

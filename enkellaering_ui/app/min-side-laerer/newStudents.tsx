@@ -19,6 +19,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Carousel } from "@/components/ui/apple-cards-carousel";
 
 import { NewStudent, Teacher } from "../admin/types";
 import { NewTeacherOrder } from "./types";
@@ -52,28 +53,28 @@ export function NewStudentsWithPreferredTeacherWorkflowActions() {
   return <NewStudentWithPreferredTeacherActionsTable newStudents={newStudents} />;
 }
 
-const NewStudentWithPreferredTeacherActionsTable = ({
-  newStudents,
-}: {
-  newStudents: NewTeacherOrder[];
-}) => {
+
+const NewStudentWithPreferredTeacherActionsTable = ({newStudents,}: {newStudents: NewTeacherOrder[];}) => {
+  
   // Order new students by created_at (most recent first)
   newStudents.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
+  const cards = newStudents.map((ns) => {
+    return (
+      <NewStudentWithPreferredTeacherActionsCard
+        key={ns.row_id}
+        ns={ns}
+      />
+    );
+  })
 
-  return (
-    <div className="w-full bg-white dark:bg-black m-4 p-4 rounded-lg flex flex-col items-center justify-center">
-        <h1 className="text-2xl font-semibold leading-none tracking-tight">Nye elever som ønkser deg som lærer</h1>
-          {newStudents.map((ns) => {
-            return (
-              <NewStudentWithPreferredTeacherActionsCard
-                key={ns.row_id}
-                ns={ns}
-              />
-            );
-          })}
+
+  return (<div className="w-full bg-white dark:bg-black m-4 p-4 rounded-lg flex flex-col items-center justify-center">
+    <h1 className="text-2xl font-semibold leading-none tracking-tight">Nye elever som ønkser deg som lærer</h1>
+    <div className="w-full flex flex-row items-center justify-center">
+       <Carousel items={cards} />
     </div>
-  );
+  </div>);
 };
 
 
