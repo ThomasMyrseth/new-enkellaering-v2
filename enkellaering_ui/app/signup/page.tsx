@@ -1,4 +1,5 @@
-"use client";
+"use client"; //why cant eslint see this is a client component
+
 
 import React, { useState } from "react";
 import { Label } from "@/components/ui/label";
