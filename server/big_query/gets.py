@@ -172,11 +172,12 @@ def get_new_orders_for_teacher(client: bigquery.Client, teacher_user_id :str):
     ON ts.student_user_id = s.user_id
     JOIN `{PROJECT_ID}.{USER_DATASET}.teachers` AS t
     ON ts.teacher_user_id = t.user_id
+
     WHERE NOT EXISTS (
         SELECT 1
         FROM `{PROJECT_ID}.{USER_DATASET}.teacher_student` AS ts2
         WHERE ts2.row_id = ts.row_id
-            AND ts2.teacher_accepted_student = TRUE
+            AND ts2.teacher_accepted_student IS NOT NULL
     )
     AND (ts.hidden IS NULL OR ts.hidden = FALSE)
     AND ts.teacher_user_id = @teacher_user_id

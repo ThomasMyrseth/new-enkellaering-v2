@@ -34,7 +34,7 @@ export const WantMoreStudents = ({teacher} : {teacher :Teacher}) => {
   }
 
     return(<>
-    <Card className="flex flex-col items-center w-3/4 m-4">
+    <Card className="flex flex-col items-center w-full">
       <CardHeader>
         <CardTitle>Ønsker du flere elever?</CardTitle>
       </CardHeader>

@@ -148,7 +148,7 @@ export function DailyRevenueChart({ teacher }: { teacher: Teacher }) {
     // }
     
 
-    return(<div className="w-3/4 p-4">
+    return(<div className="w-full">
         <Card>
         <CardHeader>
             <CardTitle>Timer du ikke har fått betalt for</CardTitle>

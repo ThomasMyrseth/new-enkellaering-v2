@@ -70,7 +70,7 @@ export const FileUploadForm = ({firstname, lastname, title} : {firstname? :strin
       };
 
   return (
-    <div className="w-3/4 mx-auto min-h-96 bg-white dark:bg-black  rounded-lg">
+    <div className="w-full mx-auto min-h-96 bg-white dark:bg-black  rounded-lg">
 
         {fileError && (
             <Alert className="text-red-400">

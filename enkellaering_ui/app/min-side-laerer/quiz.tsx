@@ -14,7 +14,7 @@ import {
 export default function QuizStatusPage( {token, baseUrl} : {token :string, baseUrl :string}) {
 
     return(<>
-    <Card className="flex flex-col items-center w-3/4 m-4">
+    <Card className="flex flex-col items-center w-full">
       <CardHeader>
         <CardTitle>Bli sertifisert lærer ved å fullføre quizzene under</CardTitle>
       </CardHeader>

@@ -51,6 +51,7 @@ import { PopoverClose } from "@radix-ui/react-popover";
 import { Teacher } from "@/app/admin/types";
 import { Textarea } from "../textarea";
 import { TeacherOrder, TeacherOrderJoinTeacher } from "@/app/min-side/types";
+import { toast } from "sonner";
   
 
 export function TeacherFocusCards() {
@@ -71,7 +72,7 @@ export function TeacherFocusCards() {
     const [orderedTeacher, setOrderedTeacher] = useState<CardType>()
     const [wantPhysicalOrDigital, setWantPhysicalOrDigital] = useState<boolean | null>(null)
     const [address, setAddress] = useState<string>('')
-    const [comments, setComments] = useState<string>('')
+    const [comments, setComments] = useState<string>()
 
     // Filter states
     const [filterLocation, setFilterLocation] = useState<string | null>(null);
@@ -161,6 +162,11 @@ export function TeacherFocusCards() {
             return;
         }
 
+        if(!comments) {
+            toast('Skriv om hva og hvilke fag du trenger hjelp med.')
+            return
+        }
+
         if (wantPhysicalOrDigital===null) {
             alert("Velg om dere ønsker digital eller fysisk undervisning")
             return;
@@ -230,11 +236,15 @@ export function TeacherFocusCards() {
                 <p>Jeg ønsker {orderedTeacher?.teacher.physical_tutouring? 'fysisk' : 'digital'} undervisning med {orderedTeacher?.teacher.firstname}</p>
                 <div>
                     <Label>Hvor ønsker du å møte {orderedTeacher?.teacher.firstname}?</Label>
-                    <Input value={address} defaultValue="Hjemmeveien 3 eller Deichman Bjørvika" onChange={(e) => setAddress(e.target.value)}/>
+                    <Textarea rows={2} value={address} placeholder="Helst hjemme hos meg i Hjemmeveien 3, eller i sentrum som Deichman Bjørvika." onChange={(e) => setAddress(e.target.value)}/>
                 </div>
                 <div>
-                    <Label>Har du noe du vil si til {orderedTeacher?.teacher.firstname}?</Label>
-                    <Textarea rows={2} value={comments} onChange={(e) => setComments(e.target.value)}/>
+                    <Label>Beskriv til {orderedTeacher?.teacher.firstname} hva du trenger hjelp med og hvilke fag.</Label>
+                    <Textarea 
+                        rows={4} 
+                        value={comments} onChange={(e) => setComments(e.target.value)}
+                        placeholder='Jeg heter Thomas og trenger hjelp i matte 1t. Jeg ønsker hjelo én gang i uken, men har en prøve i trigonometri om to uker. Håper vi kan øve litt ekstra til den!'
+                    />
                 </div>
                 <Button onClick={handleSubmit}>Bestill</Button>
                 <AlertDialogCancel onClick={() => setShowOrderPopover(false)}>Angre</AlertDialogCancel>

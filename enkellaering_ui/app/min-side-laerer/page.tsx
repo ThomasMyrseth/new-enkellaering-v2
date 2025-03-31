@@ -51,25 +51,16 @@ export default function LaererPage() {
 
     return (<div className="flex flex-col items-center justify-center w-full min-h-screen bg-slate-200 dark:bg-slate-900">
             <TeacherName teacher={teacher}/>
-            <NewStudentsWithPreferredTeacherWorkflowActions/>
-            <br/>
-            {/* <UnacceptedStudentsTable teacher={teacher}/> */}
-
-            <ProfileForm teacher={teacher}/>
-            <WantMoreStudents teacher={teacher}/>
-
-            <QuizStatusPage token={token} baseUrl={BASEURL}/>
-
-            <DailyRevenueChart teacher={teacher}/>
-            <br />
-            <AddNewClass teacher={teacher}/>
-            <br/>
-            <YourStudent teacher={teacher} classes={classes} students={students}/>
-            <br/>
-            <FileUploadForm firstname={teacher.firstname} lastname={teacher.lastname} title={"Last opp et bilde av deg"}/>
-
-        <div className="p-4 m-4">
-        </div>
+            <div className="w-full md:w-4/5 flex flex-col space-y-4 mt-4">
+                <DailyRevenueChart teacher={teacher}/>
+                <WantMoreStudents teacher={teacher}/>
+                <AddNewClass teacher={teacher}/>
+                <YourStudent teacher={teacher} classes={classes} students={students}/>
+                <NewStudentsWithPreferredTeacherWorkflowActions/>
+                <ProfileForm teacher={teacher}/>
+                <QuizStatusPage token={token} baseUrl={BASEURL}/>
+                <FileUploadForm firstname={teacher.firstname} lastname={teacher.lastname} title={"Last opp et bilde av deg"}/>
+            </div>
 
     </div>)
 

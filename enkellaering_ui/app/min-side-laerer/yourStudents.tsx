@@ -18,7 +18,7 @@ export function YourStudent( {teacher, classes, students} : {teacher: Teacher, c
 
     
 
-    return(<div className="w-3/4 bg-white dark:bg-black rounded-lg p-4 flex flex-col justify-center items-center">
+    return(<div className="w-full bg-white dark:bg-black rounded-lg p-4 flex flex-col justify-center items-center">
         <h2 className="text-xl font-semibold mb-4 text-neutral-800 dark:text-neutral-200">Dine elever</h2>
         <Accordion type="single" collapsible className="w-full">
             {students.map( (student, index) => {

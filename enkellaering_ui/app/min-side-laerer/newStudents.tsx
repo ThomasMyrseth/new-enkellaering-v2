@@ -69,7 +69,7 @@ const NewStudentWithPreferredTeacherActionsTable = ({newStudents,}: {newStudents
   })
 
 
-  return (<div className="w-full bg-white dark:bg-black m-4 p-4 rounded-lg flex flex-col items-center justify-center">
+  return (<div className="w-full bg-white dark:bg-black p-4 rounded-lg flex flex-col items-center justify-center">
     <h1 className="text-2xl font-semibold leading-none tracking-tight">Nye elever som ønkser deg som lærer</h1>
     <div className="w-full flex flex-row items-center justify-center">
        <Carousel items={cards} />
@@ -101,6 +101,7 @@ import { useRouter } from "next/navigation";
 
 export default function NewStudentWithPreferredTeacherActionsCard({ ns }: { ns :NewTeacherOrder}) {
   const [hasAccepted, setHasAccepted] = useState<boolean | null>(ns.teacher_accepted_student);
+  const [openDialog, setOpenDialog] = useState<boolean>(false)
   const token = localStorage.getItem('token') || ''
   const formattedDate = new Date(ns.created_at).toLocaleDateString("nb-NO", {
     day: "2-digit",
@@ -117,12 +118,13 @@ export default function NewStudentWithPreferredTeacherActionsCard({ ns }: { ns :
 
 
   const handleAcceptClick = (value: boolean, order :NewTeacherOrder) => {
+    setOpenDialog(false)
     handleSaveClick(value, token, order)
   }
 
   return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
+    <AlertDialog open={openDialog}>
+      <AlertDialogTrigger asChild onClick={() => setOpenDialog(true)}>
         <div className="cursor-pointer relative bg-neutral-100 dark:bg-neutral-900 rounded-lg shadow-lg overflow-hidden w-80 m-4 min-h-96">
           <div className="w-full h-40 relative">
               <Image
@@ -162,24 +164,12 @@ export default function NewStudentWithPreferredTeacherActionsCard({ ns }: { ns :
             Velg om du aksepterer eller avslår studentens forespørsel.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <div className="p-4">
-          <RadioGroup
-            onValueChange={(value) => handleAcceptClick(value === "Ja", ns)}
-            value={hasAccepted === true ? "Ja" : hasAccepted === false ? "Nei" : undefined}
-            className="w-full flex flex-col items-start space-y-2 mt-1"
-          >
-            <div className="w-full flex items-center space-x-1">
-              <RadioGroupItem value="Ja" />
-              <Label>Jeg godtar eleven</Label>
-            </div>
-            <div className="w-full flex items-center space-x-1">
-              <RadioGroupItem value="Nei" />
-              <Label>Jeg ønkser ikke denne eleven</Label>
-            </div>
-          </RadioGroup>
+        <div className="p-4 space-x-4 w-full flex flex-row items-center">
+            <Button className="bg-green-500 dark:bg-green-400" onClick={() => handleAcceptClick(true, ns)}>Jeg tar denne eleven</Button>
+            <Button className="bg-rose-500 dark:bg-rose-400"  onClick={() => handleAcceptClick(false, ns)}>Jeg ønsker ikke denne eleven</Button>
         </div>
         <AlertDialogFooter className="mt-4 flex justify-between">
-          <AlertDialogCancel>Ferdig</AlertDialogCancel>
+          <AlertDialogCancel className="" onClick={() => setOpenDialog(false)}>Tilbake</AlertDialogCancel>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

@@ -110,7 +110,7 @@ export function AddNewClass({teacher}: {teacher: Teacher}) {
     }
     
     
-    return (<div className="w-3/4  p-4 bg-white dark:bg-black rounded-lg">
+    return (<div className="w-full p-4 bg-white dark:bg-black rounded-lg">
          {success && (
             <AlertDialog open={success}>
                 <AlertDialogDescription>Timen er lastet opp!</AlertDialogDescription>
