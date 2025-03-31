@@ -7,14 +7,22 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
+import { Suspense } from 'react'
 
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../auth/firebase";
 
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 
-
 export default function SignupForm() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SignupFormContent />
+    </Suspense>
+  )
+};
+
+function SignupFormContent() {
   const searchParams = useSearchParams()
   const preferredTeacherUserId :string | null= searchParams.get("teacher_user_id") || null;
 
@@ -273,13 +281,12 @@ export default function SignupForm() {
 
 
       </form>
-    </div>
-  );
+    </div>);
 
 }
 
 const LabelInputContainer = ({ children }: { children: React.ReactNode }) => {
-  return <div className="mb-4">{children}</div>;
+  return <div className="mb-4">{children}</div>
 };
 
 
