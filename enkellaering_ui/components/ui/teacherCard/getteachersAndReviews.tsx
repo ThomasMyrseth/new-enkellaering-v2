@@ -1,6 +1,6 @@
-import { Review, Teacher } from "@/app/admin/types";
+import { Review } from "@/app/admin/types";
 import { CardType, ExpandedTeacher, AboutMe, Qualification } from "./typesAndData";
-import { TeacherOrder, TeacherOrderJoinTeacher } from "@/app/min-side/types";
+import { TeacherOrderJoinTeacher } from "@/app/min-side/types";
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080";
 

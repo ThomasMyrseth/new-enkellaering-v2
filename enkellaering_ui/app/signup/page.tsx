@@ -283,10 +283,10 @@ const LabelInputContainer = ({ children }: { children: React.ReactNode }) => {
 
 
 
-import { Student, Teacher } from "../admin/types";
+import { Teacher } from "../admin/types";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { ChevronsUpDown } from "lucide-react"
-import { Command, CommandDialog, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
+import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
 import { Check } from "lucide-react";
 import { useEffect } from "react";
 

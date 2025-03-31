@@ -18,25 +18,21 @@ export type QuizResult = {
     passed: boolean;
     quiz_id: string;
     user_id: string;
-  };
-  
-  export type Quiz = {
-    created_at: string; // Timestamp as a string
-    image: string; // URL string
-    pass_threshold: number;
-    quiz_id: string;
-    title: string;
-    content: string;
-  };
-  
-  export type QuizStatus = {
-    quiz: Quiz;
-    result: QuizResult| null;
-  };
+};
 
+export type Quiz = {
+  created_at: string; // Timestamp as a string
+  image: string; // URL string
+  pass_threshold: number;
+  quiz_id: string;
+  title: string;
+  content: string;
+};
 
-import { TeacherOrder } from "../min-side/types";
-import { Student } from "../admin/types";
+export type QuizStatus = {
+  quiz: Quiz;
+  result: QuizResult| null;
+};
 
 
 export type NewTeacherOrder = {
