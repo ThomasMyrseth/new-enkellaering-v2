@@ -58,7 +58,7 @@ export default function OrderCardsCarouselDemo() {
       );
     };
 
-    let cards = orders
+    const cards = orders
       .map((order: Order) => {
         if (order.teacherOrder.order.hidden) {
           return null;

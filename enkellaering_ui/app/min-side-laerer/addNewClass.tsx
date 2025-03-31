@@ -544,8 +544,8 @@ function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUse
                 return true;
             } else {
                 setUploadSuccessfull(true);
-                setIsSendButtonDisabled(false),
-                toast("Ny time lastet opp")
+                setIsSendButtonDisabled(false);
+                toast("Ny time lastet opp");
                 return true;
             }
         } catch (error) {

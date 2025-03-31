@@ -1,7 +1,6 @@
 "use client"
 
 import { Teacher } from "../admin/types";
-import { useState } from "react";
 import React from "react";
 import { CardBody, CardContainer, CardItem } from "@/components/ui/3d-card";
 import Image  from "next/image";

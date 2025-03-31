@@ -3,36 +3,17 @@ import Image from "next/image";
 import React, { useEffect, useId, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useOutsideClick } from "@/hooks/use-outside-click";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Laptop, Terminal, Users, Star } from "lucide-react"
+import { Laptop, Users, Star } from "lucide-react"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert"
-import {
     AlertDialog,
-    AlertDialogAction,
     AlertDialogCancel,
     AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
     AlertDialogTitle,
-    AlertDialogTrigger,
   } from "@/components/ui/alert-dialog"
 import { useRouter } from "next/navigation";
 
-import { cn } from "@/lib/utils";
 
 import { Button } from "../button";
 
@@ -40,17 +21,8 @@ import { CardType } from "./typesAndData";
 
 import { ToggleFilterCards, filterCards } from "./filter";
 import { getMyOrders, getTeacherCards } from "./getteachersAndReviews";
-import Link from "next/link";
-
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-  } from "@/components/ui/popover"
-import { PopoverClose } from "@radix-ui/react-popover";
-import { Teacher } from "@/app/admin/types";
 import { Textarea } from "../textarea";
-import { TeacherOrder, TeacherOrderJoinTeacher } from "@/app/min-side/types";
+import { TeacherOrderJoinTeacher } from "@/app/min-side/types";
 import { toast } from "sonner";
   
 

@@ -6,8 +6,6 @@ import { cn } from "@/lib/utils";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { Student, Teacher } from "../admin/types";
-import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 
 const LeaveReview = ({
   token,

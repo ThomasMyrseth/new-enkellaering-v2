@@ -1,27 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Carousel } from "@/components/ui/apple-cards-carousel";
 
-import { NewStudent, Teacher } from "../admin/types";
 import { NewTeacherOrder } from "./types";
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080";
@@ -89,18 +70,13 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogCancel,
-  AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 
 
 
 export default function NewStudentWithPreferredTeacherActionsCard({ ns }: { ns :NewTeacherOrder}) {
-  const [hasAccepted, setHasAccepted] = useState<boolean | null>(ns.teacher_accepted_student);
   const [openDialog, setOpenDialog] = useState<boolean>(false)
   const token = localStorage.getItem('token') || ''
   const formattedDate = new Date(ns.created_at).toLocaleDateString("nb-NO", {
