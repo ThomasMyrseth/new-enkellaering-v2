@@ -27,8 +27,16 @@ import { toast } from "sonner";
   
 
 export function TeacherFocusCards() {
-    const hasToken = localStorage.getItem('token') 
-    const isTeacher = localStorage.getItem('isTeacher')==='true'
+    const [hasToken, setHasToken] = useState<string | null>(null)
+    const [isTeacher, setIsTeacher] = useState<boolean>(false)
+
+    useEffect(() => {
+    const token = localStorage.getItem('token')
+    const teacher = localStorage.getItem('isTeacher') === 'true'
+    setHasToken(token)
+    setIsTeacher(teacher)
+    }, [])
+
     const isLoggedInStudent = hasToken && !isTeacher
 
     const [active, setActive] = useState<(CardType) | boolean | null>(null);
