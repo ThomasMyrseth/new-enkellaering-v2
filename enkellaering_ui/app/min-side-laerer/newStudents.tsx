@@ -193,6 +193,7 @@ const handleSaveClick = async (accept :boolean, token :string, ns :NewTeacherOrd
   });
 
   if (!response.ok) {
+    console.log("error message:", response.statusText)
     alert("Klarte ikke å oppdatere bestillingen. Prøv igjen om litt.");
     return;
   }

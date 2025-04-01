@@ -30,12 +30,14 @@ export default function NewStudentForm() {
         setTimeout(() => {
             setIsDisabled(false)
         }, 5000); //5 seconds
+        
+        const trimmedPhone = phone.replace(/\s/g, "");
+        setPhone(trimmedPhone);
 
-        if (phone.length!=8) {
+        if (trimmedPhone.length != 8) {
             setValidPhone(false)
-            return
-        }
-        else {
+            return;
+        } else {
             setValidPhone(true)
         }
 
@@ -45,7 +47,7 @@ export default function NewStudentForm() {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                "phone": phone
+                "phone": trimmedPhone
             })
         })
 
