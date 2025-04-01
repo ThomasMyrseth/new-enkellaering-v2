@@ -231,7 +231,7 @@ export function TeacherFocusCards() {
         </AlertDialog>
 
         {/*Filtering */}
-        <div className="bg-white dark:bg-black p-4 rounded-xl">
+        <div className="bg-wgite w-3/4 md:w-1/2 dark:bg-black p-4 rounded-xl">
           <ToggleFilterCards
               passFilterDigital={setFilterDigital}
               passFilterPhysical={setFilterPhysical}
