@@ -585,7 +585,7 @@ def teacher_accepts_route(user_id):
         sendAcceptOrRejectToStudentMail(studentName=firstname, teacherName=name, acceptOrReject=accept, receipientStudentMail=mail)
     except Exception as e:
         print(f"Error sending email: {e}")
-        return jsonify({"message": f"Error sending email {e}"})
+        return jsonify({"message": f"Error sending email {e}"}), 500
     
     try:
         res = update_new_order(row_id=row_id, teacher_accepted_student=accept, client=bq_client)

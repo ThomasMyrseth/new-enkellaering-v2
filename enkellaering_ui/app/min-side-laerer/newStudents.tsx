@@ -51,7 +51,8 @@ const NewStudentWithPreferredTeacherActionsTable = ({newStudents,}: {newStudents
 
 
   return (<div className="w-full bg-white dark:bg-black p-4 rounded-lg flex flex-col items-center justify-center">
-    <h1 className="text-2xl font-semibold leading-none tracking-tight">Nye elever som ønkser deg som lærer</h1>
+    <h1 className="text-2xl text-center font-semibold leading-none tracking-tight">Nye elever som ønkser deg som lærer</h1>
+    <p className="w-full md:w-2/3 text-center mt-2">Ring gjerne elevene og hør litt mer om hva de ønsker. Etter det kan du bestemme om du vil ha dem eller ikke.</p>
     <div className="w-full flex flex-row items-center justify-center">
        <Carousel items={cards} />
     </div>
