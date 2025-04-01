@@ -118,7 +118,7 @@ export default function OrderCard({ order, handleUIDelete }: {order: Order, hand
         alert("Error deleting order");
         return;
       }
-      toast("Order deleted");
+      toast("Bestillingen er slettet");
     } catch (error) {
       console.error("Error deleting order:", error);
       alert("Error deleting order");
@@ -154,23 +154,23 @@ export default function OrderCard({ order, handleUIDelete }: {order: Order, hand
               {formattedDate}
             </p>
             <p className="mt-2 text-sm">
-              <span className="font-semibold">Contact:</span>{" "}
+              <span className="font-semibold">Tlf:</span>{" "}
               {order.teacherOrder.teacher.phone}
             </p>
             <p className="mt-2 text-sm">
-              <span className="font-semibold">Method:</span> {teachingMethod}
+              <span className="font-semibold">Hvordan:</span> {teachingMethod}
             </p>
             {physicalOrDigital && meetingLocation && (
               <p className="mt-2 text-sm">
-                <span className="font-semibold">Location:</span>{" "}
+                <span className="font-semibold">Hvor:</span>{" "}
                 {meetingLocation}
               </p>
             )}
             <p className="mt-2 text-sm">
-              <span className="font-semibold">Comments:</span> {comments}
+              <span className="font-semibold">Kommentarer:</span> {comments}
             </p>
             <p className="mt-2 text-sm">
-              <span className="font-semibold">Teacher Accepted:</span>{" "}
+              <span className="font-semibold">Svar fra lærer:</span>{" "}
               {acceptanceText}
             </p>
           </div>

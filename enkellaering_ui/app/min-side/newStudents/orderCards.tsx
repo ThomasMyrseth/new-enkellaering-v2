@@ -30,7 +30,7 @@ export default function OrderCardsCarouselDemo() {
               
                     return {
                       teacherOrder: order,
-                      imageURL: foundImage ? foundImage.image : "/placeholder-image.webp", // Provide a default value if no image is found.
+                      imageURL: foundImage ? foundImage.image : "/enkel_laering_transparent.png", // Provide a default value if no image is found.
                       handleDelete: deleteOrder
                     };
                 });
@@ -69,9 +69,16 @@ export default function OrderCardsCarouselDemo() {
 
       return (
         <div className="w-full">
-          <h2 className="text-center mx-auto text-xl md:text-5xl font-bold text-neutral-800 dark:text-neutral-200 font-sans">
-            Dine bestillinger
-          </h2>
+          {cards.length>0 &&
+            <h2 className="text-center mx-auto text-xl md:text-5xl font-bold text-neutral-800 dark:text-neutral-200 font-sans">
+              Dine bestillinger
+            </h2>
+          }
+          {cards.length===0 &&
+            <h3 className="text-center mx-auto text-lg md:text-2xl font-bold text-neutral-800 dark:text-neutral-200 font-sans">
+              Du har ikke bestilt noen nye lærere
+            </h3>
+          }
           <Carousel items={cards} handleDelete={deleteOrder}/>
         </div>
       );

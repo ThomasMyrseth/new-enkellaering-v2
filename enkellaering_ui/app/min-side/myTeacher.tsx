@@ -9,19 +9,31 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 export function MyTeachers( {teachers} : {teachers :Teacher[]}) {
-    if (teachers.length===0) {
-        return <p>Dere hat ingen lærer</p>
-    }
 
     const cards = teachers.map((t: Teacher, index: number) => (
         <TeacherCard teacher={t} key={index} />
-    ));
+    ))
 
     return (<>
-    {cards.length===1 &&       <h2 className="text-center mx-auto text-xl md:text-5xl font-bold text-neutral-800 dark:text-neutral-200 font-sans">
-        Din lærer</h2>}
-    {cards.length!==1 &&       <h2 className="text-center mx-auto text-xl md:text-5xl font-bold text-neutral-800 dark:text-neutral-200 font-sans">
-        Dine lærere</h2>}
+    {cards.length===1 &&      
+        <h2 className="text-center mx-auto text-xl md:text-5xl font-bold text-neutral-800 dark:text-neutral-200 font-sans">
+        Din lærer</h2>
+    }
+    {cards.length>1 &&       
+        <h2 className="text-center mx-auto text-xl md:text-5xl font-bold text-neutral-800 dark:text-neutral-200 font-sans">
+        Dine lærere</h2>
+    }
+    {cards.length===0 &&
+        <>
+        <h2 className="text-center mx-auto text-xl md:text-5xl font-bold text-neutral-800 dark:text-neutral-200 font-sans">
+        Du har ingen lærer</h2>
+        <br/>
+        <p className="w-2/3 text-center">Dersom dere sliter med å bestille lærer, eller ønsker at vi bestiller for dere kan dere kontakte:
+            <br/>
+            <span className="font-bold">Thomas Myrseth tlf: <span className="text-underline">47184744</span></span>
+        </p>
+        </>
+    }
         <Carousel items={cards}/>
     </>)
 

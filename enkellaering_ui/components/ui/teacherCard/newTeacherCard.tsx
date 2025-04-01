@@ -10,7 +10,6 @@ import {
     AlertDialog,
     AlertDialogCancel,
     AlertDialogContent,
-    AlertDialogTitle,
   } from "@/components/ui/alert-dialog"
 import { useRouter } from "next/navigation";
 
@@ -105,7 +104,7 @@ export function TeacherFocusCards() {
     useEffect(() => {
         const c :CardType[] = filterCards(cards, filterLocation, filterQualification, filterDigital, filterPhysical);
         setFilteredCards(c);
-    },[filterLocation, filterQualification, filterDigital, filterPhysical])
+    },[filterLocation, filterQualification, filterDigital, filterPhysical, cards])
 
 
     const handleOrderClick = (card :CardType) => {
@@ -196,9 +195,9 @@ export function TeacherFocusCards() {
     return (
         <>
 
-        {/*Order popover*/}
+        {/* Order popover */}
         <AlertDialog open={showOrderPopover}>
-        <AlertDialogTitle>Bestill {orderedTeacher?.teacher.firstname}</AlertDialogTitle>
+
             <AlertDialogContent>
                 {orderedTeacher?.teacher.digital_tutouring && orderedTeacher.teacher.physical_tutouring &&
                     <RadioGroup onValueChange={handleSetWantsPhysicalOrDigital}>
@@ -232,7 +231,7 @@ export function TeacherFocusCards() {
         </AlertDialog>
 
         {/*Filtering */}
-        <div className="bg-neutral-100 dark:bg-black p-4 rounded-xl">
+        <div className="bg-white dark:bg-black p-4 rounded-xl">
           <ToggleFilterCards
               passFilterDigital={setFilterDigital}
               passFilterPhysical={setFilterPhysical}
@@ -266,7 +265,7 @@ export function TeacherFocusCards() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0, transition: { duration: 0.05 } }}
-                className="flex absolute top-2 right-2 lg:hidden items-center justify-center bg-white rounded-full h-6 w-6"
+                className="flex absolute top-8 right-2 lg:hidden items-center justify-center bg-white rounded-full h-6 w-6"
                 onClick={() => setActive(null)}
                 >
                 <CloseIcon />
@@ -274,7 +273,7 @@ export function TeacherFocusCards() {
                 <motion.div
                 layoutId={`card-${active.teacher.firstname}-${id}`}
                 ref={ref}
-                className="w-full max-w-[500px] h-full md:h-fit md:max-h-[90%] flex flex-col bg-white dark:bg-neutral-900 sm:rounded-3xl overflow-y-scroll"
+                className="w-full max-w-[500px] h-full md:h-fit md:max-h-[90%] flex flex-col bg-white dark:bg-black-900 sm:rounded-3xl overflow-y-scroll"
                 >
                 <motion.div layoutId={`image-${active.teacher.firstname}-${id}`}>
                     <Image
@@ -288,7 +287,7 @@ export function TeacherFocusCards() {
                 </motion.div>
                 <div className="">
                     <div className="m-4">
-                    <div className="flex flex-row items-center justify-between pb-4">
+                    <div className="overflow-y-scroll flex flex-row items-center justify-between p-4">
                         <motion.h3
                         layoutId={`title-${active.teacher.firstname}-${id}`}
                         className="font-bold text-neutral-700 dark:text-neutral-200"
@@ -313,12 +312,12 @@ export function TeacherFocusCards() {
                     <div className="">
                         <motion.p
                         layoutId={`description-${active.description}-${id}`}
-                        className="h-56 text-neutral-600 dark:text-neutral-400"
+                        className="h-56 overflow-y-scroll scrollbar-hide text-neutral-600 dark:text-neutral-400 mb-10"
                         >
                         {active.description}
                         </motion.p>
 
-                        <div className=""> {/* Wrapping div for scrolling */}
+                        <div className="h-56 overflow-y-scroll "> {/* Wrapping div for scrolling */}
                             {active.reviews.length === 0 ? (
                                 <span>{active.teacher.firstname} har ingen omtaler enda</span>
                             ) : (
@@ -343,7 +342,7 @@ export function TeacherFocusCards() {
             ) : null}
         </AnimatePresence>
 
-        <div className="bg-neutral-100 p-4 dark:bg-black rounded-xl">
+        <div className="bg-white p-4 dark:bg-black rounded-xl">
         {/* Card List */}
         {viewMode === "list" ? (
             <ul className="max-w-2xl mx-auto w-full gap-4">
@@ -434,7 +433,7 @@ export function TeacherFocusCards() {
         
         
         (
-            <ul className="max-w-2xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 items-start gap-4">
+            <ul className="md:max-w-2xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 items-start gap-4">
             {filteredCards.map((card, index) => {
     
 

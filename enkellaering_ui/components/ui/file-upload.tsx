@@ -3,6 +3,8 @@ import React, { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { IconUpload } from "@tabler/icons-react";
 import { useDropzone } from "react-dropzone";
+import { Alert, AlertDescription, AlertTitle } from "./alert";
+import { Terminal } from "lucide-react";
 
 const mainVariant = {
   initial: {
@@ -33,9 +35,20 @@ export const FileUpload = ({
   title :string;
 }) => {
   const [files, setFiles] = useState<File[]>([]);
+  const [fileTypeError, setFileTypeError] = useState<boolean>(false)
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (newFiles: File[]) => {
+    // Check each file for valid extension
+    for (const file of newFiles) {
+      const ext = file.name.split('.').pop()?.toLowerCase();
+      if (ext !== 'jpg' && ext !== 'jpeg') {
+        setFileTypeError(true);
+        return; // Exit the function to avoid uploading the illegal file
+      }
+    }
+    // If all files are valid, reset the error and update the state
+    setFileTypeError(false);
     setFiles((prevFiles) => [...prevFiles, ...newFiles]);
     if (onChange) {
       onChange(newFiles);
@@ -57,6 +70,15 @@ export const FileUpload = ({
 
   return (
     <div className="w-full" {...getRootProps()}>
+          {fileTypeError && (
+              <Alert className="text-red-400">
+                <Terminal className="h-4 w-4" />
+                <AlertTitle>Ugyldig filtype!</AlertTitle>
+                <AlertDescription>
+                  Kun jpg og jpeg filer er tillatt.
+                </AlertDescription>
+              </Alert>
+          )}
       <motion.div
         onClick={handleClick}
         whileHover="animate"
@@ -77,7 +99,7 @@ export const FileUpload = ({
             {title}
           </p>
           <p className="relative z-20 font-sans font-normal text-neutral-400 dark:text-neutral-400 text-base mt-2">
-            Drag & drop, eller klikk for å laste opp
+            Drag & drop, eller klikk for å laste opp (kun jpg og jpeg)
           </p>
           <div className="relative w-full mt-10 max-w-xl mx-auto">
             {files.length > 0 &&
@@ -162,7 +184,7 @@ export const FileUpload = ({
             {!files.length && (
               <motion.div
                 variants={secondaryVariant}
-                className="absolute opacity-0 border border-stone-200 border-dashed border-sky-400 inset-0 z-30 bg-transparent flex items-center justify-center h-32 mt-4 w-full max-w-[8rem] mx-auto rounded-md dark:border-stone-800"
+                className="absolute opacity-0 border border-stone-200 border-dashed  inset-0 z-30 bg-transparent flex items-center justify-center h-32 mt-4 w-full max-w-[8rem] mx-auto rounded-md dark:border-stone-800"
               ></motion.div>
             )}
           </div>

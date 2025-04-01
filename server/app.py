@@ -24,11 +24,15 @@ app.config['SESSION_USE_SIGNER'] = True
 app.config['SESSION_KEY_PREFIX'] = 'enkel_laering_prefix'
 app.config['SESSION_COOKIE_NAME'] = 'enkel_laering_coockie'
 app.config['SESSION_COOKIE_HTTPONLY'] = True
-#app.config['SESSION_COOKIE_SECURE'] = True
-app.config['SESSION_COOCKIE_SECURE'] = False
+
+app.config['SESSION_COOKIE_SECURE'] = True
+#app.config['SESSION_COOCKIE_SECURE'] = False
+
 app.config['SESSION_COOKIE_SAMESITE'] = 'None'
+
 #app.config['SESSION_COOKIE_DOMAIN'] = 'enkellaering-service-895641904484.europe-west2.run.app'
-app.config['SESSION_COOKIE_DOMAIN'] = 'localhost'
+app.config['SESSION_COOKIE_DOMAIN'] = 'https://enkellaering-service-prototype-895641904484.europe-west2.run.app'
+#app.config['SESSION_COOKIE_DOMAIN'] = 'localhost'
 
 
 CORS(app, resources={
@@ -37,7 +41,7 @@ CORS(app, resources={
             "https://new-enkellaering-v2.vercel.app",
             "http://localhost:3000",
             "https://enkellaering.no",
-            "https://www.enkellaering.no"
+            "https://www.enkellaering.no",
         ]
     }
 }, supports_credentials=True)
@@ -201,4 +205,4 @@ def get_user_id(user_id):
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))  # Use PORT from the environment or default to 8080
-    app.run(debug=True ,host="0.0.0.0", port=port)
+    app.run(debug=False ,host="0.0.0.0", port=port)

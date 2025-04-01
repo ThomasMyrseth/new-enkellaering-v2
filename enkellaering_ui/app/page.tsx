@@ -1,8 +1,7 @@
 "use client"
-import { TeacherFocusCards } from "@/components/ui/teacherCards";
 import NewStudentForm from "@/components/newStudentForm"
 import { BackgroundBeamsWithCollision } from "@/components/ui/background-beams-with-collision";
-
+import { TeacherFocusCards } from "@/components/ui/teacherCard/newTeacherCard";
 
 export default function Home() {
   return (<>       
@@ -26,7 +25,7 @@ export default function Home() {
       </div>
 
       <div className="bg-white dark:bg-black rounded-lg w-full p-4 space-y-6 flex flex-col items-center justify-center">
-      <h1 className="text-5xl ">Møt våre <span className="relative bg-clip-text text-transparent bg-no-repeat bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500 py-4">helter</span></h1>
+      <h1 className="text-5xl w-2/3">Eller bestill <span className="relative bg-clip-text text-transparent bg-no-repeat bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500 py-4">drømmelæreren</span> direkte...</h1>
       <TeacherFocusCards/>
       </div>
 

@@ -3,6 +3,7 @@ import Image from "next/image";
 import React from "react";
 import { CardBody, CardContainer, CardItem } from "@/components/ui/3d-card";
 import Link from "next/link";
+import { TeacherFocusCards } from "@/components/ui/teacherCard/newTeacherCard";
 
 export default function BestillPage() {
     
@@ -10,6 +11,9 @@ export default function BestillPage() {
 
             <NewStudentForm/>
             <Prices/>
+            <div className="space-y-10 flex flex-col items-center justify-center w-full">
+              <TeacherFocusCards/>
+            </div>
 
     </div>)
 }

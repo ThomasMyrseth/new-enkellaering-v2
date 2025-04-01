@@ -192,7 +192,7 @@ const handleSaveClick = async (accept :boolean, token :string, ns :NewTeacherOrd
   });
 
   if (!response.ok) {
-    alert("Error saving updates to new student");
+    alert("Klarte ikke å oppdatere bestillingen. Prøv igjen om litt.");
     return;
   }
   if (accept) {
