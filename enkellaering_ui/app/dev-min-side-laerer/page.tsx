@@ -36,6 +36,7 @@ import {
 import { AlertDialog, AlertDialogDescription,AlertDialogCancel, AlertDialogAction, AlertDialogFooter,AlertDialogContent,  AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Switch } from "@/components/ui/switch";
+import { SessionDateTimePicker } from "@/components/ui/session-date-time-picker";
 
 // Mock data types
 type Class = {
@@ -277,11 +278,12 @@ function AddNewClass({teacher}: {teacher: Teacher}) {
         setSelectedStudentUserId(userId);
     };
 
-    const handleStartDateSelect = (startDate :Date) => {
-        setStartedAt(startDate)
+    const handleStartTimeSelect = (date: Date) => {
+        setStartedAt(date);
     }
-    const handleEndDateSelect = (endDate :Date) => {
-        setEndedAt(endDate)
+
+    const handleEndTimeSelect = (date: Date) => {
+        setEndedAt(date);
     }
 
     const handleSetComment = (comment :string) => {
@@ -321,7 +323,10 @@ function AddNewClass({teacher}: {teacher: Teacher}) {
         <div className="flex flex-col space-y-4 items-strech">
             <SelectStudent onStudentSelect={handleStudentSelect} />
             <br />
-            <DateTimePicker onStartDateSelected={handleStartDateSelect} onEndDateSelected={handleEndDateSelect}/>
+            <SessionDateTimePicker
+                onStartTimeSelected={handleStartTimeSelect}
+                onEndTimeSelected={handleEndTimeSelect}
+            />
             <br />
             <WasCanselled onWasCanselled={handleSetCanselled}/>
             <br />
@@ -431,150 +436,6 @@ function WasCanselled({onWasCanselled} : {onWasCanselled: (wasCanselled: boolean
             </div>
         </div>
     </>)
-}
-
-function DateTimePicker({onStartDateSelected, onEndDateSelected} : {onStartDateSelected: (date: Date) => void; onEndDateSelected: (date: Date) => void}) {
-    const [startDate, setStartDate] = useState<Date>();
-    const [endDate, setEndDate] = useState<Date>();
-    const [isOpen, setIsOpen] = useState(false);
-    const [isEndTimePickerOpen, setIsEndTimePickerOpen] = useState(false);
-
-    const hours = Array.from({ length: 24 }, (_, i) => i);
-
-    const handleDateSelect = (selectedDate: Date | undefined, type: "start" | "end") => {
-        if (selectedDate) {
-            const currentTime = type === "start" ? startDate : endDate;
-            const newDate = new Date(selectedDate);
-            if (currentTime) {
-                newDate.setHours(currentTime.getHours());
-                newDate.setMinutes(currentTime.getMinutes());
-            }
-
-            if (type === "start") {
-                setStartDate(newDate);
-                onStartDateSelected(newDate);
-            } else {
-                setEndDate(newDate);
-                onEndDateSelected(newDate);
-            }
-        }
-    };
-
-    const handleTimeChange = (
-        type: "hour" | "minute",
-        value: string,
-        picker: "start" | "end"
-    ) => {
-        const targetDate = picker === "start" ? startDate : endDate;
-
-        if (targetDate) {
-            const newDate = new Date(targetDate);
-            if (type === "hour") {
-                newDate.setHours(parseInt(value));
-            } else if (type === "minute") {
-                newDate.setMinutes(parseInt(value));
-            }
-            if (picker === "start") {
-                setStartDate(newDate);
-                onStartDateSelected(newDate);
-            } else {
-                setEndDate(newDate);
-                onEndDateSelected(newDate);
-            }
-        }
-    };
-
-    const MyCalendar = ({ picker }: { picker: "start" | "end" }) => (
-        <Popover
-            open={picker === "start" && isOpen || picker === "end" && isEndTimePickerOpen }
-            onOpenChange={picker === "start" ? setIsOpen : setIsEndTimePickerOpen}
-        >
-            <PopoverTrigger asChild>
-                <Button
-                    variant="outline"
-                    className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !(picker === "start" ? startDate : endDate) && "text-muted-foreground"
-                    )}
-                >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {picker === "start" && startDate ? (
-                        format(startDate, "dd/MM/yyyy HH:mm")
-                    ) : picker === "end" && endDate ? (
-                        format(endDate, "dd/MM/yyyy HH:mm")
-                    ) : (
-                        <span>DD/MM/YYYY HH:mm</span>
-                    )}
-                </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-                <div className="sm:flex">
-                    <Calendar
-                        mode="single"
-                        selected={picker === "start" ? startDate : endDate}
-                        onSelect={(date :Date) => handleDateSelect(date, picker)}
-                        required={true}
-                        initialFocus
-                    />
-                    <div className="flex flex-col sm:flex-row sm:h-[300px] divide-y sm:divide-y-0 sm:divide-x">
-                        <ScrollArea className="w-64 sm:w-auto">
-                            <div className="flex sm:flex-col p-2">
-                                {hours.reverse().map((hour) => (
-                                    <Button
-                                        key={hour}
-                                        size="icon"
-                                        variant={
-                                            (picker === "start" ? startDate : endDate)?.getHours() === hour
-                                                ? "default"
-                                                : "ghost"
-                                        }
-                                        className="sm:w-full shrink-0 aspect-square"
-                                        onClick={() => handleTimeChange("hour", hour.toString(), picker)}
-                                    >
-                                        {hour}
-                                    </Button>
-                                ))}
-                            </div>
-                            <ScrollBar orientation="horizontal" className="sm:hidden" />
-                        </ScrollArea>
-                        <ScrollArea className="w-64 sm:w-auto">
-                            <div className="flex sm:flex-col p-2">
-                                {Array.from({ length: 12 }, (_, i) => i * 5).map((minute) => (
-                                    <Button
-                                        key={minute}
-                                        size="icon"
-                                        variant={
-                                            (picker === "start" ? startDate : endDate)?.getMinutes() === minute
-                                                ? "default"
-                                                : "ghost"
-                                        }
-                                        className="sm:w-full shrink-0 aspect-square"
-                                        onClick={() => handleTimeChange("minute", minute.toString(), picker)}
-                                    >
-                                        {minute.toString().padStart(2, "0")}
-                                    </Button>
-                                ))}
-                            </div>
-                            <ScrollBar orientation="horizontal" className="sm:hidden" />
-                        </ScrollArea>
-                    </div>
-                </div>
-            </PopoverContent>
-        </Popover>
-    );
-
-    return (
-        <div className="space-y-4">
-            <div className="flex flex-col space-y-2 items-center">
-                <h3>Når startet dere?</h3>
-                <MyCalendar picker="start"/>
-            </div>
-            <div className="flex flex-col space-y-2 items-center">
-                <h3>Når avsluttet dere?</h3>
-                <MyCalendar picker="end"/>
-            </div>
-        </div>
-    );
 }
 
 function SendButton({teacher, started_at, ended_at, comment, selectedStudentUserId, wasCanselled, setUploadSuccessfull} : {
