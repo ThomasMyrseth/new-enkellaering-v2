@@ -5,7 +5,6 @@ import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Calendar as CalendarIcon } from "lucide-react";
 import { nb } from 'date-fns/locale';
 
 interface SessionDateTimePickerProps {
@@ -14,48 +13,36 @@ interface SessionDateTimePickerProps {
 }
 
 export function SessionDateTimePicker({ onStartTimeSelected, onEndTimeSelected }: SessionDateTimePickerProps) {
-    const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
-    const [startTime, setStartTime] = useState<Date | null>(new Date());
-    const [endTime, setEndTime] = useState<Date | null>(new Date());
+    const [startDateTime, setStartDateTime] = useState<Date | null>(null);
+    const [endDateTime, setEndDateTime] = useState<Date | null>(null);
 
-    const handleDateChange = (date: Date | null) => {
+    const handleStartDateTimeChange = (date: Date | null) => {
         if (date) {
-            setSelectedDate(date);
-            // Update start and end times with new date
-            if (startTime) {
-                const newStartTime = new Date(date);
-                newStartTime.setHours(startTime.getHours());
-                newStartTime.setMinutes(startTime.getMinutes());
-                setStartTime(newStartTime);
-                onStartTimeSelected(newStartTime);
-            }
-            if (endTime) {
-                const newEndTime = new Date(date);
-                newEndTime.setHours(endTime.getHours());
-                newEndTime.setMinutes(endTime.getMinutes());
-                setEndTime(newEndTime);
-                onEndTimeSelected(newEndTime);
+            setStartDateTime(date);
+            onStartTimeSelected(date);
+
+            // If end date is null, set it to the same date but keep time at default
+            if (!endDateTime) {
+                const newEndDate = new Date(date);
+                newEndDate.setHours(0, 0, 0, 0); // Reset time to midnight
+                setEndDateTime(newEndDate);
+                onEndTimeSelected(newEndDate);
             }
         }
     };
 
-    const handleStartTimeChange = (time: Date | null) => {
-        if (time && selectedDate) {
-            const newTime = new Date(selectedDate);
-            newTime.setHours(time.getHours());
-            newTime.setMinutes(time.getMinutes());
-            setStartTime(newTime);
-            onStartTimeSelected(newTime);
-        }
-    };
+    const handleEndDateTimeChange = (date: Date | null) => {
+        if (date) {
+            setEndDateTime(date);
+            onEndTimeSelected(date);
 
-    const handleEndTimeChange = (time: Date | null) => {
-        if (time && selectedDate) {
-            const newTime = new Date(selectedDate);
-            newTime.setHours(time.getHours());
-            newTime.setMinutes(time.getMinutes());
-            setEndTime(newTime);
-            onEndTimeSelected(newTime);
+            // If start date is null, set it to the same date but keep time at default
+            if (!startDateTime) {
+                const newStartDate = new Date(date);
+                newStartDate.setHours(0, 0, 0, 0); // Reset time to midnight
+                setStartDateTime(newStartDate);
+                onStartTimeSelected(newStartDate);
+            }
         }
     };
 
@@ -64,62 +51,63 @@ export function SessionDateTimePicker({ onStartTimeSelected, onEndTimeSelected }
         "border border-stone-200 bg-white hover:bg-stone-100 hover:text-stone-900",
         "dark:border-stone-800 dark:bg-stone-950 dark:hover:bg-stone-800 dark:hover:text-stone-50",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-950 focus-visible:ring-offset-2",
-        "h-12 py-2 text-center",
+        "h-12 py-2 text-center w-full px-4",
         "disabled:pointer-events-none disabled:opacity-50"
     );
 
-    const dateInputStyles = cn(baseInputStyles, "w-full px-4");
-    const timeInputStyles = cn(baseInputStyles, "w-32 md:w-28 px-2");
-
     return (
-        <div className="space-y-4 w-full">
-            <div className="flex flex-col space-y-2 items-center w-full">
-                <h3 className="text-lg font-medium">Dato</h3>
+        <div className="space-y-6 w-full">
+            <div className="flex flex-col space-y-2">
+                <h3 className="text-lg font-medium text-center">Når startet dere?</h3>
                 <DatePicker
-                    selected={selectedDate}
-                    onChange={handleDateChange}
-                    dateFormat="dd/MM/yyyy"
+                    selected={startDateTime}
+                    onChange={handleStartDateTimeChange}
+                    showTimeSelect
+                    timeFormat="HH:mm"
+                    timeIntervals={15}
+                    dateFormat="dd/MM/yyyy HH:mm"
                     locale={nb}
-                    className={dateInputStyles}
+                    className={baseInputStyles}
+                    placeholderText="Velg dato og tid"
                     customInput={
-                        <Button variant="outline" className="w-full justify-start text-left font-normal text-base">
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {selectedDate ? selectedDate.toLocaleDateString('nb-NO') : "Velg dato"}
+                        <Button variant="outline" className="w-full justify-center text-center font-normal text-base">
+                            {startDateTime ? startDateTime.toLocaleString('nb-NO', { 
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                hour12: false
+                            }) : "Velg dato og tid"}
                         </Button>
                     }
                 />
             </div>
-            <div className="flex flex-row space-x-4 justify-center w-full">
-                <div className="flex flex-col space-y-2 items-center w-full md:w-auto">
-                    <h3 className="text-lg font-medium">Start</h3>
-                    <DatePicker
-                        selected={startTime}
-                        onChange={handleStartTimeChange}
-                        showTimeSelect
-                        showTimeSelectOnly
-                        timeIntervals={15}
-                        timeCaption="Time"
-                        dateFormat="HH:mm"
-                        timeFormat="HH:mm"
-                        locale={nb}
-                        className={timeInputStyles}
-                    />
-                </div>
-                <div className="flex flex-col space-y-2 items-center w-full md:w-auto">
-                    <h3 className="text-lg font-medium">Slutt</h3>
-                    <DatePicker
-                        selected={endTime}
-                        onChange={handleEndTimeChange}
-                        showTimeSelect
-                        showTimeSelectOnly
-                        timeIntervals={15}
-                        timeCaption="Time"
-                        dateFormat="HH:mm"
-                        timeFormat="HH:mm"
-                        locale={nb}
-                        className={timeInputStyles}
-                    />
-                </div>
+            <div className="flex flex-col space-y-2">
+                <h3 className="text-lg font-medium text-center">Når avsluttet dere?</h3>
+                <DatePicker
+                    selected={endDateTime}
+                    onChange={handleEndDateTimeChange}
+                    showTimeSelect
+                    timeFormat="HH:mm"
+                    timeIntervals={15}
+                    dateFormat="dd/MM/yyyy HH:mm"
+                    locale={nb}
+                    className={baseInputStyles}
+                    placeholderText="Velg dato og tid"
+                    customInput={
+                        <Button variant="outline" className="w-full justify-center text-center font-normal text-base">
+                            {endDateTime ? endDateTime.toLocaleString('nb-NO', { 
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                hour12: false
+                            }) : "Velg dato og tid"}
+                        </Button>
+                    }
+                />
             </div>
         </div>
     );
