@@ -20,8 +20,7 @@ import {
 
 import { Copy } from 'lucide-react';
 
-
-import { Classes, Student } from "./types";
+import { Classes, Student, Teacher, TeacherStudent } from "./types";
 
 import { useEffect, useState } from "react"
 
@@ -30,122 +29,43 @@ const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
 
 
 
-type ClassesJoinStudent = {
-    classes: Classes[];
-    student: Student;
-}
-
 export function PreviousClassesForEachStudent() {      
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('token') || ''
 
     const [classes, setClasses] = useState<Classes[]>([]);
+    const [teachers, setTeachers] = useState<Teacher[]>([]);
     const [students, setStudents] = useState<Student[]>([]);
-    const [classesByStudents, setClassesByStudents] = useState<ClassesJoinStudent[]>([]);
+    const [teacherStudent, setTeacherStudent] = useState<TeacherStudent[]>([]);
 
     const [loading, setLoading] = useState<boolean>(true)
 
 
-    //get classes for everyone
+    //populate data fields
     useEffect( () => {
-        async function fetchClasses() {
-            const response = await fetch(`${BASEURL}/get-all-classes`, {
-                method: "GET",
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            })
+        async function getData() {
+            const t :Teacher[] = await getTeachers(token)
+            const s: Student[] = await getStudents(token)
+            const c :Classes[] = await getClasses(token)
+            const ts: TeacherStudent[] = await getTeacherStudent(token)
 
-            if(!response.ok) {
-                alert("En feil har skjedd, prøv igjen")
-                return null;
+            if (t) {
+                setTeachers(t)
+            }   
+            if (s) {
+                setStudents(s)
             }
+            if (c) {
+                setClasses(c)
+            }
+            if (ts) {
+                setTeacherStudent(ts)
+            }
+            setLoading(false)
 
-            const data = await response.json()
-            const classes = data.classes
-
-            if (classes.length === 0) {
-                setClasses([])
-                setLoading(false)
-            }
-            else {
-                setClasses(classes)
-                setLoading(false)
-            }
         }
-        fetchClasses()
-    
-    },[])
+        getData()
+    },[token])
 
-    //get all the students
-    useEffect( () => {
-        async function getAllStudents() {
-
-            const response = await fetch(`${BASEURL}/get-all-students`, {
-                method: "GET",
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            })
-
-            if (!response.ok) {
-                alert("Error fetching students " + response.statusText)
-                setStudents([])
-                return null
-            }
-
-            const data = await response.json()
-            const students :Student[] = data.students
-
-            if (students.length===0) {
-                alert("No students found")
-                console.log("No students found")
-                setStudents([])
-                return null
-            }
-
-
-            else {
-                setStudents(students)
-                setLoading(false)
-            }
-        }
-
-        getAllStudents()
-    },[])
-
-
-    //map each student to his classes and sort alfabetically on students name
-    useEffect( () => {
-        
-        if (!classes || !students) {
-            alert("Teachers or classes not found")
-        }
-
-        const classesByStudent :ClassesJoinStudent[] = []
-        //for each teacher go through every class
-        students.forEach(s => {
-            const classesForStudent :Classes[] = []
-            classes.forEach(c => {
-                if (c.student_user_id === s.user_id) {
-                    classesForStudent.push(c)
-                }
-            })
-            classesByStudent.push({
-                classes: classesForStudent,
-                student: s
-            })
-        })
-
-        //sorting the array
-        classesByStudent.sort((a, b) => {
-            return a.student.firstname_parent.localeCompare(b.student.firstname_parent, undefined, {
-              sensitivity: "base",
-            });
-        });
-
-        setClassesByStudents(classesByStudent)
-        setLoading(false)
-    },[classes, students])
 
     if (loading) {
         return <p>Loading...</p>
@@ -155,20 +75,28 @@ export function PreviousClassesForEachStudent() {
     return (<div className="flex flex-col justify-center items-center w-full">
         <h1 className="text-xl">En oversikt over tidligere time for hver elev</h1>
 
-        {classesByStudents.map((cs :ClassesJoinStudent, index) => {
+        {students.map((s :Student, index) => {
 
-            if (cs.student.is_active===false) {
+            if (s.is_active===false) {
                 return null;
             }
-            
-            const classes :Classes[] = cs.classes
+
+            const myClasses :Classes[] = classes.filter( (c) => {return c.student_user_id ===s.user_id}) || []
 
             //sortng classes by startedAt
-            classes.sort((a, b) => {
+            myClasses.sort((a, b) => {
                 const dateA = new Date(a.started_at);
                 const dateB = new Date(b.started_at);
                 return -(dateA.getTime() - dateB.getTime()); //reverse cronological order
             });
+
+            const myTeacherUserIds: string[] = teacherStudent
+                .filter((ts) => {return ts.student_user_id === s.user_id && ts.teacher_accepted_student==true})
+                .map((ts) => ts.teacher_user_id);
+
+            const myTeachers: Teacher[] = teachers.filter((t) => 
+                myTeacherUserIds.includes(t.user_id)
+            );
 
             //calculate total univoiced ammount
             let totalUninvoicedStudent :number = 0
@@ -180,7 +108,7 @@ export function PreviousClassesForEachStudent() {
 
             let numberOfCanselledClassesLastFourWeeks :number =0
 
-            classes.map( (c :Classes ) => {
+            myClasses.map( (c :Classes ) => {
                 const today :Date = new Date();
                 const fourWeeksAgo: Date = new Date(today); // Create a copy of today
                 fourWeeksAgo.setDate(today.getDate() - 28); // Subtract 21 days
@@ -227,74 +155,83 @@ export function PreviousClassesForEachStudent() {
                 <AccordionTrigger className={`w-full h-full p-4 ${numberOfCanselledClassesLastFourWeeks>=2 ? 'bg-red-50 dark:bg-red-950':''}`}>
                     <div className={`flex flex-row justify-between items-center w-full pr-2 }`}>
                         <p className="text-start">
-                            {cs.student.firstname_parent} {cs.student.lastname_parent} <br/>
-                            & {cs.student.firstname_student} {cs.student.lastname_student} <br/>
-                            {cs.student.phone_parent}
+                            {s.firstname_parent} {s.lastname_parent} <br/>
+                            & {s.firstname_student} {s.lastname_student} <br/>
+                            {s.phone_parent}
                         </p>
                         <div className="flex flex-col">
                             <p className={`
-                                    ${hoursOfClassesLastFourWeeks<cs.student.est_hours_per_week*4 ? "text-red-300" : "text-neutral-400"} 
+                                    ${hoursOfClassesLastFourWeeks<s.est_hours_per_week*4 ? "text-red-300" : "text-neutral-400"} 
                                 `}>
-                               {hoursOfClassesLastFourWeeks}/{cs.student.est_hours_per_week*4}h siste fire uker
+                               {hoursOfClassesLastFourWeeks}/{s.est_hours_per_week*4}h siste fire uker
                             </p>
                             <p className="text-end text-neutral-400">
-                                {parseInt(cs.student.postal_code) < 4000 ? "Oslo" : "Trondheim"}
+                                {parseInt(s.postal_code) < 4000 ? "Oslo" : "Trondheim"}
                             </p>
                         </div>
                     </div>
                 </AccordionTrigger>
                 <AccordionContent>
-                    
-                    <StudentNotes student={cs.student}/>
+
+                    {!myTeachers.length &&
+                        <p className="m-4" key={index}>{s.firstname_parent} har ingen lærer</p>
+                    }
+                    <div className="flex flex-row space-x-2 m-4">
+                        {myTeachers.map( (t) => {
+                            return <RemoveTeacherDialog teacher={t} key={t.user_id} student={s}/>
+                        })}
+                    </div>
+
+                    <StudentNotes student={s}/>
 
                     <Accordion type="single" collapsible className="w-full">
-                        <AccordionItem value={`Om ${cs.student.firstname_parent}`} key={1}>
+                        <AccordionItem value={`Om ${s.firstname_parent}`} key={1}>
                             <AccordionTrigger>
-                                <p>{cs.student.firstname_parent}</p>
+                                <p>{s.firstname_parent}</p>
                             </AccordionTrigger>
                             <AccordionContent>
                                 <p>
                                     <h4 className="mb-1 font-semibold">Forelder</h4>
-                                    {cs.student.firstname_parent} {cs.student.lastname_parent}
+                                    {s.firstname_parent} {s.lastname_parent}
                                     <br/>
-                                    Tlf: {cs.student.phone_parent}
+                                    Tlf: {s.phone_parent}
                                     <br/>
-                                    Epost: {cs.student.email_parent}
+                                    Epost: {s.email_parent}
                                 </p>
                                 <br/>
                                 <p>
                                     <h4 className="mb-1 font-semibold">Elev</h4>
-                                    {cs.student.firstname_student} {cs.student.lastname_student}
+                                    {s.firstname_student} {s.lastname_student}
                                     <br/>
-                                    Tlf: {cs.student.phone_student}
+                                    Tlf: {s.phone_student}
                                 </p>
                                 <br/>
                                 <p>
                                     <h4 className="mb-1 font-semibold">Info</h4>
-                                    Hovedfag: {cs.student.main_subjects}
+                                    Hovedfag: {s.main_subjects}
                                     <br/>
-                                    Spesielle forhold: {cs.student.additional_comments}
+                                    Spesielle forhold: {s.additional_comments}
                                     <br/>
-                                    Hjemmeadresse: {cs.student.address}
+                                    Hjemmeadresse: {s.address}
                                     <br/>
-                                    Postnummer: {cs.student.postal_code}
+                                    Postnummer: {s.postal_code}
                                     <br/>
-                                    {`${cs.student.has_physical_tutoring? 'fysisk undervisning' : 'digital undervisning'}`}
+                                    {`${s.has_physical_tutoring? 'fysisk undervisning' : 'digital undervisning'}`}
                                 </p>
                             </AccordionContent>
                         </AccordionItem>
                 </Accordion>
 
-                <p>Totalt ufakturerte timer fra {cs.student.firstname_parent}: <span className="text-red-400">{totalUninvoicedHoursStudent}h, {totalUninvoicedStudent}kr.</span></p>
-                <p>Total fakturerte timer fra {cs.student.firstname_parent}: <span className="text-green-400">{totalInvoicedHoursStudent}h, {totalInvoicedStudent}kr.</span></p>
+                <p>Totalt ufakturerte timer fra {s.firstname_parent}: <span className="text-red-400">{totalUninvoicedHoursStudent}h, {totalUninvoicedStudent}kr.</span></p>
+                <p>Total fakturerte timer fra {s.firstname_parent}: <span className="text-green-400">{totalInvoicedHoursStudent}h, {totalInvoicedStudent}kr.</span></p>
                                 
                 <div className="flex flex-row w-full justify-between pt-2">
-                    <InvoiceStudentPopover student={cs.student} classes={cs.classes}/>
-                    <SetStudentInactive student={cs.student} />
+                    <InvoiceStudentPopover student={s} classes={myClasses}/>
+                    <SetStudentInactive student={s} />
                 </div>
 
                 <Table>
-                    <TableCaption>Kronologisk oversikt over alle timer til {cs.student.firstname_parent}</TableCaption>
+                    <TableCaption>Kronologisk oversikt over alle timer til {s.firstname_parent}</TableCaption>
                     <TableHeader>
                         <TableRow>
                             <TableHead className="w-[100px]">Dato</TableHead>
@@ -594,6 +531,7 @@ const SetStudentInactive = ({ student }: { student: Student }) => {
 };
 
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 
 const StudentNotes = ({student} : {student : Student}) => {
     const [notes, setNotes] = useState<string>(student.notes)
@@ -640,4 +578,147 @@ const saveNotes = async ( notes :string, studentUserId :string) => {
         console.error("Error uploading notes:", error);
         alert("An error occurred. Please try again.");
     }
+}
+
+
+
+// Function to handle removing a teacher from a student
+const handleRemoveTeacher = async (student: Student, teacher: Teacher) => {
+    const token = localStorage.getItem('token');
+    try {
+        const response = await fetch(`${BASEURL}/remove-teacher-from-student`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                student_user_id: student.user_id,
+                teacher_user_id: teacher.user_id
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error: ${response.status} - ${response.statusText}`);
+        }
+        toast(`${teacher.firstname} ${teacher.lastname} ble fjernet fra ${student.firstname_parent} ${student.lastname_parent}`);
+    } catch (error) {
+        alert(`Fjerning mislyktes: ${error}`);
+    }
+};
+
+// AlertDialog component to confirm teacher removal
+const RemoveTeacherDialog = ({ student, teacher }: { student: Student, teacher: Teacher }) => {
+    return (
+        <AlertDialog>
+            <AlertDialogTrigger asChild>
+                <Button className="bg-neutral-500 dark:bg-neutral-400 rounded-xl text-white">{teacher.firstname} {teacher.lastname}</Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Fjern lærer</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Er du sikker på at du vil fjerne {teacher.firstname} {teacher.lastname} fra {student.firstname_parent} {student.lastname_parent}?
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => handleRemoveTeacher(student, teacher)}>Fjern</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+    );
+};
+
+
+async function getClasses(token :string) {
+    const response = await fetch(`${BASEURL}/get-all-classes`, {
+        method: "GET",
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    });
+
+    if(!response.ok) {
+        alert("En feil har skjedd, prøv igjen");
+        return [];
+    }
+
+    const data = await response.json();
+    return data.classes || [];
+}
+
+async function getStudents(token :string) {
+    const response = await fetch(`${BASEURL}/get-all-students`, {
+        method: "GET",
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    });
+
+    if (!response.ok) {
+        alert("Error fetching students " + response.statusText);
+        return [];
+    }
+
+    const data = await response.json();
+    const students: Student[] = data.students;
+
+    if (students.length === 0) {
+        alert("No students found");
+        console.log("No students found");
+        return [];
+    } else {
+        return students;
+    }
+}
+
+async function getTeachers(token :string) {
+    const response = await fetch(`${BASEURL}/get-all-teachers`, {
+        method: "GET",
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    });
+
+    if (!response.ok) {
+        alert("Error fetching teachers and stidents " + response.statusText);
+        return [];
+    }
+
+    const data = await response.json();
+    const teachers: Teacher[] = data.teachers;
+
+    if (teachers.length === 0) {
+        alert("No students found");
+        console.log("No students found");
+        return [];
+    } else {
+        return teachers;
+    }
+}
+
+async function getTeacherStudent(token: string) {
+    const response = await fetch(`${BASEURL}/get-teacher-student`, {
+        method: "GET",
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    });
+
+    if (!response.ok) {
+        alert("Error fetching teacher-student relationships: " + response.statusText);
+        return [];
+    }
+
+    const data = await response.json();
+    const teacherStudent: TeacherStudent[] = data.teacher_student;
+
+    if (!teacherStudent || teacherStudent.length === 0) {
+        alert("Ingen tilkoblinger funnet");
+        console.log("No teacher-student relationships found");
+        return [];
+    }
+
+    return teacherStudent;
 }

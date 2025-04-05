@@ -652,6 +652,27 @@ def get_new_orders(student_user_id :str, client: bigquery.Client):
         raise RuntimeError(f"Error getting teacher orders: {e}")
 
 
+def get_teacher_student(client: bigquery.Client):
+    query = f"""
+        SELECT *
+        FROM `{USER_DATASET}.teacher_student` AS ts
+        WHERE ts.hidden IS NULL OR ts.hidden=FALSE
+    """
+
+
+    try:
+        response = client.query(query)
+        res = response.result()
+
+        rows = [dict(row) for row in res]  # Convert each row to a dictionary
+
+        return rows
+
+    except Exception as e:
+        raise RuntimeError(f"Error getting teacherStudent: {e}")
+
+
+
 from datetime import datetime, timedelta
 from google.cloud import bigquery
 
@@ -743,3 +764,36 @@ def get_all_admins():
 
     except Exception as e:
         raise RuntimeError(f"Error retrieving students with few classes: {e}")
+
+
+def get_all_teachers_join_students(client :bigquery.Client):    
+    try:
+
+        USER_DATASET = os.environ.get('USER_DATASET', 'users')
+
+        # Build the query. Note that @date is a parameter placeholder.
+        query = f"""
+            SELECT *
+            
+            FROM `{USER_DATASET}.students` AS s
+            LEFT JOIN `{USER_DATASET}.teacher_student` AS ts
+            ON s.user_id = ts.student_user_id
+            LEFT JOIN `{USER_DATASET}.teachers` AS t
+            ON t.user_id = ts.teacher_user_id
+            
+            WHERE (t.resigned=FALSE OR t.resigned IS NULL)
+            AND (ts.teacher_accepted_student=TRUE OR ts.teacher_accepted_student IS NULL)
+            AND (ts.hidden=FALSE OR ts.hidden IS NULL)
+        """
+
+        # Execute the query and wait for the result
+        query_job = client.query(query)
+        results = query_job.result()  # Waits for the job to complete
+
+        # Convert the results to a list of dictionaries
+        rows = [dict(row) for row in results]
+        return rows 
+    
+    except Exception as e:
+        print(f"Error retrieving teachers and students {e}")
+        raise RuntimeError(f"Error retrieving teachers and students: {e}")

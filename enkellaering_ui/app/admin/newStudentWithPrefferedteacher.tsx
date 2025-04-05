@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/accordion"
 import { toast } from "sonner"
 
-export function NewStudentsWithPreferredTeacherWorkflow() {
+export function NewStudentsWithoutTeacher() {
   const token = localStorage.getItem("token")
   const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080"
   const [loading, setLoading] = useState<boolean>(true)
@@ -60,7 +60,7 @@ export function NewStudentsWithPreferredTeacherWorkflow() {
     }
 
     getNewStudents()
-  }, [token])
+  }, [token, BASEURL])
 
   if (loading) {
     return <p className="w-full rounded-lg bg-white dark:bg-black m-4 p-4 shadow-lg">Loading...</p>
@@ -70,7 +70,11 @@ export function NewStudentsWithPreferredTeacherWorkflow() {
     return <p className="w-full rounded-lg bg-white dark:bg-black m-4 p-4 shadow-lg text-center">No new students found</p>
   }
 
-  return <NewStudentsAccordion studentsWithoutTeacher={studentsWithoutTeacher} />
+  return (<div className="w-full">
+    <h2 className="w-full text-center text-xl md:text-3xl font-semibold mb-4">Elever uten lærer</h2>
+    <NewStudentsAccordion studentsWithoutTeacher={studentsWithoutTeacher} />
+  </div>)
+  
 }
 
 type NewStudentsAccordionProps = {

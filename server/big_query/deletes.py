@@ -62,6 +62,24 @@ def delete_review(student_user_id: str, teacher_user_id: str, bq_client=None):
         raise Exception(f"Error deleting old review {e}")
     
 
+def removeTeacherFromStudent(teacher_user_id :str, student_user_id :str, client=None):
+
+    if not client:
+        client = bigquery.Client.from_service_account_json('google_service_account.json')
+    query = f"""
+        UPDATE `{USER_DATASET}.teacher_student`
+        SET hidden = TRUE
+        WHERE teacher_user_id = @teacher_user_id
+        AND student_user_id = @student_user_id
+    """
+
+    query_params = [bigquery.ScalarQueryParameter("teacher_user_id", "STRING", teacher_user_id),
+                    bigquery.ScalarQueryParameter("student_user_id", "STRING", student_user_id)]
+    
+    job_config = bigquery.QueryJobConfig(query_parameters=query_params)
+    return client.query(query, job_config=job_config)
+
+
 
 from google.cloud import bigquery, storage
 from big_query.gets import is_user_admin

@@ -24,6 +24,18 @@ export type Student = {
     notes :string
 }
 
+export type TeacherStudent = {
+    created_at: string; // ISO or RFC string like "Sun, 09 Mar 2025 21:06:04 GMT"
+    hidden: boolean;
+    order_comments: string | null;
+    physical_or_digital: boolean;
+    preferred_location: string | null;
+    row_id: string;
+    student_user_id: string;
+    teacher_accepted_student: boolean | null;
+    teacher_user_id: string;
+};
+
 export type Teacher = {
     user_id: string;
     firstname: string;
@@ -43,6 +55,59 @@ export type Teacher = {
     notes :string;
     digital_tutouring :boolean;
     physical_tutouring :boolean;
+}
+
+
+export type TeacherJoinStudent = {
+    //teacherStudent
+    row_id: string;
+    teacher_user_id: string;
+    student_user_id: string;
+    teacher_accepted_student: boolean;
+    physical_or_digital: boolean | null;
+    preferred_location: string;
+    created_at: string; // Row created at
+    hidden: boolean;
+    order_comments: string | null;
+  
+    // Student info
+    user_id_1: string; // student user id
+    firstname_parent: string;
+    lastname_parent: string;
+    email_parent: string;
+    phone_parent: string;
+    firstname_student: string;
+    lastname_student: string;
+    phone_student: string;
+    address: string;
+    postal_code: string;
+    main_subjects: string;
+    has_physical_tutoring: boolean | null;
+    additional_comments: string;
+    est_hours_per_week: number;
+    your_teacher: string;
+    is_active: boolean;
+    wants_more_students: boolean;
+    notes: string | null;
+  
+    // Teacher info
+    user_id: string; // teacher user id
+    firstname: string;
+    lastname: string;
+    email: string;
+    phone: string;
+    address_1: string;
+    postal_code_1: string;
+    hourly_pay: string;
+    additional_comments_1: string;
+    created_at_1: string;
+    admin: boolean;
+    resigned: boolean;
+    resigned_at: string | null;
+    wants_more_students_1: boolean | null;
+    location: string;
+    digital_tutouring: boolean | null;
+    physical_tutouring: boolean | null;
 }
 
 export type Review = {

@@ -86,6 +86,33 @@ def get_all_teachers_route():
     }), 200
 
 
+from big_query.gets import get_all_teachers_join_students
+@teacher_bp.route('/get-all-teachers-join-students', methods=["GET"])
+def get_all_teachers_join_students_route():
+    try:
+
+        teachers = get_all_teachers_join_students(client=bq_client)
+
+        if not teachers:
+            print("Error fetching teachers")
+            return jsonify({"message": "Error fetching teachers"}), 500
+        
+
+        print(teachers)
+        if len(teachers)==0:
+            return jsonify({
+                "teachersJoinStudents": []
+            }), 200
+        
+        return jsonify({
+            "teachersJoinStudents": teachers
+        }), 200
+
+    except Exception as e:
+        print(f"Error getting teachers joined students {e}")
+        return jsonify({"message": f"Error getting teachers joined students {e}"}), 500
+
+
 
 from big_query.alters import toggleWantMoreStudents
 @teacher_bp.route('/toggle-wants-more-students', methods=["POST"])

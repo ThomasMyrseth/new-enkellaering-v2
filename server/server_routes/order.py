@@ -598,6 +598,37 @@ def teacher_accepts_route(user_id):
         print(f"error updating new order {e}")
         return jsonify({"message": f"Error updating new order {e}"}), 500
 
+from big_query.deletes import removeTeacherFromStudent
+@order_bp.route('/remove-teacher-from-student', methods=["POST"])
+@token_required
+def remove_teacher_from_student_route(user_id):
+    admin_user_id = user_id
+
+    if not admin_user_id:
+        return jsonify({"message": "Unauthorized"}), 401
+    
+    data = request.get_json()
+    student_user_id = data.get('student_user_id')
+    teacher_user_id = data.get('teacher_user_id')
+
+    if not student_user_id or not teacher_user_id:
+        return jsonify({"message": "Missing fields"}), 402
+
+    
+    try:
+        res = removeTeacherFromStudent(teacher_user_id=teacher_user_id, student_user_id=student_user_id, client=bq_client)
+        if res:
+            return jsonify({"message": "removed teacher from student"}), 200
+        
+        raise(Exception("Error removing teacher from student"))
+    
+    except Exception as e:
+        print(f"Error removing teacher from student {e}")
+        return jsonify({"message": f"Error removing teacher from student {e}"}), 500
+
+
+
+
 
 from big_query.deletes import hideOldOrders
 @order_bp.route('/hide-old-orders', methods=['GET'])
@@ -610,3 +641,19 @@ def hide_old_orders_route():
     except Exception as e:
         print(f"Error hiding old orders {e}")
         return jsonify({"message": f"Error hiding old orders! {e}"}), 500
+
+
+
+
+from big_query.gets import get_teacher_student
+@order_bp.route('/get-teacher-student', methods=['GET'])
+def get_teacher_student_route():
+
+    try:
+        ts = get_teacher_student(client=bq_client)
+        return {"teacher_student": ts}, 200
+    
+    except Exception as e:
+        print(f"error getting new teachers {e}")
+        return jsonify({"message": f"Error getting new teachers {e}"}), 500
+    
