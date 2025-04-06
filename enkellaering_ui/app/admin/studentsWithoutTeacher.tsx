@@ -31,6 +31,7 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
+import { toast } from "sonner"
 
 
 export function NewStudentsWithoutTeacherPage() {
@@ -309,7 +310,7 @@ const handleSetActive = async (student: Student) => {
             throw new Error(`Error: ${response.status} - ${response.statusText}`);
         }
 
-        alert(`${student.firstname_parent} ${student.lastname_parent} er satt til aktiv`)
+        toast(`${student.firstname_parent} ${student.lastname_parent} er satt til aktiv`)
 
     } catch (error) {
         alert(`Failed to set student inactive: ${error}`);

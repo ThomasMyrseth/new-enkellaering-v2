@@ -125,24 +125,21 @@ def get_all_new_students(client: bigquery.Client, admin_user_id: str):
 def get_all_students_without_teacher(client: bigquery.Client, admin_user_id :str):
     
     query = f"""
-    SELECT * 
-    FROM `{PROJECT_ID}.{USER_DATASET}.teacher_student` AS ts
-    JOIN `{PROJECT_ID}.{USER_DATASET}.students`AS s
-    ON ts.student_user_id = s.user_id
-    JOIN `{PROJECT_ID}.{USER_DATASET}.teachers` AS t
-    ON ts.teacher_user_id = t.user_id
+        SELECT *
 
-    WHERE ts.row_id NOT IN (
-        SELECT row_id
-        FROM `{PROJECT_ID}.{USER_DATASET}.teacher_student`
-        WHERE teacher_accepted_student=TRUE
-    )
-    AND EXISTS (
-        SELECT 1 FROM `{PROJECT_ID}.{USER_DATASET}.teachers`
-        WHERE user_id = @admin_user_id AND admin = TRUE
-    )
-    AND (ts.hidden IS NULL OR ts.hidden = FALSE)
+        FROM `{USER_DATASET}.students` AS s
+        LEFT JOIN `{USER_DATASET}.teacher_student` AS ts
+        ON s.user_id=ts.student_user_id
+        JOIN `{USER_DATASET}.teachers` AS t
+        ON ts.teacher_user_id = t.user_id
+
+        WHERE s.user_id NOT IN (
+        SELECT ts.student_user_id
+        FROM `users.teacher_student` AS ts
+        WHERE ts.teacher_accepted_student = TRUE AND (ts.hidden = FALSE OR ts.hidden IS NULL)
+        )
     """
+
     query_params = [bigquery.ScalarQueryParameter("admin_user_id", "STRING", admin_user_id)]
     job_config = bigquery.QueryJobConfig(query_parameters=query_params)
     

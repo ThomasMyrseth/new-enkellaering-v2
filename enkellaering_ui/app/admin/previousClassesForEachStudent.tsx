@@ -17,6 +17,7 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@/components/ui/accordion";
+import { toast } from "sonner";
 
 import { Copy } from 'lucide-react';
 
@@ -176,10 +177,13 @@ export function PreviousClassesForEachStudent() {
                     {!myTeachers.length &&
                         <p className="m-4" key={index}>{s.firstname_parent} har ingen lærer</p>
                     }
-                    <div className="flex flex-row space-x-2 m-4">
-                        {myTeachers.map( (t) => {
-                            return <RemoveTeacherDialog teacher={t} key={t.user_id} student={s}/>
-                        })}
+                    <div className="w-full justify-between flex">
+                        <div className="flex flex-row space-x-2 m-4">
+                            {myTeachers.map( (t) => {
+                                return <RemoveTeacherDialog teacher={t} key={t.user_id} student={s}/>
+                            })}
+                        </div>
+                        <SetTeacherCombobox student={s} teachers={teachers} passSelectedTeacher={handleAddNewTeacher}/>
                     </div>
 
                     <StudentNotes student={s}/>
@@ -291,6 +295,9 @@ export function PreviousClassesForEachStudent() {
   );
 }
 
+const handleAddNewTeacher = async (teacherUserId :string, studentUserId :string) => {
+    assignTeacher(teacherUserId, studentUserId)
+}
 
 
 
@@ -531,7 +538,6 @@ const SetStudentInactive = ({ student }: { student: Student }) => {
 };
 
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
 
 const StudentNotes = ({student} : {student : Student}) => {
     const [notes, setNotes] = useState<string>(student.notes)
@@ -722,3 +728,132 @@ async function getTeacherStudent(token: string) {
 
     return teacherStudent;
 }
+
+
+const assignTeacher = async (
+    teacherUserId: string | null, 
+    studentUserId: string, 
+  ): Promise<void> => {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+    const token = localStorage.getItem('token');
+  
+    const response = await fetch(`${baseUrl}/assign-teacher-for-student`, {
+      method: "POST",
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        teacher_user_id: teacherUserId,
+        student_user_id: studentUserId
+      })
+    });
+  
+    if (!response.ok) {
+      alert("Error while assigning teacher to student");
+    } else {
+      toast("Læreren er blitt tildelt til eleven");
+    }
+};
+
+
+
+import { ChevronsUpDown } from "lucide-react";
+import { Command, CommandGroup, CommandInput, CommandItem, CommandList, CommandEmpty } from "@/components/ui/command";
+import { Check } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+const SetTeacherCombobox = ({
+    student,
+    teachers,
+    passSelectedTeacher
+  }: { 
+    student: Student, 
+    teachers: Teacher[], 
+    passSelectedTeacher: ((teacherUserId: string, studentUserId: string) => void)
+  }) => {
+  
+    const [teacherUserId, setTeacherUserId] = useState<string | null>(student.your_teacher || null);
+    const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
+    const [open, setOpen] = useState<boolean>(false);
+    const [showCombobox, setShowCombobox] = useState<boolean>(false);
+
+  
+    const getTeacherName = (teacher: Teacher | null) =>
+      teacher ? `${teacher.firstname} ${teacher.lastname}` : "Ingen lærer tildelt";
+  
+    const handleSelectTeacher = (userId: string | null) => {
+        if (!userId) {
+            alert('Velg en lærer dumbasss')
+            return
+        }
+        setTeacherUserId(userId);
+        const selected = userId ? (teachers.find((teacher) => teacher.user_id === userId) || null) : null;
+        setSelectedTeacher(selected);
+        // Pass the new teacher, student id, and old teacher id to the assign function
+        passSelectedTeacher(userId, student.user_id);
+    };
+  
+    return (<>
+        {!showCombobox?
+             <Button className="bg-neutral-500 dark:bg-neutral-400 rounded-xl" onClick={() => {setShowCombobox(!showCombobox); setOpen(!open)}}>Legg til ny lærer</Button> :
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <div
+            role="combobox"
+            aria-expanded={open}
+            className="w-[200px] justify-start flex flex-row"
+          >
+            {getTeacherName(selectedTeacher)}
+            <ChevronsUpDown className="opacity-50" />
+          </div>
+        </PopoverTrigger>
+        <PopoverContent className="w-[200px] p-0">
+          <Command>
+            <CommandInput placeholder="Søk etter lærer..." />
+            <CommandList>
+              <CommandEmpty>Ingen lærer er tildelt</CommandEmpty>
+              <CommandGroup>
+                {/* Option to remove teacher */}
+                <CommandItem
+                  key="no-teacher"
+                  value="no-teacher"
+                  onSelect={() => {
+                    handleSelectTeacher(null);
+                    setOpen(false);
+                  }}
+                >
+                  Ingen lærer
+                  <Check
+                    className={cn(
+                      "ml-auto",
+                      teacherUserId === null ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                </CommandItem>
+                {teachers.map((teacher) => (
+                  <CommandItem
+                    key={teacher.user_id}
+                    value={teacher.firstname + " " + teacher.lastname}
+                    onSelect={() => {
+                      handleSelectTeacher(teacher.user_id);
+                      setOpen(false);
+                    }}
+                  >
+                    {getTeacherName(teacher)}
+                    <Check
+                      className={cn(
+                        "ml-auto",
+                        teacherUserId === teacher.user_id ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    }
+    </>);
+};

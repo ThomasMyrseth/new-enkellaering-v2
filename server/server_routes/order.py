@@ -656,4 +656,27 @@ def get_teacher_student_route():
     except Exception as e:
         print(f"error getting new teachers {e}")
         return jsonify({"message": f"Error getting new teachers {e}"}), 500
+
+
+from big_query.inserts import addTeacherToNewStudent
+@order_bp.route("/assign-teacher-for-student", methods=["POST"])
+@token_required
+def assign_teacher_for_student(user_id):
+    data = request.get_json()
+    teacher_user_id = data.get('teacher_user_id')
+    student_user_id = data.get('student_user_id')
+
+    if not user_id:
+        return jsonify({"message": "Unautrhorizes"}), 402
+
+    if not student_user_id or not teacher_user_id:
+        return jsonify({"message": "Missing required fields"}), 400
+    
+    try:
+        response = addTeacherToNewStudent(client=bq_client, student_user_id=student_user_id, teacher_user_id=teacher_user_id, admin_user_id=user_id)
+
+        response.result()
+        return jsonify({"message": "Teacher assigned successfully"}), 200
+    except Exception as e:
+        return jsonify({"message": f"An error occured {e}"}), 500
     

@@ -586,7 +586,7 @@ def addTeacherToNewStudent(client: bigquery.Client, student_user_id: str, teache
         INSERT INTO `{USER_DATASET}.teacher_student`
             (row_id, teacher_user_id, student_user_id, teacher_accepted_student, physical_or_digital, preferred_location, created_at, hidden, order_comments)
         SELECT 
-            GENERATE_UUID(), @teacher_user_id, @student_user_id, FALSE, NULL, NULL, CURRENT_TIMESTAMP(), FALSE, ""
+            GENERATE_UUID(), @teacher_user_id, @student_user_id, TRUE, NULL, NULL, CURRENT_TIMESTAMP(), FALSE, ""
         FROM UNNEST([1])
         WHERE EXISTS (
             SELECT 1
