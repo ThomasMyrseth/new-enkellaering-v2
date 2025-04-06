@@ -431,7 +431,7 @@ export function TeacherFocusCards() {
             </ul>
         ) : 
         
-        
+        //grid view
         (
             <ul className="md:max-w-2xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 items-start gap-4">
             {filteredCards.map((card, index) => {
@@ -441,7 +441,7 @@ export function TeacherFocusCards() {
                 //avoid divinding by zero is card.reviews===0
                 if (card.reviews.length!==0) {
                     card.reviews.map( (review) => {
-                        avgRating += review.rating
+                        avgRating += Number(review.rating);
                     })
                     avgRating = Math.round(avgRating/card.reviews.length)
                 }
@@ -484,7 +484,8 @@ export function TeacherFocusCards() {
                             className="font-medium text-neutral-800 dark:text-neutral-200 text-center md:text-left text-base"
                         >
                             {card.teacher.firstname} <br/>
-                            <span className="flex flex-row items-center text-xs font-light"> <span className="mr-2">{card.teacher.location}</span> <RenderStars rating={avgRating}/></span>
+                            <span className="flex flex-row items-center text-xs font-light"> <span className="mr-2">{card.teacher.location}</span> 
+                            <RenderStars rating={avgRating}/></span>
                         </motion.h3>
                         <motion.p
                             layoutId={`description-${card.teacher.firstname}-${id}`}

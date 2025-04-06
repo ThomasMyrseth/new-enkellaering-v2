@@ -5,8 +5,8 @@ import React from "react";
 import { CardBody, CardContainer, CardItem } from "@/components/ui/3d-card";
 import Image  from "next/image";
 import { Carousel } from "@/components/ui/apple-cards-carousel";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+//import { Button } from "@/components/ui/button";
+//import { toast } from "sonner";
 
 export function MyTeachers( {teachers} : {teachers :Teacher[]}) {
 
@@ -41,34 +41,34 @@ export function MyTeachers( {teachers} : {teachers :Teacher[]}) {
     
 }
 
-const handleRemoveTeacher = async (teacherUserId: string) => {
-    const token = localStorage.getItem('token')
-    const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8080'
-    try {
-        const res = await fetch(`${BASEURL}/assign-teacher-for-student`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
-            },
-            body: JSON.stringify({
-                student_user_id: localStorage.getItem("user_id"),
-                old_teacher_user_id: teacherUserId
-            })
-        });
+// const handleRemoveTeacher = async (teacherUserId: string) => {
+//     const token = localStorage.getItem('token')
+//     const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8080'
+//     try {
+//         const res = await fetch(`${BASEURL}/assign-teacher-for-student`, {
+//             method: "POST",
+//             headers: {
+//                 "Content-Type": "application/json",
+//                 "Authorization": `Bearer ${token}`
+//             },
+//             body: JSON.stringify({
+//                 student_user_id: localStorage.getItem("user_id"),
+//                 old_teacher_user_id: teacherUserId
+//             })
+//         });
 
-        const data = await res.json();
+//         const data = await res.json();
 
-        if (!res.ok) {
-            console.error("Failed to remove teacher:", data.message);
-        } else {
-            console.log("Teacher removed successfully");
-            toast("Du har fjernet læreren din")
-        }
-    } catch (error) {
-        console.error("Error removing teacher:", error);
-    }
-};
+//         if (!res.ok) {
+//             console.error("Failed to remove teacher:", data.message);
+//         } else {
+//             console.log("Teacher removed successfully");
+//             toast("Du har fjernet læreren din")
+//         }
+//     } catch (error) {
+//         console.error("Error removing teacher:", error);
+//     }
+// };
 
 const TeacherCard = ({teacher} : {teacher :Teacher}) => {
     const hasTeacher :boolean = teacher !==null
@@ -78,13 +78,13 @@ const TeacherCard = ({teacher} : {teacher :Teacher}) => {
             <CardBody className="bg-gray-50 relative group/card  dark:hover:shadow-2xl dark:hover:shadow-emerald-500/[0.1] dark:bg-black dark:border-white/[0.2] border-black/[0.1] w-auto sm:w-[30rem] h-auto rounded-xl p-6 border  ">
                 <CardItem
                     translateZ="50"
-                    className="text-xl font-bold text-neutral-600 dark:text-white"
+                    className="text-xl w-full font-bold text-neutral-600 dark:text-white"
                 >
                 {hasTeacher ? (
-                    <>
-                        {teacher?.firstname} {teacher?.lastname}
-                        <Button onClick={() => handleRemoveTeacher(teacher.user_id)}>Fjern lærer</Button>
-                    </>
+                    <div className="flex justify-between w-full">
+                        <p>{teacher?.firstname} {teacher?.lastname}</p>
+                        {/* <Button onClick={() => handleRemoveTeacher(teacher.user_id)}>Fjern lærer</Button> */} 
+                    </div>
                 ) : (
                     <span>Dere har ingen lærere enda.</span>
                 )}

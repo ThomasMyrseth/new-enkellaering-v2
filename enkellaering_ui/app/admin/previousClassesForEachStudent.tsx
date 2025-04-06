@@ -247,7 +247,7 @@ export function PreviousClassesForEachStudent() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                    {classes.map( (c :Classes, index) => {
+                    {myClasses.map( (c :Classes, index) => {
                         const startedAt: Date = new Date(c.started_at);
                         const endedAt: Date = new Date(c.ended_at);
                         const totalDurationMillis: number = endedAt.getTime() - startedAt.getTime();
@@ -413,7 +413,7 @@ const InvoiceStudentPopover = ( {student, classes} : {student: Student, classes:
     return (
         <Popover>
         <PopoverTrigger asChild>
-            <Button>Send faktura til {student.firstname_parent} {student.lastname_parent}</Button>
+            <Button className="bg-blue-900 dark:bg-blue-800 text-white dark:text-white">Send faktura til {student.firstname_parent} {student.lastname_parent}</Button>
         </PopoverTrigger>
         <PopoverContent className="w-80">
             {success===true && <p className="text-green-400">Timene er satt til fakturert</p>}
@@ -618,7 +618,7 @@ const RemoveTeacherDialog = ({ student, teacher }: { student: Student, teacher: 
     return (
         <AlertDialog>
             <AlertDialogTrigger asChild>
-                <Button className="bg-neutral-500 dark:bg-neutral-400 rounded-xl text-white">{teacher.firstname} {teacher.lastname}</Button>
+                <Button className="bg-blue-900 dark:bg-blue-800 rounded-xl text-white dark:text-white">{teacher.firstname} {teacher.lastname}</Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
                 <AlertDialogHeader>
@@ -796,7 +796,7 @@ const SetTeacherCombobox = ({
   
     return (<>
         {!showCombobox?
-             <Button className="bg-neutral-500 dark:bg-neutral-400 rounded-xl" onClick={() => {setShowCombobox(!showCombobox); setOpen(!open)}}>Legg til ny lærer</Button> :
+             <Button className="bg-blue-900 dark:bg-blue-800 text-white dark:text-white rounded-xl" onClick={() => {setShowCombobox(!showCombobox); setOpen(!open)}}>Legg til ny lærer</Button> :
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <div

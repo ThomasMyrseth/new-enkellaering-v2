@@ -49,6 +49,7 @@ const LeaveReview = ({
 
       if (response.ok) {
         setSuccess(true);
+        toast('Takk for din omtale!')
       } else {
         const errorData = await response.json();
         setError(errorData.error || "Failed to submit review.");
@@ -176,6 +177,7 @@ import {
   CommandItem,
 } from "@/components/ui/command";
 import { ChevronsUpDown, Check } from "lucide-react";
+import { toast } from "sonner";
 
 interface ReviewTeacherComboboxProps {
   teachers: Teacher[];
