@@ -267,6 +267,30 @@ def delete_new_student(user_id):
     return jsonify({"message": "New student deleted successfully"}), 200
 
 
+
+from big_query.deletes import hideNewOrderFromNewStudentsTable
+@order_bp.route('/hide-new-student-from-new-students-table', methods=["POST"])
+@token_required
+def delete_new_student_from_new_students_table_route(user_id):
+    admin_user_id = user_id
+    data = request.get_json()
+
+    # Extract fields
+    new_student_id = data.get("new_student_id")
+
+    # Perform the update
+    try:
+        res = hideNewOrderFromNewStudentsTable(new_student_id=new_student_id, admin_user_id=admin_user_id, client=bq_client)
+        res.result()  # Force query execution to detect any errors
+    except Exception as e:
+        logging.error("BigQuery error:", e)
+        return jsonify({"message": "Error while deleting for new student"}), 500
+
+    return jsonify({"message": "New student deleted successfully"}), 200
+
+
+
+
 import uuid
 import pytz
 from big_query.inserts import insert_new_student

@@ -280,7 +280,7 @@ function NewStudentRow({ ns, teachers }: { ns: NewStudent, teachers :Teacher[] }
 
     const handleDelete = async () => {
 
-        const response = await fetch(`${BASEURL}/hide-new-student`, {
+        const response = await fetch(`${BASEURL}/hide-new-student-from-new-students-table`, {
             method: "POST",
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -296,7 +296,7 @@ function NewStudentRow({ ns, teachers }: { ns: NewStudent, teachers :Teacher[] }
             return null;
         }
         else {
-            alert("Eleven er slettet")
+            toast("Eleven er slettet")
         }
 
     }
@@ -422,6 +422,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { toast } from "sonner";
 
 
 const SetTeacherCombobox = ({ ns, teachers, passSelectedTeacher }: { 
