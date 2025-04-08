@@ -687,33 +687,37 @@ def get_students_with_few_classes(days: int):
 
         # Build the query. Note that @date is a parameter placeholder.
         query = f"""
-            SELECT 
-                s.*,
-                ts.*,
-                t.*,
-                lc.started_at AS last_class_started_at,
-                lc.class_id AS last_class_id
-            FROM `{USER_DATASET}.students` AS s
-            JOIN `{USER_DATASET}.teacher_student` AS ts
-              ON s.user_id = ts.student_user_id
-            JOIN `{USER_DATASET}.teachers` AS t
-              ON t.user_id = ts.teacher_user_id
-            LEFT JOIN (
-                SELECT * FROM (
-                    SELECT 
-                        c.*, 
-                        ROW_NUMBER() OVER (PARTITION BY c.student_user_id ORDER BY c.started_at DESC) AS rn
-                    FROM `{CLASSES_DATASET}.classes` c
+            SELECT * FROM (
+                SELECT 
+                    s.*,
+                    ts.*,
+                    t.*,
+                    lc.started_at AS last_class_started_at,
+                    lc.class_id AS last_class_id,
+                    ROW_NUMBER() OVER (PARTITION BY s.user_id ORDER BY ts.row_id) AS rn
+                FROM `{USER_DATASET}.students` AS s
+                JOIN `{USER_DATASET}.teacher_student` AS ts
+                ON s.user_id = ts.student_user_id
+                JOIN `{USER_DATASET}.teachers` AS t
+                ON t.user_id = ts.teacher_user_id
+                LEFT JOIN (
+                    SELECT * FROM (
+                        SELECT 
+                            c.*, 
+                            ROW_NUMBER() OVER (PARTITION BY c.student_user_id ORDER BY c.started_at DESC) AS rn
+                        FROM `{CLASSES_DATASET}.classes` c
+                    )
+                    WHERE rn = 1
+                ) lc
+                ON lc.student_user_id = s.user_id
+                WHERE s.user_id NOT IN (
+                    SELECT student_user_id
+                    FROM `{CLASSES_DATASET}.classes`
+                    WHERE DATE(started_at) > @date
                 )
-                WHERE rn = 1
-            ) lc
-              ON lc.student_user_id = s.user_id
-            WHERE s.user_id NOT IN (
-                SELECT student_user_id
-                FROM `{CLASSES_DATASET}.classes`
-                WHERE DATE(started_at) > @date
+                AND s.is_active = TRUE
             )
-            AND s.is_active = TRUE
+            WHERE rn = 1
         """
 
         # Create a BigQuery client
