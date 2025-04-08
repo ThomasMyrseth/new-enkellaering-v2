@@ -36,6 +36,7 @@ export default function LaererPage() {
                 return
             }
 
+            console.log("students: ", students)
             setTeacher(teacher)
             setClasses(classes)
             setStudents(students)
@@ -43,7 +44,7 @@ export default function LaererPage() {
 
         getData()
     
-    },[])
+    },[router, token])
 
     if (!teacher) {
         return (<p>Loading...</p>)
@@ -54,7 +55,7 @@ export default function LaererPage() {
             <div className="w-full md:w-4/5 flex flex-col space-y-4 mt-4">
                 <DailyRevenueChart teacher={teacher}/>
                 <WantMoreStudents teacher={teacher}/>
-                <AddNewClass teacher={teacher}/>
+                <AddNewClass teacher={teacher} students={students}/>
                 <YourStudent teacher={teacher} classes={classes} students={students}/>
                 <NewStudentsWithPreferredTeacherWorkflowActions/>
                 <ProfileForm teacher={teacher}/>

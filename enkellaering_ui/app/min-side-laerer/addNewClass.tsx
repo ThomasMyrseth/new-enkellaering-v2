@@ -24,9 +24,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8080';
 
-export function AddNewClass({teacher}: {teacher: Teacher}) {
-    const token = localStorage.getItem('token') || ''
-    const [students, setStudents] = useState<Student[]>([])
+export function AddNewClass({teacher, students}: {teacher: Teacher, students :Student[]}) {
     const [selectedStudentUserIds, setSelectedStudentUserIds] = useState<string[]>([])
     const [startedAt, setStartedAt] = useState<Date>()
     const [endedAt, setEndedAt] = useState<Date>()
@@ -34,39 +32,6 @@ export function AddNewClass({teacher}: {teacher: Teacher}) {
     const [success, setSuccess] = useState<boolean>()
     const [wasCanselled, setWasCanselled] = useState<boolean>(false)
     const [groupClass, setGroupClass] = useState<boolean>(false)
-
-
-    useEffect( () => {
-        async function fetchStudents() {
-            const response = await fetch(`${BASEURL}/get-students`, {
-                method: "GET",
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            })
-
-            if (response.ok) {
-                const data = await response.json()
-
-                const students :Student[]= data.students.sort( (a :Student, b :Student) => {
-                    const nameA = a.firstname_parent.toUpperCase()
-                    const nameB = b.firstname_parent.toUpperCase()
-                    if (nameA < nameB) {
-                        return -1
-                    }
-                    if (nameA > nameB) {
-                        return 1
-                    }
-                    return 0
-                })
-                setStudents(students)
-            }
-            else {
-            }
-        }
-        fetchStudents()
-
-    },[token])
 
 
     const handleStudentSelect = (userId: string) => {

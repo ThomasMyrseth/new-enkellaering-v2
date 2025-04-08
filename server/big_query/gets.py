@@ -254,10 +254,12 @@ def get_classes_by_teacher(client: bigquery.Client, user_id: str):
 
 def get_student_for_teacher(client :bigquery.Client, teacher_user_id: str):
     query = f"""
-            SELECT *
+            SELECT DISTINCT s.*
+
             FROM {USER_DATASET}.students AS s
             JOIN {USER_DATASET}.teacher_student AS ts
             ON s.user_id = ts.student_user_id
+            
             WHERE teacher_user_id = @teacher_user_id
             AND ts.teacher_accepted_student = TRUE
             AND (ts.hidden IS NULL OR ts.hidden!=TRUE)
