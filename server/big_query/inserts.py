@@ -339,7 +339,7 @@ def insert_classes(client: bigquery.Client, classes: list[Classes]):
 
 def upsert_about_me_text(client: bigquery.Client, text: str, user_id: str, firstname: str, lastname: str):
     query = f"""
-        MERGE `{PROJECT_ID}.{USER_DATASET}.about_me_texts` AS target
+        MERGE `{USER_DATASET}.about_me_texts` AS target
         USING (
             SELECT 
                 @user_id AS user_id, 
@@ -365,11 +365,13 @@ def upsert_about_me_text(client: bigquery.Client, text: str, user_id: str, first
             bigquery.ScalarQueryParameter("about_me", "STRING", text),
             bigquery.ScalarQueryParameter("firstname", "STRING", firstname),
             bigquery.ScalarQueryParameter("lastname", "STRING", lastname),
-            bigquery.ScalarQueryParameter("create_at", "TIMESTAMP", datetime.now(timezone.utc))
+            bigquery.ScalarQueryParameter("created_at", "TIMESTAMP", datetime.now(timezone.utc))
         ]
     )
 
-    return client.query(query, job_config=job_config, location="EU")
+    query_job = client.query(query, job_config=job_config, location="EU")
+    query_job.result()  # This will wait until the query completes (or raises errors)
+    return query_job
 
 
 def insert_quiz_result(user_id :str, quiz_id :str, passed :bool, number_of_corrects :int, number_of_questions :int, client :bigquery.Client):

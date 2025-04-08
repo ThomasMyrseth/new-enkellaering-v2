@@ -310,16 +310,16 @@ export function TeacherFocusCards() {
                     <div className="">
                         <motion.p
                         layoutId={`description-${active.description}-${id}`}
-                        className="h-56 overflow-y-scroll scrollbar-hide text-neutral-600 dark:text-neutral-400 mb-10"
+                        className="text-neutral-600 dark:text-neutral-400 mb-10"
                         >
                         {active.description}
                         </motion.p>
 
-                        <div className="h-56 overflow-y-scroll "> {/* Wrapping div for scrolling */}
+                        <div> {/* Container for reviews */}
                             {active.reviews.length === 0 ? (
                                 <span>{active.teacher.firstname} har ingen omtaler enda</span>
                             ) : (
-                                <div className="space-y-4 "> {/* Added spacing between reviews */}
+                                <div className="space-y-4">
                                     {active.reviews.map((review) => (
                                         <div key={review.id} className="flex flex-col bg-neutral-100 p-4 rounded-xl">
                                             <div className="flex flex-row items-center mb-4">

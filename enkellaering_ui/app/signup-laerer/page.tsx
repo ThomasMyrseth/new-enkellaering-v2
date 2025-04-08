@@ -218,7 +218,7 @@ export default function SignupForm() {
         {/* Additional Comments */}
         <LabelInputContainer>
           <Label htmlFor="additional-comments">Andre kommentarer</Label>
-          <Textarea id="additional-comments" placeholder="Skriv eventuelle kommentarer her" />
+          <Textarea id="additional-comments" placeholder="Jeg er allergisk mot hund og kan derfor ikke ha fysiske elever som har hund." />
         </LabelInputContainer>
 
         <br />

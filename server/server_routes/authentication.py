@@ -127,33 +127,41 @@ def register():
 
 
 from big_query.inserts import insert_teacher
+from .email import sendSingupTeacherEmailToTeacher
 @auth_bp.route('/signup-teacher', methods=["POST"])
 def register_teacher():
+    data = request.json
+
+    id_token = data.get('id_token')
+    decoded_token = auth.verify_id_token(id_token)
+    firebase_user_id = decoded_token.get('uid')
+
+    # Generate a unique user ID
+    user_id = firebase_user_id
+    firstname = data.get("firstname")
+    lastname = data.get("lastname")
+    email = data.get("email")
+    phone = data.get("phone")
+    address = data.get("address") or "N/A"
+    postal_code = data.get("postal_code") or "0000"
+    hourly_pay = data.get("hourly_pay") or "250"
+    resigned = False
+    created_at = datetime.now()
+    admin = False
+    resigned_at = None
+    additional_comments = data.get("additional_comments") or ""
+    location = data.get('location')
+    physical = data.get('physical_tutouring')
+    digital = data.get('digital_tutouring')
+     
     try:
-        data = request.json
+        name = firstname + " " + lastname
+        sendSingupTeacherEmailToTeacher(email, name)
+    except Exception as e:
+        print(f"Error sending signup-teacher email {e}")
+        return jsonify({"message": f"Error sending singup-teacher email {e}"}), 500
 
-        id_token = data.get('id_token')
-        decoded_token = auth.verify_id_token(id_token)
-        firebase_user_id = decoded_token.get('uid')
-
-        # Generate a unique user ID
-        user_id = firebase_user_id
-        firstname = data.get("firstname")
-        lastname = data.get("lastname")
-        email = data.get("email")
-        phone = data.get("phone")
-        address = data.get("address") or "N/A"
-        postal_code = data.get("postal_code") or "0000"
-        hourly_pay = data.get("hourly_pay") or "250"
-        resigned = False
-        created_at = datetime.now()
-        admin = False
-        resigned_at = None
-        additional_comments = data.get("additional_comments") or ""
-        location = data.get('location')
-        physical = data.get('physical_tutouring')
-        digital = data.get('digital_tutouring')
-
+    try:
         # Validate required fields
         if not all([firstname, lastname, email, phone]):
             return jsonify({"error": "All required fields must be filled."}), 400

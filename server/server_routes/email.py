@@ -67,6 +67,56 @@ def sendNewStudentToTeacherMail(receipientTeacherMail: str, teachername :str):
         print("❌ Failed to send email:", e)
         raise e
 
+
+
+
+
+
+def sendSingupTeacherEmailToTeacher(receipientTeacherMail: str, teachername :str):
+    try:
+        FROM_EMAIL = os.getenv("MAIL_USERNAME")
+
+        # HTML content adapted from your image template
+        html_content = f"""
+        <div style="font-family: sans-serif; background-color: #f9f9f9; padding: 30px;">
+            <h1>Hei {teachername}!</h1>
+            <h2>Velkommen til Enkel Læring</h2>
+            <div style="background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                <p style="color: #555;">
+                    For å få elever er du nødt til å skrive litt om deg selv, legge inn et bilde, samt bestå quizzene i dine fag.
+                    Dette må du gjøre nederst fra min-side-laerer. Husk også å velge om du ønsker fysiske eller digitale elever.
+                    Når du utfører quizzene anbefaler vi deg at du er på PC.
+                    <br/>
+                    Dersom du har problemer kan du kontakte oss for hjelp med kontaktinfoen under:
+                    <br/>
+                    <strong>Thomas Myrseth, telefon: 47 18 47 44</strong>
+                    <strong>Karoline Aasheim, telefon: 90 65 69 69</strong>
+                </p>
+                <a href="https://enkellaering.no/login-laerer" style="display:inline-block; margin-top: 15px; background-color:#6366F1; color:white; padding:10px 16px; border-radius:5px; text-decoration:none;">Logg inn</a>
+            </div>
+        </div>
+        """
+
+        # Send email with Resend
+        response = resend.Emails.send({
+            "from": FROM_EMAIL,
+            "to": receipientTeacherMail,
+            "subject": "Velkommen til Enkel Læring",
+            "html": html_content
+        })
+
+        print("✅ Email sent:", response)
+        return response
+
+    except Exception as e:
+        print("❌ Failed to send email:", e)
+        raise e
+
+
+
+
+
+
 import os
 import resend
 

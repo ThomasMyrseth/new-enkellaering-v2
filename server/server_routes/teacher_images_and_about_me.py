@@ -28,7 +28,7 @@ def upload_file(user_id):
     about_me = request.form.get("about_me")  # about_me text from form data
     firstname = request.form.get("firstname")
     lastname = request.form.get("lastname")
-    
+
     if not firstname:
         logging.error("Missing firstname")
         return jsonify({"error": "Missing firstname"}), 400
@@ -61,13 +61,18 @@ def upload_file(user_id):
         # Upload directly from file object
         upload_or_replace_image_in_bucket(bucket_name, file, destination_blob_name)
 
+    except Exception as e:
+        logging.error(f"Error uploading image, {str(e)}")
+        return jsonify({"error": str(e)}), 500
+    
+    try:
         # Insert about_me text into BigQuery
         upsert_about_me_text(client=bq_client, user_id=user_id, text=about_me, firstname=firstname, lastname=lastname)
 
         return jsonify({"message": f"File uploaded successfully to {destination_blob_name}"}), 200
     except Exception as e:
-        logging.error(f"An error occured, {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        logging.error(f"Error uploading about me text {e}")
+        return jsonify({"message": f"Error uploading about me texts {e}"})
 
 
 from big_query.buckets.downloads import download_all_teacher_images

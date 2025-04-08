@@ -10,6 +10,7 @@ import {
   AlertDescription,
   AlertTitle,
 } from "@/components/ui/alert"
+import { toast } from "sonner";
  
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
 
@@ -21,6 +22,7 @@ export const FileUploadForm = ({firstname, lastname, title} : {firstname? :strin
     const [fileError, setFileError] = useState<boolean | null>(null)
     const [aboutMeError, setAboutMeError] = useState<boolean | null>(null)
     const [success, setSuccess] = useState<boolean | null>(null)
+    const [isSendDisabled, setIsSendDisabled] = useState<boolean>(false)
 
 
     const handleFileUpload = (files: File[]) => {
@@ -29,7 +31,9 @@ export const FileUploadForm = ({firstname, lastname, title} : {firstname? :strin
     
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-      
+
+        setIsSendDisabled(true)
+
         if (!files.length) {
           setFileError(true);
           return;
@@ -62,11 +66,13 @@ export const FileUploadForm = ({firstname, lastname, title} : {firstname? :strin
             setSuccess(true);
             setFiles([]);
             setAboutMe("");
+            toast("Nydelig! Tekst og bilde er lastet opp. Sjekk ut om-oss")
           }
         } catch (error) {
           console.error("Error uploading file:", error);
           setSuccess(false);
         }
+        setIsSendDisabled(false)
       };
 
   return (
@@ -119,9 +125,9 @@ export const FileUploadForm = ({firstname, lastname, title} : {firstname? :strin
                 onChange={(e) => setAboutMe(e.target.value)}
             />
 
-            <button className="relative width inline-flex h-12 overflow-hidden rounded-full p-[5px] dark:p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50">
+            <button disabled={isSendDisabled} className="relative width inline-flex h-12 overflow-hidden rounded-full p-[5px] dark:p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50">
                 <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
-                <span className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-slate-950 px-3 py-1 text-sm font-medium text-white backdrop-blur-3xl">
+                <span className={`${isSendDisabled ? "bg-slate-400" :"inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-slate-950 px-3 py-1 text-sm font-medium text-white backdrop-blur-3xl"}`}>
                     Send inn
                 </span>
             </button>
