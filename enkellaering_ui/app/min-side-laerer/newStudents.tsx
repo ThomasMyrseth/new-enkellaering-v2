@@ -85,6 +85,11 @@ export default function NewStudentWithPreferredTeacherActionsCard({ ns }: { ns :
     month: "long",
     year: "numeric",
   });
+  
+  const now = new Date();
+  const inTwoHours: Date = new Date(now.getTime() + 2 * 60 * 60 * 1000); // 2 hours in milliseconds
+  const createdAt: Date = new Date(ns.created_at);
+  const twoHoursAfterCreation :Date = new Date(createdAt.getTime() + 2*60*60*1000)
 
   const teachingMethod =
     ns.physical_or_digital === true
@@ -92,7 +97,6 @@ export default function NewStudentWithPreferredTeacherActionsCard({ ns }: { ns :
       : ns.physical_or_digital === false
       ? "Digital"
       : "Vet ikke";
-
 
   const handleAcceptClick = (value: boolean, order :NewTeacherOrder) => {
     setOpenDialog(false)
@@ -135,20 +139,32 @@ export default function NewStudentWithPreferredTeacherActionsCard({ ns }: { ns :
         </div>
       </AlertDialogTrigger>
       <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Oppdater aksept</AlertDialogTitle>
-          <AlertDialogDescription>
-            Velg om du aksepterer eller avslår studentens forespørsel.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <div className="p-4 space-x-4 w-full flex flex-row items-center">
-            <Button className="bg-green-500 dark:bg-green-400" onClick={() => handleAcceptClick(true, ns)}>Jeg tar denne eleven</Button>
-            <Button className="bg-rose-500 dark:bg-rose-400"  onClick={() => handleAcceptClick(false, ns)}>Jeg ønsker ikke denne eleven</Button>
-        </div>
+        
+        {createdAt > inTwoHours?
+          <>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Oppdater aksept</AlertDialogTitle>
+              <AlertDialogDescription>
+                Velg om du aksepterer eller avslår studentens forespørsel.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="p-4 space-x-4 w-full flex flex-row items-center">
+                <Button className="bg-green-500 dark:bg-green-400" onClick={() => handleAcceptClick(true, ns)}>Jeg tar denne eleven</Button>
+                <Button className="bg-rose-500 dark:bg-rose-400"  onClick={() => handleAcceptClick(false, ns)}>Jeg ønsker ikke denne eleven</Button>
+            </div>
+          </>
+          :
+          <>
+            <h2>Du må vente til {twoHoursAfterCreation.toLocaleDateString("nb-NO", {minute: "2-digit", hour: "2-digit", month: "long", year: "numeric",})} med å godta eleven</h2>
+          </>
+        }
         <AlertDialogFooter className="mt-4 flex justify-between">
           <AlertDialogCancel className="" onClick={() => setOpenDialog(false)}>Tilbake</AlertDialogCancel>
         </AlertDialogFooter>
       </AlertDialogContent>
+
+
+
     </AlertDialog>
   );
 }

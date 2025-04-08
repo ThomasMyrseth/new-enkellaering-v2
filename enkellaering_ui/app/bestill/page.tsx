@@ -11,8 +11,9 @@ export default function BestillPage() {
 
             <NewStudentForm/>
             <Prices/>
-            <div className="space-y-10 flex flex-col items-center justify-center w-full">
-              <TeacherFocusCards/>
+            <div className="bg-white dark:bg-black rounded-lg w-full p-4 space-y-6 flex flex-col items-center justify-center">
+            <h1 className="text-3xl py-4">Eller bestill <span className="relative bg-clip-text text-transparent bg-no-repeat bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500 py-4">drømmelæreren</span> direkte...</h1>
+            <TeacherFocusCards/>
             </div>
 
     </div>)

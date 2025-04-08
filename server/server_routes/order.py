@@ -616,10 +616,9 @@ def teacher_accepts_route(user_id):
     teacher_firstname = data.get('firstname_teacher')
     teacher_lastname = data.get('lastname_teacher')
     accept = data.get('accept')
-    if (accept)=='Yes':
-        accept = True
-    else:
-        accept = False
+
+    print("teacher lastname: ", teacher_lastname)
+    print("accept: ", accept)
     
     if not (row_id and student_user_id and firstname and teacher_firstname and teacher_lastname and mail):
         print("missing fields")

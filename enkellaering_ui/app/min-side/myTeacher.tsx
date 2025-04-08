@@ -5,6 +5,7 @@ import React from "react";
 import { CardBody, CardContainer, CardItem } from "@/components/ui/3d-card";
 import Image  from "next/image";
 import { Carousel } from "@/components/ui/apple-cards-carousel";
+import Link from "next/link";
 //import { Button } from "@/components/ui/button";
 //import { toast } from "sonner";
 
@@ -28,9 +29,9 @@ export function MyTeachers( {teachers} : {teachers :Teacher[]}) {
         <h2 className="text-center mx-auto text-xl md:text-5xl font-bold text-neutral-800 dark:text-neutral-200 font-sans">
         Du har ingen lærer</h2>
         <br/>
-        <p className="w-2/3 text-center">Dersom dere sliter med å bestille lærer, eller ønsker at vi bestiller for dere kan dere kontakte:
+        <p className="w-2/3 text-center">Gå til <Link href="/bestill" className="underline">bestill</Link> for å bestille en lærer, eller kontakt oss for å få hjelp.
             <br/>
-            <span className="font-bold">Thomas Myrseth tlf: <span className="text-underline">47184744</span></span>
+            <span className="font-bold">Thomas Myrseth telefon: <span className="text-underline">47 18 47 44</span></span>
         </p>
         </>
     }

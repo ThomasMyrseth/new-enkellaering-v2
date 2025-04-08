@@ -79,6 +79,7 @@ def register():
             postal_code=postal_code,
             est_hours_per_week = est_hours_per_week,
             has_physical_tutoring=has_physical_tutoring,
+            is_active=True,
         )
 
         # Insert the new student into the database

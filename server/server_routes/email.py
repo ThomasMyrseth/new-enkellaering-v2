@@ -83,7 +83,7 @@ def sendAcceptOrRejectToStudentMail(studentName: str, teacherName: str, acceptOr
             <h1>{teacherName} har {accept_text} deg som elev.</h1>
             <div style="background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
                 <p style="font-size: 16px;"><strong>Hei {studentName}.</strong></p>
-                <p>{teacherName} har nå {accept_text} søknaden din om å få {teacherName} som lærer.</p>
+                <p>{teacherName} har nå {accept_text} søknaden din om å være din lærer.</p>
 
                 {"<p>Dersom " + teacherName + " godtok vil hen kontakte dere per telefon i løpet av kort tid. Vi ber dere i så fall om å kansellere eventuelle andre bestillinger. Dette kan gjøres fra Min Side.</p>" if acceptOrReject else ""}
                 
