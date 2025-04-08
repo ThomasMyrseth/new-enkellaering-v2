@@ -47,7 +47,7 @@ def sendNewStudentToTeacherMail(receipientTeacherMail: str, teachername :str):
             <div style="background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
                 <p style="font-size: 16px;"><strong>En ny elev ønsker hjelp av deg!</strong></p>
                 <p style="color: #555;">Logg inn på Enkel Læring for å godkjenne eller avslå eleven</p>
-                <a href="https://enkellaering.no/minside" style="display:inline-block; margin-top: 15px; background-color:#6366F1; color:white; padding:10px 16px; border-radius:5px; text-decoration:none;">Logg inn</a>
+                <a href="https://enkellaering.no/login-laerer" style="display:inline-block; margin-top: 15px; background-color:#6366F1; color:white; padding:10px 16px; border-radius:5px; text-decoration:none;">Logg inn</a>
             </div>
         </div>
         """
@@ -89,7 +89,7 @@ def sendAcceptOrRejectToStudentMail(studentName: str, teacherName: str, acceptOr
                 
                 {"<p>Dersom " + teacherName + " ikke godtok forespørselen deres kan dere forespørre en ny lærer på <a href='https://enkellaering.no/bestill'>enkellaering.no/bestill</a></p>" if not acceptOrReject else ""}
                 
-                <a href="https://enkellaering.no/minside" style="display:inline-block; margin-top: 15px; background-color:#6366F1; color:white; padding:10px 16px; border-radius:5px; text-decoration:none;">Gå til Min Side</a>
+                <a href="https://enkellaering.no/login" style="display:inline-block; margin-top: 15px; background-color:#6366F1; color:white; padding:10px 16px; border-radius:5px; text-decoration:none;">Gå til Min Side</a>
             </div>
         </div>
         """
@@ -131,7 +131,7 @@ def sendNewStudentToAdminMail(newStudentPhone: str):
       <div style="background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
         <p style="font-size: 16px;"><strong>{newStudentPhone}</strong> la igjen nummeret sitt.</p>
         <p style="color: #555;">Logg inn på <code>/admin</code> for å følge opp eleven.</p>
-        <a href="https://enkellaering.no/admin" style="display:inline-block; margin-top: 15px; background-color:#6366F1; color:white; padding:10px 16px; border-radius:5px; text-decoration:none;">Logg inn</a>
+        <a href="https://enkellaering.no/login-laerer" style="display:inline-block; margin-top: 15px; background-color:#6366F1; color:white; padding:10px 16px; border-radius:5px; text-decoration:none;">Logg inn</a>
       </div>
     </div>
     """
@@ -267,3 +267,61 @@ def sendInactiveStudentsMailToAdmin ():
     except Exception as e:
         print("❌ Failed to send email:", e)
         return jsonify({"error": str(e)}), 500
+    
+
+
+def sendNewOrderEmailToAdmin( firstname_parent:str, lastname_parent:str, phone_parent:str, teacher_firstname :str, teacher_lastname :str, teacher_phone :str):
+    try:
+        admins = get_all_admins()
+        emails = [admin['email'] for admin in admins]
+    except Exception as e:
+        raise RuntimeError(f"Error getting the email of admins: {e}")
+
+    # Your sender email (must be verified with Resend)
+    FROM_EMAIL = os.getenv("MAIL_USERNAME")
+
+    # Email content (HTML)
+    html_content = f"""
+    <div style="font-family: sans-serif; background-color: #f9f9f9; padding: 30px;">
+        <h1>{firstname_parent} {lastname_parent} bestilte {teacher_firstname} {teacher_lastname}</h1>
+        <div style="background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+            <p style="font-size: 16px;">Info om elev:
+            <br/>
+            Navn forelder: {firstname_parent} {lastname_parent}
+            <br/>
+            Telefon forelder: {phone_parent}
+            </p>
+        </div>
+
+        <br/>
+
+        <div style="background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+            <p style="font-size: 16px;">Info om lærer:
+            <br/>
+            Navn lærer: {teacher_firstname} {teacher_lastname}
+            <br/>
+            Telefon lærer: {teacher_phone}
+            </p>
+        </div>
+
+        <br/>
+
+        <p style="color: #555;">Logg inn på <code>/admin</code> for å følge opp eleven.</p>
+        <a href="https://enkellaering.no/login-laerer" style="display:inline-block; margin-top: 15px; background-color:#6366F1; color:white; padding:10px 16px; border-radius:5px; text-decoration:none;">Logg inn</a>
+      </div>
+    </div>
+    """
+
+    # Send individually (Resend doesn't support per-user vars in batch)
+    for email in emails:
+        try:
+            response = resend.Emails.send({
+                "from": FROM_EMAIL,
+                "to": email,
+                "subject": "Ny elev har bestilt en lærer",
+                "html": html_content
+            })
+            print(f"✅ Email sent to {email}")
+        except Exception as e:
+            print(f"❌ Failed to send to {email}: {e}")
+            raise e

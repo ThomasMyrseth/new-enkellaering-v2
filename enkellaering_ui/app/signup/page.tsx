@@ -6,13 +6,14 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
-import { useSearchParams } from "next/navigation";
+//import { useSearchParams } from "next/navigation";
 import { Suspense } from 'react'
 
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../auth/firebase";
 
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Textarea } from "@/components/ui/textarea";
 
 export default function SignupForm() {
   return (
@@ -23,8 +24,8 @@ export default function SignupForm() {
 };
 
 function SignupFormContent() {
-  const searchParams = useSearchParams()
-  const preferredTeacherUserId :string | null= searchParams.get("teacher_user_id") || null;
+ // const searchParams = useSearchParams()
+  //const preferredTeacherUserId :string | null= searchParams.get("teacher_user_id") || null;
 
   const [validParentPhone, setValidParentPhone] = useState(true);
   const [validStudentPhone, setValidStudentPhone] = useState(true);
@@ -33,7 +34,7 @@ function SignupFormContent() {
   const [validPassword, setValidPassword] = useState(true)
   const [hasPhysicalTutouring, setHasPhysicalTutouring] = useState<boolean>(true)
   const [isSendDisabled, setIsSendDisabled] = useState<boolean>(false)
-  const [selectedTeacherUserId, setSelectedTeacherUserId] = useState<string | null>(null)
+  //const [selectedTeacherUserId, setSelectedTeacherUserId] = useState<string | null>(null)
 
 
   const router = useRouter();
@@ -51,9 +52,9 @@ function SignupFormContent() {
     return isValid;
   }
 
-  function setSelectedTeacher (userId :string) {
-    setSelectedTeacherUserId(userId)
-  }
+  // function setSelectedTeacher (userId :string) {
+  //   setSelectedTeacherUserId(userId)
+  // }
 
   function validateForm(e: React.FormEvent<HTMLFormElement>) {
     const form = e.target as HTMLFormElement;
@@ -125,7 +126,7 @@ function SignupFormContent() {
           has_physical_tutoring: hasPhysicalTutouring,
           hours_per_week: parseInt(form["hours-per-week"].value),
           additional_comments: form["additional-comments"].value,
-          selected_teacher_user_id: selectedTeacherUserId || '',
+         // selected_teacher_user_id: selectedTeacherUserId || '',
         }),
       });
 
@@ -230,7 +231,7 @@ function SignupFormContent() {
         </LabelInputContainer>
 
         <LabelInputContainer>
-          <Label>Skal dere ha fysisk eller digital undervisning?</Label>
+          <Label>Foretrekker dere fysisk eller digital undervisning?</Label>
           <RadioGroup defaultValue="Fysisk" value={hasPhysicalTutouring ? "Fysisk" : "Digital"} onValueChange={handleSetPhysical}>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="Fysisk" id="fysisk" />
@@ -248,14 +249,14 @@ function SignupFormContent() {
           <Input id="hours-per-week" placeholder="2,0" type="number" step="0.1" min="0.1" defaultValue={2}/>
         </LabelInputContainer>
 
-        <LabelInputContainer>
+        {/* <LabelInputContainer>
           <Label>Hvilken lærer ønskere dere? Om dere ikke vet lar dere feltet stå blank</Label>
           <SetTeacherCombobox selectedTeacherUserId={preferredTeacherUserId} passSelectedTeacher={(userId) => setSelectedTeacher(userId)}/>
-        </LabelInputContainer>
+        </LabelInputContainer> */}
 
         <LabelInputContainer>
           <Label htmlFor="additional-comments">Andre kommentarer</Label>
-          <Input id="additional-comments" placeholder="Eleven er allergisk mot pels" type="text" />
+          <Textarea id="additional-comments" placeholder="Vi har hund hjemme, så læreren kan ikke være allergisk mot pels." rows={4} />
         </LabelInputContainer>
 
         <br />
@@ -291,109 +292,109 @@ const LabelInputContainer = ({ children }: { children: React.ReactNode }) => {
 
 
 
-import { Teacher } from "../admin/types";
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { ChevronsUpDown } from "lucide-react"
-import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
-import { Check } from "lucide-react";
-import { useEffect } from "react";
+// import { Teacher } from "../admin/types";
+// import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+// import { ChevronsUpDown } from "lucide-react"
+// import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
+// import { Check } from "lucide-react";
+// import { useEffect } from "react";
 
 
-const SetTeacherCombobox = ({selectedTeacherUserId, passSelectedTeacher }: { 
-    selectedTeacherUserId: string | null,
-    passSelectedTeacher: (teacherUserId: string) => void 
+// const SetTeacherCombobox = ({selectedTeacherUserId, passSelectedTeacher }: { 
+//     selectedTeacherUserId: string | null,
+//     passSelectedTeacher: (teacherUserId: string) => void 
     
-    }) => {
-    const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
-    const token = localStorage.getItem("token");
-    const [teachers, setTeachers] = useState<Teacher[]>([]);
-    const [teacherUserId, setTeacherUserId] = useState<string | null>(selectedTeacherUserId || null);
-    const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(teachers.find((teacher) => teacher.user_id === selectedTeacherUserId) || null);
-    const [open, setOpen] = useState<boolean>(false);
+//     }) => {
+//     const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
+//     const token = localStorage.getItem("token");
+//     const [teachers, setTeachers] = useState<Teacher[]>([]);
+//     const [teacherUserId, setTeacherUserId] = useState<string | null>(selectedTeacherUserId || null);
+//     const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(teachers.find((teacher) => teacher.user_id === selectedTeacherUserId) || null);
+//     const [open, setOpen] = useState<boolean>(false);
 
 
-    //fetch the teachers
-    useEffect(() => {
-          async function fetchTeacher() {
-            try {
-              const response = await fetch(`${BASEURL}/get-all-teachers`, {
-                method: "GET",
-                headers: {
-                  'Authorization': `Bearer ${token}`
-                }
-              });
+//     //fetch the teachers
+//     useEffect(() => {
+//           async function fetchTeacher() {
+//             try {
+//               const response = await fetch(`${BASEURL}/get-all-teachers`, {
+//                 method: "GET",
+//                 headers: {
+//                   'Authorization': `Bearer ${token}`
+//                 }
+//               });
         
-              if (!response.ok) {
-                return false
-              }
+//               if (!response.ok) {
+//                 return false
+//               }
         
-              const data = await response.json();
-              const teachers = data.teachers;
+//               const data = await response.json();
+//               const teachers = data.teachers;
     
-              if (!teachers) {
-                console.log("error fetching teacher!")
-              }
+//               if (!teachers) {
+//                 console.log("error fetching teacher!")
+//               }
     
-              setTeachers(teachers)
+//               setTeachers(teachers)
     
-            } 
-            catch (error) {
-              console.error("Error fetching teacher:", error);
-            }
-          }
-          fetchTeacher()
-        },[])
+//             } 
+//             catch (error) {
+//               console.error("Error fetching teacher:", error);
+//             }
+//           }
+//           fetchTeacher()
+//         },[])
   
-    const getTeacherName = (teacher: Teacher | null) =>
-      teacher ? `${teacher.firstname} ${teacher.lastname}` : "Jeg vet ikke hvem jeg vil ha";
+//     const getTeacherName = (teacher: Teacher | null) =>
+//       teacher ? `${teacher.firstname} ${teacher.lastname}` : "Jeg vet ikke hvem jeg vil ha";
   
-    const handleSelectTeacher = (userId: string) => {
-      setTeacherUserId(userId);
-      const selectedTeacher = teachers.find((teacher) => teacher.user_id === userId) || null;
-      setSelectedTeacher(selectedTeacher);
-      passSelectedTeacher(userId);
-    };
+//     const handleSelectTeacher = (userId: string) => {
+//       setTeacherUserId(userId);
+//       const selectedTeacher = teachers.find((teacher) => teacher.user_id === userId) || null;
+//       setSelectedTeacher(selectedTeacher);
+//       passSelectedTeacher(userId);
+//     };
   
-    return (
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <div
-            role="combobox"
-            aria-expanded={open}
-            className="w-[200px] justify-start flex flex-row"
-          >
-            {getTeacherName(selectedTeacher)}
-            <ChevronsUpDown className="opacity-50" />
-          </div>
-        </PopoverTrigger>
-        <PopoverContent className="w-[200px] p-0">
-          <Command>
-            <CommandInput placeholder="Søk etter lærer..." />
-            <CommandList>
-              <CommandEmpty>Jeg vet ikke hvem jeg vil ha</CommandEmpty>
-              <CommandGroup>
-                {teachers.map((teacher) => (
-                  <CommandItem
-                    key={teacher.user_id}
-                    value={teacher.user_id}
-                    onSelect={(currentValue) => {
-                      handleSelectTeacher(currentValue);
-                      setOpen(false);
-                    }}
-                  >
-                    {getTeacherName(teacher)}
-                    <Check
-                      className={cn(
-                        "ml-auto",
-                        teacherUserId === teacher.user_id ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
-    );
-};
+//     return (
+//       <Popover open={open} onOpenChange={setOpen}>
+//         <PopoverTrigger asChild>
+//           <div
+//             role="combobox"
+//             aria-expanded={open}
+//             className="w-[200px] justify-start flex flex-row"
+//           >
+//             {getTeacherName(selectedTeacher)}
+//             <ChevronsUpDown className="opacity-50" />
+//           </div>
+//         </PopoverTrigger>
+//         <PopoverContent className="w-[200px] p-0">
+//           <Command>
+//             <CommandInput placeholder="Søk etter lærer..." />
+//             <CommandList>
+//               <CommandEmpty>Jeg vet ikke hvem jeg vil ha</CommandEmpty>
+//               <CommandGroup>
+//                 {teachers.map((teacher) => (
+//                   <CommandItem
+//                     key={teacher.user_id}
+//                     value={teacher.user_id}
+//                     onSelect={(currentValue) => {
+//                       handleSelectTeacher(currentValue);
+//                       setOpen(false);
+//                     }}
+//                   >
+//                     {getTeacherName(teacher)}
+//                     <Check
+//                       className={cn(
+//                         "ml-auto",
+//                         teacherUserId === teacher.user_id ? "opacity-100" : "opacity-0"
+//                       )}
+//                     />
+//                   </CommandItem>
+//                 ))}
+//               </CommandGroup>
+//             </CommandList>
+//           </Command>
+//         </PopoverContent>
+//       </Popover>
+//     );
+// };

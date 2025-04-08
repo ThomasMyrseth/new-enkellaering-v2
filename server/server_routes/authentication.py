@@ -50,7 +50,7 @@ def register():
         postal_code = data.get("postal_code")
         est_hours_per_week = float(data.get("hours_per_week")) or 2
         has_physical_tutoring = data.get("has_physical_tutoring", True)  # Default to True
-        preferred_teacher = data.get('selected_teacher_user_id') or ''
+      #  preferred_teacher = data.get('selected_teacher_user_id') or ''
 
         # Validate required fields
         if not all([firstname_parent, lastname_parent, email_parent, phone_parent, firstname_student, lastname_student]):
@@ -85,8 +85,8 @@ def register():
         print(f"Inserting student {user_id} into the database.")
         insert_student(client=bq_client, student=new_student)
 
-        if preferred_teacher:
-            insert_new_student_order(student_user_id=user_id, teacher_user_id=preferred_teacher, accept=False, physical_or_digital=None, bq_client=bq_client)
+        #if preferred_teacher:
+          #  insert_new_student_order(student_user_id=user_id, teacher_user_id=preferred_teacher, accept=False, physical_or_digital=None, bq_client=bq_client)
         
 
         #check if the phoneNumber exisist in new_students table

@@ -78,7 +78,6 @@ export function TeacherFocusCards() {
 
         async function fetchPreviousOrders() {
             const orders = await getMyOrders();
-            console.log("previous orders: ", orders)
             if (!orders) {
                 return;
             } else {
@@ -91,7 +90,6 @@ export function TeacherFocusCards() {
                     return new Date(o.order.created_at) < sevenDaysAgo || o.order.teacher_user_id;
                 });
                 
-                console.log("filered orders: ", filteredOrders)
                 setPreviousOrders(filteredOrders);
             }
         }
@@ -596,7 +594,8 @@ const submitNewRequest = async (BASEURL: string, token: string, teacher_user_id:
                 teacher_user_id: teacher_user_id,
                 physical_or_digital: physical_or_digital,
                 address: address,
-                comments: comments
+                comments: comments,
+
             })
         });
 

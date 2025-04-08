@@ -458,8 +458,8 @@ def submit_new_referal_route():
 
 
 from big_query.inserts import insert_new_student_order
-from .email import sendNewStudentToTeacherMail
-from big_query.gets import get_teacher_by_user_id
+from .email import sendNewStudentToTeacherMail, sendNewOrderEmailToAdmin
+from big_query.gets import get_teacher_by_user_id, get_student_by_user_id
 
 @order_bp.route('/request-new-teacher', methods=["POST"])
 @token_required
@@ -470,6 +470,10 @@ def request_new_teacher_route(user_id):
     address = data.get('address') or ''
     comments = data.get('comments') or ''
 
+    firstname_teacher = ''
+    lastname_teacher = ''
+    phone_teacher = ''
+
     if not user_id or not teacher_user_id or physical_or_digital==None:
         return jsonify({"message": "Missing required fields"}), 400
     
@@ -477,12 +481,35 @@ def request_new_teacher_route(user_id):
         teacherItterator = get_teacher_by_user_id(client=bq_client, user_id=teacher_user_id)
         teacher = next(teacherItterator, None)  # Returns the first row or None if the iterator is empty
         if (teacher):
+            firstname_teacher=teacher['firstname']
+            lastname_teacher=teacher['lastname']
+            phone_teacher=teacher['phone']
             name = teacher['firstname'] + " " + teacher['lastname']
             sendNewStudentToTeacherMail(receipientTeacherMail=teacher['email'], teachername=name)
     except Exception as e:
         print(f"Error sending email to teacher {e}")
         return jsonify({"messsage": f"Error sending email to teacher: {e}"}), 500
 
+    #send an email to admin
+    try:
+        query_job = get_student_by_user_id(client=bq_client, user_id=user_id)
+        student_row = next(query_job.result(), None)
+
+        if student_row:
+            sendNewOrderEmailToAdmin(
+                student_row['firstname_parent'],
+                student_row['lastname_parent'],
+                student_row['phone_parent'],
+                firstname_teacher,
+                lastname_teacher,
+                phone_teacher
+            )
+        else:
+            print("Student not found")
+            return jsonify({"message": "Student not found"}), 404
+    except Exception as e:
+        print(f"Error sending email about new order {e}")
+        return jsonify({"message": f"Error sending email about new orer {e}"})
 
     try:
         res =  insert_new_student_order(student_user_id=user_id, teacher_user_id=teacher_user_id, accept=None, physical_or_digital=physical_or_digital, location=address, comments=comments, bq_client=bq_client)
