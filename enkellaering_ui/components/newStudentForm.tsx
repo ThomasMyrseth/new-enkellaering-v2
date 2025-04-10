@@ -16,7 +16,7 @@ const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
 
 export default function NewStudentForm() {
     const [errorMessage, setErrorMessage] = useState<boolean | null>(null);
-    const [validPhone, setValidPhone] = useState<boolean | null>(null)
+    //const [validPhone, setValidPhone] = useState<boolean | null>(null)
     const [phone, setPhone] = useState<string>("");
     const [isDisabled, setIsDisabled] = useState<boolean>()
 
@@ -31,13 +31,13 @@ export default function NewStudentForm() {
             setIsDisabled(false)
         }, 5000); //5 seconds
 
-        if (phone.length!=8) {
-            setValidPhone(false)
-            return
-        }
-        else {
-            setValidPhone(true)
-        }
+        // if (phone.length!=8) {
+        //     setValidPhone(false)
+        //     return
+        // }
+        // else {
+        //     setValidPhone(true)
+        // }
 
         const response = await fetch(`${BASEURL}/submit-new-student`, {
             method: "POST",
@@ -75,7 +75,7 @@ export default function NewStudentForm() {
             </Alert>
         }
 
-        {validPhone===false &&
+        {/* {validPhone===false &&
             <Alert>
                 <Terminal className="h-4 w-4" />
                 <AlertTitle className="text-red-400">Skrev du noe feil?</AlertTitle>
@@ -83,7 +83,7 @@ export default function NewStudentForm() {
                     Sjekk at nummeret er på 8 siffer, uten mellomrom, uten landskode
                 </AlertDescription>
             </Alert>
-        }
+        } */}
 
 
       <form className="my-8" onSubmit={handleSubmit}>
