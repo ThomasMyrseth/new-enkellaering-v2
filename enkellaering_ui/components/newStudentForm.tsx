@@ -16,7 +16,7 @@ const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
 
 export default function NewStudentForm() {
     const [errorMessage, setErrorMessage] = useState<boolean | null>(null);
-    const [validPhone, setValidPhone] = useState<boolean | null>(null)
+    //const [validPhone, setValidPhone] = useState<boolean | null>(null)
     const [phone, setPhone] = useState<string>("");
     const [isDisabled, setIsDisabled] = useState<boolean>()
 
@@ -34,12 +34,12 @@ export default function NewStudentForm() {
         const trimmedPhone = phone.replace(/\s/g, "");
         setPhone(trimmedPhone);
 
-        if (trimmedPhone.length != 8) {
-            setValidPhone(false)
-            return;
-        } else {
-            setValidPhone(true)
-        }
+        // if (trimmedPhone.length != 8) {
+        //     setValidPhone(false)
+        //     return;
+        // } else {
+        //     setValidPhone(true)
+        // }
 
         const response = await fetch(`${BASEURL}/submit-new-student`, {
             method: "POST",
