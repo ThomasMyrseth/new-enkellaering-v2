@@ -1,5 +1,3 @@
-"use client"
-
 "use client";
 
 import React, { useState } from "react";
@@ -9,6 +7,12 @@ import { cn } from "@/lib/utils";
 import { Teacher } from "../admin/types";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
+import { cities } from "@/components/ui/teacherCard/typesAndData";
+import { Button } from "@/components/ui/button";
+import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 export function ProfileForm( {teacher} : {teacher : Teacher}) {
   const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
@@ -21,12 +25,10 @@ export function ProfileForm( {teacher} : {teacher : Teacher}) {
   const [address, setAddress] = useState<string>(teacher.address);
   const [postalCode, setPostalCode] = useState<string>(teacher.postal_code);
   const [additionalComments, setAdditionalComments] = useState<string>(teacher.additional_comments || '');
-  const [location, setLocation] = useState<string>(teacher.location);
+  const [location, setLocation] = useState<string>(teacher.location || '');
   const [digitalTutoring, setDigitalTutoring] = useState<boolean>(teacher.digital_tutouring);
   const [physicalTutoring, setPhysicalTutoring] = useState<boolean>(teacher.physical_tutouring);
   const [isSendDisabled, setIsSendDisabled] = useState<boolean>(false);
-
-
 
   // Simple form validation for required fields
   const validateForm = () => {
@@ -157,12 +159,12 @@ export function ProfileForm( {teacher} : {teacher : Teacher}) {
         {/* Location */}
         <LabelInputContainer>
           <Label htmlFor="location">Sted (By)</Label>
-          <Input
-            id="location"
-            type="text"
-            placeholder="Byen du bor i"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
+          <br/>
+          <ComboBoxResponsive
+            currentValue={location}
+            values={cities}
+            placeholder="Velg by"
+            passSelectedValue={(value: string | null) => setLocation(value || '')}
           />
         </LabelInputContainer>
         {/* Additional Comments */}
@@ -214,3 +216,78 @@ export function ProfileForm( {teacher} : {teacher : Teacher}) {
 const LabelInputContainer = ({ children }: { children: React.ReactNode }) => {
   return <div className="mb-4">{children}</div>;
 };
+
+const ComboBoxResponsive = ({currentValue, values, placeholder, passSelectedValue }: {currentValue :string; values: string[]; placeholder: string; passSelectedValue: (value: string | null) => void }) => {
+  const [open, setOpen] = useState(false);
+  const isDesktop = useMediaQuery("(min-width: 768px)");
+  const [selectedValue, setSelectedValue] = useState<string | null>(currentValue);
+
+  const handleSetSelectedValue = (value: string | null) => {
+    setSelectedValue(value);
+    setOpen(false);
+    passSelectedValue(value);
+  };
+
+  if (isDesktop) {
+    return (
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button variant="outline" className="w-[150px] justify-start">
+            {selectedValue ? selectedValue : placeholder}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[200px] p-0" align="start">
+          <StatusList values={values} setOpen={setOpen} setSelectedValue={handleSetSelectedValue} />
+        </PopoverContent>
+      </Popover>
+    );
+  }
+
+  return (
+    <Drawer open={open} onOpenChange={setOpen}>
+      <DrawerTrigger asChild>
+        <Button variant="outline" className="w-[150px] justify-start">
+          {selectedValue ? selectedValue : placeholder}
+        </Button>
+      </DrawerTrigger>
+      <DrawerContent>
+        <div className="mt-4 border-t">
+          <StatusList values={values} setOpen={setOpen} setSelectedValue={handleSetSelectedValue} />
+        </div>
+      </DrawerContent>
+    </Drawer>
+  );
+};
+
+function StatusList({
+  values,
+  setOpen,
+  setSelectedValue,
+}: {
+  values: string[];
+  setOpen: (open: boolean) => void;
+  setSelectedValue: (value: string | null) => void;
+}) {
+  return (
+    <Command>
+      <CommandInput placeholder="Filter..." />
+      <CommandList>
+        <CommandEmpty>No results found.</CommandEmpty>
+        <CommandGroup>
+          {values.map((value) => (
+            <CommandItem
+              key={value}
+              value={value}
+              onSelect={() => {
+                setSelectedValue(value);
+                setOpen(false);
+              }}
+            >
+              {value}
+            </CommandItem>
+          ))}
+        </CommandGroup>
+      </CommandList>
+    </Command>
+  );
+}

@@ -166,3 +166,4 @@ def update_teacher_profile_route(user_id):
     except Exception as e:
         print(f"error updating new order {e}")
         return jsonify({"message": f"Error updating new order {e}"}), 500
+
