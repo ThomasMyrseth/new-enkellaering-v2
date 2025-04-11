@@ -49,7 +49,7 @@ export const FileUpload = ({
     }
     // If all files are valid, reset the error and update the state
     setFileTypeError(false);
-    setFiles((prevFiles) => [...prevFiles, ...newFiles]);
+    setFiles([...newFiles]); //automatically remove the old ones
     if (onChange) {
       onChange(newFiles);
     }
