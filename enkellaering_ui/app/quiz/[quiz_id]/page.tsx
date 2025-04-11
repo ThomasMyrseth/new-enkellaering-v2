@@ -65,7 +65,7 @@ export default function QuizPage() {
 
         fetchQuizMetaData()
         fetchQuiz()
-    },[token, baseUrl])
+    },[token, baseUrl, quiz_id])
 
     if (!quiz || !quizMetaData) return (<Skeleton/>)
 

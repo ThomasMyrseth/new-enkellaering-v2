@@ -185,10 +185,12 @@ from datetime import timezone
 def upload_questions_route(user_id):
 
     if not user_id:
+        logger.exception("User is not authenticated")
         return jsonify({"messsage": "User must authenticate"}), 401
     
     is_admin = is_user_admin(client=bq_client, user_id=user_id)
     if not is_admin:
+        logger.exception("user is not admin")
         return jsonify({"message": "User is not admin"}), 401
 
 
@@ -242,6 +244,7 @@ def upload_questions_route(user_id):
             os.remove(temp_path)
     except Exception as e:
         print(f"error uploading images {e}")
+        logger.exception(f"Error uploading images {e}")
         return jsonify({"message": f"Error uploading images {e}"})
 
     #upload the questions to bigquery with the imageUrls above  
@@ -264,10 +267,11 @@ def upload_questions_route(user_id):
         formatted_questions.append(q)
     
     try:
-        insert_quiz_questions(questions=formatted_questions, bq_client=bq_client)
+        insert_quiz_questions(questions=formatted_questions)
         return jsonify({"message": "Questions uploaded successfully"}), 200
     
     except Exception as e:
+        logger.exception(f"Error uploading questions {e}")
         print(f"Error saving questions to big query {e}")
         return jsonify({"message": f"Error saving questions to big query {e}"}), 500
 

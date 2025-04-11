@@ -46,7 +46,7 @@ const Question: React.FC<QuestionProps> = ({
   }, [timeLeft]);
 
   return (
-    <div className="w-full max-w-md mx-auto p-6 bg-white shadow-lg rounded-lg flex flex-col items-center space-y-4">
+    <div className="w-full md:w-2/3 mx-auto p-6 bg-white dark:bg-black shadow-lg rounded-lg flex flex-col items-center space-y-4">
       <h1 className="text-2xl font-bold text-center">
         {questionNumber}. {question}
       </h1>
@@ -56,8 +56,8 @@ const Question: React.FC<QuestionProps> = ({
           <Image
             src={image}
             alt="Quiz image"
-            width={500}
-            height={300}
+            width={800}
+            height={500}
             className="rounded-md shadow-md"
           />
         </div>
@@ -70,7 +70,7 @@ const Question: React.FC<QuestionProps> = ({
         {options.map((option: string, index: number) => (
           <div
             key={index}
-            className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-100 cursor-pointer"
+            className="flex items-center p-3 border rounded-lg dark:hover:bg-gray-600 hover:bg-gray-100 cursor-pointer"
           >
             <RadioGroupItem value={String(index)} id={`option-${index}`} className="mr-2" />
             <Label htmlFor={`option-${index}`} className="text-lg">
@@ -88,7 +88,7 @@ const Question: React.FC<QuestionProps> = ({
 
         <div className="flex flex-row justify-between items-center w-full">
             <p>{timeLeft}/{timeLimit}</p>
-            <Button onClick={handleGoToNextQuestion} className="mt-4 bg-blue-500 hover:bg-blue-600">
+            <Button onClick={handleGoToNextQuestion} className="mt-4 bg-blue-500 hover:bg-blue-800">
                 Neste <ChevronRight />
             </Button>
         </div>
@@ -171,7 +171,7 @@ const Quiz: React.FC<QuizProps> = ({
   };
 
   return (
-    <div className="w-full max-w-lg mx-auto p-6 bg-gray-50 rounded-lg shadow-md">
+    <div className="w-full mx-auto p-6 bg-white dark:bg-neutral-900 rounded-lg shadow-md">
       <h1 className="text-3xl font-bold text-center mb-6">{title}</h1>
       {shuffledQuestions.map((question: QuestionType, index: number) => {
         if (index === currentQuestion) {
@@ -191,9 +191,9 @@ const Quiz: React.FC<QuizProps> = ({
         return null;
       })}
       {numberOfQuestionsCompleted === shuffledQuestions.length && (
-        <div className="text-center mt-6">
-          <Button onClick={handleSubmit} className="bg-green-500 hover:bg-green-600">
-            Submit <TreePalm />
+        <div className="text-center mt-6 ">
+          <Button onClick={handleSubmit} className="text-lg w-1/3 bg-blue-500 dark:bg-blue-500 hover:bg-blue-900 dark:hover:bg-blue-300">
+            Ferdig <TreePalm />
           </Button>
         </div>
       )}

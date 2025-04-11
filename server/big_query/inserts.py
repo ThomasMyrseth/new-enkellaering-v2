@@ -540,18 +540,19 @@ def upload_image(image_title :str, quiz_id :str, image_path :str,  extension :st
 
     return image_url
 
-def insert_quiz_questions(questions :list, bq_client = None):
+def insert_quiz_questions(questions :list):
 
-    if bq_client is None:
-        bq_client = bigquery.Client.from_service_account_json("google_service_account.json")
+    table_id = f"{QUIZ_DATASET}.questions"
 
-    table_id = "quizzes.questions"
-
-    errors = bq_client.insert_rows_json(table_id, questions)
-    if errors:
-        raise Exception("Batch insert failed")
+    try:
+        errors = client.insert_rows_json(table_id, questions)
+        if errors:
+            raise Exception(f"Batch insert failed {errors}")
     
-    return True
+        return True
+    
+    except Exception as e:
+        raise Exception(f"Error insering images {e}")
 
 
 
