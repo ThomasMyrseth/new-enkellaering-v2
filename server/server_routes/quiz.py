@@ -119,7 +119,19 @@ def get_quiz_status_route(user_id):
 from big_query.inserts import insert_quiz
 from big_query.gets import is_user_admin
 import mimetypes
+import logging
+import os
 from uuid import uuid4
+
+logging.basicConfig(
+    level=logging.INFO,  # Change to DEBUG to capture more detailed output
+    format='%(asctime)s [%(levelname)s] %(name)s: %(message)s',
+    handlers=[
+        logging.StreamHandler()  # Outputs logs to the console (stderr)
+    ]
+)
+logger = logging.getLogger(__name__)
+
 @quiz_bp.route('/upload-quiz', methods=["POST"])
 @token_required
 def upload_quiz_route(user_id):
@@ -159,6 +171,7 @@ def upload_quiz_route(user_id):
 
     except Exception as e:
         print(f"Error inserting quiz {e}")
+        logger.exception(f"Error inserting quiz {e}")
         return jsonify({"message": f"Error inserting quiz: {e}"}), 500
 
 

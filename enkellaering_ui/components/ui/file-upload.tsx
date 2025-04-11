@@ -42,7 +42,7 @@ export const FileUpload = ({
     // Check each file for valid extension
     for (const file of newFiles) {
       const ext = file.name.split('.').pop()?.toLowerCase();
-      if (ext !== 'jpg' && ext !== 'jpeg') {
+      if (ext !== 'jpg' && ext !== 'jpeg' && ext!=='png') {
         setFileTypeError(true);
         return; // Exit the function to avoid uploading the illegal file
       }
@@ -75,7 +75,7 @@ export const FileUpload = ({
                 <Terminal className="h-4 w-4" />
                 <AlertTitle>Ugyldig filtype!</AlertTitle>
                 <AlertDescription>
-                  Kun jpg og jpeg filer er tillatt.
+                  Kun jpg, jpeg og png filer er tillatt.
                 </AlertDescription>
               </Alert>
           )}
@@ -99,7 +99,7 @@ export const FileUpload = ({
             {title}
           </p>
           <p className="relative z-20 font-sans font-normal text-neutral-400 dark:text-neutral-400 text-base mt-2">
-            Drag & drop, eller klikk for å laste opp (kun jpg og jpeg)
+            Drag & drop, eller klikk for å laste opp (kun jpg, jpeg og png)
           </p>
           <div className="relative w-full mt-10 max-w-xl mx-auto">
             {files.length > 0 &&
