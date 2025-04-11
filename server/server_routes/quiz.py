@@ -71,9 +71,9 @@ from big_query.inserts import insert_quiz_result
 @token_required
 def submit_quiz_route(user_id):
     data = request.get_json()
-    number_of_corrects :int = data.get('number_of_corrects') or None
-    number_of_questions :int = data.get('number_of_questions') or None
-    passed: int = data.get('passed_quiz') or None
+    number_of_corrects :int = data.get('number_of_corrects') or 0
+    number_of_questions :int = data.get('number_of_questions') or 1
+    passed: int = data.get('passed_quiz') or False
     quiz_id :str = data.get('quiz_id') or None
 
     
@@ -85,7 +85,23 @@ def submit_quiz_route(user_id):
         passed = None
 
 
-    if not number_of_corrects or not number_of_questions or passed==None or not quiz_id or not user_id:
+    if number_of_corrects is None or number_of_questions is None or passed is None or not quiz_id or not user_id:
+        logger.exception(f"""Missing required fields. 
+                         Got:  \n
+                         number_of_corrects = {number_of_corrects} \n
+                        number_of_questions = {number_of_questions} \n
+                        passed = {passed} \n
+                        quiz_id = {quiz_id} \n
+                        user_id = {user_id}
+        """)
+        print(f"""Missing required fields. 
+                         Got:  \n
+                         number_of_corrects = {number_of_corrects} \n
+                        number_of_questions = {number_of_questions} \n
+                        passed = {passed} \n
+                        quiz_id = {quiz_id} \n
+                        user_id = {user_id}
+        """)
         return jsonify({"message": "Missing required fields"}), 400
 
 
@@ -94,6 +110,8 @@ def submit_quiz_route(user_id):
         return jsonify({"message": "Quiz submitted successfully"}), 200
 
     except Exception as e:
+        logger.exception(f"Error submitting quiz result {e}")
+        print(f"Error submitting quiz result {e}")
         return jsonify({"message": str(e)}), 500
 
 
