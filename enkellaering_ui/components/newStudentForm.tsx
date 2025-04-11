@@ -77,7 +77,7 @@ export default function NewStudentForm() {
             </Alert>
         }
 
-        {validPhone===false &&
+        {/* {validPhone===false &&
             <Alert>
                 <Terminal className="h-4 w-4" />
                 <AlertTitle className="text-red-400">Skrev du noe feil?</AlertTitle>
@@ -85,7 +85,7 @@ export default function NewStudentForm() {
                     Sjekk at nummeret er på 8 siffer, uten mellomrom, uten landskode
                 </AlertDescription>
             </Alert>
-        }
+        } */}
 
 
       <form className="my-8 " onSubmit={handleSubmit}>

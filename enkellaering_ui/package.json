@@ -1,5 +1,5 @@
-{
 
+{
   "name": "enkellaering_ui",
 
   "version": "0.1.0",
@@ -86,7 +86,7 @@
 
     "mini-svg-data-uri": "^1.4.4",
 
-    "next": "15.1.0",
+    "next": "15.3.0",
 
     "next-themes": "^0.4.4",
 
