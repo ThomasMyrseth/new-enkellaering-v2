@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/popover"
 
 import { CardType } from "./typesAndData";
-import { cities, qualifications } from "./typesAndData";
+import { cities } from "./typesAndData";
 import { useMediaQuery } from "@/hooks/use-media-query";
 
 export const ToggleFilterCards = ({
@@ -34,6 +34,8 @@ export const ToggleFilterCards = ({
     passFilterPhysical,
     passFilterLocation,
     passFilterQualification,
+
+    qualifications,
     
     viewMode,
     setViewMode
@@ -42,6 +44,8 @@ export const ToggleFilterCards = ({
     passFilterPhysical: (value: boolean) => void;
     passFilterLocation: (value: string | null) => void;
     passFilterQualification: (value: string | null) => void;
+
+    qualifications :string[];
 
     viewMode: string;
     setViewMode: React.Dispatch<React.SetStateAction<"list" | "grid">>;

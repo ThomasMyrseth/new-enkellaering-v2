@@ -1,6 +1,7 @@
 import { Review } from "@/app/admin/types";
 import { CardType, ExpandedTeacher, AboutMe, Qualification } from "./typesAndData";
 import { TeacherOrderJoinTeacher } from "@/app/min-side/types";
+import { Quiz } from "@/app/min-side-laerer/types";
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080";
 
@@ -138,6 +139,33 @@ export const getMyOrders = async () => {
         return teachers;
     } catch (error) {
         console.error("Error fetching previous orders:", error);
+        return [];
+    }
+};
+
+
+export const getAllAvailableQualifications = async (): Promise<string[]> => {
+    try {
+        const [qualifications] = await Promise.all([
+            fetch(`${BASEURL}/get-all-available-qualifications`),
+        ]);
+
+        if (!qualifications.ok) {
+            throw new Error("Failed to fetch qualifications");
+        }
+
+        const qualificationsData = await qualifications.json();
+
+        const quizzes :Quiz[]= qualificationsData.quizzes || [];
+
+        const qualificationsList = quizzes.map( (quiz) => {
+            return quiz.title
+        })
+
+        return qualificationsList
+
+    } catch (error) {
+        console.error("Error fetching qualificationsData:", error);
         return [];
     }
 };

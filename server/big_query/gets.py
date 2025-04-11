@@ -399,6 +399,46 @@ def get_all_quizzes(client: bigquery.Client):
     return formatted_quizzes
         
 
+def get_all_qualifications(client: bigquery.Client):
+    query = f"""  
+        SELECT *
+        FROM {USER_DATASET}.quiz_results AS qr
+        JOIN {QUIZ_DATASET}.quizzes AS q
+        ON qr.quiz_id=q.quiz_id        
+    """
+
+    try:
+        query_job = client.query(query, location="EU")
+        results = query_job.result()  # Fetch all rows
+
+        rows = [dict(row) for row in results]
+        return rows
+    
+    except Exception as e:
+        raise Exception(f"Error getting qualifications {e}")
+        
+
+
+def get_all_available_qualifications(client: bigquery.Client):
+    query = f"""  
+        SELECT *
+        JOIN {QUIZ_DATASET}.quizzes AS q
+        ON qr.quiz_id=q.quiz_id        
+    """
+
+    try:
+        query_job = client.query(query, location="EU")
+        results = query_job.result()  # Fetch all rows
+
+        rows = [dict(row) for row in results]
+        return rows
+    
+    except Exception as e:
+        raise Exception(f"Error getting qualifications {e}")
+        
+
+
+
 
 def get_quiz_meta_data(quiz_id :str, client: bigquery.Client):
     query = f"""

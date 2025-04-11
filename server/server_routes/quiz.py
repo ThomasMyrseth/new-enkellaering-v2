@@ -29,6 +29,45 @@ def get_all_quizzes_route(user_id):
 
 
 
+from big_query.gets import get_all_qualifications
+@quiz_bp.route('/get-all-qualifications', methods=["GET"])
+def get_all_qualifications_route():
+
+    try:
+        q = get_all_qualifications(bq_client=bq_client)
+
+        if not q or len(q)==0:
+            logger.exception(f"Error getting qualifications {e}")
+            return jsonify({"message": "Error retrieving qualifications"}), 500
+    
+        return jsonify({"qualifications": q}), 200
+    
+    except Exception as e:
+        logger.exception(f"Error getting qualifications {e}")
+        return jsonify({"message": f"Error retrieving qualifications {e}"}), 500
+
+
+from big_query.gets import get_all_quizzes
+@quiz_bp.route('/get-all-available-qualifications', methods=["GET"])
+def get_all_available_qualifications_route():
+
+    try:
+        q = get_all_quizzes(client=bq_client)
+
+        if not q or len(q)==0:
+            logger.exception(f"Error getting quizzes {e}")
+            return jsonify({"message": "Error retrieving quizzes"}), 500
+    
+        return jsonify({"quizzes": q}), 200
+    
+    except Exception as e:
+        logger.exception(f"Error getting quizzes {e}")
+        print(f"Error getting quizzes {e}")
+        return jsonify({"message": f"Error retrieving quizzes {e}"}), 500
+
+
+
+
 from big_query.gets import get_quiz_meta_data
 @quiz_bp.route('/get-quiz-meta-data', methods=["POST"])
 @token_required

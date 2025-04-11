@@ -20,7 +20,7 @@ import { Button } from "../button";
 import { CardType } from "./typesAndData";
 
 import { ToggleFilterCards, filterCards } from "./filter";
-import { getMyOrders, getTeacherCards } from "./getteachersAndReviews";
+import { getAllAvailableQualifications, getMyOrders, getTeacherCards } from "./getteachersAndReviews";
 import { Textarea } from "../textarea";
 import { TeacherOrderJoinTeacher } from "@/app/min-side/types";
 import { toast } from "sonner";
@@ -54,7 +54,7 @@ export function TeacherFocusCards() {
     const [wantPhysicalOrDigital, setWantPhysicalOrDigital] = useState<boolean | null>(null)
     const [address, setAddress] = useState<string>('')
     const [comments, setComments] = useState<string>()
-
+    const [allQualifications, setAllQualifications] = useState<string[]>([])
     // Filter states
     const [filterLocation, setFilterLocation] = useState<string | null>(null);
     const [filterQualification, setFilterQualification] = useState<string | null>(null);
@@ -105,6 +105,21 @@ export function TeacherFocusCards() {
         }
         fetchCards()
         fetchPreviousOrders()
+    },[])
+
+    //fetch all the different possible qualifications
+    useEffect( () => {
+        async function fetchQualifications() {
+            const res = await getAllAvailableQualifications()
+
+            if (!res) {
+                return
+            }
+            else {
+                setAllQualifications(res)
+            }
+        }
+        fetchQualifications()
     },[])
 
 
@@ -243,12 +258,13 @@ export function TeacherFocusCards() {
         {/*Filtering */}
         <div className="bg-wgite w-3/4 md:w-1/2 dark:bg-black p-4 rounded-xl">
           <ToggleFilterCards
-              passFilterDigital={setFilterDigital}
-              passFilterPhysical={setFilterPhysical}
-              passFilterLocation={setFilterLocation}
-              passFilterQualification={setFilterQualification}
-              viewMode={viewMode}
-              setViewMode={setViewMode}
+                qualifications={allQualifications}
+                passFilterDigital={setFilterDigital}
+                passFilterPhysical={setFilterPhysical}
+                passFilterLocation={setFilterLocation}
+                passFilterQualification={setFilterQualification}
+                viewMode={viewMode}
+                setViewMode={setViewMode}
           />   
         </div>
 
@@ -259,7 +275,7 @@ export function TeacherFocusCards() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black/20 h-full w-full z-10"
+                className="fixed inset-0 bg-black/10 h-full w-full z-10"
             />
             )}
         </AnimatePresence>
@@ -283,8 +299,9 @@ export function TeacherFocusCards() {
                 <motion.div
                 layoutId={`card-${active.teacher.firstname}-${id}`}
                 ref={ref}
-                className="w-full max-w-[500px] h-full md:h-fit md:max-h-[90%] flex flex-col bg-white dark:bg-black-900 sm:rounded-3xl overflow-y-scroll"
+                className="w-full max-w-[500px] h-full md:h-fit md:max-h-[90%] flex flex-col bg-white dark:bg-neutral-800 sm:rounded-3xl overflow-y-scroll"
                 >
+
                 <motion.div layoutId={`image-${active.teacher.firstname}-${id}`}>
                     <Image
                     priority
@@ -302,27 +319,27 @@ export function TeacherFocusCards() {
                         layoutId={`title-${active.teacher.firstname}-${id}`}
                         className="font-bold text-neutral-700 dark:text-neutral-200"
                         >
-                        {active.teacher.firstname} {active.teacher.location}
+                        {active.teacher.firstname}, {active.teacher.location}
                         </motion.h3>
                         <motion.p
                             layoutId={`description-${active.teacher.firstname}-${id}`}
-                            className="flex flex-row w-60 text-neutral-600 dark:text-neutral-400 text-center md:text-left overflow-x-scroll scrollbar-hide"
+                            className="flex flex-row w-60 text-neutral-600 dark:text-white text-center md:text-left overflow-x-scroll scrollbar-hide"
                         >
-                            {active.qualifications.map((qualification :string, index :number) => {
-                                //order the qualifications alfabetically
-                                active.qualifications.sort();
-                                return(<div className="m-2" key={index}>
-                                    <span key={index} className="rounded-lg bg-neutral-100 mx-1 p-2 text-xs">{qualification}</span>
-                                </div>)
-                            })}
-                        </motion.p>
+                            {[...new Set(active.qualifications)].sort().map((qualification: string, index: number) => (
+                                <div className="m-1 px-4 py-2 bg-neutral-100 dark:bg-neutral-600 rounded-xl" key={index}>
+                                    <span className="rounded-lg mx-1 p-2 text-xs inline-block whitespace-nowrap">
+                                        {qualification}
+                                    </span>
+                                </div>
+                            ))}
+                    </motion.p>
                         
                     
                     </div>
                     <div className="">
                         <motion.p
                         layoutId={`description-${active.description}-${id}`}
-                        className="text-neutral-600 dark:text-neutral-400 mb-10"
+                        className="text-neutral-600 dark:text-neutral-100 mb-10"
                         >
                         {active.description}
                         </motion.p>
@@ -333,12 +350,12 @@ export function TeacherFocusCards() {
                             ) : (
                                 <div className="space-y-4">
                                     {active.reviews.map((review) => (
-                                        <div key={review.id} className="flex flex-col bg-neutral-100 p-4 rounded-xl">
+                                        <div key={review.id} className="flex flex-col bg-neutral-100 dark:bg-neutral-700 p-4 rounded-xl">
                                             <div className="flex flex-row items-center mb-4">
-                                                <span className="text-lg mr-4">{review.student_name!==""? review.student_name : "Anonym"}</span>
+                                                <span className="text-lg mr-4 text-black dark:text-white">{review.student_name!==""? review.student_name : "Anonym"}</span>
                                                 <RenderStars rating={review.rating}/>
                                             </div>
-                                            <p className="text-neutral-800">{review.comment}</p>
+                                            <p className="text-neutral-800 dark:text-neutral-100">{review.comment}</p>
                                         </div>
                                     ))}
                                 </div>
@@ -391,24 +408,18 @@ export function TeacherFocusCards() {
                         >
                             {card.teacher.firstname}
                             <span className="text-xs font-light">{card.teacher.location}</span>
-                            <span>
+                            <span className="text-black dark:text-white">
                                 <RenderStars rating = {avgRating}/>
                             </span>
                         </motion.h3>
                         <motion.p
                             layoutId={`description-${card.teacher.firstname}-${id}`}
-                            className="w-60 text-neutral-600 dark:text-neutral-400 text-center md:text-left overflow-x-scroll scrollbar-hide"
+                            className="w-60 m-2 text-neutral-600 dark:text-neutral-400 text-center md:text-left overflow-x-scroll scrollbar-hide"
                             key = {card.teacher.firstname}
                         >
-                            {card.qualifications.map((qualification :string, index :number) => {
-                                
-                                //order the qualifications alfabetically
-                                card.qualifications.sort();
-
-                                return(<>
-                                    <span key={index} className="rounded-lg bg-neutral-100 mx-1 p-2 text-xs">{qualification}</span>
-                                </>)
-                            })}
+                            {[...new Set(card.qualifications)].sort().map((qualification: string, index: number) => (
+                                <span key={index} className="whitespace-nowrap rounded-lg bg-neutral-100 mx-1 p-2 text-xs">{qualification}</span>
+                            ))}
                         </motion.p>
                         <motion.p className={`font-light text-xs rounded-lg m-2 p-1 ${card.teacher.digital_tutouring? 'text-emerald-400': 'text-rose-400'}`}>
                         <Laptop/> digital
@@ -465,7 +476,7 @@ export function TeacherFocusCards() {
                                 key={index}
                                 fill={index < rating ? "currentColor" : "none"} // Fill only up to avgRating
                                 stroke="none"
-                                className="text-black w-3 h-3"
+                                className="text-black dark:text-white w-3 h-3"
                             />))}
 
                     </div>)
@@ -494,22 +505,20 @@ export function TeacherFocusCards() {
                             className="font-medium text-neutral-800 dark:text-neutral-200 text-center md:text-left text-base"
                         >
                             {card.teacher.firstname} <br/>
-                            <span className="flex flex-row items-center text-xs font-light"> <span className="mr-2">{card.teacher.location}</span> 
-                            <RenderStars rating={avgRating}/></span>
+                            <span className="text-black dark:text-white flex flex-row items-center text-xs font-light"> 
+                                <span className="mr-2">{card.teacher.location}</span> 
+                                <span className="text-white dark:text-black">
+                                    <RenderStars rating={avgRating}/>
+                                </span>
+                            </span>
                         </motion.h3>
                         <motion.p
                             layoutId={`description-${card.teacher.firstname}-${id}`}
-                            className="w-40 text-neutral-600 dark:text-neutral-400 text-center md:text-left overflow-x-scroll scrollbar-hide"
+                            className="w-40 m-2 text-neutral-600 dark:text-neutral-400 text-center md:text-left overflow-x-scroll scrollbar-hide"
                         >
-                            {card.qualifications.map((qualification :string, index :number) => {
-                                
-                                //order the qualifications alfabetically
-                                card.qualifications.sort();
-
-                                return(<>
-                                    <span key={index} className="rounded-lg bg-neutral-100 mx-1 p-2 text-xs">{qualification}</span>
-                                </>)
-                            })}
+                            {[...new Set(card.qualifications)].sort().map((qualification: string, index: number) => (
+                                <span key={index} className="whitespace-nowrap rounded-lg bg-neutral-100 mx-1 p-2 text-xs">{qualification}</span>
+                            ))}
                         </motion.p>
                         <div className="flex flex-row">
                             <motion.p className={`rounded-lg m-2 p-1 ${card.teacher.digital_tutouring? 'text-emerald-400': 'text-rose-400'}`}>
@@ -557,11 +566,13 @@ const RenderStars = ({rating} : {rating :number}) => {
     <div className="flex flex-row">
         {Array.from({ length: 5 }, (_, index) => (
             <Star
-                key={index}
-                fill={index < rating ? "currentColor" : "none"} // Fill only up to avgRating
-                stroke="none"
-                className="text-black w-3 h-3"
-            />))}
+            key={index}
+            className="w-3 h-3"
+            fill={index < rating ? "currentColor" : "none"}
+            stroke="currentColor"
+            color="currentColor"
+            />
+        ))}
 
     </div>)
 };

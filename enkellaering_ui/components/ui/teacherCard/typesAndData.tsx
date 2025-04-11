@@ -55,7 +55,6 @@ export type AboutMe = {
 
 
 export const cities :string[] = ['Oslo', 'Trondheim', 'Annet']
-export const qualifications :string[] = ['1P', '1T', '2P', 'S1', 'S2', 'R1', 'R2', 'Matte ungdomskole', 'Annet']
 
 
 
