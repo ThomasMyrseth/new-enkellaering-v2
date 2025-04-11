@@ -153,7 +153,6 @@ def upload_quiz_route(user_id):
 
 
     #inserting the quiz
-
     try:
         quiz_id = insert_quiz(title=title, content=content, image_path=temp_filename, extension=file_extension, pass_treshold=pass_treshold, number_of_questions=number_of_questions, bq_client=bq_client)
         return jsonify({"url": f"/quiz/make-quiz/{quiz_id}"}), 200

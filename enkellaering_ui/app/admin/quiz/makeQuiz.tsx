@@ -72,6 +72,7 @@ export function MakeQuizForm() {
 
         if (!res.ok) {
             setSuccess(false)
+            console.log(res.statusText)
             return
         }
         else {
