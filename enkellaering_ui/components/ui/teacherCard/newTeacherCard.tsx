@@ -12,6 +12,7 @@ import {
     AlertDialogContent,
   } from "@/components/ui/alert-dialog"
 import { useRouter } from "next/navigation";
+import { Skeleton } from "../skeleton";
 
 
 import { Button } from "../button";
@@ -28,6 +29,7 @@ import { toast } from "sonner";
 export function TeacherFocusCards() {
     const [hasToken, setHasToken] = useState<string | null>(null)
     const [isTeacher, setIsTeacher] = useState<boolean>(false)
+    const [loading, setLoading] = useState<boolean>(true)
 
     useEffect(() => {
     const token = localStorage.getItem('token')
@@ -71,8 +73,16 @@ export function TeacherFocusCards() {
                 return
             }
             else {
-                setFilteredCards(cards)
-                setCards(cards)
+                //show available teacher on top
+                const sortedCards = cards.sort((a, b) => {
+                    const aAvailable = a.teacher.physical_tutouring || a.teacher.digital_tutouring ? 1 : 0
+                    const bAvailable = b.teacher.physical_tutouring || b.teacher.digital_tutouring ? 1 : 0
+                    return bAvailable - aAvailable // puts available ones on top
+                })
+
+                setFilteredCards(sortedCards)
+                setCards(sortedCards)
+                setLoading(false)
             }
         }
 
@@ -192,7 +202,9 @@ export function TeacherFocusCards() {
 
     return (
         <>
-
+        {loading ? <Skeleton className="w-full h-60 rounded-full"/>
+        :
+        <>
         {/* Order popover */}
         <AlertDialog open={showOrderPopover}>
 
@@ -532,7 +544,7 @@ export function TeacherFocusCards() {
             </ul>
         )}
         </div>
-
+        </>}
         </>
     );
 }
