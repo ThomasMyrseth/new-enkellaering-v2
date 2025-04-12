@@ -187,6 +187,11 @@ def hideOldOrders(daysOld: int, client: bigquery.Client):
         UPDATE `{USER_DATASET}.teacher_student`
         SET hidden = TRUE
         WHERE created_at < TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL @daysOld DAY)
+        AND (
+            teacher_accepted_student IS NULL
+            OR
+            teacher_accepted_student IS FALSE
+        )
     """
     query_params = [
         bigquery.ScalarQueryParameter("daysOld", "INT64", daysOld)
