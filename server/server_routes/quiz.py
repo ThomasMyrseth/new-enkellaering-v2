@@ -306,9 +306,8 @@ def upload_questions_route(user_id):
 
     #upload the questions to bigquery with the imageUrls above  
     formatted_questions = []
-    for i in range(len(questions)):
-        image_url = uploaded_image_urls.get(question_id, "no image")  # Use empty string or another default if no image
-        question = questions[i]
+    for question in questions:
+        image_url = uploaded_image_urls.get(question['question_id'], "no image")
 
         q = {
             "question_id": question['question_id'],
