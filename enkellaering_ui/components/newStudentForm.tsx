@@ -65,7 +65,8 @@ export default function NewStudentForm() {
     <div className="max-w-md rounded-lg w-full mx-auto md:rounded-2xl p-4 md:p-8 shadow-none bg-white dark:bg-black">
         
         <h2 className="text-3xl font-bold relative bg-clip-text text-transparent bg-no-repeat bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500 py-4">Bestill privatundervisning</h2>
-        <p>Legg igjen nummeret ditt her, vi ringer deg innen 24 timer for å avtale oppstart.</p>
+        <p>Legg igjen nummeret ditt her, vi ringer deg innen 24 timer for å avtale oppstart.
+        <br/>Eller ring oss selv på <span className="font-bold">+47 47184744</span></p>
 
         {errorMessage===false &&
             <Alert>
