@@ -97,7 +97,7 @@ export function NewStudentsWithoutTeacherPage() {
             }
         }
         fetchTeachers()
-    },[])
+    },[baseUrl, token])
 
     return (<div className="flex flex-col items-center space-y-3">
         <h3>Elever som mangler lærer</h3>

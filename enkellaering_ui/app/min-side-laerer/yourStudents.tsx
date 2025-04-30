@@ -146,7 +146,7 @@ import {
     TableHeader,
     TableRow
 } from "@/components/ui/table"
-import { useState, useEffect, useMemo } from "react"
+import { useMemo } from "react"
 import { DeleteClass } from "./deleteClass"
 
 

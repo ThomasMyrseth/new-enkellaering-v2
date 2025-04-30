@@ -569,7 +569,6 @@ const SetStudentInactive = ({ student }: { student: Student }) => {
 };
 
 import { Textarea } from "@/components/ui/textarea";
-import { get } from "http";
 
 const StudentNotes = ({student} : {student : Student}) => {
     const [notes, setNotes] = useState<string>(student.notes)

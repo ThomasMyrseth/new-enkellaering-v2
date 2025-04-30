@@ -277,7 +277,7 @@ export function PreviousClassesForEachTeacher() {
         getAllTeacherStudents()
 
     
-    },[])
+    },[token])
 
     //map each teacher to his classes
     useEffect( () => {
