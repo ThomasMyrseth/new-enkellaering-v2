@@ -86,8 +86,6 @@ export default function NewStudentWithPreferredTeacherActionsCard({ ns }: { ns :
     year: "numeric",
   });
   
-  const now = new Date();
-  const inTwoHours: Date = new Date(now.getTime() + 2 * 60 * 60 * 1000); // 2 hours in milliseconds
   const createdAt: Date = new Date(ns.created_at);
   const twoHoursAfterCreation :Date = new Date(createdAt.getTime() + 2*60*60*1000)
 
@@ -140,7 +138,7 @@ export default function NewStudentWithPreferredTeacherActionsCard({ ns }: { ns :
       </AlertDialogTrigger>
       <AlertDialogContent>
         
-        {createdAt > inTwoHours?
+        {new Date().getTime() > twoHoursAfterCreation.getTime()?
           <>
             <AlertDialogHeader>
               <AlertDialogTitle>Oppdater aksept</AlertDialogTitle>
