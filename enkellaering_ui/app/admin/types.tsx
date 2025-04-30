@@ -34,6 +34,8 @@ export type TeacherStudent = {
     student_user_id: string;
     teacher_accepted_student: boolean | null;
     teacher_user_id: string;
+    travel_pay_to_teacher: number;
+    travel_pay_from_student: number;
 };
 
 export type Teacher = {

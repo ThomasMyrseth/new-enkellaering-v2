@@ -7,7 +7,7 @@ import {
     AccordionTrigger,
 } from "@/components/ui/accordion"
 
-import { Teacher, Classes, Student } from "../admin/types"
+import { Teacher, Classes, Student, TeacherStudent } from "../admin/types"
 
 const formatToNorwegian = (utcString: string) => {
   return new Date(utcString).toLocaleString("no-NO", {
@@ -21,7 +21,7 @@ const formatToNorwegian = (utcString: string) => {
   });
 };
 
-export function YourStudent( {teacher, classes, students} : {teacher: Teacher, classes :Classes[], students :Student[]}) {
+export function YourStudent( {teacher, classes, students, teacherStudents} : {teacher: Teacher, classes :Classes[], students :Student[], teacherStudents :TeacherStudent[]} ) {
     
     if (!teacher || !students) {
         return (<p>Loading...</p>)
@@ -33,6 +33,8 @@ export function YourStudent( {teacher, classes, students} : {teacher: Teacher, c
         <h2 className="text-xl font-semibold mb-4 text-neutral-800 dark:text-neutral-200">Dine elever</h2>
         <Accordion type="single" collapsible className="w-full">
             {students.map( (student, index) => {
+
+                const teacherStudent = teacherStudents.find((ts) => ts.student_user_id === student.user_id && ts.teacher_user_id === teacher.user_id);
 
                 let totalDurationMillisLastFourWeeks :number = 0
                 const fourWeeksAgo = new Date()
@@ -50,6 +52,8 @@ export function YourStudent( {teacher, classes, students} : {teacher: Teacher, c
                 })
 
                 const totalDurationHours = Math.round(totalDurationMillisLastFourWeeks/(1000*60*60)*10)/10
+
+                console.log("Teacher student", teacherStudent)
 
                 return (
                 <AccordionItem value={index.toString()} key={index}>
@@ -91,10 +95,14 @@ export function YourStudent( {teacher, classes, students} : {teacher: Teacher, c
                             Postnummer: {student.postal_code}
                             <br/>
                             {`${student.has_physical_tutoring? 'fysisk undervisning' : 'digital undervisning'}`}
+                            <br/>
+                            {teacherStudent?.travel_pay_to_teacher && Number(teacherStudent?.travel_pay_to_teacher) > 0
+                              ? `Reisetillegg: ${teacherStudent.travel_pay_to_teacher}kr per gang`
+                              :``}
                         </p>
                       </div>
 
-                        <PreviousClasses student={student} teacher={teacher} allClasses={classes} />
+                        <PreviousClasses student={student} teacher={teacher} allClasses={classes} teacherStudent={teacherStudent || null}/>
                     </AccordionContent>
                 </AccordionItem>
                 )
@@ -144,7 +152,7 @@ import { useState, useEffect, useMemo } from "react"
 import { DeleteClass } from "./deleteClass"
 
 
-const PreviousClasses =  ({student, teacher, allClasses}  : {student :FullStudent, teacher :Teacher, allClasses :Classes[]})  => {     
+const PreviousClasses =  ({student, teacher, allClasses, teacherStudent}  : {student :FullStudent, teacher :Teacher, allClasses :Classes[], teacherStudent :TeacherStudent | null})  => {     
 
     const sortedFilteredClasses = useMemo(() => {
       return allClasses
@@ -178,11 +186,12 @@ const PreviousClasses =  ({student, teacher, allClasses}  : {student :FullStuden
                 const durationMinutes: number = Math.round((totalDurationMillis % (1000 * 60 * 60)) / (1000 * 60)); // Remaining minutes
 
                 let amount: number = Math.round( (durationHours * parseInt(teacher.hourly_pay) + (durationMinutes / 60) * parseInt(teacher.hourly_pay)) ); // Adding fractional hours
+
                 if (c.groupclass) {
                     const numberOfStudents: number = c.number_of_students || 1;
                     amount = Math.round( (durationHours * (parseInt(teacher.hourly_pay)+60) + (durationMinutes / 60) * (parseInt(teacher.hourly_pay)+60))/numberOfStudents )
-                    console.log(`Number of students: ${numberOfStudents}, Amount: ${amount}`)
                 }
+                amount += Number(teacherStudent?.travel_pay_to_teacher || 0)
 
                 return(
                     <TableRow key={index} className={`${c.was_canselled===true ? 'bg-red-50 dark:bg-red-950' : ''}`}>

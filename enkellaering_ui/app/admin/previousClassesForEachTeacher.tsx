@@ -2,6 +2,8 @@
 
 import { Copy } from 'lucide-react';
 
+import { TeacherStudent } from './types';
+
 import { DeleteClass } from '../min-side-laerer/deleteClass';
 import { Switch } from '@/components/ui/switch';
 import { Label } from "@/components/ui/label";
@@ -155,6 +157,7 @@ export function PreviousClassesForEachTeacher() {
     const [teachers, setTeachers] = useState<Teacher[]>([]);
     const [classesByTeacher, setClassesByTeacher] = useState<classesJoinTeacher[]>([]);
     const [students, setStudents] = useState<Student[]>([]);
+    const [teacherStudents, setTeacherStudents] = useState<TeacherStudent[]>([]);
     
 
     const [loading, setLoading] = useState<boolean>(true)
@@ -251,9 +254,27 @@ export function PreviousClassesForEachTeacher() {
                 setLoading(false)
             }
         }
+        async function getAllTeacherStudents() {
+            const response = await fetch(`${BASEURL}/get-teacher-student`, {
+                method: "GET",
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            if (!response.ok) {
+                alert("Error fetching teacher student relation " + response.statusText)
+                setTeacherStudents([])
+                return null
+            }
+            const data = await response.json()
+            const ts :TeacherStudent[] = data.teacher_student
+            setTeacherStudents(ts)
+        }
+
         fetchClasses()
         getAllTeachers()
         getAllStudents()
+        getAllTeacherStudents()
 
     
     },[])
@@ -350,6 +371,12 @@ export function PreviousClassesForEachTeacher() {
             }) 
 
             classes.map((c :Classes) => {
+                const teacherStudent :TeacherStudent | null= teacherStudents.find((ts: TeacherStudent) =>
+                    ts.student_user_id === c.student_user_id &&
+                    ts.teacher_user_id === c.teacher_user_id
+                ) || null
+
+
                 const startedAt: Date = new Date(c.started_at);
                 const endedAt: Date = new Date(c.ended_at);
                 const totalDurationMillis: number = endedAt.getTime() - startedAt.getTime();
@@ -358,11 +385,14 @@ export function PreviousClassesForEachTeacher() {
                 if (c.groupclass) {
                     invoiceAmount = (totalDurationMillis / (1000 * 60 * 60)) * 350
                 }
+                invoiceAmount += Number(teacherStudent?.travel_pay_from_student || 0)
+
                 let toTeacherAmmount :number = totalDurationMillis / (1000 * 60 * 60) * teacherHourlyPay
                 if (c.groupclass) {
                     const numberOfStudents :number = c.number_of_students || 1
                     toTeacherAmmount = (totalDurationMillis / (1000 * 60 * 60) * (teacherHourlyPay+60))/numberOfStudents
                 }
+                toTeacherAmmount += Number(teacherStudent?.travel_pay_to_teacher || 0)
 
                 //add up to see how many hours the teacher has had the last four weeks
                 if (new Date(c.started_at).getTime() > fourWeeksAgo.getTime()) {
@@ -489,7 +519,7 @@ export function PreviousClassesForEachTeacher() {
                             </AccordionItem>
                         </Accordion>
 
-                        <PayTeacherPopover teacher={ct.teacher} classes={ct.classes} />
+                        <PayTeacherPopover teacher={ct.teacher} classes={ct.classes} teacherStudents={teacherStudents}/>
 
                         <p className="my-4">
                             Totalt ufakturerte timer fra {ct.teacher.firstname}: <span className="text-red-400">{totalUninvoicedHoursByTeacher}h, {totalUninvoicedByTeacher}kr.</span> <br/>
@@ -526,11 +556,20 @@ export function PreviousClassesForEachTeacher() {
                                 if (c.groupclass) {
                                     invoiceAmount = Math.round(totalDurationMillis / (1000 * 60 * 60) *350)
                                 }
+                                invoiceAmount += Number(teacherStudents.find((ts: TeacherStudent) =>
+                                    ts.student_user_id === c.student_user_id &&
+                                    ts.teacher_user_id === c.teacher_user_id
+                                )?.travel_pay_from_student || 0)
+
                                 let toTeacherAmmount :number = Math.round(totalDurationMillis / (1000 * 60 * 60) * teacherHourlyPay)
                                 if (c.groupclass) {
                                     const numberOfStudents :number = c.number_of_students || 1
                                     toTeacherAmmount = Math.round( (totalDurationMillis / (1000 * 60 * 60) * (teacherHourlyPay+60))/numberOfStudents )
                                 }
+                                toTeacherAmmount += Number(teacherStudents.find((ts: TeacherStudent) =>
+                                    ts.student_user_id === c.student_user_id &&
+                                    ts.teacher_user_id === c.teacher_user_id
+                                )?.travel_pay_to_teacher || 0)
 
                                 
                                 return (
@@ -579,7 +618,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 
-const PayTeacherPopover = ( {teacher, classes} : {teacher: Teacher, classes: Classes[] }) => {
+const PayTeacherPopover = ( {teacher, classes, teacherStudents} : {teacher: Teacher, classes: Classes[], teacherStudents :TeacherStudent[] }) => {
     const token = localStorage.getItem('token')
 
     const [success, setSuccess] = useState<boolean | null>(null)
@@ -597,6 +636,7 @@ const PayTeacherPopover = ( {teacher, classes} : {teacher: Teacher, classes: Cla
     
     //Invoice ammount
     let totalPaymentAmmount :number = 0
+    let totalTravelPay :number = 0
     let totalNumberOfHours :number = 0
     //clasIds to be marked as invoiced
     const classIds :string[] = []
@@ -627,10 +667,19 @@ const PayTeacherPopover = ( {teacher, classes} : {teacher: Teacher, classes: Cla
             thisClass = Math.round(durationHours * (parseInt(teacher.hourly_pay)+60))
         }
         totalPaymentAmmount += thisClass
+
+        //add travel pay to teacher
+        const ts = teacherStudents.find((ts: TeacherStudent) =>
+          ts.student_user_id === c.student_user_id &&
+          ts.teacher_user_id === c.teacher_user_id
+        );
+        const travelPayToTeacher = Number(ts?.travel_pay_to_teacher || 0)
+        totalTravelPay += travelPayToTeacher
     });
 
     //round of final values
     totalPaymentAmmount = Math.round(totalPaymentAmmount)
+    totalTravelPay = Math.round(totalTravelPay)
     totalNumberOfHours = Math.round(totalNumberOfHours*100)/100 //2 decimals
 
     //mark the classes as invoiced
@@ -690,9 +739,11 @@ const PayTeacherPopover = ( {teacher, classes} : {teacher: Teacher, classes: Cla
                 <p>
                     Lønn for {currentMonth} {currentYear}
                     <br/>
-                    Total {totalNumberOfHours} timer, {totalPaymentAmmount} kroner, fordelt på {numberOfClassesToPay} ganger
+                    Total {totalNumberOfHours} timer, {totalPaymentAmmount+totalTravelPay} kroner, fordelt på {numberOfClassesToPay} ganger
                     <br/>
                     Timelønn: {teacher.hourly_pay}
+                    <br/>
+                    Derav reisetillegg: {totalTravelPay}kr
                 </p>
                 
                 <div className="">

@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-import { Classes } from "../admin/types";
+import { Classes, TeacherStudent } from "../admin/types";
 import { Teacher, Student } from "../admin/types";
 import { AddNewClass } from "./addNewClass";
 
@@ -21,25 +21,36 @@ export default function LaererPage() {
     const [teacher, setTeacher] = useState<Teacher>()
     const [classes, setClasses] = useState<Classes[]>([])
     const [students, setStudents] = useState<Student[]>([])
+    const [teacherStudents, setTeacherStudents] = useState<TeacherStudent[]>([])
     const router = useRouter()
 
     const token :string = localStorage.getItem('token') || ''
 
     useEffect(() => {
         async function getData() {
-            const students = await fetchStudents(token)
-            const classes = await fetchClasses(token)
-            const teacher = await fetchTeacherName(token)
+            const students = await fetchStudents(token);
+            const classes = await fetchClasses(token);
+            const teacher = await fetchTeacherName(token);
+            const tss: TeacherStudent[] = await fetchTeacherStudents(token);
+
+            // Build a set of valid student IDs for fast lookup
+            const studentIds = new Set(students.map((s: Student) => s.user_id));
+
+            // Filter only those teacher-student records matching this teacher and existing students
+            const ts = tss.filter((ts: TeacherStudent) =>
+                ts.teacher_user_id === teacher.user_id &&
+                studentIds.has(ts.student_user_id)
+            );
 
             if (!teacher) {
                 router.push('/login-laerer')
                 return
             }
 
-            console.log("students: ", students)
             setTeacher(teacher)
             setClasses(classes)
             setStudents(students)
+            setTeacherStudents(ts);
         }
 
         getData()
@@ -56,7 +67,7 @@ export default function LaererPage() {
                 <DailyRevenueChart teacher={teacher}/>
                 <WantMoreStudents teacher={teacher}/>
                 <AddNewClass teacher={teacher} students={students}/>
-                <YourStudent teacher={teacher} classes={classes} students={students}/>
+                <YourStudent teacher={teacher} classes={classes} students={students} teacherStudents={teacherStudents}/>
                 <NewStudentsWithPreferredTeacherWorkflowActions/>
                 <ProfileForm teacher={teacher}/>
                 <QuizStatusPage token={token} baseUrl={BASEURL}/>
@@ -132,6 +143,24 @@ async function fetchStudents(token :string) {
         return 0
     })
     return students
+}
+
+async function fetchTeacherStudents(token :string) {
+    const response = await fetch(`${BASEURL}/get-teacher-student`, {
+        method: "GET",
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    })
+
+    if(!response.ok) {
+        return null;
+    }
+
+    const data = await response.json()
+    const ts = data.teacher_student
+
+    return ts
 }
 
 

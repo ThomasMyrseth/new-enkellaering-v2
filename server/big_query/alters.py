@@ -1,6 +1,7 @@
 from google.cloud import bigquery
 from dotenv import load_dotenv
 import os
+from decimal import Decimal
 
 # Load environment variables from .env file
 load_dotenv()
@@ -446,3 +447,41 @@ def update_teacher_profile(
 
     # Run the query
     return client.query(query, job_config=job_config, location='EU')
+
+
+
+def update_travel_payment(client: bigquery.Client, travel_payment: dict, admin_user_id: str):
+    """
+    Update travel payment for a user
+    """
+    query = f"""
+        UPDATE `{PROJECT_ID}.{USER_DATASET}.teacher_student`
+        SET
+            travel_pay_to_teacher = @travel_pay_to_teacher,
+            travel_pay_from_student = @travel_pay_from_student
+        WHERE student_user_id = @student_user_id
+        AND teacher_user_id = @teacher_user_id
+        AND EXISTS (
+            SELECT 1
+            FROM `{USER_DATASET}.teachers`
+            WHERE user_id = @admin_user_id
+        )
+    """
+
+    # Define query parameters
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("travel_pay_to_teacher", "NUMERIC", Decimal(str(travel_payment["travel_pay_to_teacher"]))),
+            bigquery.ScalarQueryParameter("travel_pay_from_student", "NUMERIC", Decimal(str(travel_payment["travel_pay_from_student"]))),
+            bigquery.ScalarQueryParameter("student_user_id", "STRING", travel_payment["student_user_id"]),
+            bigquery.ScalarQueryParameter("teacher_user_id", "STRING", travel_payment["teacher_user_id"]),
+            bigquery.ScalarQueryParameter("admin_user_id", "STRING", admin_user_id),
+        ]
+    )
+
+    # Run the query
+    # Submit the query and wait for completion
+    job = client.query(query, job_config=job_config, location='EU')
+    job.result()  # Ensure the update is applied and surface any errors
+    return job
+    

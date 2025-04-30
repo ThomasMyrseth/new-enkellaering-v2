@@ -273,7 +273,7 @@ function NewStudentRow({ ns, teachers }: { ns: NewStudent, teachers :Teacher[] }
             return null;
         }
         else {
-            alert("Oppdateringer lagret")
+            toast("Oppdateringer lagret")
         }
         
     }

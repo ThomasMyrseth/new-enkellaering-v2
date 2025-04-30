@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect } from "react";
-import { Teacher, Student } from "../admin/types";
+import { Teacher, Student, TeacherStudent } from "../admin/types";
 import { AlertDialog, AlertDialogDescription,AlertDialogCancel, AlertDialogAction, AlertDialogFooter,AlertDialogContent,  AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label";

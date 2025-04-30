@@ -286,7 +286,7 @@ const assignTeacher = async (
     if (!response.ok) {
       alert("Error while assigning teacher to student");
     } else {
-      alert("Læreren er blitt tildelt til eleven");
+      toast("Læreren er blitt tildelt til eleven");
     }
 };
 

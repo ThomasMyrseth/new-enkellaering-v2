@@ -1,5 +1,6 @@
 "use client"
 import React, { useRef } from "react";
+import { Input } from "@/components/ui/input"
 
 import {
     Table,
@@ -37,7 +38,7 @@ export function PreviousClassesForEachStudent() {
     const [classes, setClasses] = useState<Classes[]>([]);
     const [teachers, setTeachers] = useState<Teacher[]>([]);
     const [students, setStudents] = useState<Student[]>([]);
-    const [teacherStudent, setTeacherStudent] = useState<TeacherStudent[]>([]);
+    const [teacherStudents, setTeacherStudents] = useState<TeacherStudent[]>([]);
 
     const [loading, setLoading] = useState<boolean>(true)
 
@@ -60,7 +61,7 @@ export function PreviousClassesForEachStudent() {
                 setClasses(c)
             }
             if (ts) {
-                setTeacherStudent(ts)
+                setTeacherStudents(ts)
             }
             setLoading(false)
 
@@ -92,7 +93,7 @@ export function PreviousClassesForEachStudent() {
                 return -(dateA.getTime() - dateB.getTime()); //reverse cronological order
             });
 
-            const myTeacherUserIds: string[] = teacherStudent
+            const myTeacherUserIds: string[] = teacherStudents
                 .filter((ts) => {return ts.student_user_id === s.user_id && ts.teacher_accepted_student==true})
                 .map((ts) => ts.teacher_user_id);
 
@@ -105,6 +106,7 @@ export function PreviousClassesForEachStudent() {
             let totalUninvoicedHoursStudent :number = 0
             let totalInvoicedStudent :number = 0
             let totalInvoicedHoursStudent :number = 0
+            let totalTravelPayFromStudent :number = 0
 
             let hoursOfClassesLastFourWeeks : number = 0
 
@@ -130,6 +132,16 @@ export function PreviousClassesForEachStudent() {
                 if (!c.invoiced_student) {
                     totalUninvoicedHoursStudent += totalDurationHours; // Add fractional hours directly
                     totalUninvoicedStudent += invoiceAmount;
+
+
+                    const ts = teacherStudents.find((ts: TeacherStudent) =>
+                        ts.student_user_id === c.student_user_id &&
+                        ts.teacher_user_id === c.teacher_user_id
+                    );
+                    const travelPayFromStudent = Number(ts?.travel_pay_from_student || 0)
+                    totalTravelPayFromStudent += travelPayFromStudent
+                    invoiceAmount += travelPayFromStudent
+
                 } else {
                     totalInvoicedHoursStudent += totalDurationHours;
                     totalInvoicedStudent += invoiceAmount;
@@ -181,7 +193,9 @@ export function PreviousClassesForEachStudent() {
                     <div className="w-full justify-between flex">
                         <div className="flex flex-row space-x-2 m-4">
                             {myTeachers.map( (t) => {
-                                return <RemoveTeacherDialog teacher={t} key={t.user_id} student={s}/>
+                                return <RemoveTeacherDialog teacher={t} key={t.user_id} student={s} teacherStudent={teacherStudents.find(
+                                    (ts: TeacherStudent) => ts.student_user_id === s.user_id && ts.teacher_user_id === t.user_id
+                                )}/>;
                             })}
                         </div>
                         <SetTeacherCombobox student={s} teachers={teachers} passSelectedTeacher={handleAddNewTeacher}/>
@@ -227,11 +241,11 @@ export function PreviousClassesForEachStudent() {
                         </AccordionItem>
                 </Accordion>
 
-                <p>Totalt ufakturerte timer fra {s.firstname_parent}: <span className="text-red-400">{totalUninvoicedHoursStudent}h, {totalUninvoicedStudent}kr.</span></p>
+                <p>Totalt ufakturerte timer fra {s.firstname_parent}: <span className="text-red-400">{totalUninvoicedHoursStudent}h, {totalUninvoicedStudent+totalTravelPayFromStudent}kr. (inkludert reisetillegg)</span></p>
                 <p>Total fakturerte timer fra {s.firstname_parent}: <span className="text-green-400">{totalInvoicedHoursStudent}h, {totalInvoicedStudent}kr.</span></p>
                                 
                 <div className="flex flex-row w-full justify-between pt-2">
-                    <InvoiceStudentPopover student={s} classes={myClasses}/>
+                    <InvoiceStudentPopover student={s} classes={myClasses} teacherStudents={teacherStudents}/>
                     <SetStudentInactive student={s} />
                 </div>
 
@@ -261,6 +275,10 @@ export function PreviousClassesForEachStudent() {
                         if (c.groupclass) {
                             invoiceAmount = Math.round(durationHours*350)
                         }
+                        invoiceAmount += Number(teacherStudents.find((ts: TeacherStudent) =>
+                            ts.student_user_id === c.student_user_id &&
+                            ts.teacher_user_id === c.teacher_user_id
+                        )?.travel_pay_from_student || 0);
                         
                         return (
                         <TableRow key={index} className={`${c.was_canselled===true? 'bg-red-50 dark:bg-red-950' : ''}`}>
@@ -316,7 +334,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 
-const InvoiceStudentPopover = ( {student, classes} : {student: Student, classes: Classes[]}) => {
+const InvoiceStudentPopover = ( {student, classes, teacherStudents} : {student: Student, classes: Classes[], teacherStudents :TeacherStudent[]}) => {
     const token = localStorage.getItem('token')
 
     const [success, setSuccess] = useState<boolean | null>(null)
@@ -335,6 +353,7 @@ const InvoiceStudentPopover = ( {student, classes} : {student: Student, classes:
     //Invoice ammount
     let totalInvoiceAmmount :number = 0
     let totalNumberOfHours :number = 0
+    let totalTravelPay :number = 0
     //clasIds to be marked as invoiced
     const classIds :string[] = []
 
@@ -363,11 +382,19 @@ const InvoiceStudentPopover = ( {student, classes} : {student: Student, classes:
             thisClass = durationHours*350
         }
         totalInvoiceAmmount += thisClass
+
+        const ts = teacherStudents.find((ts: TeacherStudent) =>
+            ts.student_user_id === c.student_user_id &&
+            ts.teacher_user_id === c.teacher_user_id
+        );
+        const travelPayFromStudent = Number(ts?.travel_pay_from_student || 0)
+        totalTravelPay += travelPayFromStudent
     });
 
     //now round of total values
     totalInvoiceAmmount = Math.round(totalInvoiceAmmount * 10) / 10;
     totalNumberOfHours = Math.round(totalNumberOfHours * 10) / 10;
+    totalTravelPay = Math.round(totalTravelPay * 10) / 10;
 
     //mark the classes as invoiced
     const handleSetClassesToInvoiced = async () => {
@@ -426,8 +453,9 @@ const InvoiceStudentPopover = ( {student, classes} : {student: Student, classes:
                 <p>
                     Faktura for privatundervisning i {currentMonth} {currentYear}
                     <br/>
-                    Total {totalNumberOfHours} timer, {totalInvoiceAmmount} kroner, fordelt på {numberOfClassesToInvoice} ganger
+                    Total {totalNumberOfHours} timer, {totalInvoiceAmmount+totalTravelPay} kroner, fordelt på {numberOfClassesToInvoice} ganger
                     <br/>
+                    Derav {totalTravelPay} kroner i reisetillegg
                 </p>
                 
                 <div className="">
@@ -541,6 +569,7 @@ const SetStudentInactive = ({ student }: { student: Student }) => {
 };
 
 import { Textarea } from "@/components/ui/textarea";
+import { get } from "http";
 
 const StudentNotes = ({student} : {student : Student}) => {
     const [notes, setNotes] = useState<string>(student.notes)
@@ -616,8 +645,39 @@ const handleRemoveTeacher = async (student: Student, teacher: Teacher) => {
     }
 };
 
+const handleUpdateTravelPay = async (travelPayToTeacher: number, travelPayFromStudent: number, studentUserId: string, teacherUserId: string) => {
+    const token = localStorage.getItem('token');
+    try {
+        const response = await fetch(`${BASEURL}/update-travel-pay`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                travel_pay_to_teacher: travelPayToTeacher,
+                travel_pay_from_student: travelPayFromStudent,
+                student_user_id: studentUserId,
+                teacher_user_id: teacherUserId
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error: ${response.status} - ${response.statusText}`);
+        }
+        toast("Reisetillegg oppdatert");
+    } catch (error) {
+        alert(`Oppdatering mislyktes: ${error}`);
+    }
+};
+
 // AlertDialog component to confirm teacher removal
-const RemoveTeacherDialog = ({ student, teacher }: { student: Student, teacher: Teacher }) => {
+const RemoveTeacherDialog = ({ student, teacher, teacherStudent }: { student: Student, teacher: Teacher, teacherStudent? :TeacherStudent }) => {
+    const [travelPayToTeacher, setTravelPayToTeacher] = useState<number>(teacherStudent?.travel_pay_to_teacher || 0);
+    const [travelPayFromStudent, setTravelPayFromStudent] = useState<number>(teacherStudent?.travel_pay_from_student || 0);
+
+    console.log("teacherStudent", teacherStudent)
+    ''
     return (
         <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -625,15 +685,30 @@ const RemoveTeacherDialog = ({ student, teacher }: { student: Student, teacher: 
             </AlertDialogTrigger>
             <AlertDialogContent>
                 <AlertDialogHeader>
-                    <AlertDialogTitle>Fjern lærer</AlertDialogTitle>
+                    <AlertDialogTitle>Rediger forhold mellom elev og lærer</AlertDialogTitle>
                     <AlertDialogDescription>
                         Er du sikker på at du vil fjerne {teacher.firstname} {teacher.lastname} fra {student.firstname_parent} {student.lastname_parent}?
                     </AlertDialogDescription>
                 </AlertDialogHeader>
-                <AlertDialogFooter>
+                <AlertDialogContent>
+                    <div className="flex flex-row space-x-2 w-full">
+                        <div className="flex flex-col space-y-1 w-full">
+                            <Label className="text-sm font-medium ">Reisetillegg fakturert fra elev</Label>
+                            <Input type="number" placeholder="Reisetillegg" className="w-full" value={travelPayFromStudent} onChange={(e) => setTravelPayFromStudent(Number(e.target.value))}                            />
+                        </div>
+
+                        <div className="flex flex-col space-y-1 w-full">
+                            <Label className="text-sm font-medium ">Reisetillegg betalt til lærer</Label>
+                            <Input type="number" placeholder="Reisetillegg" className="w-full" value={travelPayToTeacher} onChange={(e) => setTravelPayToTeacher(Number(e.target.value))}/>
+                        </div>
+                    </div>
+
+                    <Button onClick={() => {
+                            handleUpdateTravelPay(travelPayToTeacher, travelPayFromStudent, student.user_id, teacher.user_id);
+                    }}>Lagre</Button>
+                    <Button className="bg-red-400 dark:bg-red-400" onClick={() => handleRemoveTeacher(student, teacher)}>Fjern {teacher.firstname} fra {student.firstname_parent}</Button>
                     <AlertDialogCancel>Avbryt</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => handleRemoveTeacher(student, teacher)}>Fjern</AlertDialogAction>
-                </AlertDialogFooter>
+                </AlertDialogContent>
             </AlertDialogContent>
         </AlertDialog>
     );
@@ -765,6 +840,7 @@ import { ChevronsUpDown } from "lucide-react";
 import { Command, CommandGroup, CommandInput, CommandItem, CommandList, CommandEmpty } from "@/components/ui/command";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Label } from "@/components/ui/label";
 
 const SetTeacherCombobox = ({
     student,
