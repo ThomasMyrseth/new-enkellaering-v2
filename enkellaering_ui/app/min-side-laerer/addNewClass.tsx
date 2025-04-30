@@ -35,11 +35,11 @@ export function AddNewClass({teacher, students}: {teacher: Teacher, students :St
 
 
     const handleStudentSelect = (userId: string) => {
-        setSelectedStudentUserIds([...selectedStudentUserIds, userId]);
+        setSelectedStudentUserIds([userId]);
     };
 
-    const handleStudentSelects = (userId: string[]) => {
-        setSelectedStudentUserIds([...selectedStudentUserIds, ...userId])
+    const handleStudentSelects = (userIds: string[]) => {
+        setSelectedStudentUserIds([...selectedStudentUserIds, ...userIds])
     };
 
     const handleStartDateSelect = (startDate :Date) => {
