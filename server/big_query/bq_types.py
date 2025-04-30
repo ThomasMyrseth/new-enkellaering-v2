@@ -189,6 +189,7 @@ class Classes:
         started_at: datetime,
         ended_at: datetime,
         groupclass: bool,
+        number_of_students: Optional[int] = None,
         was_canselled :bool = False,
         comment: Optional[str] = None,
         paid_teacher: Optional[bool] = None,
@@ -203,6 +204,7 @@ class Classes:
         self.started_at = started_at
         self.ended_at = ended_at
         self.groupclass = groupclass
+        self.number_of_students = number_of_students
         self.comment = comment
         self.paid_teacher = paid_teacher
         self.invoiced_student = invoiced_student

@@ -32,6 +32,7 @@ export function AddNewClass({teacher, students}: {teacher: Teacher, students :St
     const [success, setSuccess] = useState<boolean>()
     const [wasCanselled, setWasCanselled] = useState<boolean>(false)
     const [groupClass, setGroupClass] = useState<boolean>(false)
+    const [numberOfStudents, setNumberOfStudents] = useState<number>(1)
 
 
     const handleStudentSelect = (userId: string) => {
@@ -39,7 +40,8 @@ export function AddNewClass({teacher, students}: {teacher: Teacher, students :St
     };
 
     const handleStudentSelects = (userIds: string[]) => {
-        setSelectedStudentUserIds([...selectedStudentUserIds, ...userIds])
+        setSelectedStudentUserIds(userIds)
+        setNumberOfStudents(userIds.length)
     };
 
     const handleStartDateSelect = (startDate :Date) => {
@@ -117,6 +119,7 @@ export function AddNewClass({teacher, students}: {teacher: Teacher, students :St
                 wasCanselled={wasCanselled}
                 groupClass={groupClass}
                 setUploadSuccessfull={handleSetSucces}
+                numberOfStudents={numberOfStudents}
             />
         </div>
     </div>)
@@ -427,7 +430,7 @@ function DateTimePicker({onStartDateSelected, onEndDateSelected} : {onStartDateS
 }
 
 
-function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUserIds, wasCanselled, groupClass, setUploadSuccessfull} : {teacher: Teacher; started_at?: Date; ended_at?: Date; comment?: string, selectedStudentUserIds: string[], wasCanselled :boolean, groupClass :boolean, setUploadSuccessfull: (success: boolean) => void}) {
+function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUserIds, wasCanselled, groupClass, numberOfStudents, setUploadSuccessfull} : {teacher: Teacher; started_at?: Date; ended_at?: Date; comment?: string, selectedStudentUserIds: string[], wasCanselled :boolean, groupClass :boolean, numberOfStudents :number, setUploadSuccessfull: (success: boolean) => void}) {
     const token = localStorage.getItem('token')
     const [durationInHours, setDurationInHours] = useState<number | undefined>()
     const [allValid, setAllValid] = useState<boolean>(false)
@@ -499,6 +502,7 @@ function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUse
                 comment: comment,
                 was_canselled: wasCanselled,
                 groupclass : groupClass,
+                number_of_students: numberOfStudents,
             }),
             });
     

@@ -186,7 +186,7 @@ export default function OrderCard({ order, handleUIDelete }: {order: Order, hand
           </AlertDialogDescription>
         </AlertDialogHeader>
         <div className="space-y-4">
-          <div className="rounded-lg bg-neutral-100 p-4">
+          <div className="rounded-lg bg-neutral-100 dark:bg-neutral-800 p-4">
             <p className="text-sm font-medium">Ønsker du digital eller fysisk undervisning? <br/> 
             <span className="text-xs">Merk at det ikke er sikkert læreren din er tiljengelig i begge undervisningsformer</span></p>
             <RadioGroup
@@ -205,7 +205,7 @@ export default function OrderCard({ order, handleUIDelete }: {order: Order, hand
             </RadioGroup>
           </div>
           {physicalOrDigital && (
-            <div className="rounded-lg bg-neutral-100 p-4">
+            <div className="rounded-lg bg-neutral-100 dark:bg-neutral-800 p-4">
               <p className="text-sm font-medium">Hvor ønkser du å møtes? <br/>
               <span className="text-xs">Skriv gjerne at du er fleksibel, ettersom læreren kan bo/studere langt unna</span></p>
               <Textarea
@@ -216,7 +216,7 @@ export default function OrderCard({ order, handleUIDelete }: {order: Order, hand
               />
             </div>
           )}
-          <div className="rounded-lg bg-neutral-100 p-4">
+          <div className="rounded-lg bg-neutral-100 dark:bg-neutral-800 p-4">
             <p className="text-sm font-medium">Har du noe læreren din burde vite</p>
             <Textarea
               placeholder="Jeg er allergisk mot pels"

@@ -9,6 +9,17 @@ import {
 
 import { Teacher, Classes, Student } from "../admin/types"
 
+const formatToNorwegian = (utcString: string) => {
+  return new Date(utcString).toLocaleString("no-NO", {
+    weekday: "long",
+    timeZone: "Europe/Oslo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
 
 export function YourStudent( {teacher, classes, students} : {teacher: Teacher, classes :Classes[], students :Student[]}) {
     
@@ -51,7 +62,8 @@ export function YourStudent( {teacher, classes, students} : {teacher: Teacher, c
                             <p className={`w-1/4 md:w-full text-right ${totalDurationHours < student.est_hours_per_week*4 ? "text-red-400" : "text-neutral-400"}`}>{totalDurationHours}/{student.est_hours_per_week*4}h de siste fire ukene</p>
                         </div>
                     </AccordionTrigger>
-                    <AccordionContent>
+                    <AccordionContent className="w-full">
+                      <div className="flex flex-col justify-center items-start w-full ml-10 p-4">
                         <p>
                             <h4 className="mb-1 font-semibold">Forelder</h4>
                             {student.firstname_parent} {student.lastname_parent}
@@ -80,6 +92,7 @@ export function YourStudent( {teacher, classes, students} : {teacher: Teacher, c
                             <br/>
                             {`${student.has_physical_tutoring? 'fysisk undervisning' : 'digital undervisning'}`}
                         </p>
+                      </div>
 
                         <PreviousClasses student={student} teacher={teacher} allClasses={classes} />
                     </AccordionContent>
@@ -127,48 +140,21 @@ import {
     TableHeader,
     TableRow
 } from "@/components/ui/table"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
+import { DeleteClass } from "./deleteClass"
 
 
 const PreviousClasses =  ({student, teacher, allClasses}  : {student :FullStudent, teacher :Teacher, allClasses :Classes[]})  => {     
 
-    const classes :Classes[] = []
-    const [firstTenClasses, setFirstTenclasses] = useState<Classes[]>()
-    const [remainingClasses, setRemainingClasses] = useState<Classes[]>()
-    const [loading, setLoading] = useState<boolean>(true)
+    const sortedFilteredClasses = useMemo(() => {
+      return allClasses
+        .filter(c => c.student_user_id === student.user_id)
+        .sort((a, b) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime());
+    }, [allClasses, student.user_id]);
 
-    //sort classes cronologically by started at
-    if (allClasses) {
-        allClasses.sort((a, b) => {
-            const dateA = new Date(a.started_at);
-            const dateB = new Date(b.started_at);
-            return dateB.getTime() - dateA.getTime();
-        });
-    }
+    const firstTenClasses = sortedFilteredClasses.slice(0, 10);
+    const remainingClasses = sortedFilteredClasses.slice(10);
 
-    //filter out the classes for this student and sum them up
-    allClasses.forEach( (c :Classes) => {
-        if (c.student_user_id === student.user_id) {
-            classes.push(c)
-        }
-    })
-
-    //split classes
-    useEffect(() => {
-        if (classes) {
-            setFirstTenclasses(classes.slice(0, 10));
-            setRemainingClasses(classes.slice(10));
-        }
-        
-        setLoading(false)
-    }, [classes]); // Only run when `classes` changes
-
-
-    if (loading) {
-        return <p>Loading...</p>
-    }
-
-      
     return (<div className="flex flex-col justify-center items-center w-full bg-white dark:bg-black rounded-lg p-4">
         <Table>
         <TableCaption>Tidligre timer med {student.firstname_student}</TableCaption>
@@ -179,6 +165,7 @@ const PreviousClasses =  ({student, teacher, allClasses}  : {student :FullStuden
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Beløp</TableHead>
                 <TableHead>Kommentar</TableHead>
+                <TableHead>Slett</TableHead>
             </TableRow>
         </TableHeader>
         <TableBody>
@@ -190,18 +177,21 @@ const PreviousClasses =  ({student, teacher, allClasses}  : {student :FullStuden
                 const durationHours: number = Math.floor(totalDurationMillis / (1000 * 60 * 60)); // Whole hours
                 const durationMinutes: number = Math.round((totalDurationMillis % (1000 * 60 * 60)) / (1000 * 60)); // Remaining minutes
 
-                let amount: number = Math.round( durationHours * parseInt(teacher.hourly_pay) + (durationMinutes / 60) * parseInt(teacher.hourly_pay) ); // Adding fractional hours
+                let amount: number = Math.round( (durationHours * parseInt(teacher.hourly_pay) + (durationMinutes / 60) * parseInt(teacher.hourly_pay)) ); // Adding fractional hours
                 if (c.groupclass) {
-                    amount = Math.round( durationHours * (parseInt(teacher.hourly_pay)+60) + (durationMinutes / 60) * (parseInt(teacher.hourly_pay)+60) )
+                    const numberOfStudents: number = c.number_of_students || 1;
+                    amount = Math.round( (durationHours * (parseInt(teacher.hourly_pay)+60) + (durationMinutes / 60) * (parseInt(teacher.hourly_pay)+60))/numberOfStudents )
+                    console.log(`Number of students: ${numberOfStudents}, Amount: ${amount}`)
                 }
 
                 return(
                     <TableRow key={index} className={`${c.was_canselled===true ? 'bg-red-50 dark:bg-red-950' : ''}`}>
-                        <TableCell className="font-medium">{c.started_at}</TableCell>
+                        <TableCell className="font-medium">{formatToNorwegian(c.started_at)}</TableCell>
                         <TableCell>{`${durationHours}t ${Math.round(durationMinutes % 60)}min`}</TableCell>
                         <TableCell>{c.paid_teacher ? <p className="text-green-400">Betalt</p> : <p className="text-red-400">Ubetalt</p>}</TableCell>
                         <TableCell className="text-right">{amount}</TableCell>
                         <TableCell>{c.comment}</TableCell>
+                        <TableCell><DeleteClass classId={c.class_id} hasInvoiced={c.invoiced_student} hasPaid={c.paid_teacher}/></TableCell>
                     </TableRow>
                 )
             })}

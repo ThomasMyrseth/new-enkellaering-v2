@@ -179,6 +179,7 @@ def upload_new_class(user_id):
     comment = data.get("comment")
     was_canselled = data.get("was_canselled") or False
     groupclass = data.get('groupclass')
+    number_of_students = data.get('number_of_students')
     invoiced_student = False
     paid_teacher = False
     paid_teacher_at = None
@@ -203,7 +204,8 @@ def upload_new_class(user_id):
             paid_teacher_at=paid_teacher_at,
             invoiced_student_at=invoiced_student_at,
             was_canselled=was_canselled,
-            groupclass=groupclass
+            groupclass=groupclass,
+            number_of_students=number_of_students
         )
         classes.append(new_class)
 
@@ -216,3 +218,27 @@ def upload_new_class(user_id):
         print(f"error inserting new class: {e}")
         return jsonify({"message": f"Error inserting new class {e}"}), 500
 
+
+
+
+from big_query.deletes import delete_class
+@classes_bp.route('/delete-class', methods=["POST"])
+@token_required
+def delete_class_route(user_id):
+    if not user_id:
+        return jsonify({"message": "Unauthenticaterd"}), 400
+
+    data = request.get_json()
+    class_id = data.get('class_id')
+
+    if not class_id:
+        return jsonify({"message": "missing class id field"}), 401
+
+    try:
+        res = delete_class(teacher_user_id=user_id, class_id=class_id, client=bq_client)
+        res.result()  # Wait for query to complete
+
+        return jsonify({"message": "Class successfully deleted"}), 200
+    except Exception as e:
+        print(f"Error deleting class: {e}")
+        return jsonify({"message": f"Error deleting class: {str(e)}"}), 500

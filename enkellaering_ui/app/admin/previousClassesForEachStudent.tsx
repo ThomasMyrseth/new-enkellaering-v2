@@ -18,6 +18,7 @@ import {
     AccordionTrigger,
 } from "@/components/ui/accordion";
 import { toast } from "sonner";
+import { DeleteClass } from "../min-side-laerer/deleteClass";
 
 import { Copy } from 'lucide-react';
 
@@ -73,7 +74,7 @@ export function PreviousClassesForEachStudent() {
     }
 
       
-    return (<div className="flex flex-col justify-center items-center w-full">
+    return (<div className="flex flex-col justify-center items-center w-full shadow-lg m-4 p-4 bg-white dark:bg-black rounded-lg">
         <h1 className="text-xl">En oversikt over tidligere time for hver elev</h1>
 
         {students.map((s :Student, index) => {
@@ -150,7 +151,7 @@ export function PreviousClassesForEachStudent() {
             totalInvoicedStudent = Math.round(totalInvoicedStudent)
             totalInvoicedHoursStudent = Math.round(totalInvoicedHoursStudent*10)/10
 
-        return (<div key={index} className="bg-white dark:bg-black shadow-lg w-full p-4 rounded-lg mb-4">
+        return (<div key={index} className="bg-white dark:bg-black w-full p-4 rounded-lg mb-4">
             <Accordion type="single" collapsible className="w-full mt-4">
             <AccordionItem value="remaining-classes">
                 <AccordionTrigger className={`w-full h-full p-4 ${numberOfCanselledClassesLastFourWeeks>=2 ? 'bg-red-50 dark:bg-red-950':''}`}>
@@ -244,6 +245,7 @@ export function PreviousClassesForEachStudent() {
                             <TableHead className="text-right">Fakturert beløp</TableHead>
                             <TableHead>Betalt lærer</TableHead>
                             <TableHead>Kommentar fra timen</TableHead>
+                            <TableHead>Slett</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -281,6 +283,7 @@ export function PreviousClassesForEachStudent() {
                             )}
                             </TableCell>
                             <TableCell>{c.comment}</TableCell>
+                            <TableCell><DeleteClass classId={c.class_id} hasInvoiced={c.invoiced_student} hasPaid={c.paid_teacher}/></TableCell>
                         </TableRow>
                         );
                     })}

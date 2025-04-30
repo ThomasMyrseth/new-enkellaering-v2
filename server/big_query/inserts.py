@@ -317,7 +317,8 @@ def insert_classes(client: bigquery.Client, classes: list[Classes]):
             "paid_teacher": cls.paid_teacher,
             "invoiced_student": cls.invoiced_student,
             "was_canselled": cls.was_canselled,
-            "groupclass": cls.groupclass
+            "groupclass": cls.groupclass,
+            "number_of_students": cls.number_of_students,
         }
         for cls in classes
     ]

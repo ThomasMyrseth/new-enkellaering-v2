@@ -37,8 +37,6 @@ export const ToggleFilterCards = ({
 
     qualifications,
     
-    viewMode,
-    setViewMode
   }: {
     passFilterDigital: (value: boolean) => void;
     passFilterPhysical: (value: boolean) => void;
@@ -47,8 +45,6 @@ export const ToggleFilterCards = ({
 
     qualifications :string[];
 
-    viewMode: string;
-    setViewMode: React.Dispatch<React.SetStateAction<"list" | "grid">>;
   }) => {
     const [filterDigital, setFilterDigital] = useState<boolean>(false);
     const [filterPhysical, setFilterPhysical] = useState<boolean>(false);
@@ -108,7 +104,6 @@ export const ToggleFilterCards = ({
                 </div>
             </div>
 
-            {isDesktop && <ToggleBetweenGridAndList setViewMode={setViewMode} viewMode={viewMode}/>}
         </div>
 
         
@@ -234,17 +229,3 @@ function StatusList({
 }
 
 
-const ToggleBetweenGridAndList = ({setViewMode, viewMode} : {  setViewMode: React.Dispatch<React.SetStateAction<"list" | "grid">>    , viewMode: string}) => {
-
-
-    return(<>                 
-        <div className="mb-4 flex justify-end">
-            <Button
-            onClick={() => setViewMode(viewMode === "list" ? "grid" : "list")}
-            //className="px-4 py-2 dark:bg-black text-white rounded"
-            >
-            Endre visning til {viewMode === "list" ? "rutenett" : "liste"}
-            </Button>
-        </div>
-    </>)
-}

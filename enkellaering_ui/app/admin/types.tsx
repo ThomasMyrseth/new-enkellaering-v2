@@ -134,6 +134,7 @@ export type Classes = {
     class_id :string;
     was_canselled :boolean;
     groupclass :boolean;
+    number_of_students :number | null;
 };
 
 export type ClassesJoinTeacher = {

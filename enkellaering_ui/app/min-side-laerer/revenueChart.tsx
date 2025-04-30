@@ -27,6 +27,7 @@ type FormattedClass = {
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080/server";
 
 function calculatePayment(classSession: Classes, hourlyPay: number): number {
+    const numberOfStudents :number = classSession.number_of_students || 1; // Default to 1 if null
     const start = new Date(classSession.started_at);
     const end = new Date(classSession.ended_at);
   
@@ -40,7 +41,7 @@ function calculatePayment(classSession: Classes, hourlyPay: number): number {
     let payment = durationInHours * hourlyPay;
     //bonus if this is a groupclass
     if (classSession.groupclass) {
-        payment = durationInHours * (hourlyPay + 60)
+        payment = durationInHours * (hourlyPay + 60) / numberOfStudents;
     }
   
     return Math.round(payment); // Optional: Round to the nearest integer

@@ -305,41 +305,46 @@ def submit_new_student_route():
     if not phone:
         return jsonify({"message": "Missing phone number"}), 400
     
-    ns = NewStudents(
-        new_student_id=str(uuid.uuid4()),
-        phone=phone,
-        preffered_teacher= '',
-        created_at=datetime.now(norway_tz),
-        has_called=False,
-        called_at=None,
-        has_answered=False,
-        answered_at=None,
-        has_signed_up=False,
-        signed_up_at=None,
-        from_referal=False,
-        referee_phone=None,
-        referee_name = None,
-        has_assigned_teacher=False,
-        assigned_teacher_at=None,
-        assigned_teacher_user_id=None,
-        has_finished_onboarding=False,
-        finished_onboarding_at=None,
-        comments=None,
-        paid_referee=False,
-        paid_referee_at=None
-    )
+    try:
+        ns = NewStudents(
+            new_student_id=str(uuid.uuid4()),
+            phone=phone,
+            preffered_teacher= '',
+            created_at=datetime.now(norway_tz),
+            has_called=False,
+            called_at=None,
+            has_answered=False,
+            answered_at=None,
+            has_signed_up=False,
+            signed_up_at=None,
+            from_referal=False,
+            referee_phone=None,
+            referee_name = None,
+            has_assigned_teacher=False,
+            assigned_teacher_at=None,
+            assigned_teacher_user_id=None,
+            has_finished_onboarding=False,
+            finished_onboarding_at=None,
+            comments=None,
+            paid_referee=False,
+            paid_referee_at=None
+        )
 
-    res = insert_new_student(client=bq_client, new_student=ns)
+        res = insert_new_student(client=bq_client, new_student=ns)
 
-    if not res or res.errors:
-        print("An error occured inserting nre student", res.errors)
-        return jsonify({
-            "message": "An error occured while inserting new student"
-        }), 500
+        if not res or res.errors:
+            print("An error occured inserting nre student", res.errors)
+            return jsonify({
+                "message": "An error occured while inserting new student"
+            }), 500
+    except Exception as e:
+        print(f"Error adding new student {e}")
+        return jsonify({"message": str(e)}), 500
     
     try:
         sendNewStudentToAdminMail(newStudentPhone=phone)
     except Exception as e:
+        print(f"Error sending email about new student {e}")
         return jsonify({"message": f"Error sending email about the new student: {e}"}), 500
     
     print("response: ", res.result())

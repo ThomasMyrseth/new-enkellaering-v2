@@ -12,6 +12,7 @@ import { NewStudentsWithoutTeacher } from "./newStudentWithPrefferedteacher";
 import Quiz from "./quiz/main";
 
 import { Teacher } from "./types";
+import { InactiveStudents } from "./inactiveStudents";
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
 
@@ -70,16 +71,16 @@ export default function AdminPage() {
         return <p>Loading...</p>
     }
 
-    return (<div className="flex flex-col items-center justify-center w-full space-y-10 min-h-screen">
+    return (<div className="flex flex-col items-center justify-center w-full space-y-10 min-h-screen bg-stone-100 dark:bg-slate-950">
         <TeacherName teacher={teacher}/>
         <div className="flex flex-col items-center justify-center w-full md:w-3/4 max-w-screen-lg space-y-10 mx-auto px-4">
           <NewStudentsWithoutTeacher />
-          <Quiz/>
           <DailyRevenueChart />
           <PreviousClassesForEachTeacher />
           <PreviousClassesForEachStudent />
           <NewStudentsWorkflow />
-          {/* <NewStudentsWithoutTeacherPage /> */}
+          <InactiveStudents />
+          <Quiz/>
 
         </div>
         <div className="h-10"> </div>

@@ -155,7 +155,7 @@ export default function NewStudentWithPreferredTeacherActionsCard({ ns }: { ns :
           </>
           :
           <>
-            <h2>Du må vente til {twoHoursAfterCreation.toLocaleDateString("nb-NO", {minute: "2-digit", hour: "2-digit", month: "long", year: "numeric",})} med å godta eleven</h2>
+            <h2>Du må vente til {twoHoursAfterCreation.toLocaleDateString("nb-NO", {minute: "2-digit", hour: "2-digit", day: "2-digit", month: "long", year: "numeric",})} med å godta eleven</h2>
           </>
         }
         <AlertDialogFooter className="mt-4 flex justify-between">

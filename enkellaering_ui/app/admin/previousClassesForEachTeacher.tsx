@@ -2,6 +2,120 @@
 
 import { Copy } from 'lucide-react';
 
+import { DeleteClass } from '../min-side-laerer/deleteClass';
+import { Switch } from '@/components/ui/switch';
+import { Label } from "@/components/ui/label";
+import {
+  Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList
+} from "@/components/ui/command";
+import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
+import { useMediaQuery } from "@/hooks/use-media-query";
+
+const ToggleFilterPreviousClasses = ({
+  passFilterDigital,
+  passFilterPhysical,
+  passFilterLocation,
+}: {
+  passFilterDigital: (v: boolean) => void;
+  passFilterPhysical: (v: boolean) => void;
+  passFilterLocation: (v: string) => void;
+}) => {
+  const [filterDigital, setFilterDigital] = useState(false);
+  const [filterPhysical, setFilterPhysical] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [selectedCity, setSelectedCity] = useState<string | null>(null);
+  const isDesktop = useMediaQuery("(min-width: 768px)");
+  const cities = ["Oslo", "Trondheim"];
+
+  const handleCitySelect = (value: string | null) => {
+    setSelectedCity(value);
+    passFilterLocation(value || "");
+    setOpen(false);
+  };
+
+  return (
+    <div className="flex flex-col items-center space-y-4 mb-4 ">
+      <div className="w-full flex justify-between">
+        <div className="flex flex-row items-center space-x-4 w-full">
+          <Switch
+            id="digital-filter"
+            checked={filterDigital}
+            onCheckedChange={(v) => {
+              setFilterDigital(v);
+              passFilterDigital(v);
+            }}
+          />
+          <Label htmlFor="digital-filter">Kun digital</Label>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="physical-filter"
+            checked={filterPhysical}
+            onCheckedChange={(v) => {
+              setFilterPhysical(v);
+              passFilterPhysical(v);
+            }}
+          />
+          <Label htmlFor="physical-filter">Kun fysisk</Label>
+        </div>
+      </div>
+      {isDesktop ? (
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="w-[150px] justify-start">
+              {selectedCity || "Søk etter by"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[200px] p-0" align="start">
+            <Command>
+              <CommandInput placeholder="Filter..." />
+              <CommandList>
+                <CommandEmpty>No results found.</CommandEmpty>
+                <CommandGroup>
+                  <CommandItem onSelect={() => handleCitySelect(null)}>
+                    Fjern filter
+                  </CommandItem>
+                  {cities.map((city) => (
+                    <CommandItem key={city} value={city} onSelect={() => handleCitySelect(city)}>
+                      {city}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+      ) : (
+        <Drawer open={open} onOpenChange={setOpen}>
+          <DrawerTrigger asChild>
+            <Button variant="outline" className="w-[150px] justify-start">
+              {selectedCity || "Søk etter by"}
+            </Button>
+          </DrawerTrigger>
+          <DrawerContent>
+            <Command>
+              <CommandInput placeholder="Filter..." />
+              <CommandList>
+                <CommandEmpty>No results found.</CommandEmpty>
+                <CommandGroup>
+                  <CommandItem onSelect={() => handleCitySelect(null)}>
+                    Fjern filter
+                  </CommandItem>
+                  {cities.map((city) => (
+                    <CommandItem key={city} value={city} onSelect={() => handleCitySelect(city)}>
+                      {city}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </DrawerContent>
+        </Drawer>
+      )}
+    </div>
+  );
+};
+
 import {
     Table,
     TableBody,
@@ -44,6 +158,11 @@ export function PreviousClassesForEachTeacher() {
     
 
     const [loading, setLoading] = useState<boolean>(true)
+
+    // Filter states
+    const [filterLocation, setFilterLocation] = useState<string>("");
+    const [filterPhysical, setFilterPhysical] = useState<boolean>(false);
+    const [filterDigital, setFilterDigital] = useState<boolean>(false);
 
     //get classes, teachers and students for everyone
     useEffect( () => {
@@ -176,11 +295,24 @@ export function PreviousClassesForEachTeacher() {
         return <p>Loading...</p>
     }
 
-      
-    return (<div className="flex flex-col justify-center items-center w-full">
+    // Apply filters to teachers
+    const filteredTeachers = classesByTeacher.filter(ct => {
+        const loc = parseInt(ct.teacher.postal_code) < 4000 ? "Oslo" : "Trondheim";
+        if (filterLocation && loc !== filterLocation) return false;
+        if (filterPhysical && !ct.teacher.physical_tutouring) return false;
+        if (filterDigital && !ct.teacher.digital_tutouring) return false;
+        return true;
+    });
+
+    return (<div className="flex flex-col justify-center items-center w-full bg-white dark:bg-black shadow-lg rounded-lg m-4 p-4">
+        <ToggleFilterPreviousClasses
+          passFilterDigital={setFilterDigital}
+          passFilterPhysical={setFilterPhysical}
+          passFilterLocation={setFilterLocation}
+        />
         <h1 className="text-xl">En oversikt over tidligere timer for hver lærer</h1>
 
-        {classesByTeacher.map((ct :classesJoinTeacher, index) => {
+        {filteredTeachers.map((ct :classesJoinTeacher, index) => {
             const classes :Classes[] = ct.classes
             
 
@@ -228,7 +360,8 @@ export function PreviousClassesForEachTeacher() {
                 }
                 let toTeacherAmmount :number = totalDurationMillis / (1000 * 60 * 60) * teacherHourlyPay
                 if (c.groupclass) {
-                    toTeacherAmmount = totalDurationMillis / (1000 * 60 * 60) * (teacherHourlyPay+60)
+                    const numberOfStudents :number = c.number_of_students || 1
+                    toTeacherAmmount = (totalDurationMillis / (1000 * 60 * 60) * (teacherHourlyPay+60))/numberOfStudents
                 }
 
                 //add up to see how many hours the teacher has had the last four weeks
@@ -270,18 +403,15 @@ export function PreviousClassesForEachTeacher() {
             totalInvoicedHoursByTeacher = Math.round(totalInvoicedHoursByTeacher*100)/100
 
 
-        return (<div key={index} className="bg-white dark:bg-black shadow-lg w-full p-4 rounded-lg mb-4">
+        return (<div key={index} className="bg-white dark:bg-black w-full p-4 rounded-lg mb-4">
             <Accordion type="single" collapsible className="w-full mt-4">
                 <AccordionItem value="remaining-classes">
                     <AccordionTrigger>
                         <div className='flex flex-row w-full items-center justify-between'>
                             <div className='flex flex-row items-center'>
-                                <div className={`rounded-full h-4 w-4 mr-4 ${ct.teacher.wants_more_students ? "bg-green-500" : "bg-red-500"}`}/>
                                 <div className='text-start'>{ct.teacher.firstname} {ct.teacher.lastname}</div>
                             </div>
                             <div className='text-start font-extralight mr-2 w-44 text-neutral-400'> 
-                                { `${parseInt(ct.teacher.postal_code)<4000 ? "Oslo" : "Trondheim"}` }
-
                                 <p 
                                     className={`${actualTotalHoursLastFourWeeks<estTotalHoursLastFourWeeks ? 'text-red-400' : ''}`}
                                 >{ actualTotalHoursLastFourWeeks}/{estTotalHoursLastFourWeeks}h siste fire uker</p>
@@ -381,6 +511,7 @@ export function PreviousClassesForEachTeacher() {
                                     <TableHead>Betalt lærer</TableHead>
                                     <TableHead>Beløp til lærer</TableHead>
                                     <TableHead>Kommentar fra timen</TableHead>
+                                    <TableHead>Slett</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -397,7 +528,8 @@ export function PreviousClassesForEachTeacher() {
                                 }
                                 let toTeacherAmmount :number = Math.round(totalDurationMillis / (1000 * 60 * 60) * teacherHourlyPay)
                                 if (c.groupclass) {
-                                    toTeacherAmmount = Math.round(totalDurationMillis / (1000 * 60 * 60) * (teacherHourlyPay+60))
+                                    const numberOfStudents :number = c.number_of_students || 1
+                                    toTeacherAmmount = Math.round( (totalDurationMillis / (1000 * 60 * 60) * (teacherHourlyPay+60))/numberOfStudents )
                                 }
 
                                 
@@ -423,6 +555,8 @@ export function PreviousClassesForEachTeacher() {
                                     </TableCell>
                                     <TableCell className="text-right">{toTeacherAmmount}kr</TableCell>
                                     <TableCell>{c.comment}</TableCell>
+                                    <TableCell><DeleteClass classId={c.class_id} hasInvoiced={c.invoiced_student} hasPaid={c.paid_teacher}/></TableCell>
+                                    
                                 </TableRow>
                                 );
                             })}

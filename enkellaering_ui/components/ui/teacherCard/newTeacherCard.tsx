@@ -41,7 +41,6 @@ export function TeacherFocusCards() {
     const isLoggedInStudent = hasToken && !isTeacher
 
     const [active, setActive] = useState<(CardType) | boolean | null>(null);
-    const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
     const [disableButton, setDisableButton] = useState<boolean>(false)
 
     const id = useId();
@@ -237,20 +236,20 @@ export function TeacherFocusCards() {
                         </div>
                     </RadioGroup>
                 }
-                <p>Jeg ønsker {orderedTeacher?.teacher.physical_tutouring? 'fysisk' : 'digital'} undervisning med {orderedTeacher?.teacher.firstname}</p>
-                <div>
+
+                {wantPhysicalOrDigital && <div>
                     <Label>Hvor ønsker du å møte {orderedTeacher?.teacher.firstname}?</Label>
                     <Textarea rows={2} value={address} placeholder="Helst hjemme hos meg i Hjemmeveien 3, eller i sentrum som Deichman Bjørvika." onChange={(e) => setAddress(e.target.value)}/>
-                </div>
+                </div>}
                 <div>
                     <Label>Beskriv til {orderedTeacher?.teacher.firstname} hva du trenger hjelp med og hvilke fag.</Label>
                     <Textarea 
                         rows={4} 
                         value={comments} onChange={(e) => setComments(e.target.value)}
-                        placeholder='Jeg heter Thomas og trenger hjelp i matte 1t. Jeg ønsker hjelo én gang i uken, men har en prøve i trigonometri om to uker. Håper vi kan øve litt ekstra til den!'
+                        placeholder='Jeg heter Thomas og trenger hjelp i matte 1t. Jeg ønsker hjelp én gang i uken, men har en prøve i trigonometri om to uker. Håper vi kan øve litt ekstra til den!'
                     />
                 </div>
-                <Button onClick={handleSubmit}>Bestill</Button>
+                <Button disabled={disableButton} onClick={handleSubmit}>Bestill</Button>
                 <AlertDialogCancel onClick={() => setShowOrderPopover(false)}>Angre</AlertDialogCancel>
             </AlertDialogContent>
         </AlertDialog>
@@ -263,8 +262,6 @@ export function TeacherFocusCards() {
                 passFilterPhysical={setFilterPhysical}
                 passFilterLocation={setFilterLocation}
                 passFilterQualification={setFilterQualification}
-                viewMode={viewMode}
-                setViewMode={setViewMode}
           />   
         </div>
 
@@ -370,90 +367,6 @@ export function TeacherFocusCards() {
         </AnimatePresence>
 
         <div className="bg-white p-4 dark:bg-black rounded-xl">
-        {/* Card List */}
-        {viewMode === "list" ? (
-            <ul className="max-w-2xl mx-auto w-full gap-4">
-            {filteredCards.length === 0 && <h3 className="text-black w-full text-center dark:text-white">Vi har desverre ingen lærere som møter filtrene dine.</h3>}
-            {filteredCards.map((card :CardType, index) => {
-                let avgRating :number =0
-                //avoid divinding by zero is card.reviews===0
-                if (card.reviews.length!==0) {
-                    card.reviews.map( (review) => {
-                        avgRating += review.rating
-                    })
-                    avgRating = Math.round(avgRating/card.reviews.length)
-                }
-
-                return(<div className="flex flex-row items-center w-full justify-between" key={index}>
-                <motion.div
-                    layoutId={`card-${card.teacher.user_id}-${id}`}
-                    key={`card-${card.teacher.firstname}-${id}`}
-                    onClick={() => setActive(card)}
-                    className="p-4 flex flex-col justify-between items-center hover:bg-neutral-50 dark:hover:bg-neutral-800 rounded-xl cursor-pointer"
-                >
-                    <div className="flex gap-4 flex-col md:flex-row">
-                        <motion.div layoutId={`image-${card.teacher.firstname}-${id}`}>
-                        <Image
-                            width={100}
-                            height={100}
-                            src={card.src}
-                            alt={card.teacher.firstname}
-                            className="h-40 w-40 md:h-14 md:w-14 rounded-lg object-cover object-top"
-                        />
-                        </motion.div>
-                        <div className="flex flex-row items-center ">
-                        <motion.h3
-                            layoutId={`title-${card.teacher.firstname}-${id}`}
-                            className="flex flex-col w-28 font-bold text-neutral-800 dark:text-neutral-200 text-center md:text-left"
-                        >
-                            {card.teacher.firstname}
-                            <span className="text-xs font-light">{card.teacher.location}</span>
-                            <span className="text-black dark:text-white">
-                                <RenderStars rating = {avgRating}/>
-                            </span>
-                        </motion.h3>
-                        <motion.p
-                            layoutId={`description-${card.teacher.firstname}-${id}`}
-                            className="w-60 m-2 text-neutral-600 dark:text-neutral-400 text-center md:text-left overflow-x-scroll scrollbar-hide"
-                            key = {card.teacher.firstname}
-                        >
-                            {[...new Set(card.qualifications)].sort().map((qualification: string, index: number) => (
-                                <span key={index} className="whitespace-nowrap rounded-lg bg-neutral-100 mx-1 p-2 text-xs">{qualification}</span>
-                            ))}
-                        </motion.p>
-                        <motion.p className={`font-light text-xs rounded-lg m-2 p-1 ${card.teacher.digital_tutouring? 'text-emerald-400': 'text-rose-400'}`}>
-                        <Laptop/> digital
-                        </motion.p>
-                        <motion.p className={`font-light text-xs rounded-lg p-1 m-1 ${card.teacher.physical_tutouring? 'text-emerald-400': 'text-rose-400'}`}>
-                            <Users/> fysisk
-                        </motion.p>
-                        </div>
-                    </div>
-                </motion.div>
-                <Button 
-                    onClick={() => handleOrderClick(card)}
-                    disabled={
-                        (!card.teacher.physical_tutouring && !card.teacher.digital_tutouring) ||
-                        !!previousOrders.find((p) => p.order.teacher_user_id === card.teacher.user_id)
-                        || !isLoggedInStudent
-                        || disableButton
-                    }
-                    className={`py-2min-w-32 w-fit min-h-14 ${   (!card.teacher.physical_tutouring && !card.teacher.digital_tutouring) ||
-                        !!previousOrders.find((p) => p.order.teacher_user_id === card.teacher.user_id) || !isLoggedInStudent ? 'bg-neutral-400 text-neutral-100':''}`}
-                >
-                    {
-                    previousOrders.find((p) => p.order.teacher_user_id === card.teacher.user_id)
-                        ? <p className="text-xs whitespace-normal">Du har allerede bestilt {card.teacher.firstname} uken, eller så er {card.teacher.firstname} læreren din</p>
-                        : isLoggedInStudent ? <p>Bestill {card.teacher.firstname}</p> : <p className="text-xs">Logg inn for å bestille</p>
-                    }
-                                            
-                </Button>
-            </div>)})}
-            </ul>
-        ) : 
-        
-        //grid view
-        (
             <ul className="md:max-w-2xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 items-start gap-4">
             {filteredCards.map((card, index) => {
     
@@ -551,7 +464,6 @@ export function TeacherFocusCards() {
 
             </div>)})}
             </ul>
-        )}
         </div>
         </>}
         </>

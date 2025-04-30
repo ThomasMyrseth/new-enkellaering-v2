@@ -10,6 +10,7 @@ import {
   AlertDescription,
   AlertTitle,
 } from "@/components/ui/alert"
+import { toast } from "sonner";
  
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
 
@@ -30,14 +31,12 @@ export default function NewStudentForm() {
         setTimeout(() => {
             setIsDisabled(false)
         }, 5000); //5 seconds
-        
-        const trimmedPhone = phone.replace(/\s/g, "");
-        setPhone(trimmedPhone);
 
-        // if (trimmedPhone.length != 8) {
+        // if (phone.length!=8) {
         //     setValidPhone(false)
-        //     return;
-        // } else {
+        //     return
+        // }
+        // else {
         //     setValidPhone(true)
         // }
 
@@ -47,7 +46,7 @@ export default function NewStudentForm() {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                "phone": trimmedPhone
+                "phone": phone
             })
         })
 
@@ -58,6 +57,7 @@ export default function NewStudentForm() {
         else {
             setErrorMessage(false) //we have success
             setPhone('')
+            toast('Tusen takk! Vi ringer deg innen kort tid')
         }
     }
 
@@ -77,7 +77,7 @@ export default function NewStudentForm() {
             </Alert>
         }
 
-        {/* {validPhone===false &&
+        {/* {/* {validPhone===false &&
             <Alert>
                 <Terminal className="h-4 w-4" />
                 <AlertTitle className="text-red-400">Skrev du noe feil?</AlertTitle>
