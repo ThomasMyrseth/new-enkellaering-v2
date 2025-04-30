@@ -48,7 +48,6 @@ export const ToggleFilterCards = ({
   }) => {
     const [filterDigital, setFilterDigital] = useState<boolean>(false);
     const [filterPhysical, setFilterPhysical] = useState<boolean>(false);
-    const isDesktop :boolean = useMediaQuery("(min-width: 768px)");
   
     return (
       <div className="">
@@ -146,7 +145,7 @@ export const filterCards = (
 
 const ComboBoxResponsive = ({ values, placeholder, passSelectedValue }: { values: string[], placeholder: string, passSelectedValue: (value :string | null) => void }) => {
     const [open, setOpen] = useState(false);
-    const isDesktop = useMediaQuery("(min-width: 768px)");
+    const isDesktop :boolean= useMediaQuery("(min-width: 768px)");
     const [selectedValue, setSelectedValue] = useState<string | null>(null);
   
     const handleSetSelectedValue = (value: string | null) => {
@@ -169,20 +168,22 @@ const ComboBoxResponsive = ({ values, placeholder, passSelectedValue }: { values
       );
     }
   
-    return (
-      <Drawer open={open} onOpenChange={setOpen}>
-        <DrawerTrigger asChild>
-          <Button variant="outline" className="w-[150px] justify-start">
-            {selectedValue ? selectedValue : placeholder}
-          </Button>
-        </DrawerTrigger>
-        <DrawerContent>
-          <div className="mt-4 border-t">
-            <StatusList values={values} setOpen={setOpen} setSelectedValue={handleSetSelectedValue} />
-          </div>
-        </DrawerContent>
-      </Drawer>
-    );
+    else {
+      return (
+        <Drawer open={open} onOpenChange={setOpen}>
+          <DrawerTrigger asChild>
+            <Button variant="outline" className="w-[150px] justify-start">
+              {selectedValue ? selectedValue : placeholder}
+            </Button>
+          </DrawerTrigger>
+          <DrawerContent>
+            <div className="mt-4 border-t">
+              <StatusList values={values} setOpen={setOpen} setSelectedValue={handleSetSelectedValue} />
+            </div>
+          </DrawerContent>
+        </Drawer>
+      );
+    }
 }
 
 
