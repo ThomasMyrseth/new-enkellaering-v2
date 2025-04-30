@@ -676,8 +676,7 @@ const RemoveTeacherDialog = ({ student, teacher, teacherStudent }: { student: St
     const [travelPayToTeacher, setTravelPayToTeacher] = useState<number>(teacherStudent?.travel_pay_to_teacher || 0);
     const [travelPayFromStudent, setTravelPayFromStudent] = useState<number>(teacherStudent?.travel_pay_from_student || 0);
 
-    console.log("teacherStudent", teacherStudent)
-    ''
+
     return (
         <AlertDialog>
             <AlertDialogTrigger asChild>

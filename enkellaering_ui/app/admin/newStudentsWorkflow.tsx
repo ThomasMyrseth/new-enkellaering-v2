@@ -169,7 +169,6 @@ const NewStudentTable =( {newStudents} : {newStudents : NewStudent[]})  => {
                             if (ns.hidden) {
                                 return null
                             }
-                            console.log(ns)
                             return <NewStudentRow key={ns.new_student_id} ns={ns} teachers={teachers}/>
                         })}
                     </TableBody>

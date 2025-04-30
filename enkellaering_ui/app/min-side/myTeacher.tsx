@@ -42,35 +42,6 @@ export function MyTeachers( {teachers} : {teachers :Teacher[]}) {
     
 }
 
-// const handleRemoveTeacher = async (teacherUserId: string) => {
-//     const token = localStorage.getItem('token')
-//     const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8080'
-//     try {
-//         const res = await fetch(`${BASEURL}/assign-teacher-for-student`, {
-//             method: "POST",
-//             headers: {
-//                 "Content-Type": "application/json",
-//                 "Authorization": `Bearer ${token}`
-//             },
-//             body: JSON.stringify({
-//                 student_user_id: localStorage.getItem("user_id"),
-//                 old_teacher_user_id: teacherUserId
-//             })
-//         });
-
-//         const data = await res.json();
-
-//         if (!res.ok) {
-//             console.error("Failed to remove teacher:", data.message);
-//         } else {
-//             console.log("Teacher removed successfully");
-//             toast("Du har fjernet læreren din")
-//         }
-//     } catch (error) {
-//         console.error("Error removing teacher:", error);
-//     }
-// };
-
 const TeacherCard = ({teacher} : {teacher :Teacher}) => {
     const hasTeacher :boolean = teacher !==null
 

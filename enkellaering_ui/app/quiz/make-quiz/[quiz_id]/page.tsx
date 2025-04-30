@@ -55,13 +55,6 @@ export default function MakeQuizPage() {
     const handleAddQuestion = (file :File, timelimit :number, question :string, options :string[], correct : 0|1|2|3) => {
         const uniqueId = uuidv4();
 
-        console.log("quizId: ", quiz_id)
-        console.log("file: ", file)
-        console.log("timelimit: ", timelimit)
-        console.log("question: ", question)
-        console.log("options: ", options)
-        console.log("correct: ", correct)
-
         //1. append the new question
         if (!quiz_id || !file || !timelimit || !question || !options || correct === undefined) {
             return false;

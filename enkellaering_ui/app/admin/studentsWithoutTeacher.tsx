@@ -88,7 +88,6 @@ export function NewStudentsWithoutTeacherPage() {
             }
 
             const data = await response.json()
-            console.log("teacher data", data)
             const teachers :Teacher[] = data.teachers
             setTeachers(teachers)
 

@@ -98,10 +98,8 @@ function SignupFormContent() {
       const email = form["parent-email"].value;
       const password = form["password"].value
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      console.log("created user in firebase!")
 
       const idToken = await userCredential.user.getIdToken();
-      console.log("Firebase ID Token:", idToken);
 
 
 
@@ -291,110 +289,3 @@ const LabelInputContainer = ({ children }: { children: React.ReactNode }) => {
 };
 
 
-
-// import { Teacher } from "../admin/types";
-// import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-// import { ChevronsUpDown } from "lucide-react"
-// import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
-// import { Check } from "lucide-react";
-// import { useEffect } from "react";
-
-
-// const SetTeacherCombobox = ({selectedTeacherUserId, passSelectedTeacher }: { 
-//     selectedTeacherUserId: string | null,
-//     passSelectedTeacher: (teacherUserId: string) => void 
-    
-//     }) => {
-//     const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
-//     const token = localStorage.getItem("token");
-//     const [teachers, setTeachers] = useState<Teacher[]>([]);
-//     const [teacherUserId, setTeacherUserId] = useState<string | null>(selectedTeacherUserId || null);
-//     const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(teachers.find((teacher) => teacher.user_id === selectedTeacherUserId) || null);
-//     const [open, setOpen] = useState<boolean>(false);
-
-
-//     //fetch the teachers
-//     useEffect(() => {
-//           async function fetchTeacher() {
-//             try {
-//               const response = await fetch(`${BASEURL}/get-all-teachers`, {
-//                 method: "GET",
-//                 headers: {
-//                   'Authorization': `Bearer ${token}`
-//                 }
-//               });
-        
-//               if (!response.ok) {
-//                 return false
-//               }
-        
-//               const data = await response.json();
-//               const teachers = data.teachers;
-    
-//               if (!teachers) {
-//                 console.log("error fetching teacher!")
-//               }
-    
-//               setTeachers(teachers)
-    
-//             } 
-//             catch (error) {
-//               console.error("Error fetching teacher:", error);
-//             }
-//           }
-//           fetchTeacher()
-//         },[])
-  
-//     const getTeacherName = (teacher: Teacher | null) =>
-//       teacher ? `${teacher.firstname} ${teacher.lastname}` : "Jeg vet ikke hvem jeg vil ha";
-  
-//     const handleSelectTeacher = (userId: string) => {
-//       setTeacherUserId(userId);
-//       const selectedTeacher = teachers.find((teacher) => teacher.user_id === userId) || null;
-//       setSelectedTeacher(selectedTeacher);
-//       passSelectedTeacher(userId);
-//     };
-  
-//     return (
-//       <Popover open={open} onOpenChange={setOpen}>
-//         <PopoverTrigger asChild>
-//           <div
-//             role="combobox"
-//             aria-expanded={open}
-//             className="w-[200px] justify-start flex flex-row"
-//           >
-//             {getTeacherName(selectedTeacher)}
-//             <ChevronsUpDown className="opacity-50" />
-//           </div>
-//         </PopoverTrigger>
-//         <PopoverContent className="w-[200px] p-0">
-//           <Command>
-//             <CommandInput placeholder="Søk etter lærer..." />
-//             <CommandList>
-//               <CommandEmpty>Jeg vet ikke hvem jeg vil ha</CommandEmpty>
-//               <CommandGroup>
-//                 {teachers.map((teacher) => (
-//                   <CommandItem
-//                     key={teacher.user_id}
-//                     value={teacher.user_id}
-//                     onSelect={(currentValue) => {
-//                       handleSelectTeacher(currentValue);
-//                       setOpen(false);
-//                     }}
-//                   >
-//                     {getTeacherName(teacher)}
-//                     <Check
-//                       className={cn(
-//                         "ml-auto",
-//                         teacherUserId === teacher.user_id ? "opacity-100" : "opacity-0"
-//                       )}
-//                     />
-//                   </CommandItem>
-//                 ))}
-//               </CommandGroup>
-//             </CommandList>
-//           </Command>
-//         </PopoverContent>
-//       </Popover>
-//     );
-// };

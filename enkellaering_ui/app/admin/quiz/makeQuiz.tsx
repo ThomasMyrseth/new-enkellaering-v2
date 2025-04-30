@@ -28,7 +28,6 @@ export function MakeQuizForm() {
 
     const handleFileUpload = (files: File[]) => {
       setFiles(files);
-      console.log(files);
     };
 
     const handleSetTitle = (value :string) => {
@@ -72,7 +71,6 @@ export function MakeQuizForm() {
 
         if (!res.ok) {
             setSuccess(false)
-            console.log(res.statusText)
             return
         }
         else {

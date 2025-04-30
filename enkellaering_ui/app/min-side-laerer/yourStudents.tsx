@@ -53,8 +53,6 @@ export function YourStudent( {teacher, classes, students, teacherStudents} : {te
 
                 const totalDurationHours = Math.round(totalDurationMillisLastFourWeeks/(1000*60*60)*10)/10
 
-                console.log("Teacher student", teacherStudent)
-
                 return (
                 <AccordionItem value={index.toString()} key={index}>
                     <AccordionTrigger>

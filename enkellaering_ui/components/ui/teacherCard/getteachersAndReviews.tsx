@@ -84,7 +84,6 @@ const buildTeacherCards = (teachers: ExpandedTeacher[], reviews: Review[], image
         lastname: 'Læring'
       };
       
-    console.log(imagesAndAboutMes)
     teachers.map((teacher) => {
         const teacherReviews :Review[]= reviews.filter((review) => review.teacher_user_id === teacher.user_id);
         const imageAndAboutMe :AboutMe= imagesAndAboutMes.find((i) => i.user_id === teacher.user_id) || fallbackAboutMe;
@@ -133,7 +132,6 @@ export const getMyOrders = async () => {
         }
 
         const data = await response.json();
-        console.log("Data from previous orders", data);
         const teachers: TeacherOrderJoinTeacher[] = data.teachers || [];
 
         return teachers;

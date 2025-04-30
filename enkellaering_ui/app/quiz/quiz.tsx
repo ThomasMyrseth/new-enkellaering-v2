@@ -145,7 +145,6 @@ const Quiz: React.FC<QuizProps> = ({
       passedNumber = 2
     }
 
-    console.log(passedNumber)
 
 
     const res = await fetch(`${baseUrl}/submit-quiz`, {

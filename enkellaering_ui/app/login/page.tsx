@@ -22,11 +22,9 @@ export default function LoginForm() {
     try {
       // Authenticate the user with Firebase
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      console.log("User signed in:", userCredential.user);
 
       // Get the Firebase ID token
       const idToken = await userCredential.user.getIdToken();
-      console.log("Firebase ID Token:", idToken);
 
       // Send the token to the backend for further validation
       const response = await fetch(`${BASE_URL}/login`, {

@@ -74,10 +74,8 @@ export default function SignupForm() {
       const email = form["email"].value;
       const password = form["password"].value
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      console.log("created user in firebase!")
 
       const idToken = await userCredential.user.getIdToken();
-      console.log("Firebase ID Token:", idToken);
 
 
       const response = await fetch(`${BASE_URL}/signup-teacher`, {
@@ -105,7 +103,6 @@ export default function SignupForm() {
         }),
       });
 
-      console.log(response)
       setIsSendDisabled(false)
 
       if (response.ok) {
