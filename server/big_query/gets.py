@@ -503,7 +503,7 @@ def get_quiz_status(user_id :str, client: bigquery.Client):
     #1 get all the quizzes
     quiz_query = f"""
         SELECT * 
-        FROM `{PROJECT_ID}.{QUIZ_DATASET}.quizzes`
+        FROM `{QUIZ_DATASET}.quizzes`
     """
 
     quiz_query_job = client.query(quiz_query, location="EU")
@@ -512,7 +512,7 @@ def get_quiz_status(user_id :str, client: bigquery.Client):
     #2 get all of the users attempts
     quiz_results_query=f"""
         SELECT * 
-        FROM `{PROJECT_ID}.{USER_DATASET}.quiz_results`
+        FROM `{USER_DATASET}.quiz_results`
         WHERE user_id = @user_id
         """
 

@@ -169,6 +169,7 @@ def get_quiz_status_route(user_id):
     
     except Exception as e:
         print(str(e))
+        logger.exception(f"Error getting quiz status {e}")
         return jsonify({"message": f"Error getting quiz status {str(e)}"}), 500
 
 
