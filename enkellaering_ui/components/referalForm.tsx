@@ -11,6 +11,7 @@ import {
   AlertDescription,
   AlertTitle,
 } from "@/components/ui/alert"
+import { toast } from "sonner";
  
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
 
@@ -21,6 +22,7 @@ export default function ReferalForm() {
     const [referalPhone, setReferalPhone] = useState<string>("");
     const [refereePhone, setRefereePhone] = useState<string>("");
     const [refereeName, setRefereeName] = useState<string>("");
+    const [refereeAccountNumber, setRefereeAccountNumber] = useState<string>("")
     const [isSendDisabled, setIsSendDisabled] = useState<boolean>(false);
 
 
@@ -31,7 +33,12 @@ export default function ReferalForm() {
         setErrorMessage(null);
         setIsSendDisabled(true)
 
-        if (referalPhone.length!=8 || refereePhone.length!=8 || refereeName.length<3) {
+        if (
+          referalPhone.trim().length !== 8 ||
+          refereePhone.trim().length !== 8 ||
+          refereeName.trim().length < 3 ||
+          refereeAccountNumber.trim().length !== 11
+        ) {
             setValidPhone(false)
             setIsSendDisabled(false)
             return
@@ -46,9 +53,10 @@ export default function ReferalForm() {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                "referal_phone": referalPhone,
-                "referee_phone": refereePhone,
-                "referee_name": refereeName
+                "referal_phone": referalPhone.trim(),
+                "referee_phone": refereePhone.trim(),
+                "referee_name": refereeName.trim(),
+                "account_number": refereeAccountNumber.trim()
             })
         })
 
@@ -61,8 +69,7 @@ export default function ReferalForm() {
             setErrorMessage(false) //we have success
             setIsSendDisabled(false)
             setReferalPhone('')
-            setRefereePhone('')
-            setRefereeName('')
+            toast("Takk for at du vervet!")
         }
     }
 
@@ -133,10 +140,23 @@ export default function ReferalForm() {
           />
         </LabelInputContainer>
 
+
+        <LabelInputContainer>
+          <Label htmlFor="name">Ditt kontonummer</Label>
+          <Input
+            id="name"
+            placeholder="1207.00.65543"
+            type="name"
+            value={refereeAccountNumber}
+            onChange={(e) => setRefereeAccountNumber(e.target.value)}
+            className={cn(errorMessage ? "border-red-500" : "")}
+          />
+        </LabelInputContainer>
+
         <button  type="submit" disabled={isSendDisabled} className="relative inline-flex h-12 overflow-hidden rounded-full p-[5px] dark:p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50">
             <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
             <span className={`${isSendDisabled ? "bg-slate-400" :"inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-slate-950 px-3 py-1 text-sm font-medium text-white backdrop-blur-3xl"}`}>
-                Opprett bruker
+                Verv
             </span>
         </button>
         

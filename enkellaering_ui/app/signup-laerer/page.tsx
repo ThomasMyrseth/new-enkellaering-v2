@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea"; // Assuming Textarea component exists
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
-
+import { Switch } from "@/components/ui/switch";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../auth/firebase";
 
@@ -15,6 +15,9 @@ export default function SignupForm() {
   const [validPostalCode, setValidPostalCode] = useState(true);
   const [passwordsMatch, setPasswordsMatch] = useState(true);
   const [isSendDisabled, setIsSendDisabled] = useState<boolean>(false);
+  const [myCity, setMyCity] = useState<string>('Annet')
+  const [digital, setDigital] = useState<boolean>(false)
+  const [physical, setPhysical] = useState<boolean>(false)
 
   const router = useRouter();
   const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
@@ -24,6 +27,15 @@ export default function SignupForm() {
     setValid(isValid);
     return isValid;
   }
+
+  function handleSetMyCity(city :string | null) {
+    if (!city) {
+      setMyCity('Annet')
+      return;
+    }
+    setMyCity(city)
+  }
+
 
   function validateForm(e: React.FormEvent<HTMLFormElement>) {
     const form = e.target as HTMLFormElement;
@@ -62,10 +74,8 @@ export default function SignupForm() {
       const email = form["email"].value;
       const password = form["password"].value
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      console.log("created user in firebase!")
 
       const idToken = await userCredential.user.getIdToken();
-      console.log("Firebase ID Token:", idToken);
 
 
       const response = await fetch(`${BASE_URL}/signup-teacher`, {
@@ -87,10 +97,13 @@ export default function SignupForm() {
           resigned: false,
           password: form["password"].value,
           admin: false,
+          location: myCity,
+          digital_tutouring: digital,
+          physical_tutouring: physical,
         }),
       });
 
-      console.log(response)
+      setIsSendDisabled(false)
 
       if (response.ok) {
         response.json().then(data => {
@@ -114,7 +127,8 @@ export default function SignupForm() {
       }
     } catch (error) {
       console.error("Signup error:", error);
-      alert("An unexpected error occurred. Please try again.");
+      alert(`An unexpected error occurred. Please try again. ${error}`);
+      setIsSendDisabled(false)
     }
   };
 
@@ -155,6 +169,7 @@ export default function SignupForm() {
             <Label htmlFor="address">Hjemmeadresse</Label>
             <Input id="address" placeholder="123 Main St" type="text" />
           </LabelInputContainer>
+
           <LabelInputContainer>
             <Label htmlFor="postal-code">Postkode</Label>
             <Input id="postal-code" placeholder="0123" type="text" className={cn(validPostalCode ? "" : "border-red-500")} />
@@ -162,12 +177,45 @@ export default function SignupForm() {
           </LabelInputContainer>
         </div>
 
+        <ComboBoxResponsive
+              values={cities}
+              placeholder="Hvilken by bor du i nå?"
+              passSelectedValue={handleSetMyCity}
+        />
+
+
+        <div className="flex items-center space-x-2 mt-4">
+          <Switch
+          id="digital"
+          checked={digital}
+          onCheckedChange={(value) => {
+              setDigital(value);
+          }}
+          />
+          <div className="flex flex-col space-y-1">
+            <Label htmlFor="digital">Jeg kan undervise digitalt.</Label>
+            <p className="text-xs">For å undervise i matte MÅ du ha en ipad med penn, eller en touch-pc med penn</p>
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-2 mt-4">
+          <Switch
+          id="physical"
+          checked={physical}
+          onCheckedChange={(value) => {
+              setPhysical(value);
+          }}
+          />
+          <div className="flex flex-col space-y-1">
+            <Label htmlFor="digital">Jeg kan undervise fysisk.</Label>
+          </div>
+        </div>
         <br />
 
         {/* Additional Comments */}
         <LabelInputContainer>
           <Label htmlFor="additional-comments">Andre kommentarer</Label>
-          <Textarea id="additional-comments" placeholder="Skriv eventuelle kommentarer her" />
+          <Textarea id="additional-comments" placeholder="Jeg er allergisk mot hund og kan derfor ikke ha fysiske elever som har hund." />
         </LabelInputContainer>
 
         <br />
@@ -193,6 +241,117 @@ export default function SignupForm() {
     </div>
   );
 }
+
+
+import {
+  Drawer,
+  DrawerContent,
+  DrawerTrigger,
+} from "@/components/ui/drawer"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command"
+import { useMediaQuery } from "@/hooks/use-media-query";
+import { Button } from "@/components/ui/button";
+
+const cities :string[] = ['Oslo', 'Trondheim', 'Annet']
+
+const ComboBoxResponsive = ({ values, placeholder, passSelectedValue }: { values: string[], placeholder: string, passSelectedValue: (value :string | null) => void }) => {
+  const [open, setOpen] = useState(false);
+  const isDesktop = useMediaQuery("(min-width: 768px)");
+  const [selectedValue, setSelectedValue] = useState<string | null>(null);
+
+  const handleSetSelectedValue = (value: string | null) => {
+    setSelectedValue(value);
+    setOpen(false);
+    passSelectedValue(value)
+  }
+  if (isDesktop) {
+    return (
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button variant="outline" className="w-full justify-start">
+            {selectedValue ? selectedValue : placeholder}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[200px] p-0" align="start">
+          <StatusList values={values} setOpen={setOpen} setSelectedValue={handleSetSelectedValue} />
+        </PopoverContent>
+      </Popover>
+    );
+  }
+
+  return (
+    <Drawer open={open} onOpenChange={setOpen}>
+      <DrawerTrigger asChild>
+        <Button variant="outline" className="w-[150px] justify-start">
+          {selectedValue ? selectedValue : placeholder}
+        </Button>
+      </DrawerTrigger>
+      <DrawerContent>
+        <div className="mt-4 border-t">
+          <StatusList values={values} setOpen={setOpen} setSelectedValue={handleSetSelectedValue} />
+        </div>
+      </DrawerContent>
+    </Drawer>
+  );
+}
+
+
+
+function StatusList({
+  values,
+  setOpen,
+  setSelectedValue,
+}: {
+  values: string[];
+  setOpen: (open: boolean) => void;
+  setSelectedValue: (value: string | null) => void;
+}) {
+  return (
+    <Command>
+      <CommandInput placeholder="Filter..." />
+      <CommandList>
+        <CommandEmpty>No results found.</CommandEmpty>
+        <CommandGroup>
+           {/* Option to clear the selection */}
+          <CommandItem
+              onSelect={() => {
+              setSelectedValue(null);
+              setOpen(false);
+              }}
+          >
+              Fjern filter
+          </CommandItem>
+          {values.map((value) => (
+            <CommandItem
+              key={value}
+              value={value}
+              onSelect={() => {
+                setSelectedValue(value);
+                setOpen(false);
+              }}
+            >
+              {value}
+            </CommandItem>
+          ))}
+        </CommandGroup>
+      </CommandList>
+    </Command>
+  );
+}
+
+
 
 const LabelInputContainer = ({ children }: { children: React.ReactNode }) => {
   return <div className="mb-4">{children}</div>;

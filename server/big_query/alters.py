@@ -1,6 +1,7 @@
 from google.cloud import bigquery
 from dotenv import load_dotenv
 import os
+from decimal import Decimal
 
 # Load environment variables from .env file
 load_dotenv()
@@ -103,12 +104,13 @@ def setYourTeacher(client :bigquery.Client, phone: str, your_teacher :str):
 
     return client.query(query, job_config=job_config)
 
-def setYourTeacherByuserId (client: bigquery.Client, student_user_id: str, teacher_user_id: str, admin_user_id :str):
+def changeTeacherByUserId (client: bigquery.Client, student_user_id: str, teacher_user_id: str, admin_user_id :str, old_teacher_user_id :str):
     query = f"""
-        UPDATE `{USER_DATASET}.students`
+        UPDATE `{USER_DATASET}.teacher_student`
         SET
-            your_teacher = @your_teacher
-        WHERE user_id = @user_id
+            teacher_user_id = @teacher_user_id
+        WHERE student_user_id = @student_user_id
+        AND teacher_user_id = @teacher_user_id
         AND EXISTS (
             SELECT 1
             FROM `{USER_DATASET}.teachers`
@@ -125,7 +127,29 @@ def setYourTeacherByuserId (client: bigquery.Client, student_user_id: str, teach
     return client.query(query, job_config=job_config)
 
 
+def removeTeacherFromStudent (client: bigquery.Client, student_user_id: str, teacher_user_id: str, admin_user_id :str):
+    query = f"""
+        UPDATE `{USER_DATASET}.teacher_student`
+        SET hidden=TRUE
+        WHERE student_user_id = @student_user_id
+        AND teacher_user_id = @teacher_user_id
+        AND EXISTS (
+            SELECT 1
+            FROM `{USER_DATASET}.teachers`
+            WHERE user_id = @admin_user_id
+        )"""
+    
+    params = [ bigquery.ScalarQueryParameter("teacher_user_id", "STRING", teacher_user_id),
+               bigquery.ScalarQueryParameter("student_user_id", "STRING", student_user_id),
+               bigquery.ScalarQueryParameter("admin_user_id", "STRING", admin_user_id)
+            ]
+    
+    job_config = bigquery.QueryJobConfig(query_parameters=params)
 
+    try:
+        return client.query(query, job_config=job_config)
+    except Exception as e:
+        raise(RuntimeError(f"error removing teacher from student {e}"))
 
 
 def setClassesToInvoiced(client: bigquery.Client, class_ids: list, admin_user_id: str):
@@ -234,18 +258,20 @@ def setStudentToActive(client: bigquery.Client, student_user_id: str, admin_user
 
 
 
-def toggleWantMoreStudents(client: bigquery.Client, wants_more_students :bool, teacher_user_id: str):
+def toggleWantMoreStudents(client: bigquery.Client, physical :bool, digital: bool, teacher_user_id: str):
     query = f"""
         UPDATE `{USER_DATASET}.teachers`
         SET
-            wants_more_students = @wants_more_students
+            digital_tutouring = @digital_tutouring,
+            physical_tutouring = @physical_tutouring
         WHERE user_id = @teacher_user_id
     """
 
     # Define query parameters
     job_config = bigquery.QueryJobConfig(
         query_parameters=[
-            bigquery.ScalarQueryParameter("wants_more_students", "BOOL", wants_more_students),
+            bigquery.ScalarQueryParameter("digital_tutouring", "BOOL", digital),
+            bigquery.ScalarQueryParameter("physical_tutouring", "BOOL", physical),
             bigquery.ScalarQueryParameter("teacher_user_id", "STRING", teacher_user_id),
         ]
     )
@@ -284,3 +310,178 @@ def updateStudentNotes(admin_user_id :str, student_user_id :str, notes: str, cli
 
     # Run the query
     return client.query(query, job_config=job_config, location='EU')
+
+
+
+
+
+def cansel_new_order(row_id :str, client: bigquery.Client):
+    query = f"""
+        UPDATE `{USER_DATASET}.teacher_student`
+        SET hidden=TRUE
+        WHERE row_id = @row_id
+    """
+    
+
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("row_id", "STRING", row_id)
+        ]
+    )
+
+    try:
+        query_job = client.query(query, job_config=job_config)
+        query_job.result()  # Wait for the query to complete
+
+        if query_job.errors:
+            raise RuntimeError(f"Error hiding new student: {query_job.errors}")
+        
+        return True
+    except Exception as e:
+        print(f"Error hiding new student: {e}")
+        raise RuntimeError(f"Error hiding new student: {query_job.errors}")
+
+
+
+
+
+
+def update_new_order(row_id: str, client: bigquery.Client, teacher_accepted_student: bool = None, physical_or_digital: bool = None, preferred_location: str = None, comments :str = None):
+    print(row_id)
+    print(teacher_accepted_student)
+    print(physical_or_digital)
+    print(preferred_location)
+    print(comments)
+    query = f"UPDATE `{USER_DATASET}.teacher_student` SET "
+    query_params = []
+    
+    if teacher_accepted_student is not None:
+        query += "teacher_accepted_student = @teacher_accepted_student, "
+        query_params.append(bigquery.ScalarQueryParameter("teacher_accepted_student", "BOOL", teacher_accepted_student))
+
+    if physical_or_digital is not None:
+        query += "physical_or_digital = @physical_or_digital, "
+        query_params.append(bigquery.ScalarQueryParameter("physical_or_digital", "BOOL", physical_or_digital))
+
+    if preferred_location is not None:
+        query += "preferred_location = @preferred_location, "
+        query_params.append(bigquery.ScalarQueryParameter("preferred_location", "STRING", preferred_location))
+
+    if comments is not None:
+        query += "order_comments = @order_comments, "
+        query_params.append(bigquery.ScalarQueryParameter("order_comments", "STRING", comments))
+
+    # Remove the trailing comma and space
+    query = query.rstrip(", ")
+
+    # Ensure at least one field is updated
+    if not query_params:
+        raise ValueError("No fields provided for update")
+
+    query += " WHERE row_id = @row_id"
+    query_params.append(bigquery.ScalarQueryParameter("row_id", "STRING", row_id))
+
+    job_config = bigquery.QueryJobConfig(query_parameters=query_params)
+
+    try:
+        query_job = client.query(query, job_config=job_config)
+        query_job.result()  # Wait for the query to complete
+
+        if not query_job or query_job.errors:
+            raise RuntimeError(f"Error updating new order: {query_job.errors}")
+
+        return True
+    except Exception as e:
+        print(f"Error updating new order: {e}")
+        raise RuntimeError(f"Error updating new order: {query_job.errors}")
+    
+
+
+
+def update_teacher_profile(
+    client: bigquery.Client,
+    teacher_user_id: str,
+    firstname: str,
+    lastname: str,
+    email: str,
+    phone: str,
+    address: str,
+    postal_code: str,
+    additional_comments: str = None,
+    location: str = None,
+    physical: bool = None,
+    digital: bool = None
+):
+    query = f"""
+        UPDATE `{USER_DATASET}.teachers`
+        SET
+            firstname = @firstname,
+            lastname = @lastname,
+            email = @email,
+            phone = @phone,
+            address = @address,
+            postal_code = @postal_code,
+            additional_comments = @additional_comments,
+            location = @location,
+            physical_tutouring = @physical_tutouring,
+            digital_tutouring = @digital_tutouring
+        WHERE user_id = @teacher_user_id
+    """
+
+    # Define query parameters
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("firstname", "STRING", firstname),
+            bigquery.ScalarQueryParameter("lastname", "STRING", lastname),
+            bigquery.ScalarQueryParameter("email", "STRING", email),
+            bigquery.ScalarQueryParameter("phone", "STRING", phone),
+            bigquery.ScalarQueryParameter("address", "STRING", address),
+            bigquery.ScalarQueryParameter("postal_code", "STRING", postal_code),
+            bigquery.ScalarQueryParameter("additional_comments", "STRING", additional_comments),
+            bigquery.ScalarQueryParameter("location", "STRING", location),
+            bigquery.ScalarQueryParameter("physical_tutouring", "BOOL", physical),
+            bigquery.ScalarQueryParameter("digital_tutouring", "BOOL", digital),
+            bigquery.ScalarQueryParameter("teacher_user_id", "STRING", teacher_user_id),
+        ]
+    )
+
+    # Run the query
+    return client.query(query, job_config=job_config, location='EU')
+
+
+
+def update_travel_payment(client: bigquery.Client, travel_payment: dict, admin_user_id: str):
+    """
+    Update travel payment for a user
+    """
+    query = f"""
+        UPDATE `{PROJECT_ID}.{USER_DATASET}.teacher_student`
+        SET
+            travel_pay_to_teacher = @travel_pay_to_teacher,
+            travel_pay_from_student = @travel_pay_from_student
+        WHERE student_user_id = @student_user_id
+        AND teacher_user_id = @teacher_user_id
+        AND EXISTS (
+            SELECT 1
+            FROM `{USER_DATASET}.teachers`
+            WHERE user_id = @admin_user_id
+        )
+    """
+
+    # Define query parameters
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("travel_pay_to_teacher", "NUMERIC", Decimal(str(travel_payment["travel_pay_to_teacher"]))),
+            bigquery.ScalarQueryParameter("travel_pay_from_student", "NUMERIC", Decimal(str(travel_payment["travel_pay_from_student"]))),
+            bigquery.ScalarQueryParameter("student_user_id", "STRING", travel_payment["student_user_id"]),
+            bigquery.ScalarQueryParameter("teacher_user_id", "STRING", travel_payment["teacher_user_id"]),
+            bigquery.ScalarQueryParameter("admin_user_id", "STRING", admin_user_id),
+        ]
+    )
+
+    # Run the query
+    # Submit the query and wait for completion
+    job = client.query(query, job_config=job_config, location='EU')
+    job.result()  # Ensure the update is applied and surface any errors
+    return job
+    

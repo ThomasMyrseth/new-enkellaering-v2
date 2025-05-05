@@ -10,6 +10,7 @@ import {
   AlertDescription,
   AlertTitle,
 } from "@/components/ui/alert"
+import { toast } from "sonner";
  
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
 
@@ -56,14 +57,16 @@ export default function NewStudentForm() {
         else {
             setErrorMessage(false) //we have success
             setPhone('')
+            toast('Tusen takk! Vi ringer deg innen kort tid')
         }
     }
 
     return(<>
-    <div className="max-w-md rounded-lg w-full mx-auto md:rounded-2xl p-4 md:p-8 shadow-input bg-white dark:bg-black">
+    <div className="max-w-md rounded-lg w-full mx-auto md:rounded-2xl p-4 md:p-8 shadow-none bg-white dark:bg-black">
         
         <h2 className="text-3xl font-bold relative bg-clip-text text-transparent bg-no-repeat bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500 py-4">Bestill privatundervisning</h2>
-        <p>Legg igjen nummeret ditt her, vi ringer deg innen 24 timer for å avtale oppstart.</p>
+        <p>Legg igjen nummeret ditt her, vi ringer deg innen 24 timer for å avtale oppstart.
+        <br/>Eller ring oss selv på <span className="font-bold">+47 47184744</span></p>
 
         {errorMessage===false &&
             <Alert>
@@ -75,7 +78,7 @@ export default function NewStudentForm() {
             </Alert>
         }
 
-        {/* {validPhone===false &&
+        {/* {/* {validPhone===false &&
             <Alert>
                 <Terminal className="h-4 w-4" />
                 <AlertTitle className="text-red-400">Skrev du noe feil?</AlertTitle>
@@ -86,7 +89,7 @@ export default function NewStudentForm() {
         } */}
 
 
-      <form className="my-8" onSubmit={handleSubmit}>
+      <form className="my-8 " onSubmit={handleSubmit}>
         {/* phone field */}
         <LabelInputContainer>
           <Label htmlFor="phone">Ditt telefonnummer</Label>

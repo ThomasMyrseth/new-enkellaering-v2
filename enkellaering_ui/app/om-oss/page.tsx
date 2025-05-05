@@ -1,16 +1,18 @@
 "use client";
 import { SparklesCore } from "@/components/ui/sparkles";
-import { TeacherFocusCards } from "@/components/ui/teacherCards";
+//import { TeacherFocusCards } from "@/components/ui/teacherCards";
 import { TextGenerateEffect } from "@/components/ui/text-generate-effect";
 import React from "react";
+import { TeacherFocusCards } from "@/components/ui/teacherCard/newTeacherCard";
 
 export default function OmOssPage() {
+
   return (
     <div className="flex flex-col items-center justify-center w-full max-w-[100vw] py-4 px-4 md:px-6 lg:px-8 m-0 lg:py-10 min-h-screen space-y-10">
       <SparklesHeadline />
       <div className="space-y-10 flex flex-col items-center justify-center w-full">
         <AboutEl />
-        <AboutTeachers />
+        <TeacherFocusCards />
       </div>
     </div>
   );
@@ -48,24 +50,24 @@ function SparklesHeadline() {
   );
 }
 
-function AboutTeachers() {
-  return (
-    <div className="bg-fuchsia-100 dark:bg-black rounded-lg w-full lg:w-3/4 p-4 md:p-6 lg:p-8  space-y-6 flex flex-col items-center justify-center">
-      <h1 className="text-3xl md:text-4xl lg:text-5xl text-neutral-800 dark:text-neutral-200 text-center">
-        Møt våre{" "}
-        <span className="relative bg-clip-text text-transparent bg-no-repeat bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500 py-4">
-          helter
-        </span>
-      </h1>
-      <p className="text-center text-base md:text-lg lg:text-xl w-full sm:w-2/3 text-neutral-600 dark:text-neutral-300">
-        Lærerne våre er fordelt i Oslo og Trondheim. De aller fleste av oss er
-        studenter og jobber på deltid, mange innenfor ingeniør og lektor. <br />
-        Les om noen av oss her.
-      </p>
-      <TeacherFocusCards />
-    </div>
-  );
-}
+// function AboutTeachers() {
+//   return (
+//     <div className="bg-fuchsia-100 dark:bg-black rounded-lg w-full lg:w-3/4 p-4 md:p-6 lg:p-8  space-y-6 flex flex-col items-center justify-center">
+//       <h1 className="text-3xl md:text-4xl lg:text-5xl text-neutral-800 dark:text-neutral-200 text-center">
+//         Møt våre{" "}
+//         <span className="relative bg-clip-text text-transparent bg-no-repeat bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500 py-4">
+//           helter
+//         </span>
+//       </h1>
+//       <p className="text-center text-base md:text-lg lg:text-xl w-full sm:w-2/3 text-neutral-600 dark:text-neutral-300">
+//         Lærerne våre er fordelt i Oslo og Trondheim. De aller fleste av oss er
+//         studenter og jobber på deltid, mange innenfor ingeniør og lektor. <br />
+//         Les om noen av oss her.
+//       </p>
+//       <TeacherFocusCards />
+//     </div>
+//   );
+// }
 
 function AboutEl() {
   const words = `Enkel Læring startet som et innlegg på en nabolagsgruppe på facebook under første bølgen med Corona.

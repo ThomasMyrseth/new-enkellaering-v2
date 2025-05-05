@@ -22,11 +22,9 @@ export default function LoginForm() {
     try {
       // Authenticate the user with Firebase
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      console.log("User signed in:", userCredential.user);
 
       // Get the Firebase ID token
       const idToken = await userCredential.user.getIdToken();
-      console.log("Firebase ID Token:", idToken);
 
       // Send the token to the backend for further validation
       const response = await fetch(`${BASE_URL}/login`, {
@@ -42,6 +40,7 @@ export default function LoginForm() {
           
           localStorage.setItem('token', data.token)
           localStorage.setItem('isAuthenticated', 'true');
+          localStorage.setItem('isTeacher', 'false')
 
           router.push(`/min-side`);
         }).catch(err => {
@@ -64,7 +63,7 @@ export default function LoginForm() {
   };
 
   return (
-    <div className="max-w-md w-full mx-auto rounded-none md:rounded-2xl p-4 md:p-8 shadow-input bg-white dark:bg-black">
+    <div className="max-w-md w-full mx-auto rounded-none md:rounded-2xl p-4 md:p-8 shadow-none m-4 bg-white dark:bg-black">
       <h2 className="font-bold text-xl text-neutral-800 dark:text-neutral-200">Logg Inn</h2>
       <p className="text-neutral-600 text-sm max-w-sm mt-2 dark:text-neutral-300">
         Fyll ut feltene under for å logge inn

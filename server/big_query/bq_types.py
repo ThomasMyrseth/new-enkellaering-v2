@@ -1,39 +1,27 @@
 from typing import Optional
 from datetime import datetime
-from google.cloud import bigquery
+from dataclasses import dataclass, field
 
+@dataclass
+class Teacher:
+    user_id: str                       # REQUIRED
+    firstname: str                     # REQUIRED
+    lastname: str                      # REQUIRED
+    email: str                         # REQUIRED
+    phone: Optional[str] = None        # NULLABLE
+    address: Optional[str] = None      # NULLABLE
+    postal_code: Optional[str] = None  # NULLABLE
+    hourly_pay: Optional[str] = None   # NULLABLE
+    additional_comments: Optional[str] = None  # NULLABLE
+    created_at: Optional[datetime] = field(default_factory=datetime.utcnow)  # NULLABLE, default CURRENT_TIMESTAMP()
+    admin: Optional[bool] = False      # NULLABLE, default FALSE
+    resigned: bool = False
+    resigned_at: Optional[datetime] = None  # NULLABLE
+    wants_more_students: Optional[bool] = True  # NULLABLE, default TRUE
+    location: Optional[str] = None     # NULLABLE; City the teacher resides in
+    digital_tutouring: Optional[bool] = None  # NULLABLE; TRUE if the teacher can tutor digitally (must have an ipad)
+    physical_tutouring: Optional[bool] = None # NULLABLE; TRUE if the teacher is willing to meet student in person
 
-# TEACHERS table
-class Teachers:
-    def __init__(
-        self,
-        user_id: str,
-        firstname: str,
-        lastname: str,
-        email: str,
-        phone: str,
-        address: str,
-        postal_code: str,
-        hourly_pay: str,
-        resigned: bool,
-        additional_comments: str,
-        created_at: Optional[datetime] = None,
-        admin: Optional[bool] = None,
-        resigned_at: Optional[datetime] = None,
-    ):
-        self.user_id = user_id
-        self.firstname = firstname
-        self.lastname = lastname
-        self.email = email
-        self.phone = phone
-        self.address = address
-        self.postal_code = postal_code
-        self.hourly_pay = hourly_pay
-        self.resigned = resigned
-        self.created_at = created_at or datetime.now()
-        self.admin = admin
-        self.resigned_at = resigned_at
-        self.additional_comments = additional_comments or ""
 
 # STUDENTS table
 class Students:
@@ -105,6 +93,7 @@ class NewStudents:
         phone: str,
         has_called: bool,
         created_at: datetime,
+        preffered_teacher :str,
         has_answered: bool,
         has_signed_up: bool,
         from_referal: bool,
@@ -122,6 +111,7 @@ class NewStudents:
         referee_name: Optional[str] = None,
         paid_referee: Optional[bool] = None,
         paid_referee_at: Optional[datetime] = None,
+        referee_account_number :Optional[str] = None,
         
         comments: Optional[str] = None,
     ):
@@ -129,6 +119,7 @@ class NewStudents:
         self.has_called = has_called
         self.called_at = called_at
         self.created_at = created_at
+        self.preffered_teacher = preffered_teacher
         self.has_answered = has_answered
         self.answered_at = answered_at
         self.has_signed_up = has_signed_up
@@ -144,7 +135,47 @@ class NewStudents:
         self.referee_name = referee_name
         self.paid_referee = paid_referee
         self.paid_referee_at = paid_referee_at
+        self.referee_account_number = referee_account_number
         self.new_student_id = new_student_id
+
+
+
+
+class NewStudentWithPreferredTeacher:
+    def __init__(
+        self,
+        new_student_id: str,
+        phone: str,
+        teacher_called: bool,
+        created_at: datetime,
+        preferred_teacher: str,
+        teacher_answered: bool,
+        student_signed_up: bool,
+        teacher_has_accepted: bool,
+        hidden: bool,
+        physical_or_digital: bool,
+        # Optional fields
+        called_at: Optional[datetime] = None,
+        answered_at: Optional[datetime] = None,
+        signed_up_at: Optional[datetime] = None,
+        teacher_accepted_at: Optional[datetime] = None,
+        comments: Optional[str] = None,
+    ):
+        self.new_student_id = new_student_id
+        self.phone = phone
+        self.teacher_called = teacher_called
+        self.created_at = created_at
+        self.preferred_teacher = preferred_teacher
+        self.teacher_answered = teacher_answered
+        self.student_signed_up = student_signed_up
+        self.teacher_has_accepted = teacher_has_accepted
+        self.hidden = hidden
+        self.physical_or_digital = physical_or_digital
+        self.called_at = called_at
+        self.answered_at = answered_at
+        self.signed_up_at = signed_up_at
+        self.teacher_accepted_at = teacher_accepted_at
+        self.comments = comments
 
 
 # CLASSES table
@@ -157,6 +188,8 @@ class Classes:
         created_at: datetime,
         started_at: datetime,
         ended_at: datetime,
+        groupclass: bool,
+        number_of_students: Optional[int] = None,
         was_canselled :bool = False,
         comment: Optional[str] = None,
         paid_teacher: Optional[bool] = None,
@@ -170,6 +203,8 @@ class Classes:
         self.created_at = created_at
         self.started_at = started_at
         self.ended_at = ended_at
+        self.groupclass = groupclass
+        self.number_of_students = number_of_students
         self.comment = comment
         self.paid_teacher = paid_teacher
         self.invoiced_student = invoiced_student

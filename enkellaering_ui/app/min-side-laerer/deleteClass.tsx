@@ -1,6 +1,7 @@
 "use client"
 import { Button } from "@/components/ui/button";
 import React from "react"; 
+import { toast } from "sonner";
 
 const deleteClass = async (classId: string) => {
     const token = localStorage.getItem('token'); // Or use a more secure storage method
@@ -33,7 +34,7 @@ export const DeleteClass = ({hasPaid, hasInvoiced, classId} : {hasPaid :boolean,
             alert("Error deleting class")
         }
         if (res) {
-            alert("timen er slettet")
+            toast("timen er slettet")
         }
     }
     return (<>

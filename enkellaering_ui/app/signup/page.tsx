@@ -1,18 +1,32 @@
-"use client";
+"use client"; //why cant eslint see this is a client component
+
 
 import React, { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+//import { useSearchParams } from "next/navigation";
+import { Suspense } from 'react'
 
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../auth/firebase";
 
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-
+import { Textarea } from "@/components/ui/textarea";
 
 export default function SignupForm() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SignupFormContent />
+    </Suspense>
+  )
+};
+
+function SignupFormContent() {
+ // const searchParams = useSearchParams()
+  //const preferredTeacherUserId :string | null= searchParams.get("teacher_user_id") || null;
+
   const [validParentPhone, setValidParentPhone] = useState(true);
   const [validStudentPhone, setValidStudentPhone] = useState(true);
   const [validPostalCode, setValidPostalCode] = useState(true);
@@ -20,6 +34,8 @@ export default function SignupForm() {
   const [validPassword, setValidPassword] = useState(true)
   const [hasPhysicalTutouring, setHasPhysicalTutouring] = useState<boolean>(true)
   const [isSendDisabled, setIsSendDisabled] = useState<boolean>(false)
+  //const [selectedTeacherUserId, setSelectedTeacherUserId] = useState<string | null>(null)
+
 
   const router = useRouter();
   const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
@@ -35,6 +51,10 @@ export default function SignupForm() {
     setValidPassword(isValid);
     return isValid;
   }
+
+  // function setSelectedTeacher (userId :string) {
+  //   setSelectedTeacherUserId(userId)
+  // }
 
   function validateForm(e: React.FormEvent<HTMLFormElement>) {
     const form = e.target as HTMLFormElement;
@@ -78,10 +98,8 @@ export default function SignupForm() {
       const email = form["parent-email"].value;
       const password = form["password"].value
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      console.log("created user in firebase!")
 
       const idToken = await userCredential.user.getIdToken();
-      console.log("Firebase ID Token:", idToken);
 
 
 
@@ -106,6 +124,7 @@ export default function SignupForm() {
           has_physical_tutoring: hasPhysicalTutouring,
           hours_per_week: parseInt(form["hours-per-week"].value),
           additional_comments: form["additional-comments"].value,
+         // selected_teacher_user_id: selectedTeacherUserId || '',
         }),
       });
 
@@ -138,7 +157,7 @@ export default function SignupForm() {
     setHasPhysicalTutouring(physical)
   }
   return (
-    <div className="max-w-md w-full mx-auto rounded-none md:rounded-2xl p-4 md:p-8 shadow-input bg-white dark:bg-black">
+    <div className="max-w-md w-full m-4 mx-auto rounded-none md:rounded-2xl p-4 md:p-8 shadow-input bg-white dark:bg-black">
       <h2 className="font-bold text-xl text-neutral-800 dark:text-neutral-200">Velkommen til Enkel Læring</h2>
       <p className="text-neutral-600 text-sm max-w-sm mt-2 dark:text-neutral-300">
         Fyll ut feltene under for å opprette en konto
@@ -210,7 +229,7 @@ export default function SignupForm() {
         </LabelInputContainer>
 
         <LabelInputContainer>
-          <Label>Skal dere ha fysisk eller digital undervisning?</Label>
+          <Label>Foretrekker dere fysisk eller digital undervisning?</Label>
           <RadioGroup defaultValue="Fysisk" value={hasPhysicalTutouring ? "Fysisk" : "Digital"} onValueChange={handleSetPhysical}>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="Fysisk" id="fysisk" />
@@ -228,9 +247,14 @@ export default function SignupForm() {
           <Input id="hours-per-week" placeholder="2,0" type="number" step="0.1" min="0.1" defaultValue={2}/>
         </LabelInputContainer>
 
+        {/* <LabelInputContainer>
+          <Label>Hvilken lærer ønskere dere? Om dere ikke vet lar dere feltet stå blank</Label>
+          <SetTeacherCombobox selectedTeacherUserId={preferredTeacherUserId} passSelectedTeacher={(userId) => setSelectedTeacher(userId)}/>
+        </LabelInputContainer> */}
+
         <LabelInputContainer>
           <Label htmlFor="additional-comments">Andre kommentarer</Label>
-          <Input id="additional-comments" placeholder="Eleven er allergisk mot pels" type="text" />
+          <Textarea id="additional-comments" placeholder="Vi har hund hjemme, så læreren kan ikke være allergisk mot pels." rows={4} />
         </LabelInputContainer>
 
         <br />
@@ -256,11 +280,12 @@ export default function SignupForm() {
 
 
       </form>
-    </div>
-  );
+    </div>);
 
 }
 
 const LabelInputContainer = ({ children }: { children: React.ReactNode }) => {
-  return <div className="mb-4">{children}</div>;
+  return <div className="mb-4">{children}</div>
 };
+
+

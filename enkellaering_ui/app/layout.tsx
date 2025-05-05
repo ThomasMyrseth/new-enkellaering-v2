@@ -9,6 +9,7 @@ import './globals.css'; // Make sure this path is correct
 import Head from 'next/head';
 import MenuBarMobile from '@/components/ui/menubarMobile';
 import Sidebar from '@/components/ui/sidebar';
+import { Toaster } from "@/components/ui/sonner"
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -51,6 +52,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </AuthProvider>
             </div>
           </div>
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

@@ -105,6 +105,10 @@ const NewStudentTable =( {newStudents} : {newStudents : NewStudent[]})  => {
         return dateB.getTime() - dateA.getTime();
     });
 
+    //remove new students who have a preffered teacher
+    newStudents = newStudents.filter(ns => !ns.preffered_teacher)
+
+
     //get all the teachers and pass it to newStudentRow
     useEffect( () => {
         async function getAllTeachers() {
@@ -165,7 +169,6 @@ const NewStudentTable =( {newStudents} : {newStudents : NewStudent[]})  => {
                             if (ns.hidden) {
                                 return null
                             }
-                            console.log(ns)
                             return <NewStudentRow key={ns.new_student_id} ns={ns} teachers={teachers}/>
                         })}
                     </TableBody>
@@ -269,14 +272,14 @@ function NewStudentRow({ ns, teachers }: { ns: NewStudent, teachers :Teacher[] }
             return null;
         }
         else {
-            alert("Oppdateringer lagret")
+            toast("Oppdateringer lagret")
         }
         
     }
 
     const handleDelete = async () => {
 
-        const response = await fetch(`${BASEURL}/hide-new-student`, {
+        const response = await fetch(`${BASEURL}/hide-new-student-from-new-students-table`, {
             method: "POST",
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -292,7 +295,7 @@ function NewStudentRow({ ns, teachers }: { ns: NewStudent, teachers :Teacher[] }
             return null;
         }
         else {
-            alert("Eleven er slettet")
+            toast("Eleven er slettet")
         }
 
     }
@@ -347,7 +350,9 @@ function NewStudentRow({ ns, teachers }: { ns: NewStudent, teachers :Teacher[] }
 
         <TableCell className="min-w-60">
             {fromReferal ? (
-                <span className="text-gray-400">Fra {ns.referee_name} <br/> tlf: {refereePhone}</span>
+                <span className="text-gray-400">Fra {ns.referee_name} <br/> tlf: {refereePhone}
+                <br/> kontoNr: {ns.referee_account_number}
+                </span>
             ) : (
                 <span className="text-gray-400">Nei</span>
 
@@ -416,6 +421,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { toast } from "sonner";
 
 
 const SetTeacherCombobox = ({ ns, teachers, passSelectedTeacher }: { 

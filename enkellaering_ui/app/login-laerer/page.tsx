@@ -43,6 +43,7 @@ export default function LoginForm() {
         console.log("pushing to /min-side-laerer")
         localStorage.setItem('isAuthenticated', 'true');
         localStorage.setItem('token', data.token)
+        localStorage.setItem('isTeacher', 'true')
 
         router.push('/min-side-laerer')
       } else {
@@ -62,7 +63,7 @@ export default function LoginForm() {
     }
   };
   return (
-    <div className="max-w-md w-full mx-auto rounded-none md:rounded-2xl p-4 md:p-8 shadow-input bg-white dark:bg-black">
+    <div className="max-w-md w-full mx-auto rounded-none md:rounded-2xl p-4 md:p-8 shadow-none m-4 bg-white dark:bg-black">
       <h2 className="font-bold text-xl text-neutral-800 dark:text-neutral-200">Logg Inn Lærer</h2>
       <p className="text-neutral-600 text-sm max-w-sm mt-2 dark:text-neutral-300">
         Fyll ut feltene under for å logge inn

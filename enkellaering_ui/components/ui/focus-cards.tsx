@@ -2,10 +2,12 @@
 import Image from "next/image";
 import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { Button } from "./button";
 
 type Card = {
   title: string;
   description: string;
+  onClick: () => void;
   src: string;
 };
 
@@ -23,7 +25,6 @@ export const Card = React.memo(
     setHovered: React.Dispatch<React.SetStateAction<number | null>>;
     isMobile: boolean;
   }) => {
-    const placeholderImage = "/placeholder-image.webp";
 
     const handleClick = () => {
       if (isMobile) {
@@ -45,12 +46,12 @@ export const Card = React.memo(
         )}
       >
         <Image
-          src={card.src || placeholderImage}
+          src={card.src || "/enkel_laering_transparent.png"}
           alt={card.title}
           fill
           className="object-cover absolute inset-0"
           onError={(e) => {
-            (e.target as HTMLImageElement).src = placeholderImage;
+            (e.target as HTMLImageElement).src = "/enkel_laering_transparent.png";
           }}
         />
         <div
@@ -59,13 +60,15 @@ export const Card = React.memo(
             hovered === index ? "opacity-100" : "opacity-0"
           )}
         >
-          <div className="text-xl md:text-2xl font-medium bg-clip-text text-transparent bg-gradient-to-b from-neutral-50 to-neutral-200">
+          <Button 
+            className="text-xl md:text-2xl font-medium bg-clip-text text-transparent bg-gradient-to-b from-neutral-50 to-neutral-200"
+            onClick={card.onClick}>
             {card.title}
-          </div>
+          </Button>
           <div
             className="text-sm md:text-base overflow-y-auto text-neutral-300 mt-2 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200"
           >
-          {card.description || "No description available"}
+          {card.description}
         </div>
         </div>
       </div>
