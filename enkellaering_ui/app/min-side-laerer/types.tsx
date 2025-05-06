@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+
 
 export type ExpandableCardType = {
     description: string;
@@ -7,7 +7,7 @@ export type ExpandableCardType = {
     src: string;
     ctaText: string;
     ctaLink: string;
-    content: () => ReactNode;
+    content: string;
 }
 
 

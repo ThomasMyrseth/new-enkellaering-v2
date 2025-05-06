@@ -10,6 +10,7 @@ import {
     CardHeader,
     CardTitle,
   } from "@/components/ui/card";
+import ReactMarkdown from "react-markdown";
 
 export default function QuizStatusPage( {token, baseUrl} : {token :string, baseUrl :string}) {
 
@@ -128,12 +129,6 @@ function QuizStatusCards({token, baseUrl} : {token :string, baseUrl :string}) {
                     >
                       {active.title}
                     </motion.h3>
-                    {/* <motion.p
-                      layoutId={`description-${active.description}-${id}`}
-                      className="text-neutral-600 dark:text-neutral-400"
-                    >
-                      {active.description}
-                    </motion.p> */}
                   </div>
 
                   <motion.a
@@ -153,9 +148,9 @@ function QuizStatusCards({token, baseUrl} : {token :string, baseUrl :string}) {
                     exit={{ opacity: 0 }}
                     className="text-neutral-600 text-xs md:text-sm lg:text-base h-40 md:h-fit pb-10 flex flex-col items-start gap-4 overflow-auto dark:text-neutral-400 [mask:linear-gradient(to_bottom,white,white,transparent)] [scrollbar-width:none] [-ms-overflow-style:none] [-webkit-overflow-scrolling:touch]"
                   >
-                    {typeof active.content === "function"
-                      ? active.content()
-                      : active.content}
+                    <ReactMarkdown>
+                      {active.content}
+                    </ReactMarkdown>
                   </motion.div>
                 </div>
               </div>
@@ -188,12 +183,6 @@ function QuizStatusCards({token, baseUrl} : {token :string, baseUrl :string}) {
                 >
                   {card.title}
                 </motion.h3>
-                {/* <motion.p
-                  layoutId={`description-${card.description}-${id}`}
-                  className="text-neutral-600 dark:text-neutral-400 text-center md:text-left"
-                >
-                  {card.description}
-                </motion.p> */}
               </div>
             </div>
             <motion.button
@@ -288,7 +277,7 @@ const fetchCards = async (token :string, baseUrl :string) => {
                 src: quiz.image,
                 ctaText: ctaText,
                 ctaLink: `/quiz/${quiz.quiz_id}`,
-                content: () => {return <p>{quiz.content}</p>}
+                content: quiz.content
         }
 
         cards.push(card)

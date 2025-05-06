@@ -13,6 +13,7 @@ import {
   } from "@/components/ui/alert-dialog"
 import { useRouter } from "next/navigation";
 import { Skeleton } from "../skeleton";
+import ReactMarkdown from "react-markdown";
 
 
 import { Button } from "../button";
@@ -333,14 +334,12 @@ export function TeacherFocusCards() {
                         
                     
                     </div>
-                    <div className="">
-                        <motion.p
-                        layoutId={`description-${active.description}-${id}`}
-                        className="text-neutral-600 dark:text-neutral-100 mb-10"
-                        >
-                        {active.description}
-                        </motion.p>
-
+                    <div>
+                        <div className="text-neutral-600 dark:text-neutral-100 mb-10">
+                            <ReactMarkdown>
+                                {active.description}
+                            </ReactMarkdown>
+                        </div>
                         <div> {/* Container for reviews */}
                             {active.reviews.length === 0 ? (
                                 <span>{active.teacher.firstname} har ingen omtaler enda</span>
