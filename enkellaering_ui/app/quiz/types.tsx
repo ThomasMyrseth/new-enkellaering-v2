@@ -24,6 +24,7 @@ export type FullQuizType = {
     quiz_id :string;
     title :string;
     pass_threshold :number;
+    number_of_questions: number;
     questions :QuestionType[];
 }
 

@@ -102,12 +102,14 @@ interface QuizProps {
   quizId: string;
   title: string;
   baseUrl: string;
+  numberOfQuestions: number;
   token: string;
 }
 
 const Quiz: React.FC<QuizProps> = ({
   questions,
   passThreshold,
+  numberOfQuestions,
   quizId,
   title,
   baseUrl,
@@ -121,9 +123,11 @@ const Quiz: React.FC<QuizProps> = ({
   const [shuffledQuestions, setShuffledQuestions] = useState<QuestionType[]>([])
   const router = useRouter();
 
+
+  //adjust the shuffled questions to the correct lenght
   useEffect(() => {
-    setShuffledQuestions([...questions].sort(() => Math.random() - 0.5));
-  }, [questions]);
+    setShuffledQuestions([...questions].sort(() => Math.random() - 0.5).slice(0, numberOfQuestions));
+  }, [questions, numberOfQuestions]);
 
   const incrementCorrectAnswer = (correct: boolean): void => {
     if (correct) {

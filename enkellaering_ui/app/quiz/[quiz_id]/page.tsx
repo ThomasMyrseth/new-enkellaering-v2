@@ -73,6 +73,7 @@ export default function QuizPage() {
     return(<>
         <Quiz 
             questions={quiz}
+            numberOfQuestions={quizMetaData.number_of_questions || 12}
             passThreshold={quizMetaData.pass_threshold}            
             quizId={quizMetaData.quiz_id}
             title={quizMetaData.title}
