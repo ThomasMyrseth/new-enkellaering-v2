@@ -53,7 +53,7 @@ export default function NewStudentForm() {
             })
         })
 
-        if (!response.ok) {
+        if (!response.ok || !response) {
             setErrorMessage(true)
             alert("En feil har skjedd. Venligst prøv igjen!")
         }
