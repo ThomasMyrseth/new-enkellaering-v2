@@ -14,6 +14,7 @@ import { auth } from "../auth/firebase";
 
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea";
+import { event } from "@/components/facebookPixel/fpixel";
 
 export default function SignupForm() {
   return (
@@ -102,6 +103,7 @@ function SignupFormContent() {
       const idToken = await userCredential.user.getIdToken();
 
 
+      event("signup-student", {"email": email, "phone": form["parent-phone"].value.replace(/\s+/g, "")})
 
       const response = await fetch(`${BASE_URL}/signup`, {
         method: "POST",

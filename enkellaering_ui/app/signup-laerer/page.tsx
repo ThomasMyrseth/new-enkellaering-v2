@@ -71,6 +71,8 @@ export default function SignupForm() {
     try {
       const form = e.target as HTMLFormElement;
 
+      event("singup-teacher", {"email": form["email"].value, "phone": form["phone"].value})
+
       const email = form["email"].value;
       const password = form["password"].value
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -263,6 +265,7 @@ import {
 } from "@/components/ui/command"
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { Button } from "@/components/ui/button";
+import { event } from "@/components/facebookPixel/fpixel";
 
 const cities :string[] = ['Oslo', 'Trondheim', 'Annet']
 
