@@ -140,7 +140,7 @@ const Quiz: React.FC<QuizProps> = ({
   const handleSubmit = async (): Promise<void> => {
     setHasSubmitted(true);
 
-    const calculatedPassed :boolean= numberOfCorrects / numberOfQuestionsCompleted >= passThreshold / 100;
+    const calculatedPassed :boolean= numberOfCorrects / shuffledQuestions.length >= passThreshold / 100;
 
     setPassed(calculatedPassed)
     
