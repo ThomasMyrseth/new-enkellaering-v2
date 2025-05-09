@@ -25,6 +25,7 @@ import { getAllAvailableQualifications, getMyOrders, getTeacherCards } from "./g
 import { Textarea } from "../textarea";
 import { TeacherOrderJoinTeacher } from "@/app/min-side/types";
 import { toast } from "sonner";
+import { event } from "@/components/facebookPixel/fpixel";
   
 
 export function TeacherFocusCards() {
@@ -174,6 +175,7 @@ export function TeacherFocusCards() {
             return;
         }
         try {
+            event("order-new-teacher")
             submitNewRequest(BASEURL, token, orderedTeacher.teacher.user_id, wantPhysicalOrDigital, address, comments, router)
             setDisableButton(false)
         }
