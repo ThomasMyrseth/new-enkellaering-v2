@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { event } from "./facebookPixel/fpixel";
 
 import { Terminal } from "lucide-react"
  
@@ -46,6 +47,8 @@ export default function ReferalForm() {
         else {
             setValidPhone(true)
         }
+
+        event("submit-new-referal", {"refereePhone": refereePhone.trim(), "refereeName": refereeName.trim(), "referalPhone": referalPhone.trim()})
 
         const response = await fetch(`${BASEURL}/submit-new-referal`, {
             method: "POST",

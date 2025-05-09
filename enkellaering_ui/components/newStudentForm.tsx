@@ -11,6 +11,7 @@ import {
   AlertTitle,
 } from "@/components/ui/alert"
 import { toast } from "sonner";
+import { event } from '@/components/facebookPixel/fpixel';
  
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
 
@@ -25,6 +26,8 @@ export default function NewStudentForm() {
 
         e.preventDefault();
         setErrorMessage(null);
+
+        event("submit-new-student", {"newStudentPhone": phone})
 
         //stop user from spamming button
         setIsDisabled(true)
@@ -50,7 +53,7 @@ export default function NewStudentForm() {
             })
         })
 
-        if (!response.ok) {
+        if (!response.ok || !response) {
             setErrorMessage(true)
             alert("En feil har skjedd. Venligst prøv igjen!")
         }

@@ -6,6 +6,7 @@ import { useOutsideClick } from "@/hooks/use-outside-click";
 import { Label } from "@/components/ui/label"
 import { Laptop, Users, Star } from "lucide-react"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import Link from "next/link";
 import {
     AlertDialog,
     AlertDialogCancel,
@@ -25,6 +26,7 @@ import { getAllAvailableQualifications, getMyOrders, getTeacherCards } from "./g
 import { Textarea } from "../textarea";
 import { TeacherOrderJoinTeacher } from "@/app/min-side/types";
 import { toast } from "sonner";
+import { event } from "@/components/facebookPixel/fpixel";
   
 
 export function TeacherFocusCards() {
@@ -174,6 +176,7 @@ export function TeacherFocusCards() {
             return;
         }
         try {
+            event("order-new-teacher")
             submitNewRequest(BASEURL, token, orderedTeacher.teacher.user_id, wantPhysicalOrDigital, address, comments, router)
             setDisableButton(false)
         }
@@ -456,7 +459,7 @@ export function TeacherFocusCards() {
                     {
                     previousOrders.find((p) => p.order.teacher_user_id === card.teacher.user_id)
                         ? <p className="text-xs whitespace-normal">Du har allerede bestilt {card.teacher.firstname} uken, eller så er {card.teacher.firstname} læreren din</p>
-                        : isLoggedInStudent ? <p>Bestill {card.teacher.firstname}</p> : <p className="text-xs">Logg inn for å bestille</p>
+                        : isLoggedInStudent ? <p>Bestill {card.teacher.firstname}</p> : <p className="text-xs"><Link href="/login" className="underline cursor-pointer pointer-events-auto">Logg inn</Link> eller <Link href="/signup" className="underline cursor-pointer pointer-events-auto">opprett en konto</Link> for å bestille</p>
                     }
                                             
                 </Button>

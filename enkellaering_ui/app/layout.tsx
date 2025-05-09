@@ -10,6 +10,9 @@ import Head from 'next/head';
 import MenuBarMobile from '@/components/ui/menubarMobile';
 import Sidebar from '@/components/ui/sidebar';
 import { Toaster } from "@/components/ui/sonner"
+import FacebookPixel from "@/components/facebookPixel/facebookPixel"
+import PixelTracker from '@/components/facebookPixel/pageTracker';
+
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -49,6 +52,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <div className="flex-1 flex mt-[60px] md:mt-0">
               <AuthProvider>
                 {isProtected ? <ProtectedRoute>{children}</ProtectedRoute> : children}
+                <FacebookPixel/>
+                <PixelTracker/>
               </AuthProvider>
             </div>
           </div>

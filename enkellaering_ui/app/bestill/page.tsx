@@ -7,16 +7,16 @@ import { TeacherFocusCards } from "@/components/ui/teacherCard/newTeacherCard";
 
 export default function BestillPage() {
     
-    return (<div className="text-center w-full h-full bg-slate-200 dark:bg-slate-950 space-y-10 p-10">
+    return (<div className="text-center w-fit md:w-full h-full bg-slate-200 dark:bg-slate-950 space-y-10 p-10">
 
             <NewStudentForm/>
-            <div className="grid grid-cols-1 md:grid-cols-2 space-x-10 space-y-4 md:space-y-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 space-x-0 md:space-x-4 items-start space-y-4 md:space-y-0">
               <GroupPrices/>
-              <Prices/>
+              <IndividualPrices/>
             </div>
-            <div className="bg-white dark:bg-black rounded-lg w-full p-4 space-y-6 flex flex-col items-center justify-center">
-            <h1 className="text-3xl py-4">Eller bestill <span className="relative bg-clip-text text-transparent bg-no-repeat bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500 py-4">drømmelæreren</span> direkte...</h1>
-            <TeacherFocusCards/>
+            <div className="bg-white dark:bg-black rounded-lg w-full md:w-full p-4 space-y-6 flex flex-col items-center justify-center">
+              <h1 className="text-3xl py-4">Eller bestill <span className="relative bg-clip-text text-transparent bg-no-repeat bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500 py-4">drømmelæreren</span> direkte...</h1>
+              <TeacherFocusCards/>
             </div>
 
     </div>)
@@ -24,10 +24,10 @@ export default function BestillPage() {
 
 
 
-function Prices() {
+function IndividualPrices() {
   return (<>
-    <CardContainer className="inter-var">
-      <CardBody className="bg-gray-50 relative group/card  dark:hover:shadow-2xl dark:hover:shadow-emerald-500/[0.1] dark:bg-black dark:border-white/[0.2] border-black/[0.1] w-auto sm:w-[30rem] h-auto rounded-xl p-6 border  ">
+    <CardContainer className="inter-var w-full">
+      <CardBody className="bg-gray-50 relative group/card  dark:hover:shadow-2xl dark:hover:shadow-emerald-500/[0.1] dark:bg-black dark:border-white/[0.2] border-black/[0.1]  h-auto rounded-xl p-6 border  ">
         <CardItem
           translateZ="50"
           className="flex flex-col w-full items-center justify-center font-bold text-neutral-600 dark:text-white"
@@ -37,7 +37,7 @@ function Prices() {
         <CardItem
           as="p"
           translateZ="60"
-          className="text-neutral-500 text-sm max-w-sm mt-2 dark:text-neutral-300"
+          className="text-neutral-500 text-sm mt-2 dark:text-neutral-300"
         >
           Uavhengig av om dere ønsker fysisk eller digital undervisning, en innspurt til eksamen eller et maraton ut skoleåret tar vi den samme prisen*.
         </CardItem>
@@ -65,10 +65,6 @@ function Prices() {
             <p className="text-neutral-500 text-sm dark:text-neutral-300">
               * Alle timer må avbestilles minst én virkedag (24 timer) før. 
               Dersom avbestillingen skjer etter dette vil dere bli fakturert for hele den planlagte tiden. Avbestillinger skjer ved å kontakte deres lærer per SMS.</p>
-            
-            <br/>
-            <p className="text-neutral-500 text-sm dark:text-neutral-300">
-            * Dersom du ønsker å ha med deg en venn, eller være to personer på privatundervisning samtidig, gjelder samlet pris på <span className="font-bold">350kr per 60min per person</span>. Alle andre vilkår gjelder som vanlig.</p>
           </CardItem>
         </div>
       </CardBody>
@@ -79,8 +75,8 @@ function Prices() {
 
 function GroupPrices() {
   return (<>
-    <CardContainer className="inter-var">
-      <CardBody className="bg-gray-50 relative group/card  dark:hover:shadow-2xl dark:hover:shadow-emerald-500/[0.1] dark:bg-black dark:border-white/[0.2] border-black/[0.1] w-auto sm:w-[30rem] h-auto rounded-xl p-6 border  ">
+    <CardContainer className="inter-var w-full">
+      <CardBody className="bg-gray-50 relative group/card  dark:hover:shadow-2xl dark:hover:shadow-emerald-500/[0.1] dark:bg-black dark:border-white/[0.2] border-black/[0.1] h-auto rounded-xl p-6 border  ">
         <CardItem
           translateZ="50"
           className="flex flex-col w-full items-center justify-center font-bold text-neutral-600 dark:text-white"
@@ -90,7 +86,7 @@ function GroupPrices() {
         <CardItem
           as="p"
           translateZ="60"
-          className="text-neutral-500 text-sm max-w-sm mt-2 dark:text-neutral-300"
+          className="text-neutral-500 text-sm mt-2 dark:text-neutral-300"
         >
           Uavhengig av om dere ønsker fysisk eller digital undervisning, en innspurt til eksamen eller et maraton ut skoleåret tar vi den samme prisen*.
         </CardItem>
