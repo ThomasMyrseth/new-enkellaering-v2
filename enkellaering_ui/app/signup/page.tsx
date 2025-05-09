@@ -103,7 +103,7 @@ function SignupFormContent() {
       const idToken = await userCredential.user.getIdToken();
 
 
-      event("signup-student", {"email": email, "phone": form["parent-phone"].value.replace(/\s+/g, "")})
+      event("signup-student")
 
       const response = await fetch(`${BASE_URL}/signup`, {
         method: "POST",

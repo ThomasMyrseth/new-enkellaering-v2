@@ -48,7 +48,7 @@ export default function ReferalForm() {
             setValidPhone(true)
         }
 
-        event("submit-new-referal", {"refereePhone": refereePhone.trim(), "refereeName": refereeName.trim(), "referalPhone": referalPhone.trim()})
+        event("submit-new-referal")
 
         const response = await fetch(`${BASEURL}/submit-new-referal`, {
             method: "POST",

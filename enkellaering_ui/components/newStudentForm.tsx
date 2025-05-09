@@ -27,7 +27,7 @@ export default function NewStudentForm() {
         e.preventDefault();
         setErrorMessage(null);
 
-        event("submit-new-student", {"newStudentPhone": phone})
+        event("submit-new-student")
 
         //stop user from spamming button
         setIsDisabled(true)

@@ -71,7 +71,7 @@ export default function SignupForm() {
     try {
       const form = e.target as HTMLFormElement;
 
-      event("singup-teacher", {"email": form["email"].value, "phone": form["phone"].value})
+      event("singup-teacher")
 
       const email = form["email"].value;
       const password = form["password"].value
