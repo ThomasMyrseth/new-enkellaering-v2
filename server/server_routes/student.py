@@ -131,3 +131,23 @@ def upload_notes_about_student_route(user_id):
     return jsonify({"message": "successfully added notes about student"}), 200
 
 
+from big_query.gets import get_students_without_teacher
+@student_bp.route('/get-student-without-teacher', methods=["GET"])
+@token_required
+
+def get_student_without_teacher_route(user_id):
+    if not user_id:
+        return jsonify({"message": "missing user id"})
+    
+    try:
+        students = get_students_without_teacher(client=bq_client)
+        return jsonify({"students": students}), 200
+    except Exception as e:
+        print("Error fetching students without teacher", e)
+        return jsonify({"message": f"failed to fetch students without teacher: {e}"}), 500
+    
+    
+    
+
+    
+

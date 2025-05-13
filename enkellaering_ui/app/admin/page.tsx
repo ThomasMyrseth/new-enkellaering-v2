@@ -9,18 +9,18 @@ import { NewStudentsWorkflow } from "./newStudentsWorkflow";
 import { PreviousClassesForEachTeacher } from "./previousClassesForEachTeacher";
 import { PreviousClassesForEachStudent } from "./previousClassesForEachStudent";
 import { NewStudentsWithoutTeacher } from "./newStudentWithPrefferedteacher";
+import { StudentsWithoutAnyTeachers } from "./studentsWithoutTeacher";
 import Quiz from "./quiz/main";
 
 import { Teacher } from "./types";
 import { InactiveStudents } from "./inactiveStudents";
 
-const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
-
 
 
 
 export default function AdminPage() {
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('token')!
+    const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080"
     const router = useRouter()
     const [teacher, setTeacher] = useState<Teacher>()
 
@@ -64,7 +64,7 @@ export default function AdminPage() {
         }
       }
       fetchTeacher()
-    },[router, token])
+    },[router, token, BASEURL])
 
     //this user is an admin
     if (!teacher) {
@@ -74,6 +74,7 @@ export default function AdminPage() {
     return (<div className="flex flex-col items-center justify-center w-full space-y-10 min-h-screen bg-stone-100 dark:bg-slate-950">
         <TeacherName teacher={teacher}/>
         <div className="flex flex-col items-center justify-center w-full md:w-3/4 max-w-screen-lg space-y-10 mx-auto px-4">
+          <StudentsWithoutAnyTeachers token={token} BASEURL={BASEURL} />
           <NewStudentsWithoutTeacher />
           <DailyRevenueChart />
           <PreviousClassesForEachTeacher />

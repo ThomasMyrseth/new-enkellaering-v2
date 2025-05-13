@@ -840,3 +840,34 @@ def get_all_teachers_join_students(client :bigquery.Client):
     except Exception as e:
         print(f"Error retrieving teachers and students {e}")
         raise RuntimeError(f"Error retrieving teachers and students: {e}")
+    
+
+
+def get_students_without_teacher(client :bigquery.Client):
+    try:
+        USER_DATASET = os.environ.get('USER_DATASET', 'users')
+
+        # Build the query. Note that @date is a parameter placeholder.
+        query = f"""
+            SELECT *
+            
+            FROM `{USER_DATASET}.students` AS s
+
+            WHERE s.user_id NOT IN (
+                SELECT ts.student_user_id
+                FROM `{USER_DATASET}.teacher_student` AS ts
+                WHERE ts.teacher_accepted_student = TRUE AND (ts.hidden = FALSE OR ts.hidden IS NULL)
+            )
+        """
+
+        # Execute the query and wait for the result
+        query_job = client.query(query)
+        results = query_job.result()  # Waits for the job to complete
+
+        # Convert the results to a list of dictionaries
+        rows = [dict(row) for row in results]
+        return rows 
+    
+    except Exception as e:
+        print(f"Error retrieving teachers and students {e}")
+        raise RuntimeError(f"Error retrieving teachers and students: {e}")
