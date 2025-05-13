@@ -87,13 +87,13 @@ def insert_student(client: bigquery.Client, student: Students):
             user_id, firstname_parent, lastname_parent, email_parent, phone_parent,
             firstname_student, lastname_student, phone_student, created_at,
             main_subjects, additional_comments, address, has_physical_tutoring,
-            postal_code
+            postal_code, is_active
         )
         VALUES (
             @user_id, @firstname_parent, @lastname_parent, @email_parent, @phone_parent,
             @firstname_student, @lastname_student, @phone_student, @created_at,
             @main_subjects, @additional_comments, @address, @has_physical_tutoring,
-            @postal_code
+            @postal_code, @is_active
         )
     """
     job_config = bigquery.QueryJobConfig(
@@ -112,6 +112,7 @@ def insert_student(client: bigquery.Client, student: Students):
             bigquery.ScalarQueryParameter("address", "STRING", student.address),
             bigquery.ScalarQueryParameter("postal_code", "STRING", student.postal_code),
             bigquery.ScalarQueryParameter("has_physical_tutoring", "BOOL", student.has_physical_tutoring),
+            bigquery.ScalarQueryParameter("is_active", "BOOL", student.is_active),
         ]
     )
 
