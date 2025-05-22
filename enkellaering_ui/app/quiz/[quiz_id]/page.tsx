@@ -75,7 +75,7 @@ export default function QuizPage() {
             questions={quiz}
             numberOfQuestions={quizMetaData.number_of_questions || 12}
             passThreshold={quizMetaData.pass_threshold}            
-            quizId={quizMetaData.quiz_id}
+            quizId={quiz_id}
             title={quizMetaData.title}
             baseUrl={baseUrl}
             token={token}

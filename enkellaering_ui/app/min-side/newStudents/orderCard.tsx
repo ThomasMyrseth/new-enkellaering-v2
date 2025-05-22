@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import React, { useState } from "react";
-import { TeacherOrderJoinTeacher } from "../types";
+import { TeacherOrderWithTeacherData } from "../types";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,7 +22,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
 interface Order {
-  teacherOrder: TeacherOrderJoinTeacher;
+  teacherOrder: TeacherOrderWithTeacherData;
   imageURL: string;
 }
 
@@ -34,17 +34,17 @@ export default function OrderCard({ order, handleUIDelete }: {order: Order, hand
   const router = useRouter();
   // State for the editable fields
   const [physicalOrDigital, setPhysicalOrDigital] = useState<boolean>(
-    order.teacherOrder.order.physical_or_digital
+    order.teacherOrder.physical_or_digital
   );
   const [comments, setComments] = useState<string>(
-    order.teacherOrder.order.order_comments
+    order.teacherOrder.order_comments
   );
   const [meetingLocation, setMeetingLocation] = useState<string>(
-    order.teacherOrder.order.preferred_location
+    order.teacherOrder.preferred_location
   );
 
   const formattedDate = new Date(
-    order.teacherOrder.order.created_at
+    order.teacherOrder.created_at
   ).toLocaleDateString("nb-NO", {
     day: "2-digit",
     month: "long",
@@ -54,7 +54,7 @@ export default function OrderCard({ order, handleUIDelete }: {order: Order, hand
   const teachingMethod = physicalOrDigital ? "Fysisk" : "Digitalt";
 
   // Determine teacher acceptance status.
-  const teacherAccepted = order.teacherOrder.order.teacher_accepted_student;
+  const teacherAccepted = order.teacherOrder.teacher_accepted_student;
   const acceptanceText =
     teacherAccepted === true
       ? "Ja"
@@ -77,7 +77,7 @@ export default function OrderCard({ order, handleUIDelete }: {order: Order, hand
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          row_id: order.teacherOrder.order.row_id,
+          row_id: order.teacherOrder.row_id,
           physical_or_digital: physicalOrDigital,
           meeting_location: meetingLocation,
           comments: comments,
@@ -98,7 +98,7 @@ export default function OrderCard({ order, handleUIDelete }: {order: Order, hand
   const handleDelete = async () => {
 
     //update the UI
-    handleUIDelete(order.teacherOrder.order.row_id)
+    handleUIDelete(order.teacherOrder.row_id)
 
     const token = localStorage.getItem("token");
     if (!token) {
@@ -112,7 +112,7 @@ export default function OrderCard({ order, handleUIDelete }: {order: Order, hand
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ row_id: order.teacherOrder.order.row_id }),
+        body: JSON.stringify({ row_id: order.teacherOrder.row_id }),
       });
       if (!response.ok) {
         alert("Error deleting order");
@@ -147,15 +147,15 @@ export default function OrderCard({ order, handleUIDelete }: {order: Order, hand
           </div>
           <div className="p-4">
             <h3 className="text-lg font-bold">
-              {order.teacherOrder.teacher.firstname}{" "}
-              {order.teacherOrder.teacher.lastname}
+              {order.teacherOrder.firstname}{" "}
+              {order.teacherOrder.lastname}
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-300">
               {formattedDate}
             </p>
             <p className="mt-2 text-sm">
               <span className="font-semibold">Tlf:</span>{" "}
-              {order.teacherOrder.teacher.phone}
+              {order.teacherOrder.phone}
             </p>
             <p className="mt-2 text-sm">
               <span className="font-semibold">Hvordan:</span> {teachingMethod}

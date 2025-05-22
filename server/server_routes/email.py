@@ -5,6 +5,12 @@ import resend
 from typing import List
 load_dotenv()
 
+from cloud_sql.gets import get_students_with_few_classes, get_all_admins
+
+resend.api_key = os.getenv('RESEND_API_KEY')
+FROM_EMAIL = os.getenv("MAIL_USERNAME") or "kontakt@enkellaering.no"
+
+
 mail_bp = Blueprint('mail', __name__)
 
 # This route builds and sends the email dynamically on request
@@ -30,15 +36,10 @@ def send_hello_email_route():
         return jsonify({"error": str(e)}), 500
 
 
-import os
-import resend
 
-resend.api_key = os.getenv('RESEND_API_KEY')
 
 def sendNewStudentToTeacherMail(receipientTeacherMail: str, teachername :str):
     try:
-        FROM_EMAIL = os.getenv("MAIL_USERNAME")
-
         # HTML content adapted from your image template
         html_content = f"""
         <div style="font-family: sans-serif; background-color: #f9f9f9; padding: 30px;">
@@ -74,8 +75,6 @@ def sendNewStudentToTeacherMail(receipientTeacherMail: str, teachername :str):
 
 def sendSingupTeacherEmailToTeacher(receipientTeacherMail: str, teachername :str):
     try:
-        FROM_EMAIL = os.getenv("MAIL_USERNAME")
-
         # HTML content adapted from your image template
         html_content = f"""
         <div style="font-family: sans-serif; background-color: #f9f9f9; padding: 30px;">
@@ -117,14 +116,8 @@ def sendSingupTeacherEmailToTeacher(receipientTeacherMail: str, teachername :str
 
 
 
-import os
-import resend
-
-resend.api_key = os.getenv('RESEND_API_KEY')
-
 def sendAcceptOrRejectToStudentMail(studentName: str, teacherName: str, acceptOrReject: bool, receipientStudentMail: str):
     try:
-        FROM_EMAIL = os.getenv("MAIL_USERNAME")
         accept_text = 'godkjent' if acceptOrReject else 'avslått'
 
         # HTML email body, adapted to your template
@@ -162,7 +155,6 @@ def sendAcceptOrRejectToStudentMail(studentName: str, teacherName: str, acceptOr
 import os
 import resend
 
-resend.api_key = os.getenv("RESEND_API_KEY")
 
 def sendNewStudentToAdminMail(newStudentPhone: str):
     try:
@@ -171,8 +163,6 @@ def sendNewStudentToAdminMail(newStudentPhone: str):
     except Exception as e:
         raise RuntimeError(f"Error getting the email of admins: {e}")
 
-    # Your sender email (must be verified with Resend)
-    FROM_EMAIL = os.getenv("MAIL_USERNAME")
 
     # Email content (HTML)
     html_content = f"""
@@ -203,6 +193,7 @@ def sendNewStudentToAdminMail(newStudentPhone: str):
 
 
 import locale
+from datetime import datetime
 def format_last_class_date(date_str, language="no"):
     try:
         # Parse the ISO date/datetime string
@@ -225,9 +216,6 @@ def format_last_class_date(date_str, language="no"):
     return formatted
 
 
-from big_query.gets import get_students_with_few_classes, get_all_admins
-from big_query.bq_types import Teacher
-from datetime import datetime
 @mail_bp.route('/send-email-about-inactive-students-to-admin', methods=['GET'])
 def sendInactiveStudentsMailToAdmin ():
 
@@ -241,7 +229,7 @@ def sendInactiveStudentsMailToAdmin ():
 
     #get all the admins
     try:
-        admins :List[Teacher] = get_all_admins()
+        admins :List = get_all_admins()
     except Exception as e:
         print(e)
         return jsonify({"message": f"Error getting the admins emails: {e}"})
@@ -327,8 +315,6 @@ def sendNewOrderEmailToAdmin( firstname_parent:str, lastname_parent:str, phone_p
     except Exception as e:
         raise RuntimeError(f"Error getting the email of admins: {e}")
 
-    # Your sender email (must be verified with Resend)
-    FROM_EMAIL = os.getenv("MAIL_USERNAME")
 
     # Email content (HTML)
     html_content = f"""

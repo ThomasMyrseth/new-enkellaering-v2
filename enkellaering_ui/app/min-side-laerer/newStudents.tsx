@@ -85,9 +85,6 @@ export default function NewStudentWithPreferredTeacherActionsCard({ ns }: { ns :
     month: "long",
     year: "numeric",
   });
-  
-  const createdAt: Date = new Date(ns.created_at);
-  const twoHoursAfterCreation :Date = new Date(createdAt.getTime() + 2*60*60*1000)
 
   const teachingMethod =
     ns.physical_or_digital === true
@@ -137,9 +134,6 @@ export default function NewStudentWithPreferredTeacherActionsCard({ ns }: { ns :
         </div>
       </AlertDialogTrigger>
       <AlertDialogContent>
-        
-        {new Date().getTime() > twoHoursAfterCreation.getTime()?
-          <>
             <AlertDialogHeader>
               <AlertDialogTitle>Oppdater aksept</AlertDialogTitle>
               <AlertDialogDescription>
@@ -150,12 +144,6 @@ export default function NewStudentWithPreferredTeacherActionsCard({ ns }: { ns :
                 <Button className="bg-green-500 dark:bg-green-400" onClick={() => handleAcceptClick(true, ns)}>Jeg tar denne eleven</Button>
                 <Button className="bg-rose-500 dark:bg-rose-400"  onClick={() => handleAcceptClick(false, ns)}>Jeg ønsker ikke denne eleven</Button>
             </div>
-          </>
-          :
-          <>
-            <h2>Du må vente til {twoHoursAfterCreation.toLocaleDateString("nb-NO", {minute: "2-digit", hour: "2-digit", day: "2-digit", month: "long", year: "numeric",})} med å godta eleven</h2>
-          </>
-        }
         <AlertDialogFooter className="mt-4 flex justify-between">
           <AlertDialogCancel className="" onClick={() => setOpenDialog(false)}>Tilbake</AlertDialogCancel>
         </AlertDialogFooter>

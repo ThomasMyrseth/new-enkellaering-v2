@@ -123,7 +123,6 @@ const Quiz: React.FC<QuizProps> = ({
   const [shuffledQuestions, setShuffledQuestions] = useState<QuestionType[]>([])
   const router = useRouter();
 
-
   //adjust the shuffled questions to the correct lenght
   useEffect(() => {
     setShuffledQuestions([...questions].sort(() => Math.random() - 0.5).slice(0, numberOfQuestions));
@@ -143,13 +142,6 @@ const Quiz: React.FC<QuizProps> = ({
     const calculatedPassed :boolean= numberOfCorrects / shuffledQuestions.length >= passThreshold / 100;
 
     setPassed(calculatedPassed)
-    
-    let passedNumber :number =1
-    if (calculatedPassed) {
-      passedNumber = 2
-    }
-
-
 
     const res = await fetch(`${baseUrl}/submit-quiz`, {
       headers: {
@@ -160,7 +152,7 @@ const Quiz: React.FC<QuizProps> = ({
       body: JSON.stringify({
         number_of_corrects: numberOfCorrects,
         number_of_questions: numberOfQuestionsCompleted,
-        passed_quiz: passedNumber,
+        passed_quiz: calculatedPassed,
         quiz_id: quizId,
       }),
     });
@@ -183,7 +175,7 @@ const Quiz: React.FC<QuizProps> = ({
               key={index}
               question={question.question}
               questionNumber={index + 1}
-              options={question.options}
+              options={question.answer_options}
               correctOption={question.correct_option}
               image={question.image}
               onSubmitAnswer={incrementCorrectAnswer}
