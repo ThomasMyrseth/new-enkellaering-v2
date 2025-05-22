@@ -3,11 +3,11 @@
 import React, { useEffect, useState } from "react";
 import { Carousel } from "@/components/ui/apple-cards-carousel"; // reusing your carousel component
 import OrderCard from "./orderCard";
-import { TeacherOrderJoinTeacher } from "../types"; // adjust the import based on your project structure
+import { TeacherOrderWithTeacherData } from "../types"; // adjust the import based on your project structure
 import { getNewTeachers, getAllTeacherImagesAndAboutMes } from "./getPushData";
 
 type Order = {
-    teacherOrder :TeacherOrderJoinTeacher;
+    teacherOrder :TeacherOrderWithTeacherData;
     imageURL :string;
 }
 export default function OrderCardsCarouselDemo() {
@@ -22,10 +22,13 @@ export default function OrderCardsCarouselDemo() {
                 const orders = await getNewTeachers(BASEURL, token)
                 const images = await getAllTeacherImagesAndAboutMes(BASEURL, token)
 
+                console.log("Orders", orders)
+                console.log("Images", images)
+
                 //blend them together
-                const blendedOrders: Order[] = orders.map((order: TeacherOrderJoinTeacher) => {
+                const blendedOrders: Order[] = orders.map((order: TeacherOrderWithTeacherData) => {
                     const foundImage = images.find(
-                      (img) => img.user_id === order.teacher.user_id
+                      (img) => img.user_id === order.teacher_user_id
                     );
               
                     return {
@@ -37,7 +40,7 @@ export default function OrderCardsCarouselDemo() {
 
                 //filter them by date
                 blendedOrders.sort((a, b) => {
-                    return new Date(b.teacherOrder.order.created_at).getTime() - new Date(a.teacherOrder.order.created_at).getTime();
+                    return new Date(b.teacherOrder.created_at).getTime() - new Date(a.teacherOrder.created_at).getTime();
                 });
                 
                 setOrders(blendedOrders)
@@ -47,23 +50,23 @@ export default function OrderCardsCarouselDemo() {
             }
         }
         fetchOrders()
-    },[])
+    },[BASEURL, token])
 
     //pass this fucntion to every card
     const deleteOrder = (rowId: string) => {
       setOrders((prevOrders) =>
         prevOrders.filter(
-          (order) => order.teacherOrder.order.row_id !== rowId
+          (order) => order.teacherOrder.row_id !== rowId
         )
       );
     };
 
     const cards = orders
       .map((order: Order) => {
-        if (order.teacherOrder.order.hidden) {
+        if (order.teacherOrder.hidden) {
           return null;
         }
-        return <OrderCard key={order.teacherOrder.order.row_id} order={order} handleUIDelete={deleteOrder}/>;
+        return <OrderCard key={order.teacherOrder.row_id} order={order} handleUIDelete={deleteOrder}/>;
       })
       .filter((card): card is JSX.Element => card !== null);
 

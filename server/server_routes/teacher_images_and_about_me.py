@@ -1,22 +1,15 @@
 from flask import Blueprint, request, jsonify
-import os
 import logging
 
-from .config import bq_client 
 from .config import token_required
-
-PROJECT_ID = os.getenv('PROJECT_ID')
-USER_DATASET = os.getenv('USER_DATASET')
-CLASSES_DATASET = os.getenv('CLASSES_DATASET')
-NEW_STUDENTS_DATASET = os.getenv('NEW_STUDENTS_DATASET')
-
+from cloud_sql.buckets.uploads import upload_or_replace_image_in_bucket
+from cloud_sql.inserts import upsert_about_me_text
+from cloud_sql.buckets.downloads import download_all_teacher_images
+from cloud_sql.gets import get_all_about_me_texts
 
 teacher_images_bp = Blueprint('teacher_images', __name__)
-
 import mimetypes
 
-from big_query.buckets.uploads import upload_or_replace_image_in_bucket
-from big_query.inserts import upsert_about_me_text
 @teacher_images_bp.route("/upload-teacher-image", methods=["POST"])
 @token_required
 def upload_file(user_id):
@@ -67,7 +60,7 @@ def upload_file(user_id):
     
     try:
         # Insert about_me text into BigQuery
-        upsert_about_me_text(client=bq_client, user_id=user_id, text=about_me, firstname=firstname, lastname=lastname)
+        upsert_about_me_text(user_id=user_id, text=about_me, firstname=firstname, lastname=lastname)
 
         return jsonify({"message": f"File uploaded successfully to {destination_blob_name}"}), 200
     except Exception as e:
@@ -75,13 +68,11 @@ def upload_file(user_id):
         return jsonify({"message": f"Error uploading about me texts {e}"})
 
 
-from big_query.buckets.downloads import download_all_teacher_images
-from big_query.gets import get_all_about_me_texts
 @teacher_images_bp.route('/get-all-teacher-images-and-about-mes', methods=["GET"])
 def get_all_images_and_about_mes():
     try:
         # Fetch about me texts
-        about_mes = get_all_about_me_texts(client=bq_client)
+        about_mes = get_all_about_me_texts()
 
         # Fetch teacher images
         images = download_all_teacher_images()

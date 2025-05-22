@@ -432,7 +432,7 @@ export function TeacherFocusCards() {
                             className="w-40 m-2 text-neutral-600 dark:text-neutral-400 text-center md:text-left overflow-x-scroll scrollbar-hide"
                         >
                             {[...new Set(card.qualifications)].sort().map((qualification: string, index: number) => (
-                                <span key={index} className="whitespace-nowrap rounded-lg bg-neutral-100 mx-1 p-2 text-xs">{qualification}</span>
+                                <span key={index} className="whitespace-nowrap rounded-lg bg-ne utral-100 mx-1 p-2 text-xs">{qualification}</span>
                             ))}
                         </motion.p>
                         <div className="flex flex-row">
@@ -518,7 +518,7 @@ const CloseIcon = () => {
   
 
 
-const submitNewRequest = async (BASEURL: string, token: string, teacher_user_id: string, physical_or_digital :boolean, address :string, comments :string, router : ReturnType<typeof useRouter>) => {
+const submitNewRequest = async (BASEURL: string, token: string, teacher_user_id: string, physical_or_digital :boolean, location :string, comments :string, router : ReturnType<typeof useRouter>) => {
 
     try {
         const res = await fetch(`${BASEURL}/request-new-teacher`, {
@@ -530,7 +530,7 @@ const submitNewRequest = async (BASEURL: string, token: string, teacher_user_id:
             body: JSON.stringify({
                 teacher_user_id: teacher_user_id,
                 physical_or_digital: physical_or_digital,
-                address: address,
+                location: location,
                 comments: comments,
 
             })

@@ -1,7 +1,7 @@
-import { TeacherOrderJoinTeacher } from "../types";
+import { TeacherOrderWithTeacherData } from "../types";
 
 // Get all the new orders
-const getNewTeachers = async (BASEURL: string, token: string): Promise<TeacherOrderJoinTeacher[]> => {
+const getNewTeachers = async (BASEURL: string, token: string): Promise<TeacherOrderWithTeacherData[]> => {
     try {
         const res = await fetch(`${BASEURL}/get-new-orders`, {
             method: "GET",
@@ -15,7 +15,7 @@ const getNewTeachers = async (BASEURL: string, token: string): Promise<TeacherOr
         }
 
         const data = await res.json();
-        return data.teachers as TeacherOrderJoinTeacher[] || [];
+        return data.teachers as TeacherOrderWithTeacherData[] || [];
     } catch (e: unknown) {
       if (e instanceof Error) {
         throw new Error(`Failed to get new students: ${e.message}`);

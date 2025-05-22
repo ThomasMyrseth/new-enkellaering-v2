@@ -1,24 +1,15 @@
 import os
-from google.cloud import bigquery
+from datetime import datetime, timedelta, timezone
+from flask import request, jsonify
+import logging
+from functools import wraps
+import jwt
 from google.cloud import firestore
 
 
-from datetime import datetime, timedelta
-from flask import request, jsonify
-from google.cloud import bigquery
-from datetime import datetime
-import logging
-from datetime import timedelta
-from functools import wraps
-import jwt
-
-# Initialize BigQuery client here
-bq_client = bigquery.Client.from_service_account_json('google_service_account.json')
+SECRET_KEY = os.getenv('SECRET_KEY', 'fallback_super_secret_key')
 firestore_client = firestore.Client(project='enkel-laering')
 
-
-SECRET_KEY = os.getenv('SECRET_KEY', 'fallback_super_secret_key')
-from datetime import timezone
 def generate_token(user_id):
     payload = {
         'user_id': user_id,

@@ -87,7 +87,7 @@ const buildTeacherCards = (teachers: ExpandedTeacher[], reviews: Review[], image
     teachers.map((teacher) => {
         const teacherReviews :Review[]= reviews.filter((review) => review.teacher_user_id === teacher.user_id);
         const imageAndAboutMe :AboutMe= imagesAndAboutMes.find((i) => i.user_id === teacher.user_id) || fallbackAboutMe;
-        const teacherQualifications :Qualification[]= qualifications.filter((qualification) => qualification.user_id === teacher.user_id);
+        const teacherQualifications :Qualification[]= qualifications.filter((qualification) => qualification.user_id === teacher.user_id && qualification.passed === true);
         const qualificationTitles :string[]= teacherQualifications.map((qualification) => qualification.title);
         
         const card :CardType = {
@@ -145,7 +145,7 @@ export const getMyOrders = async () => {
 export const getAllAvailableQualifications = async (): Promise<string[]> => {
     try {
         const [qualifications] = await Promise.all([
-            fetch(`${BASEURL}/get-all-available-qualifications`),
+            fetch(`${BASEURL}/get-all-qualifications`),
         ]);
 
         if (!qualifications.ok) {

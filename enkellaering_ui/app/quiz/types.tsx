@@ -3,7 +3,7 @@ export type QuestionType = {
     quiz_id :string;
     question_id :string;
     question :string;
-    options: string[];
+    answer_options: string[];
     correct_option: number;
     image :string;
     time_limit :number;
