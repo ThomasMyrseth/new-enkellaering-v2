@@ -34,7 +34,6 @@ export const ToggleFilterCards = ({
     passFilterPhysical,
     passFilterLocation,
     passFilterQualification,
-
     qualifications,
     
   }: {

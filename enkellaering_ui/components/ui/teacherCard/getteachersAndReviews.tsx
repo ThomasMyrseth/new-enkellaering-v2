@@ -153,14 +153,16 @@ export const getAllAvailableQualifications = async (): Promise<string[]> => {
         }
 
         const qualificationsData = await qualifications.json();
+        console.log("Qualifications Data:", qualificationsData);
+        const qs :Quiz[]= qualificationsData.qualifications || [];
+        console.log("Fetched quizzes:", qs);
 
-        const quizzes :Quiz[]= qualificationsData.quizzes || [];
-
-        const qualificationsList = quizzes.map( (quiz) => {
-            return quiz.title
+        const qualificationsList = qs.map( (q) => {
+            return q.title
         })
 
-        return qualificationsList
+        //avoid duplicates
+        return Array.from(new Set(qualificationsList));
 
     } catch (error) {
         console.error("Error fetching qualificationsData:", error);

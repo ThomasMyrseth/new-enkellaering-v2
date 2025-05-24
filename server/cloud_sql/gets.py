@@ -228,8 +228,8 @@ def is_user_admin(user_id: str):
 def get_all_qualifications():
     sql = """
         SELECT qr.*, q.* 
-        FROM public.quiz_results qr
-        RIGHT JOIN public.quizzes q 
+        FROM public.quizzes q
+        LEFT JOIN public.quiz_results qr
           ON qr.quiz_id = q.quiz_id
     """
     return execute_query(sql)

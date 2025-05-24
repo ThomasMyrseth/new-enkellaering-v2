@@ -39,5 +39,6 @@ def get_all_reviews_route():
         reviews = get_all_reviews()
         return jsonify({"reviews": reviews}), 200
     except Exception as e:
+        print(f"Error retrieving reviews: {e}")
         return jsonify({"message": f"Error retrieving reviews: {e}"}), 500
 
