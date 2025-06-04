@@ -22,6 +22,7 @@ from firebase_admin import auth
 
 auth_bp = Blueprint('auth', __name__)
 
+from .email import welcomeNewStudentEmailToStudent
 @auth_bp.route('/signup', methods=['POST'])
 def register():
     data = request.json
@@ -82,7 +83,6 @@ def register():
         session['user_id'] = user_id
         token = generate_token(user_id)
         logging.info(f"Student {user_id} registered.")
-        return jsonify({"message": "User registered successfully.", "user_id": user_id, "token": token}), 200
 
     except auth.InvalidIdTokenError:
         logging.error("Invalid Firebase ID token.")
@@ -90,6 +90,17 @@ def register():
     except Exception as e:
         logging.error(f"Error saving user: {e}")
         return jsonify({"error": str(e)}), 500
+    
+    #send email
+    try:
+        welcomeNewStudentEmailToStudent(email_parent, firstname_parent)
+    except Exception as e:
+        logging.error(f"Error sending welcome email: {e}")
+        return jsonify({"error": "User registered, but failed to send welcome email."}), 500
+    
+    return jsonify({"message": "User registered successfully.", "user_id": user_id, "token": token}), 200
+    
+
 
 @auth_bp.route('/signup-teacher', methods=['POST'])
 def register_teacher():

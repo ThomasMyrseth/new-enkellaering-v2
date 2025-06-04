@@ -82,6 +82,8 @@ def fetch_classes_for_teacher(user_id):
     except Exception as e:
         return jsonify({"message": str(e)}), 500
 
+from .email import sendNewClassToStudentMail
+from cloud_sql.gets import get_student_by_user_id, get_teacher_by_user_id
 @classes_bp.route('/upload-new-class', methods=["POST"])
 @token_required
 def upload_new_class(user_id):
@@ -115,6 +117,27 @@ def upload_new_class(user_id):
             groupclass=groupclass,
             number_of_students=number_of_students
         ))
+
+    #send an email to students about the new class
+    try:
+        student = get_student_by_user_id(student_ids[0])  # Ensure at least one student exists
+        teacher = get_teacher_by_user_id(user_id)  # Ensure the teacher exists
+
+        # If get_student_by_user_id returns a list, use the first element
+        if isinstance(student, list) and student:
+            student = student[0]
+        # If get_teacher_by_user_id returns a list, use the first element
+        if isinstance(teacher, list) and teacher:
+            teacher = teacher[0]
+    except Exception as e:
+        print(f"Error fetching student or teacher: {e}")
+        return jsonify({"message": str(e)}), 500
+
+    try:
+        sendNewClassToStudentMail(student['firstname_student'], teacher['firstname'], student['firstname_parent'], classes[0].comment, classes[0].started_at, student['email_parent'])
+    except Exception as e:
+        print(f"Error sending email: {e}")
+        return jsonify({"message": f"Error sending email: {e}"}), 500
     try:
         insert_classes(classes)
         return jsonify({"message": "Class inserted successfully"}), 200

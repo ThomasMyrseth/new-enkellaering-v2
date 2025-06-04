@@ -70,7 +70,37 @@ def sendNewStudentToTeacherMail(receipientTeacherMail: str, teachername :str):
 
 
 
+def welcomeNewStudentEmailToStudent(parentEmail: str, parentName :str):
+    try:
+        # HTML content adapted from your image template
+        html_content = f"""
+        <div style="font-family: sans-serif; background-color: #f9f9f9; padding: 30px;">
+            <h1>Hei {parentName}!</h1>
+            <h2>Velkommen til Enkel Læring</h2>
+            <div style="background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                <p style="color: #555;">
+                    Takk for at du registrerte deg på Enkel Læring! Vi er glade for å ha deg med.
+                    Vi minner om at du kan logge inn på Min Side for å se dine timer, kontaktinformasjon til din lærer, samt annen viktig informasjon. 
+                </p>
+                <a href="https://enkellaering.no/login" style="display:inline-block; margin-top: 15px; background-color:#6366F1; color:white; padding:10px 16px; border-radius:5px; text-decoration:none;">Logg inn</a>
+            </div>
+        </div>
+        """
 
+        # Send email with Resend
+        response = resend.Emails.send({
+            "from": FROM_EMAIL,
+            "to": parentEmail,
+            "subject": "Informasjon: velkommen til Enkel Læring",
+            "html": html_content
+        })
+
+        print("✅ Email sent:", response)
+        return response
+
+    except Exception as e:
+        print("❌ Failed to send email:", e)
+        raise e
 
 
 def sendSingupTeacherEmailToTeacher(receipientTeacherMail: str, teachername :str):
@@ -111,7 +141,56 @@ def sendSingupTeacherEmailToTeacher(receipientTeacherMail: str, teachername :str
         print("❌ Failed to send email:", e)
         raise e
 
+def sendNewClassToStudentMail(studentName: str, teacherName: str, parentName :str, comment :str, classDate: str, receipientStudentMail: str):
+    try:
+        # Inline parsing and formatting of classDate
+        try:
+            # Parse ISO string with 'Z' suffix as UTC
+            dt = datetime.fromisoformat(classDate.replace('Z', '+00:00'))
+            from zoneinfo import ZoneInfo
+            dt = dt.astimezone(ZoneInfo("Europe/Oslo"))
+        except Exception:
+            formatted_classDate = classDate  # Fallback to raw string on parse failure
+        else:
+            # Set locale to Norwegian (nb_NO); fallback to en_US if unavailable
+            try:
+                locale.setlocale(locale.LC_TIME, 'nb_NO.UTF-8')
+            except locale.Error:
+                locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
+            # Format date as "weekday dd. month yyyy, kl. HH:MM"
+            formatted_classDate = dt.strftime("%A %d. %B %Y, kl. %H:%M")
+        # HTML email body, adapted to your template
+        html_content = f"""
+        <div style="font-family: sans-serif; background-color: #f9f9f9; padding: 30px;">
+            <h1>{studentName} har akkurat hatt en time</h1>
+            <br/>
+            <div style="background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                <p style="font-size: 16px;"><strong>Hei {parentName}.</strong></p>
+                <br/>
+                <p>{studentName} har hatt en time med {teacherName} den {formatted_classDate}.</p>
+                <p>Kommentar fra lærer: <br/><strong>{comment}</strong></p>
+                <br/>
+                <p>Du kan se flere timer og kontakt info til din lærer på <a href='https://enkellaering.no/min-side'>Min Side</a>.
+                Ta gjerne kontakt om du lurer på noe eller ønsker en oppfølging fra læreren din!</p>
+                <a href="https://enkellaering.no/login" style="display:inline-block; margin-top: 15px; background-color:#6366F1; color:white; padding:10px 16px; border-radius:5px; text-decoration:none;">Gå til Min Side</a>
+            </div>
+        </div>
+        """
 
+        # Send the email
+        response = resend.Emails.send({
+            "from": FROM_EMAIL,
+            "to": receipientStudentMail,
+            "subject": f"{studentName} har hatt en time med {teacherName}",
+            "html": html_content
+        })
+
+        print("✅ Email sent:", response)
+        return response
+
+    except Exception as e:
+        print("❌ Failed to send email:", e)
+        raise e
 
 
 
