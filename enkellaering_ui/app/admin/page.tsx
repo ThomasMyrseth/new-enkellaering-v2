@@ -8,7 +8,6 @@ import { TeacherName } from "./teacherName";
 import { NewStudentsWorkflow } from "./newStudentsWorkflow";
 import { PreviousClassesForEachTeacher } from "./previousClassesForEachTeacher";
 import { PreviousClassesForEachStudent } from "./previousClassesForEachStudent";
-import { NewStudentsWithoutTeacher } from "./newStudentWithPrefferedteacher";
 import { StudentsWithoutAnyTeachers } from "./studentsWithoutTeacher";
 import Quiz from "./quiz/main";
 
