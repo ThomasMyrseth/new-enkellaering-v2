@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from datetime import datetime
+import logging
 
 from .config import token_required
 from cloud_sql.gets import (
@@ -136,6 +137,7 @@ def upload_new_class(user_id):
     try:
         sendNewClassToStudentMail(student['firstname_student'], teacher['firstname'], student['firstname_parent'], classes[0].comment, classes[0].started_at, student['email_parent'])
     except Exception as e:
+        logging.error(f"Error sending email: {e}")
         print(f"Error sending email: {e}")
         return jsonify({"message": f"Error sending email: {e}"}), 500
     try:

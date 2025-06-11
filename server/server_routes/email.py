@@ -4,6 +4,10 @@ from dotenv import load_dotenv
 import resend
 from typing import List
 load_dotenv()
+import logging
+from tzlocal import get_localzone
+from datetime import datetime
+from babel.dates import format_datetime
 
 from cloud_sql.gets import get_students_with_few_classes, get_all_admins
 
@@ -81,6 +85,7 @@ def welcomeNewStudentEmailToStudent(parentEmail: str, parentName :str):
                 <p style="color: #555;">
                     Takk for at du registrerte deg på Enkel Læring! Vi er glade for å ha deg med.
                     Vi minner om at du kan logge inn på Min Side for å se dine timer, kontaktinformasjon til din lærer, samt annen viktig informasjon. 
+                    Vi anbefaler at du regelmessig tar en titt på Min Side for å holde deg oppdatert.
                 </p>
                 <a href="https://enkellaering.no/login" style="display:inline-block; margin-top: 15px; background-color:#6366F1; color:white; padding:10px 16px; border-radius:5px; text-decoration:none;">Logg inn</a>
             </div>
@@ -99,6 +104,7 @@ def welcomeNewStudentEmailToStudent(parentEmail: str, parentName :str):
         return response
 
     except Exception as e:
+        logging.error(f"❌ Failed to send email to {parentEmail}: {e}")
         print("❌ Failed to send email:", e)
         raise e
 
@@ -143,22 +149,28 @@ def sendSingupTeacherEmailToTeacher(receipientTeacherMail: str, teachername :str
 
 def sendNewClassToStudentMail(studentName: str, teacherName: str, parentName :str, comment :str, classDate: str, receipientStudentMail: str):
     try:
-        # Inline parsing and formatting of classDate
         try:
             # Parse ISO string with 'Z' suffix as UTC
             dt = datetime.fromisoformat(classDate.replace('Z', '+00:00'))
-            from zoneinfo import ZoneInfo
-            dt = dt.astimezone(ZoneInfo("Europe/Oslo"))
+            # Convert to server’s local timezone
+            try:
+                local_zone = get_localzone()  # picks up OS's local timezone
+                dt = dt.astimezone(local_zone)
+            except Exception:
+                # If timezone conversion fails, keep UTC
+                pass
         except Exception:
             formatted_classDate = classDate  # Fallback to raw string on parse failure
         else:
-            # Set locale to Norwegian (nb_NO); fallback to en_US if unavailable
+            # Format using Babel in Norwegian ("nb"); fallback to ISO-like string on failure
             try:
-                locale.setlocale(locale.LC_TIME, 'nb_NO.UTF-8')
-            except locale.Error:
-                locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
-            # Format date as "weekday dd. month yyyy, kl. HH:MM"
-            formatted_classDate = dt.strftime("%A %d. %B %Y, kl. %H:%M")
+                formatted_classDate = format_datetime(
+                    dt,
+                    "EEEE dd. MMMM yyyy, 'kl.' HH:mm",
+                    locale="nb"
+                )
+            except Exception:
+                formatted_classDate = dt.strftime("%Y-%m-%d %H:%M %Z")
         # HTML email body, adapted to your template
         html_content = f"""
         <div style="font-family: sans-serif; background-color: #f9f9f9; padding: 30px;">

@@ -465,10 +465,11 @@ export function PreviousClassesForEachTeacher() {
                                 <AccordionTrigger>{ct.teacher.firstname} sine elever</AccordionTrigger>
                                 <AccordionContent>
                                     <Accordion type="single" collapsible className="w-full">
+                                        
+
                                         {students.map( (student, index) => {
-                                            
-                                            //skip not this teachers students
-                                            if (student.your_teacher !== ct.teacher.user_id || !student.is_active) {
+                                            //skip students that are not this teachers students
+                                            if (!teacherStudents.some((ts) => ts.teacher_user_id === ct.teacher.user_id && ts.student_user_id === student.user_id)){
                                                 return null;
                                             }
 
