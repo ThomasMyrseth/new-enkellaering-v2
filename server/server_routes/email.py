@@ -5,7 +5,7 @@ import resend
 from typing import List
 load_dotenv()
 import logging
-from tzlocal import get_localzone
+from zoneinfo import ZoneInfo
 from datetime import datetime
 from babel.dates import format_datetime
 
@@ -152,13 +152,9 @@ def sendNewClassToStudentMail(studentName: str, teacherName: str, parentName :st
         try:
             # Parse ISO string with 'Z' suffix as UTC
             dt = datetime.fromisoformat(classDate.replace('Z', '+00:00'))
-            # Convert to server’s local timezone
-            try:
-                local_zone = get_localzone()  # picks up OS's local timezone
-                dt = dt.astimezone(local_zone)
-            except Exception:
-                # If timezone conversion fails, keep UTC
-                pass
+            # Convert to Europe/Oslo timezone
+            local_zone = ZoneInfo("Europe/Oslo")
+            dt = dt.astimezone(local_zone)
         except Exception:
             formatted_classDate = classDate  # Fallback to raw string on parse failure
         else:
@@ -179,7 +175,7 @@ def sendNewClassToStudentMail(studentName: str, teacherName: str, parentName :st
             <div style="background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
                 <p style="font-size: 16px;"><strong>Hei {parentName}.</strong></p>
                 <br/>
-                <p>{studentName} har hatt en time med {teacherName} den {formatted_classDate}.</p>
+                <p>{studentName} har hatt en time med {teacherName} {formatted_classDate}.</p>
                 <p>Kommentar fra lærer: <br/><strong>{comment}</strong></p>
                 <br/>
                 <p>Du kan se flere timer og kontakt info til din lærer på <a href='https://enkellaering.no/min-side'>Min Side</a>.
