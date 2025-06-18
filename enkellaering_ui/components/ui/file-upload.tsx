@@ -30,9 +30,13 @@ const secondaryVariant = {
 export const FileUpload = ({
   onChange,
   title,
+  underText="Drag & drop, eller klikk for å laste opp (kun jpg, jpeg og png)",
+  fileTypeAlertText="Kun jpg, jpeg og png filer er tillatt.",
 }: {
   onChange?: (files: File[]) => void;
   title :string;
+  underText?: string;
+  fileTypeAlertText?: string;
 }) => {
   const [files, setFiles] = useState<File[]>([]);
   const [fileTypeError, setFileTypeError] = useState<boolean>(false)
@@ -42,7 +46,7 @@ export const FileUpload = ({
     // Check each file for valid extension
     for (const file of newFiles) {
       const ext = file.name.split('.').pop()?.toLowerCase();
-      if (ext !== 'jpg' && ext !== 'jpeg' && ext!=='png') {
+      if (ext !== 'jpg' && ext !== 'jpeg' && ext!=='png' && ext!=='pdf') {
         setFileTypeError(true);
         return; // Exit the function to avoid uploading the illegal file
       }
@@ -75,7 +79,7 @@ export const FileUpload = ({
                 <Terminal className="h-4 w-4" />
                 <AlertTitle>Ugyldig filtype!</AlertTitle>
                 <AlertDescription>
-                  Kun jpg, jpeg og png filer er tillatt.
+                  {fileTypeAlertText}
                 </AlertDescription>
               </Alert>
           )}
@@ -99,7 +103,7 @@ export const FileUpload = ({
             {title}
           </p>
           <p className="relative z-20 font-sans font-normal text-neutral-400 dark:text-neutral-400 text-base mt-2">
-            Drag & drop, eller klikk for å laste opp (kun jpg, jpeg og png)
+            {underText}
           </p>
           <div className="relative w-full mt-10 max-w-xl mx-auto">
             {files.length > 0 &&

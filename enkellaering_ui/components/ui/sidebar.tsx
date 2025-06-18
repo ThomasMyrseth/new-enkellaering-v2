@@ -7,6 +7,7 @@ import { LayoutDashboard, ShoppingCart, DollarSign } from 'lucide-react'
 import { LockKeyhole } from 'lucide-react'
 import { LockKeyholeOpen } from 'lucide-react'
 import { BookUser } from 'lucide-react'
+import { Album } from 'lucide-react'
 
 interface SidebarProps {
   show: boolean;
@@ -133,6 +134,13 @@ const Sidebar: FC<SidebarProps> = ({ show, setter }) => {
             name="Logg ut"
             route="/logout"
             icon={<LockKeyhole />}
+            setter={setter}
+          />
+          <br/>
+          <MenuItem
+            name="Søk jobb"
+            route="/jobb"
+            icon={<Album />}
             setter={setter}
           />
         </div>

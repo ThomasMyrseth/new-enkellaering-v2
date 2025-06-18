@@ -67,7 +67,7 @@ def insert_student(student: Students):
     )
     execute_modify(sql, params)
 
-def insert_new_student(new_student: NewStudents):
+def insert_new_student(new_student):
     sql = """
         INSERT INTO public.new_students (
             phone, has_called, called_at, has_answered, answered_at, has_signed_up,
@@ -331,3 +331,42 @@ def add_teacher_to_new_student(
     finally:
         conn.close()
     return True
+
+
+def insertJobApplication(
+    firstname: str,
+    lastname: str,
+    email: str,
+    phone: str,
+    resumeLink :str,
+    subject: str,
+):
+    sql = """
+        INSERT INTO public.job_applications (
+            uuid, firstname, lastname, email, phone, resumeLink, subject, created_at
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+    """
+    params = (
+        str(uuid.uuid4()) ,firstname, lastname, email, phone,
+        resumeLink, subject,
+        datetime.now(timezone.utc)
+    )
+    execute_modify(sql, params)
+
+
+def uploadRecumeToStorage(
+    resume: bytes, filename: str, firstname :str, lastname: str, content_type: str
+):
+    storage_client = storage.Client()
+    bucket_name = "enkellaering-resumes"
+    destination_blob_name = f"resumes/{firstname}_{lastname}/{filename}"
+
+    bucket = storage_client.bucket(bucket_name)
+    blob = bucket.blob(destination_blob_name)
+
+    try:
+        blob.upload_from_string(resume, content_type=content_type)
+    except Exception as e:
+        raise Exception(f"Error uploading resume to bucket: {e}")
+
+    return f"https://storage.googleapis.com/{bucket_name}/{destination_blob_name}"
