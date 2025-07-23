@@ -6,11 +6,19 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import Image from "next/image";
 
 const JobDescription = () => {
   return (
     <div className="space-y-4">
       <div className="bg-neutral-50 dark:bg-neutral-900 border p-4 rounded-lg">
+        <Image
+          src="/serious_woman.jpg"
+          alt="Mentor"
+          width={400}
+          height={400}
+          className="mx-auto mb-4 rounded-lg shadow-lg"
+        />
         <p className="rounded-lg p-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-900 to-purple-400">
           Enkel Læring er en studentdrevet virksomhet som tilbyr privatundervisning for elever i grunnskolen (1.–10. trinn) og på videregående. All undervisning foregår på kveldstid etter ordinær skoletid.
         </p>
@@ -113,13 +121,14 @@ export default function JobPage() {
     };
 
   return (
-    <div className="flex md:flex-row flex-col justify-center items-center w-full mx-auto bg-white dark:bg-black rounded-lg">
-        <div className="max-w-xl p-4">
+    <div className="grid md:grid-cols-2 grid-cols-1 justify-center items-center w-full mx-auto bg-white dark:bg-black rounded-lg">
+        
+
+        <div className="max-w-xl p-4 h-full">
           <JobDescription/>
         </div>
 
-
-        <form onSubmit={handleSubmit} className="p-4 rounded-lg">
+        <form onSubmit={handleSubmit} className="p-4 rounded-lg h-full">
             <div className="shadow-input mx-auto w-full max-w-xl m-4 bg-neutral-50 p-4 md:rounded-2xl md:p-8 dark:bg-neutral-900">
                 <h2 className="text-xl font-bold text-neutral-800 dark:text-neutral-200">
                     Velkommen til Enkel Læring
