@@ -7,6 +7,49 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
+const JobDescription = () => {
+  return (
+    <div className="space-y-4">
+      <div className="bg-neutral-50 dark:bg-neutral-900 border p-4 rounded-lg">
+        <p className="rounded-lg p-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-900 to-purple-400">
+          Enkel Læring er en studentdrevet virksomhet som tilbyr privatundervisning for elever i grunnskolen (1.–10. trinn) og på videregående. All undervisning foregår på kveldstid etter ordinær skoletid.
+        </p>
+
+        <p className="bg-gradient-to-br rounded-lg p-4 bg-clip-text text-transparent from-blue-900 to-purple-400">
+          <h3 className="text-xl "><strong>Hva gjør en mentor?</strong></h3>
+            Som mentor får du ansvar for en liten gruppe elever som du følger gjennom ett eller flere skoleår. Vanligvis har hver mentor 3–6 elever, og du møter én elev av gangen omtrent én gang i uken. En typisk økt består av
+            arbeid med eksamens­oppgaver,
+            faglige diskusjoner og
+            småprat – fordi vi tror læring skjer best når dere trives sammen.
+            Målet er at du blir både en faglig støtte <strong>og</strong> en god venn for elevene dine.
+        </p>
+
+        <ul className="bg-gradient-to-br ounded-lg p-4 bg-clip-text text-transparent from-blue-900 to-purple-400">
+          <h2 className="text-xl"><strong>Hvem ser vi etter?</strong></h2>
+          <li className=""><strong>Utadvendt og sosial</strong> – du liker å bli kjent med nye mennesker.</li>
+          <li className=""><strong>Faglig trygg</strong> – komfortabel med å svare på spørsmål på sparket.</li>
+          <li className=""><strong>God formidler</strong> – klar, tydelig og engasjerende i forklaringene dine.</li>
+        </ul>
+        <p className="bg-gradient-to-br  rounded-lg p-4 bg-clip-text text-transparent from-blue-900 to-purple-400">
+          Er du usikker fordi det er lenge siden du hadde fagene, eller fordi du mangler undervisningserfaring? Slapp av! Alle nye mentorer får et grundig opplærings­program som både friske opp fagkunnskapen og gir deg verktøyene du trenger i klasserommet.
+        </p>
+
+        <p className="bg-gradient-to-br rounded-lg p-4 bg-clip-text text-transparent from-blue-900 to-purple-400">
+          <h3 className="text-xl bg-clip-text text-transparent bg-gradient-to-r from-blue-900 to-purple-400"><strong>Arbeidstid & lønn</strong></h3>
+          Arbeidstiden er fleksibel. Vi anbefaler minimum tre elever per mentor – omtrent seks timer i uken. Det finnes ingen øvre grense, men husk: Det er mer i livet enn bare jobb!
+          <br/><br/>
+          Og lønn? Opp til 335kr/time ;D
+        </p>
+
+        <p className="bg-gradient-to-br rounded-lg p-4 bg-clip-text text-transparent from-blue-900 to-purple-400">
+          <h3 className="text-xl bg-clip-text text-transparent bg-gradient-to-r from-blue-900 to-purple-400"><strong>Klar for å søke?</strong></h3>
+          Last opp CV-en din via lenken nedenfor – <strong>søknadsbrev er ikke nødvendig</strong>. Vi gleder oss til å høre fra deg!
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function JobPage() {
     const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
     const [files, setFiles] = useState<File[]>([]);
@@ -70,8 +113,13 @@ export default function JobPage() {
     };
 
   return (
-    <div className="w-full mx-auto bg-white dark:bg-black rounded-lg">
-        <form onSubmit={handleSubmit}>
+    <div className="flex md:flex-row flex-col justify-center items-center w-full mx-auto bg-white dark:bg-black rounded-lg">
+        <div className="max-w-xl p-4">
+          <JobDescription/>
+        </div>
+
+
+        <form onSubmit={handleSubmit} className="p-4 rounded-lg">
             <div className="shadow-input mx-auto w-full max-w-xl m-4 bg-neutral-50 p-4 md:rounded-2xl md:p-8 dark:bg-neutral-900">
                 <h2 className="text-xl font-bold text-neutral-800 dark:text-neutral-200">
                     Velkommen til Enkel Læring
