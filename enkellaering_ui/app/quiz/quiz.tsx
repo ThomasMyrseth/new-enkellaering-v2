@@ -143,7 +143,7 @@ const Quiz: React.FC<QuizProps> = ({
 
     setPassed(calculatedPassed)
 
-    const res = await fetch(`${baseUrl}/submit-quiz`, {
+    await fetch(`${baseUrl}/submit-quiz`, {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
@@ -157,12 +157,9 @@ const Quiz: React.FC<QuizProps> = ({
       }),
     });
 
-    if (!res.ok) {
-      alert("En feil har skjedd, venligst prøv igjen");
-      return;
-    }
-
-    router.push("/min-side-laerer");
+    setTimeout(() => {
+      router.push("/");
+    }, 5000);
   };
 
   return (

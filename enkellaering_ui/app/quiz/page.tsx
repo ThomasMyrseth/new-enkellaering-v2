@@ -9,7 +9,7 @@ import { FocusCards } from "@/components/ui/focus-cards"
 import { motion } from "framer-motion";
 import { LampContainer } from "@/components/ui/lamp"
 
-export default function QuizPage() {
+export default function QuizPage({description} : {description?: string}) {
     const [token, setToken] = useState<string | null>(null)
     const baseUrl :string= process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8080'
     const router = useRouter()
@@ -24,7 +24,7 @@ export default function QuizPage() {
             router.push('/login-laerer')
         }
         setToken(token)
-    }, [])
+    }, [router])
 
     //fetch the quiszes
     useEffect(() => {
@@ -32,7 +32,6 @@ export default function QuizPage() {
             const res = await fetch(`${baseUrl}/get-all-quizzes`, {
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
                 },
                 method: "GET",
             })
@@ -81,9 +80,13 @@ export default function QuizPage() {
              duration: 0.8,
              ease: "easeInOut",
              }}
-             className="text-slate-300">Testen starter så fort du klikker inn på den. Hvert spørsmål er tidsbegrenset.</motion.p>
+             className="text-slate-300">
+                {description}
+             <br/>
+                Testen starter så fort du klikker inn på den. Hvert spørsmål er tidsbegrenset.
+             </motion.p>
         </LampContainer>
-        <div className="w-full flex flex-col items-center justify-center">
+        <div className="w-full mt-4 flex flex-col items-center justify-center">
             <FocusCards cards={cards}/>
         </div>
     </div>)
