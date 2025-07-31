@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import Image from "next/image";
+import { QuizPageComponent } from "../quiz/quizPageComponent";
 
 const JobDescription = () => {
   return (
@@ -120,90 +121,89 @@ export default function JobPage() {
         setIsDisabled(false);
     };
 
-  return (
-    <div className="grid md:grid-cols-2 grid-cols-1 justify-center items-center w-full mx-auto bg-white dark:bg-black rounded-lg">
-        
+  return (<div className="flex flex-col w-full">
+          <div className="grid md:grid-cols-2 grid-cols-1 justify-center items-center w-full mx-auto bg-white dark:bg-black rounded-lg">
+              <div className="max-w-xl p-4 h-full">
+                <JobDescription/>
+              </div>
 
-        <div className="max-w-xl p-4 h-full">
-          <JobDescription/>
-        </div>
+              <form onSubmit={handleSubmit} className="p-4 rounded-lg h-full flex flex-col">
+                  <div className="shadow-input mx-auto w-full max-w-xl bg-neutral-50 p-4 md:rounded-2xl md:p-8 dark:bg-neutral-900 flex-1 flex flex-col justify-between">
+                      <h2 className="text-xl font-bold text-neutral-800 dark:text-neutral-200">
+                          Velkommen til Enkel Læring
+                      </h2>
+                      <p className="my-4 text-sm text-neutral-600 dark:text-neutral-300">
+                          Last opp din CV, samt fyll ut feltene under. Vi kontakter deg snarlig.
+                          <br/><br/>Dersom du har spørsmål, send oss en epost på <a href="mailto:kontakt@enkellaering.no" className="text-blue-600 dark:text-blue-400 hover:underline">kontakt@enkellaering.no</a>.
+                      </p>
 
-        <form onSubmit={handleSubmit} className="p-4 rounded-lg h-full">
-            <div className="shadow-input mx-auto w-full max-w-xl m-4 bg-neutral-50 p-4 md:rounded-2xl md:p-8 dark:bg-neutral-900">
-                <h2 className="text-xl font-bold text-neutral-800 dark:text-neutral-200">
-                    Velkommen til Enkel Læring
-                </h2>
-                <p className="my-4 text-sm text-neutral-600 dark:text-neutral-300">
-                    Last opp din CV, samt fyll ut feltene under. Vi kontakter deg snarlig.
-                    <br/><br/>Dersom du har spørsmål, send oss en epost på <a href="mailto:kontakt@enkellaering.no" className="text-blue-600 dark:text-blue-400 hover:underline">kontakt@enkellaering.no</a>.
-                </p>
-
-                    <div className="mb-4 flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-2">
-                    <LabelInputContainer>
-                        <Label htmlFor="firstname">Fornavn</Label>
-                        <Input id="firstname" placeholder="Anita" type="text" value={firstname} onChange={(e) => setFirstname(e.target.value)} />
-                    </LabelInputContainer>
-                    <LabelInputContainer>
-                        <Label htmlFor="lastname">Etternavn</Label>
-                        <Input
-                          id="lastname"
-                          placeholder="Andreasen"
-                          type="text"
-                          value={lastname}
-                          onChange={(e) => setLastname(e.target.value)}
-                        />
-                    </LabelInputContainer>
-                    </div>
-                    <LabelInputContainer className="mb-4">
-                    <Label htmlFor="email">Epost</Label>
-                    <Input
-                      id="email"
-                      placeholder="anita.andreasen@gmail.com"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                    />
-                    </LabelInputContainer>
-                    <LabelInputContainer className="mb-4">
-                    <Label htmlFor="grades">Karaktersnitt (fyll ut det du har)</Label>
-                    <Input
-                      id="grades"
-                      placeholder="Vgs: 5.5, universitet: 4.3"
-                      type="text"
-                      value={grades}
-                      onChange={(e) => setGrades(e.target.value)}
-                    />
-                    </LabelInputContainer>
-                    <LabelInputContainer className="mb-4">
-                      <Label htmlFor="phone">Telefon</Label>
-                      <Input
-                        id="phone"
-                        type="tel"
-                        placeholder="12345678"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                      />
-                    </LabelInputContainer>
-                    <LabelInputContainer className="mb-4">
-                      <Label htmlFor="subject">Hvilke fag kan du tenke deg å undervise i?</Label>
-                      <Input
-                        id="subject"
-                        placeholder="Matte ungdomskole, 1t, engelsk Vgs"
-                        value={subject}
-                        onChange={(e) => setSubject(e.target.value)}
-                      />
-                    </LabelInputContainer>
-            <FileUpload onChange={handleFileUpload} title="Last opp din CV her" underText="kun PDF"/>
-            <button type="submit" disabled={isDisabled===true} className="w-full relative inline-flex h-12 overflow-hidden rounded-full p-[5px] dark:p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50">
-                <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
-                <span className={`${isDisabled ? "bg-slate-400" :"inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-slate-950 px-3 py-1 text-sm font-medium text-white backdrop-blur-3xl"}`}>
-                    Send inn
-                </span>
-            </button>
-            </div>
-        </form>
-    </div>
-  );
+                          <div className="mb-4 flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-2">
+                          <LabelInputContainer>
+                              <Label htmlFor="firstname">Fornavn</Label>
+                              <Input id="firstname" placeholder="Anita" type="text" value={firstname} onChange={(e) => setFirstname(e.target.value)} />
+                          </LabelInputContainer>
+                          <LabelInputContainer>
+                              <Label htmlFor="lastname">Etternavn</Label>
+                              <Input
+                                id="lastname"
+                                placeholder="Andreasen"
+                                type="text"
+                                value={lastname}
+                                onChange={(e) => setLastname(e.target.value)}
+                              />
+                          </LabelInputContainer>
+                          </div>
+                          <LabelInputContainer className="mb-4">
+                          <Label htmlFor="email">Epost</Label>
+                          <Input
+                            id="email"
+                            placeholder="anita.andreasen@gmail.com"
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                          />
+                          </LabelInputContainer>
+                          <LabelInputContainer className="mb-4">
+                          <Label htmlFor="grades">Karaktersnitt (fyll ut det du har)</Label>
+                          <Input
+                            id="grades"
+                            placeholder="Vgs: 5.5, universitet: 4.3"
+                            type="text"
+                            value={grades}
+                            onChange={(e) => setGrades(e.target.value)}
+                          />
+                          </LabelInputContainer>
+                          <LabelInputContainer className="mb-4">
+                            <Label htmlFor="phone">Telefon</Label>
+                            <Input
+                              id="phone"
+                              type="tel"
+                              placeholder="12345678"
+                              value={phone}
+                              onChange={(e) => setPhone(e.target.value)}
+                            />
+                          </LabelInputContainer>
+                          <LabelInputContainer className="mb-4">
+                            <Label htmlFor="subject">Hvilke fag kan du tenke deg å undervise i?</Label>
+                            <Input
+                              id="subject"
+                              placeholder="Matte ungdomskole, 1t, engelsk Vgs"
+                              value={subject}
+                              onChange={(e) => setSubject(e.target.value)}
+                            />
+                          </LabelInputContainer>
+                  <FileUpload onChange={handleFileUpload} title="Last opp din CV her" underText="kun PDF"/>
+                  <button type="submit" disabled={isDisabled===true} className="w-full relative inline-flex h-12 overflow-hidden rounded-full p-[5px] dark:p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50">
+                      <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
+                      <span className={`${isDisabled ? "bg-slate-400" :"inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-slate-950 px-3 py-1 text-sm font-medium text-white backdrop-blur-3xl"}`}>
+                          Send inn
+                      </span>
+                  </button>
+                  </div>
+              </form>
+          </div>
+          <QuizPageComponent description="Lurer du på hvilke fag du kan undervise i? Prøv deg på quizzene under for å finne ut! Svarene dine blir ikke lagret." />
+  </div>);
 }
 
 

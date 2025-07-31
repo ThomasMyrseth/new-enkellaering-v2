@@ -29,8 +29,7 @@ quiz_bp = Blueprint('quiz', __name__)
 
 
 @quiz_bp.route('/get-all-quizzes', methods=["GET"])
-@token_required
-def get_all_quizzes_route(user_id):
+def get_all_quizzes_route():
     try:
         quizzes = get_all_quizzes()
         return jsonify({"quizzes": quizzes}), 200
@@ -51,8 +50,7 @@ def get_all_qualifications_route():
 
 
 @quiz_bp.route('/get-quiz-meta-data', methods=["POST"])
-@token_required
-def get_quiz_meta_data_route(user_id):
+def get_quiz_meta_data_route():
     quiz_id = request.json.get('quiz_id')
     try:
         data = get_quiz_meta_data(quiz_id)
@@ -63,8 +61,7 @@ def get_quiz_meta_data_route(user_id):
 
 
 @quiz_bp.route('/get-quiz', methods=["POST"])
-@token_required
-def get_quiz_route(user_id):
+def get_quiz_route():
     quiz_id = request.json.get('quiz_id')
     if not quiz_id:
         return jsonify({"message": "Missing quiz id"}), 400
