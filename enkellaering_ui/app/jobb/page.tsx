@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import Image from "next/image";
-import QuizPage from "../quiz/page";
+import { QuizPageComponent } from "../quiz/quizPageComponent";
 
 const JobDescription = () => {
   return (
@@ -202,7 +202,7 @@ export default function JobPage() {
                   </div>
               </form>
           </div>
-          <QuizPage description="Lurer du på hvilke fag du kan undervise i? Prøv deg på quizzene under for å finne ut! Svarene dine blir ikke lagret." />
+          <QuizPageComponent description="Lurer du på hvilke fag du kan undervise i? Prøv deg på quizzene under for å finne ut! Svarene dine blir ikke lagret." />
   </div>);
 }
 
