@@ -25,13 +25,12 @@ export default function QuizPage() {
     //fetch the quiz
     useEffect(() => {
 
-        if (!quiz_id || token === "no-token-found") return;
+        if (!quiz_id) return;
 
         async function fetchQuiz() {
             const res = await fetch(`${baseUrl}/get-quiz`, {
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
                 },
                 method: "POST",
                 body: JSON.stringify({
@@ -49,7 +48,6 @@ export default function QuizPage() {
             const res = await fetch(`${baseUrl}/get-quiz-meta-data`, {
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
                 },
                 method: "POST",
                 body: JSON.stringify({

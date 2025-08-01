@@ -24,9 +24,10 @@ export function QuizPageComponent({description} : {description?: string}) {
         if (!token) {
             console.error("No token found in localStorage");
             setToken("")
-            return;
         }
-        setToken(token)
+        else {
+            setToken(token)
+        }
     }, [router])
 
     //fetch the quiszes
