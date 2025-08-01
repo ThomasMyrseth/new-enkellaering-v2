@@ -122,7 +122,7 @@ export default function JobPage() {
     };
 
   return (<div className="flex flex-col w-full">
-          <div className="grid md:grid-cols-2 grid-cols-1 justify-center items-center w-full mx-auto bg-white dark:bg-black rounded-lg">
+          <div className="grid md:grid-cols-2 grid-cols-1 max-w-7xl w-full mx-auto bg-white dark:bg-black rounded-lg">
               <div className="max-w-xl p-4 h-full">
                 <JobDescription/>
               </div>
