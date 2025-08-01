@@ -22,7 +22,9 @@ export function QuizPageComponent({description} : {description?: string}) {
         const token = localStorage.getItem('token')
 
         if (!token) {
-            router.push('/login-laerer')
+            console.error("No token found in localStorage");
+            setToken("")
+            return;
         }
         setToken(token)
     }, [router])
@@ -44,7 +46,7 @@ export function QuizPageComponent({description} : {description?: string}) {
         }
 
         fetchQuizzes()
-    },[token])
+    },[token, baseUrl])
 
    const handleSetSelectedQuiz =(quizId :string) => {
         router.push(`/quiz/${quizId}`)
