@@ -370,3 +370,16 @@ def uploadRecumeToStorage(
         raise Exception(f"Error uploading resume to bucket: {e}")
 
     return f"https://storage.googleapis.com/{bucket_name}/{destination_blob_name}"
+
+
+def insertNewTeacherReferal(teacherUserId :str, referalPhone :str, referalName :str, referalEmail :str):
+    sql = """
+        INSERT INTO public.teacher_referrals (
+            uid, referee_teacher_user_id, referral_phone, referral_name, referral_email, created_at
+        ) VALUES (%s, %s, %s, %s, %s, %s)
+    """
+    params = (
+        str(uuid.uuid4()), teacherUserId, referalPhone, referalName, referalEmail,
+        datetime.now(timezone.utc)
+    )
+    execute_modify(sql, params)

@@ -72,8 +72,6 @@ def sendNewStudentToTeacherMail(receipientTeacherMail: str, teachername :str):
         print("❌ Failed to send email:", e)
         raise e
 
-
-
 def welcomeNewStudentEmailToStudent(parentEmail: str, parentName :str):
     try:
         # HTML content adapted from your image template
@@ -107,7 +105,6 @@ def welcomeNewStudentEmailToStudent(parentEmail: str, parentName :str):
         logging.error(f"❌ Failed to send email to {parentEmail}: {e}")
         print("❌ Failed to send email:", e)
         raise e
-
 
 def sendSingupTeacherEmailToTeacher(receipientTeacherMail: str, teachername :str):
     try:
@@ -200,9 +197,6 @@ def sendNewClassToStudentMail(studentName: str, teacherName: str, parentName :st
         print("❌ Failed to send email:", e)
         raise e
 
-
-
-
 def sendAcceptOrRejectToStudentMail(studentName: str, teacherName: str, acceptOrReject: bool, receipientStudentMail: str):
     try:
         accept_text = 'godkjent' if acceptOrReject else 'avslått'
@@ -247,6 +241,7 @@ def sendNewStudentToAdminMail(newStudentPhone: str):
     try:
         admins = get_all_admins()
         emails = [admin['email'] for admin in admins]
+        emails.append("kontakt@enkellaering.no")
     except Exception as e:
         raise RuntimeError(f"Error getting the email of admins: {e}")
 
@@ -317,6 +312,7 @@ def sendInactiveStudentsMailToAdmin ():
     #get all the admins
     try:
         admins :List = get_all_admins()
+        admins.append("kontakt@enkellaering.no")
     except Exception as e:
         print(e)
         return jsonify({"message": f"Error getting the admins emails: {e}"})
@@ -399,6 +395,7 @@ def sendNewOrderEmailToAdmin( firstname_parent:str, lastname_parent:str, phone_p
     try:
         admins = get_all_admins()
         emails = [admin['email'] for admin in admins]
+        emails.append("kontakt@enkellaering.no")
     except Exception as e:
         raise RuntimeError(f"Error getting the email of admins: {e}")
 
@@ -448,3 +445,225 @@ def sendNewOrderEmailToAdmin( firstname_parent:str, lastname_parent:str, phone_p
         except Exception as e:
             print(f"❌ Failed to send to {email}: {e}")
             raise e
+
+
+from time import sleep
+def sendEmailsToAddAboutMeText(teachers):
+    try:
+        resend.api_key = os.environ.get('RESEND_API_KEY')
+
+        for teacher in teachers:
+
+            sleep(2) #avoid rate limit
+            
+            html_content = f"""
+            <div style="font-family: sans-serif; background-color: #f9f9f9; padding: 30px;">
+                <h1>Hei {teacher['firstname']}!</h1>
+                <h2>Skriv om deg selv på Enkel Læring</h2>
+                <div style="background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                    <p style="color: #555;">
+                        Du har fortsatt ikke skrevet noe om deg selv på nettsiden vår. Dette er viktig for at elevene skal kunne velge deg som lærer.
+                    </p>
+                    <p style="color: #555;">
+                        Venligst skriv noe om deg selv og legg igjen et bilde. Du kan gjøre dette ved å logge inn på Min Side og bla nederst på siden.
+                    </p>
+                    <a href="https://enkellaering.no/login-laerer" style="display:inline-block; margin-top: 15px; background-color:#6366F1; color:white; padding:10px 16px; border-radius:5px; text-decoration:none;">Logg inn</a>
+                </div>
+            </div>
+            """
+            
+            try:
+                response = resend.Emails.send({
+                    "from": FROM_EMAIL,
+                    "to": teacher['email'],
+                    "subject": "Skriv om deg selv på Enkel Læring",
+                    "html": html_content
+                })
+                print(f"✅ Email sent to {teacher['email']}")
+            except Exception as e:
+                print(f"❌ Failed to send to {teacher['email']}: {e}")
+                raise e
+
+        return True
+    except Exception as e:
+        print("❌ Failed to send emails:", e)
+        raise e
+    
+
+from time import sleep
+def sendEmailsToTeacherAboutTakingQuiz(teachers):
+    try:
+        resend.api_key = os.environ.get('RESEND_API_KEY')
+
+        for teacher in teachers:
+            sleep(2)  # Avoid rate limit
+            
+            html_content = f"""
+            <div style="font-family: sans-serif; background-color: #f9f9f9; padding: 30px;">
+                <h1>Hei {teacher['firstname']}!</h1>
+                <h2>Fullfør quizzene dine på Enkel Læring</h2>
+                <div style="background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                    <p style="color: #555;">
+                        Du har ikke gjort noen quizer enda. Venligst ta quizene til fagene du underviser i. Dette er viktig slik at elever skal kunne bestille deg som lærer, samt fordi Thomas og Karoline bruker quizresultatene dine til å vurdere hvilke elever som skal få deg som lærer.
+                    </p>
+                    <p style="color: #555;">
+                        For å ta quizzene, logg inn på Min Side og bla ned til quiz-fanen.
+                    </p>
+                    <a href="https://enkellaering.no/login-laerer" style="display:inline-block; margin-top: 15px; background-color:#6366F1; color:white; padding:10px 16px; border-radius:5px; text-decoration:none;">Logg inn</a>
+                </div>
+            </div>
+            """
+
+            try:
+                response = resend.Emails.send({
+                    "from": FROM_EMAIL,
+                    "to": teacher['email'],
+                    "subject": "Fullfør quizzene dine på Enkel Læring",
+                    "html": html_content
+                })
+                print(f"✅ Email sent to {teacher['email']}")
+            except Exception as e:
+                print(f"❌ Failed to send to {teacher['email']}: {e}")
+                raise e
+
+        return True
+    except Exception as e:
+        print("❌ Failed to send emails:", e)
+        raise e
+    
+
+from time import sleep
+def sendEmailsToTeacherAndStudentAboutFewClasses(teachersAndStudents :dict):
+
+    try:
+        resend.api_key = os.environ.get('RESEND_API_KEY')
+
+        for teacherUserId in teachersAndStudents.keys():
+            sleep(2)  # Avoid rate limit
+            ts = teachersAndStudents[teacherUserId]
+            students = ts['students']
+            studentNames = ', '.join([f"{s['firstname']} {s['lastname']}" for s in students])
+
+            html_content = f"""
+            <div style="font-family: sans-serif; background-color: #f9f9f9; padding: 30px;">
+                <h1>Hei {ts['firstname']}!</h1>
+                <h2>Du har ikke hatt noen timer med {studentNames} på over to uker.</h2>
+                <div style="background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                    <p style="color: #555;">
+                        Kanskje det er på tide å kontakte dem og legge en plan for fremtidige timer?
+                    </p>
+                    <p style="color: #555;">Dersom eleven(e) ikke ønsker mer undervisning, eller du ikke ønsker eleven, kan du si ifra til Thomas eller Karoline.</p>
+                    <p style="color: #999;">Dersom det er ferie eller lignende kan du ignorere denne e-posten.</p>
+                    <a href="https://enkellaering.no/login-laerer" style="display:inline-block; margin-top: 15px; background-color:#6366F1; color:white; padding:10px 16px; border-radius:5px; text-decoration:none;">Logg inn</a>
+                </div>
+            </div>
+            """
+
+            #send the emails to the teacher
+            try:
+                response = resend.Emails.send({
+                    "from": FROM_EMAIL,
+                    "to": ts['email'],
+                    "subject": "Lenge siden du har hatt timer med elevene dine",
+                    "html": html_content
+                })
+                print(f"✅ Email sent to {ts['email']}")
+            except Exception as e:
+                print(f"❌ Failed to send to {ts['email']}: {e}")
+                raise e
+            
+            #send the emails to the students
+            for student in students:
+                sleep(2) #rate limit
+
+                student_html_content = f"""
+                <div style="font-family: sans-serif; background-color: #f9f9f9; padding: 30px;">
+                    <h1>Hei {student['firstname']}!</h1>
+                    <h2>Det er over to uker siden {student['firstname_student']} har hatt time med {ts['firstname']}</h2>
+                    <div style="background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                        <p style="color: #555;">
+                            Kanskje det er på tide å kontakte {ts['firstname']} og legge en plan for fremtidige timer?
+                        </p>
+                        <p style="color: #555;">Dersom dere ikke ønsker mer undervisning kan dere si ifra til Thomas eller Karoline.
+                        Hvis det er ferie eller lignende kan dere ignorere denne e-posten.
+                        <br/><br/>Kontaktinfo:<br/>Thomas: kontakt@enkellaering.no<br/>Karoline: 906 56 969</p>
+                        <p style="color: #999;">*{ts['firstname']} har også fått denne e-posten</p>
+                        <a href="https://enkellaering.no/login" style="display:inline-block; margin-top: 15px; background-color:#6366F1; color:white; padding:10px 16px; border-radius:5px; text-decoration:none;">Logg inn for å se kontaktinfoen til {ts['firstname']}</a>
+                    </div>
+                </div>
+                """
+
+                try:
+                    response = resend.Emails.send({
+                        "from": FROM_EMAIL,
+                        "to": student['email'],
+                        "subject": f"Lenge siden dere har hatt time med {ts['firstname']}",
+                        "html": student_html_content
+                    })
+                    print(f"✅ Email sent to {student['email']}")
+                except Exception as e:
+                    print(f"❌ Failed to send to {student['email']}: {e}")
+                    raise e
+
+        return True
+    except Exception as e:
+        print("❌ Failed to send emails:", e)
+        raise e
+
+
+from cloud_sql.gets import get_all_admins, get_teacher_by_user_id
+def sendEmailToAdminAboutNewTeacherReferal(referalName :str, referalEmail :str, referalPhone :str, teacherUserId :str):
+    
+    try:
+        admins = get_all_admins()
+        emails = [admin['email'] for admin in admins]
+        emails.append("kontakt@enkellaering.no")
+    except Exception as e:
+        raise RuntimeError(f"Error getting the email of admins: {e}")
+    
+    try:
+        teacher = get_teacher_by_user_id(teacherUserId)
+        teacher_row = teacher[0]
+        print(teacher_row)
+        teacherName = f"{teacher_row.get('firstname')} {teacher_row.get('lastname')}"
+        if not teacher_row:
+            raise ValueError(f"No teacher found with user ID {teacherUserId}")
+    except Exception as e:
+        raise RuntimeError(f"Error getting teacher by user ID {teacherUserId}: {e}")
+
+    # Email content (HTML)
+    html_content = f"""
+    <div style="font-family: sans-serif; background-color: #f9f9f9; padding: 30px;">
+        <h1>Ny lærerhenvisning fra {teacherName}</h1>
+        <div style="background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+            <p style="font-size: 16px;"><strong>{referalName}</strong> ble henvist som ny lærer</p>
+            <p style="color: #555;">
+                <strong>Kontaktinformasjon:</strong><br/>
+                Navn: {referalName}<br/>
+                E-post: {referalEmail}<br/>
+                Telefon: {referalPhone}
+            </p>
+            <p style="color: #555;">
+                <strong>Henvist av:</strong> {teacherName}
+            </p>
+            <p style="color: #555;">Logg inn på <code>/admin</code> for å følge opp henvisningen.</p>
+            <a href="https://enkellaering.no/login-laerer" style="display:inline-block; margin-top: 15px; background-color:#6366F1; color:white; padding:10px 16px; border-radius:5px; text-decoration:none;">Logg inn</a>
+        </div>
+    </div>
+    """
+
+    # Send email to admins
+    for email in emails:
+        try:
+            response = resend.Emails.send({
+                "from": FROM_EMAIL,
+                "to": email,
+                "subject": f"Ny lærerhenvisning: {referalName}",
+                "html": html_content
+            })
+            print(f"✅ Email sent to {email}")
+        except Exception as e:
+            print(f"❌ Failed to send to {email}: {e}")
+            raise e
+
+    return True

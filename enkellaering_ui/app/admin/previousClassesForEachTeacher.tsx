@@ -460,6 +460,8 @@ export function PreviousClassesForEachTeacher() {
                             Spesielle forhold: <span className='font-sembibold'>{ct.teacher.additional_comments? "" : ct.teacher.additional_comments }</span>
                         </p>
 
+                        <TeacherNotes teacher={ct.teacher} />
+
                         <Accordion type="single" collapsible className="w-full mb-4">
                             <AccordionItem value="your-students">
                                 <AccordionTrigger>{ct.teacher.firstname} sine elever</AccordionTrigger>
@@ -796,4 +798,55 @@ const PayTeacherPopover = ( {teacher, classes, teacherStudents} : {teacher: Teac
         </PopoverContent>
         </Popover>
     )
+}
+
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from 'sonner';
+
+const TeacherNotes = ({teacher} : {teacher : Teacher}) => {
+    const [notes, setNotes] = useState<string>(teacher.notes)
+
+    const handleAddNotes = (note :string) => {
+        setNotes(note)
+    }
+
+    return (<div className="flex flex-col my-10">
+        <Textarea  
+                rows={10} 
+                className="w-full mb-2 dark:bg-neutral-800" 
+                value={notes} 
+                onChange={(e) => handleAddNotes(e.target.value)} 
+                id="notes" 
+                placeholder="Noter ned generell info om læreren (kun synlig for admin)"
+        />
+        <Button onClick={() => {saveNotes(notes, teacher.user_id)} } className="bg-blue-900 dark:bg-blue-900 dark:text-neutral-100">Lagre</Button>
+    </div>)
+}
+
+const saveNotes = async ( notes :string, teacherUserId :string) => {
+    const token :string | null= localStorage.getItem('token')
+
+    try {
+        const response = await fetch(`${BASEURL}/upload-notes-about-teacher`, {
+        method: "POST",
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            teacher_user_id : teacherUserId,
+            notes : notes
+        }),
+        });
+
+        if (!response.ok) {
+            throw new Error("An error occurred. Please try again.");
+        } 
+
+        toast("Notater lagret")
+        return true
+    } catch (error) {
+        console.error("Error uploading notes:", error);
+        alert("An error occurred. Please try again.");
+    }
 }

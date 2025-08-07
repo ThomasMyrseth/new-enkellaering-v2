@@ -1,3 +1,4 @@
+import re
 from flask import Blueprint, request, jsonify
 from datetime import datetime
 import logging
@@ -549,3 +550,35 @@ def assign_teacher_for_student(user_id):
         return jsonify({"message": "Teacher assigned successfully"}), 200
     except Exception as e:
         return jsonify({"message": f"An error occured {e}"}), 500
+
+
+
+from cloud_sql.inserts import insertNewTeacherReferal
+from server_routes.email import sendEmailToAdminAboutNewTeacherReferal
+@order_bp.route('/submit-new-teacher-referal', methods=["POST"])
+@token_required
+def submit_new_teacher_referal_route(user_id):
+    data = request.get_json()
+    referal_phone = data.get('referal_phone')
+    referal_email = data.get('referal_email', '')
+    referal_name = data.get('referal_name')
+
+    if not referal_phone or not referal_name:
+        return jsonify({"message": "Missing required fields"}), 400
+    if not user_id:
+        logging.error("Unauthorized access attempt")
+        return jsonify({"message": "Unauthorized"}), 402
+
+    try:
+        insertNewTeacherReferal(user_id, referal_phone, referal_name, referal_email)
+    except Exception as e:
+        logging.error(f"Error inserting new teacher referal: {e}")
+        return jsonify({"message": f"An error occured {e}"}), 500
+    
+    try:
+        sendEmailToAdminAboutNewTeacherReferal(referal_name, referal_email, referal_phone, user_id)
+    except Exception as e:
+        logging.error(f"Error sending email to admin about new teacher referal: {e}")
+        return jsonify({"message": f"Error sending email to admin about new teacher referal {e}"}), 500
+    
+    return jsonify({"message": "New teacher referal submitted successfully"}), 200

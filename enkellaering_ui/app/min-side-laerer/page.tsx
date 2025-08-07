@@ -16,6 +16,7 @@ import { TeacherName  } from "./teacherName";
 import { WantMoreStudents } from "./wantsMoreStudents";
 import { DailyRevenueChart } from "./revenueChart";
 import { ProfileForm } from "./changeProfileInfo";
+import TeacherReferalForm from "@/components/teacherReferalForm";
 
 export default function LaererPage() {
     const [teacher, setTeacher] = useState<Teacher>()
@@ -68,6 +69,7 @@ export default function LaererPage() {
                 <WantMoreStudents teacher={teacher}/>
                 <AddNewClass teacher={teacher} students={students}/>
                 <YourStudent teacher={teacher} classes={classes} students={students} teacherStudents={teacherStudents}/>
+                <TeacherReferalForm token={token}/>
                 <NewStudentsWithPreferredTeacherWorkflowActions/>
                 <ProfileForm teacher={teacher}/>
                 <QuizStatusPage token={token} baseUrl={BASEURL}/>

@@ -159,3 +159,49 @@ def delete_class_route(user_id):
         return jsonify({"message": "Class successfully deleted"}), 200
     except Exception as e:
         return jsonify({"message": str(e)}), 500
+    
+
+from cloud_sql.gets import get_students_with_few_classes
+from server_routes.email import sendEmailsToTeacherAndStudentAboutFewClasses
+@classes_bp.route('/send-email-to-teachers-and-students-with-few-classes', methods=["GET"])
+def send_email_to_teachers_and_students_with_few_classes_route():
+    try:
+        teacherStudents = get_students_with_few_classes(days=14)
+    except Exception as e:
+        logging.exception("Failed to fetch students with few classes")
+        return jsonify({"message": str(e)}), 500
+    
+
+    #structure the data
+    ts = {}
+    
+    for row in teacherStudents:
+        teacher_id = row['teacher_user_id']
+        
+        # Create teacher entry if not exists
+        if teacher_id not in ts:
+            ts[teacher_id] = {
+                'firstname': row['firstname'],        # teacher firstname
+                'lastname': row['lastname'],          # teacher lastname  
+                'email': row['email'],                # teacher email row['email']
+                'phone': row['phone'],                # teacher phone
+                'students': []                         # initialize students list
+            }
+        
+        # Add student to this teacher
+        student = {
+            'firstname': row['firstname_parent'],
+            'lastname': row['lastname_parent'],
+            'firstname_student': row['firstname_student'],
+            'email': row['email_parent'],           # using parent email as student contact
+        }
+        
+        ts[teacher_id]['students'].append(student)
+
+
+    try:
+        sendEmailsToTeacherAndStudentAboutFewClasses(ts)
+        return jsonify({"message": "Emails sent successfully"}), 200
+    except Exception as e:
+        logging.exception("Failed to send emails to teachers and students about few classes")
+        return jsonify({"message": str(e)}), 500

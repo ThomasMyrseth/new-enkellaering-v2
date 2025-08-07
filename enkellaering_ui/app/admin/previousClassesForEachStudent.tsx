@@ -610,6 +610,7 @@ const saveNotes = async ( notes :string, studentUserId :string) => {
             throw new Error("An error occurred. Please try again.");
         } 
 
+        toast("Notater lagret")        
         return true
     } catch (error) {
         console.error("Error uploading notes:", error);

@@ -19,6 +19,7 @@ def uploadJobApplicationRoute():
     email = request.form.get("email")
     phone = request.form.get("phone")
     subject = request.form.get("subject")
+    grades = request.form.get("grades")
     resume_file = request.files.get("resume")
 
     if not all([firstname, lastname, email, phone, subject, resume_file]):
@@ -88,6 +89,7 @@ def uploadJobApplicationRoute():
                             E-post: {email}<br/>
                             Telefon: {phone}<br/>
                             Emne: {subject}<br/>
+                            Snitt: {grades}<br/>
                             <a href="{public_url}" target="_blank">Se vedlagt CV</a>
                         </p>
                     </div>
