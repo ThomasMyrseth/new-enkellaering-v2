@@ -40,7 +40,7 @@ def uploadJobApplicationRoute():
         return jsonify({"error": "Failed to process application"}), 500
     
     try:
-        insertJobApplication(firstname, lastname, email, phone, public_url, subject)
+        insertJobApplication(firstname, lastname, email, phone, public_url, grades, subject)
     except Exception as e:
         logging.error(f"Error inserting job application into database: {e}")
         return jsonify({"error": "Failed to save application"}), 500

@@ -339,16 +339,17 @@ def insertJobApplication(
     email: str,
     phone: str,
     resumeLink :str,
+    grades: str,
     subject: str,
 ):
     sql = """
         INSERT INTO public.job_applications (
-            uuid, firstname, lastname, email, phone, resumeLink, subject, created_at
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            uuid, firstname, lastname, email, phone, resumeLink, grades, subject, created_at
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
     """
     params = (
         str(uuid.uuid4()) ,firstname, lastname, email, phone,
-        resumeLink, subject,
+        resumeLink, grades, subject,
         datetime.now(timezone.utc)
     )
     execute_modify(sql, params)
