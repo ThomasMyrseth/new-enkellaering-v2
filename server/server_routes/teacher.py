@@ -136,3 +136,21 @@ def send_email_to_teachers_without_about_me_route():
     except Exception as e:
         logging.exception("Failed to send emails to teachers without 'about me'")
         return jsonify({"message": str(e)}), 500
+    
+
+from cloud_sql.gets import get_teachers_without_quizes
+from server_routes.email import sendEmailsToTeacherAboutTakingQuiz
+@teacher_bp.route('/send-email-to-teachers-without-quizes', methods=["GET"])
+def send_email_to_teachers_without_quizes_route():
+    try:
+        teachers = get_teachers_without_quizes()
+    except Exception as e:
+        logging.exception("Failed to fetch teachers without quizzes")
+        return jsonify({"message": str(e)}), 500
+    
+    try:
+        sendEmailsToTeacherAboutTakingQuiz(teachers)
+        return jsonify({"message": "Emails sent successfully"}), 200
+    except Exception as e:
+        logging.exception("Failed to send emails to teachers about quizzes")
+        return jsonify({"message": str(e)}), 500

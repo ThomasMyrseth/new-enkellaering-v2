@@ -282,8 +282,8 @@ def get_students_with_few_classes(days: int):
           AND s.is_active = TRUE
           AND ts.row_id = (
               SELECT MIN(row_id) 
-              FROM public.teacher_student 
-              GROUP BY student_user_id
+              FROM public.teacher_student ts2
+              WHERE ts2.student_user_id = ts.student_user_id
           )
     """
     return execute_query(sql, (threshold_date,))
@@ -331,3 +331,17 @@ def get_teachers_without_about_me():
             AND t.resigned = FALSE
     """
     return execute_query(sql)
+
+def get_teachers_without_quizes():
+    sql = """
+        SELECT t.user_id, t.firstname, t.lastname, t.email
+        FROM public.teachers AS t
+        WHERE t.user_id NOT IN (
+            SELECT user_id 
+            FROM public.quiz_results
+        )
+            AND t.resigned = FALSE
+    """
+    return execute_query(sql)
+
+
