@@ -200,6 +200,19 @@ def update_student_notes(admin_user_id: str, student_user_id: str, notes: str):
     """
     return execute_modify(sql, (notes, student_user_id, admin_user_id))
 
+
+def update_teacher_notes(admin_user_id: str, teacher_user_id: str, notes: str):
+    sql = """
+        UPDATE public.teachers
+        SET notes = %s
+        WHERE user_id = %s
+          AND EXISTS (
+              SELECT 1 FROM public.teachers t
+              WHERE t.user_id = %s
+          )
+    """
+    return execute_modify(sql, (notes, teacher_user_id, admin_user_id))
+
 def cancel_new_order(row_id: str):
     sql = """
         UPDATE public.teacher_student

@@ -101,3 +101,20 @@ def update_teacher_profile_route(user_id):
     except Exception as e:
         logging.exception("Failed to update teacher profile")
         return jsonify({"message": str(e)}), 500
+
+
+from cloud_sql.alters import update_teacher_notes
+@teacher_bp.route('/upload-notes-about-teacher', methods=["POST"])
+@token_required
+def upload_notes_about_teacher_route(user_id):
+    data = request.json or {}
+    teacher_user_id = data.get('teacher_user_id')
+    notes = data.get('notes', '')
+    if not teacher_user_id:
+        return jsonify({"message": "Missing teacher_user_id"}), 400
+    try:
+        update_teacher_notes(user_id, teacher_user_id, notes)
+        return jsonify({"message": "Notes updated"}), 200
+    except Exception as e:
+        logging.exception(f"Failed to upload notes about teacher {teacher_user_id}: {e}")
+        return jsonify({"message": str(e)}), 500
