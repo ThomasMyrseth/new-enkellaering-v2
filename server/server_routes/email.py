@@ -609,3 +609,61 @@ def sendEmailsToTeacherAndStudentAboutFewClasses(teachersAndStudents :dict):
     except Exception as e:
         print("❌ Failed to send emails:", e)
         raise e
+
+
+from cloud_sql.gets import get_all_admins, get_teacher_by_user_id
+def sendEmailToAdminAboutNewTeacherReferal(referalName :str, referalEmail :str, referalPhone :str, teacherUserId :str):
+    
+    try:
+        admins = get_all_admins()
+        emails = [admin['email'] for admin in admins]
+        emails.append("kontakt@enkellaering.no")
+    except Exception as e:
+        raise RuntimeError(f"Error getting the email of admins: {e}")
+    
+    try:
+        teacher = get_teacher_by_user_id(teacherUserId)
+        teacher_row = teacher[0]
+        print(teacher_row)
+        teacherName = f"{teacher_row.get('firstname')} {teacher_row.get('lastname')}"
+        if not teacher_row:
+            raise ValueError(f"No teacher found with user ID {teacherUserId}")
+    except Exception as e:
+        raise RuntimeError(f"Error getting teacher by user ID {teacherUserId}: {e}")
+
+    # Email content (HTML)
+    html_content = f"""
+    <div style="font-family: sans-serif; background-color: #f9f9f9; padding: 30px;">
+        <h1>Ny lærerhenvisning fra {teacherName}</h1>
+        <div style="background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+            <p style="font-size: 16px;"><strong>{referalName}</strong> ble henvist som ny lærer</p>
+            <p style="color: #555;">
+                <strong>Kontaktinformasjon:</strong><br/>
+                Navn: {referalName}<br/>
+                E-post: {referalEmail}<br/>
+                Telefon: {referalPhone}
+            </p>
+            <p style="color: #555;">
+                <strong>Henvist av:</strong> {teacherName}
+            </p>
+            <p style="color: #555;">Logg inn på <code>/admin</code> for å følge opp henvisningen.</p>
+            <a href="https://enkellaering.no/login-laerer" style="display:inline-block; margin-top: 15px; background-color:#6366F1; color:white; padding:10px 16px; border-radius:5px; text-decoration:none;">Logg inn</a>
+        </div>
+    </div>
+    """
+
+    # Send email to admins
+    for email in emails:
+        try:
+            response = resend.Emails.send({
+                "from": FROM_EMAIL,
+                "to": email,
+                "subject": f"Ny lærerhenvisning: {referalName}",
+                "html": html_content
+            })
+            print(f"✅ Email sent to {email}")
+        except Exception as e:
+            print(f"❌ Failed to send to {email}: {e}")
+            raise e
+
+    return True
