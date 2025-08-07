@@ -41,7 +41,7 @@ export const StudentsWithoutAnyTeachers = ({token, BASEURL} : {token :string, BA
   return (<>
     <div className="w-full bg-white rounded-lg shadow-md p-4 dark:bg-black">
       <Table>
-        <TableCaption>Elever uten lærer</TableCaption>
+        <TableCaption>Elever uten lærer, inaktive elever vises ikke her</TableCaption>
         <TableHeader>
           <TableRow>
             <TableHead>Forelder</TableHead>

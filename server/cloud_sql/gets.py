@@ -311,11 +311,15 @@ def get_students_without_teacher():
         SELECT * 
         FROM public.students s
         WHERE s.user_id NOT IN (
-            SELECT student_user_id 
-            FROM public.teacher_student
-            WHERE teacher_accepted_student = TRUE 
-              AND (hidden = FALSE OR hidden IS NULL)
+            SELECT student_user_id
+            FROM public.teacher_student AS ts
+            JOIN public.teachers AS t
+              ON ts.teacher_user_id = t.user_id
+            WHERE ts.teacher_accepted_student = TRUE 
+              AND (ts.hidden = FALSE OR hidden IS NULL)
+              AND t.resigned = FALSE
         )
+        AND s.is_active = TRUE
     """
     return execute_query(sql)
 
