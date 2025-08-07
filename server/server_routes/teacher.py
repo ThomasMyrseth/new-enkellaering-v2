@@ -118,3 +118,21 @@ def upload_notes_about_teacher_route(user_id):
     except Exception as e:
         logging.exception(f"Failed to upload notes about teacher {teacher_user_id}: {e}")
         return jsonify({"message": str(e)}), 500
+    
+
+from cloud_sql.gets import get_teachers_without_about_me
+from server_routes.email import sendEmailsToAddAboutMeText
+@teacher_bp.route('/send-email-to-teachers-without-about-me', methods=["GET"])
+def send_email_to_teachers_without_about_me_route():
+    try:
+        teachers = get_teachers_without_about_me()
+    except Exception as e:
+        logging.exception("Failed to fetch teachers without 'about me'")
+        return jsonify({"message": str(e)}), 500
+    
+    try:
+        sendEmailsToAddAboutMeText(teachers)
+        return jsonify({"message": "Emails sent successfully"}), 200
+    except Exception as e:
+        logging.exception("Failed to send emails to teachers without 'about me'")
+        return jsonify({"message": str(e)}), 500

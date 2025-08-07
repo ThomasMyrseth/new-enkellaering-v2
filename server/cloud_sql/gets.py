@@ -318,3 +318,16 @@ def get_students_without_teacher():
         )
     """
     return execute_query(sql)
+
+
+def get_teachers_without_about_me():
+    sql = """
+        SELECT t.user_id, t.firstname, t.lastname, t.email
+        FROM public.teachers AS t
+        WHERE t.user_id NOT IN (
+            SELECT user_id 
+            FROM public.about_me_texts
+        )
+            AND t.resigned = FALSE
+    """
+    return execute_query(sql)

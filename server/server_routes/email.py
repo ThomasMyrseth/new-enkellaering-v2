@@ -72,8 +72,6 @@ def sendNewStudentToTeacherMail(receipientTeacherMail: str, teachername :str):
         print("❌ Failed to send email:", e)
         raise e
 
-
-
 def welcomeNewStudentEmailToStudent(parentEmail: str, parentName :str):
     try:
         # HTML content adapted from your image template
@@ -107,7 +105,6 @@ def welcomeNewStudentEmailToStudent(parentEmail: str, parentName :str):
         logging.error(f"❌ Failed to send email to {parentEmail}: {e}")
         print("❌ Failed to send email:", e)
         raise e
-
 
 def sendSingupTeacherEmailToTeacher(receipientTeacherMail: str, teachername :str):
     try:
@@ -200,9 +197,6 @@ def sendNewClassToStudentMail(studentName: str, teacherName: str, parentName :st
         print("❌ Failed to send email:", e)
         raise e
 
-
-
-
 def sendAcceptOrRejectToStudentMail(studentName: str, teacherName: str, acceptOrReject: bool, receipientStudentMail: str):
     try:
         accept_text = 'godkjent' if acceptOrReject else 'avslått'
@@ -247,6 +241,7 @@ def sendNewStudentToAdminMail(newStudentPhone: str):
     try:
         admins = get_all_admins()
         emails = [admin['email'] for admin in admins]
+        emails.append("kontakt@enkellaering.no")
     except Exception as e:
         raise RuntimeError(f"Error getting the email of admins: {e}")
 
@@ -317,6 +312,7 @@ def sendInactiveStudentsMailToAdmin ():
     #get all the admins
     try:
         admins :List = get_all_admins()
+        admins.append("kontakt@enkellaering.no")
     except Exception as e:
         print(e)
         return jsonify({"message": f"Error getting the admins emails: {e}"})
@@ -399,6 +395,7 @@ def sendNewOrderEmailToAdmin( firstname_parent:str, lastname_parent:str, phone_p
     try:
         admins = get_all_admins()
         emails = [admin['email'] for admin in admins]
+        emails.append("kontakt@enkellaering.no")
     except Exception as e:
         raise RuntimeError(f"Error getting the email of admins: {e}")
 
@@ -448,3 +445,46 @@ def sendNewOrderEmailToAdmin( firstname_parent:str, lastname_parent:str, phone_p
         except Exception as e:
             print(f"❌ Failed to send to {email}: {e}")
             raise e
+
+
+from time import sleep
+def sendEmailsToAddAboutMeText(teachers):
+    try:
+        resend.api_key = os.environ.get('RESEND_API_KEY')
+
+        for teacher in teachers:
+
+            sleep(2) #avoid rate limit
+            
+            html_content = f"""
+            <div style="font-family: sans-serif; background-color: #f9f9f9; padding: 30px;">
+                <h1>Hei {teacher['firstname']}!</h1>
+                <h2>Skriv om deg selv på Enkel Læring</h2>
+                <div style="background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                    <p style="color: #555;">
+                        Du har fortsatt ikke skrevet noe om deg selv på nettsiden vår. Dette er viktig for at elevene skal kunne velge deg som lærer.
+                    </p>
+                    <p style="color: #555;">
+                        Venligst skriv noe om deg selv og legg igjen et bilde. Du kan gjøre dette ved å logge inn på Min Side og bla nederst på siden.
+                    </p>
+                    <a href="https://enkellaering.no/login-laerer" style="display:inline-block; margin-top: 15px; background-color:#6366F1; color:white; padding:10px 16px; border-radius:5px; text-decoration:none;">Logg inn</a>
+                </div>
+            </div>
+            """
+            
+            try:
+                response = resend.Emails.send({
+                    "from": FROM_EMAIL,
+                    "to": teacher['email'],
+                    "subject": "Skriv om deg selv på Enkel Læring",
+                    "html": html_content
+                })
+                print(f"✅ Email sent to {teacher['email']}")
+            except Exception as e:
+                print(f"❌ Failed to send to {teacher['email']}: {e}")
+                raise e
+
+        return True
+    except Exception as e:
+        print("❌ Failed to send emails:", e)
+        raise e
