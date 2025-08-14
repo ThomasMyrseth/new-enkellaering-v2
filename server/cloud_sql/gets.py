@@ -231,7 +231,8 @@ def get_all_qualifications():
         FROM public.quizzes q
         LEFT JOIN public.quiz_results qr
           ON qr.quiz_id = q.quiz_id
-    """/submit-quiz
+        WHERE qr.passed=TRUE
+    """
     return execute_query(sql)
 
 def get_new_orders(student_user_id: str):
