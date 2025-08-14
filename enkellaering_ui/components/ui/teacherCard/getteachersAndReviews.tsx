@@ -153,9 +153,7 @@ export const getAllAvailableQualifications = async (): Promise<string[]> => {
         }
 
         const qualificationsData = await qualifications.json();
-        console.log("Qualifications Data:", qualificationsData);
         const qs :Quiz[]= qualificationsData.qualifications || [];
-        console.log("Fetched quizzes:", qs);
 
         const qualificationsList = qs.map( (q) => {
             return q.title

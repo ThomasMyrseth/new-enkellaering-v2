@@ -1,5 +1,5 @@
 "use client"
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
@@ -32,9 +32,13 @@ const Question: React.FC<QuestionProps> = ({
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState<number>(timeLimit);
 
-  const handleGoToNextQuestion = (): void => {
+  const handleGoToNextQuestion = useCallback((): void => {
+    console.log("isCorrect: ", selectedOption === correctOption);
     onSubmitAnswer(selectedOption === correctOption);
-  };
+  }, [selectedOption, correctOption, onSubmitAnswer]);
+
+
+
 
   useEffect(() => {
     if (timeLeft <= 0) {
@@ -43,7 +47,7 @@ const Question: React.FC<QuestionProps> = ({
     }
     const timer: NodeJS.Timeout = setTimeout(() => setTimeLeft((prev) => prev - 1), 1000);
     return () => clearTimeout(timer);
-  }, [timeLeft]);
+  }, [timeLeft, handleGoToNextQuestion]);
 
   return (
     <div className="w-full md:w-2/3 mx-auto p-6 bg-white dark:bg-black shadow-lg rounded-lg flex flex-col items-center space-y-4">
@@ -65,15 +69,17 @@ const Question: React.FC<QuestionProps> = ({
 
       <RadioGroup
         onValueChange={(value: string) => setSelectedOption(Number(value))}
+        value={selectedOption !== null ? String(selectedOption) : undefined}
         className="w-full space-y-2"
       >
         {options.map((option: string, index: number) => (
           <div
             key={index}
             className="flex items-center p-3 border rounded-lg dark:hover:bg-gray-600 hover:bg-gray-100 cursor-pointer"
+            onClick={() => setSelectedOption(index)}
           >
             <RadioGroupItem value={String(index)} id={`option-${index}`} className="mr-2" />
-            <Label htmlFor={`option-${index}`} className="text-lg">
+            <Label htmlFor={`option-${index}`} className="text-lg cursor-pointer">
               {option}
             </Label>
           </div>
@@ -95,6 +101,9 @@ const Question: React.FC<QuestionProps> = ({
     </div>
   );
 };
+
+
+
 
 interface QuizProps {
   questions: QuestionType[];
@@ -120,21 +129,22 @@ const Quiz: React.FC<QuizProps> = ({
   const [passed, setPassed] = useState<boolean>(false);
   const [hasSubmitted, setHasSubmitted] = useState<boolean>(false);
   const [currentQuestion, setCurrentQuestion] = useState<number>(0);
-  const [shuffledQuestions, setShuffledQuestions] = useState<QuestionType[]>([])
+  const [shuffledQuestions, setShuffledQuestions] = useState<QuestionType[]>([]);
   const router = useRouter();
+
 
   //adjust the shuffled questions to the correct lenght
   useEffect(() => {
     setShuffledQuestions([...questions].sort(() => Math.random() - 0.5).slice(0, numberOfQuestions));
   }, [questions, numberOfQuestions]);
 
-  const incrementCorrectAnswer = (correct: boolean): void => {
+  const incrementCorrectAnswer = useCallback((correct: boolean): void => {
     if (correct) {
-      setNumberOfCorrects(numberOfCorrects + 1);
+      setNumberOfCorrects(prev => prev + 1);
     }
     setNumberOfQuestionsCompleted((prev) => prev + 1);
     setCurrentQuestion((prev) => prev + 1);
-  };
+  }, []);
 
   const handleSubmit = async (): Promise<void> => {
     setHasSubmitted(true);
@@ -159,7 +169,7 @@ const Quiz: React.FC<QuizProps> = ({
 
     setTimeout(() => {
       router.push("/");
-    }, 5000);
+    }, 10000);
   };
 
   return (
@@ -191,12 +201,16 @@ const Quiz: React.FC<QuizProps> = ({
       )}
       {hasSubmitted && passed && (
         <h3 className="text-green-500 font-semibold text-xl mt-4 text-center">
-          Gratulerer! Du bestod
+          Gratulerer! Du bestod <br/>
+          Du fikk {numberOfCorrects} riktige av {shuffledQuestions.length} <br/>
+          Du trenger {Math.ceil(shuffledQuestions.length*passThreshold/100)} for å bestå.
         </h3>
       )}
       {hasSubmitted && !passed && (
         <h3 className="text-red-500 font-semibold text-xl mt-4 text-center">
-          Beklager, du bestod ikke.
+          Beklager, du bestod ikke.<br/>
+          Du fikk {numberOfCorrects} riktige av {shuffledQuestions.length} <br/>
+          Du trenger {Math.ceil(shuffledQuestions.length*passThreshold/100)} for å bestå.
         </h3>
       )}
     </div>
