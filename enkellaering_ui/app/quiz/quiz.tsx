@@ -33,7 +33,6 @@ const Question: React.FC<QuestionProps> = ({
   const [timeLeft, setTimeLeft] = useState<number>(timeLimit);
 
   const handleGoToNextQuestion = useCallback((): void => {
-    console.log("isCorrect: ", selectedOption === correctOption);
     onSubmitAnswer(selectedOption === correctOption);
   }, [selectedOption, correctOption, onSubmitAnswer]);
 
@@ -50,54 +49,58 @@ const Question: React.FC<QuestionProps> = ({
   }, [timeLeft, handleGoToNextQuestion]);
 
   return (
-    <div className="w-full md:w-2/3 mx-auto p-6 bg-white dark:bg-black shadow-lg rounded-lg flex flex-col items-center space-y-4">
-      <h1 className="text-2xl font-bold text-center">
-        {questionNumber}. {question}
-      </h1>
+    <div className="w-full md:w-2/3 mx-auto p-6 min-h-3/4 bg-neutral-100 dark:bg-black shadow-lg rounded-lg flex flex-col justify-between items-center">
+      <div className="flex flex-col items-center space-y-4 w-full">
+        <h1 className="text-2xl font-bold text-center">
+          {questionNumber}. {question}
+        </h1>
 
-      {image && (
-        <div className="my-4">
-          <Image
-            src={image}
-            alt="Quiz image"
-            width={800}
-            height={500}
-            className="rounded-md shadow-md"
-          />
-        </div>
-      )}
-
-      <RadioGroup
-        onValueChange={(value: string) => setSelectedOption(Number(value))}
-        value={selectedOption !== null ? String(selectedOption) : undefined}
-        className="w-full space-y-2"
-      >
-        {options.map((option: string, index: number) => (
-          <div
-            key={index}
-            className="flex items-center p-3 border rounded-lg dark:hover:bg-gray-600 hover:bg-gray-100 cursor-pointer"
-            onClick={() => setSelectedOption(index)}
-          >
-            <RadioGroupItem value={String(index)} id={`option-${index}`} className="mr-2" />
-            <Label htmlFor={`option-${index}`} className="text-lg cursor-pointer">
-              {option}
-            </Label>
+        {image && (
+          <div className="my-4">
+            <Image
+              src={image}
+              alt="Quiz image"
+              width={500}
+              height={300}
+              className="rounded-md shadow-md"
+            />
           </div>
-        ))}
-      </RadioGroup>
+        )}
 
-      <Progress
-        value={(timeLeft / timeLimit) * 100}
-        max={100}
-        className="w-full my-4"
-      />
+        <RadioGroup
+          onValueChange={(value: string) => setSelectedOption(Number(value))}
+          value={selectedOption !== null ? String(selectedOption) : undefined}
+          className="w-full space-y-2"
+        >
+          {options.map((option: string, index: number) => (
+            <div
+              key={index}
+              className="flex items-center p-3 border rounded-lg bg-white dark:bg-neutral-900 dark:hover:bg-gray-600 hover:bg-gray-100 cursor-pointer"
+              onClick={() => setSelectedOption(index)}
+            >
+              <RadioGroupItem value={String(index)} id={`option-${index}`} className="mr-2" />
+              <Label htmlFor={`option-${index}`} className="text-lg cursor-pointer">
+                {option}
+              </Label>
+            </div>
+          ))}
+        </RadioGroup>
+      </div>
+
+      <div className="mt-10 w-full space-y-4">
+        <Progress
+          value={(timeLeft / timeLimit) * 100}
+          max={100}
+          className="w-full"
+        />
 
         <div className="flex flex-row justify-between items-center w-full">
             <p>{timeLeft}/{timeLimit}</p>
-            <Button onClick={handleGoToNextQuestion} className="mt-4 bg-blue-500 hover:bg-blue-800">
+            <Button onClick={handleGoToNextQuestion} className="bg-blue-500 hover:bg-blue-800">
                 Neste <ChevronRight />
             </Button>
         </div>
+      </div>
     </div>
   );
 };
@@ -173,7 +176,7 @@ const Quiz: React.FC<QuizProps> = ({
   };
 
   return (
-    <div className="w-full mx-auto p-6 bg-white dark:bg-neutral-900 rounded-lg shadow-md">
+    <div className="w-full mx-auto h-screen p-6 bg-white dark:bg-neutral-900">
       <h1 className="text-3xl font-bold text-center mb-6">{title}</h1>
       {shuffledQuestions.map((question: QuestionType, index: number) => {
         if (index === currentQuestion) {
