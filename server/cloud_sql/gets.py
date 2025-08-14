@@ -231,6 +231,7 @@ def get_all_qualifications():
         FROM public.quizzes q
         LEFT JOIN public.quiz_results qr
           ON qr.quiz_id = q.quiz_id
+        WHERE qr.passed=TRUE
     """
     return execute_query(sql)
 

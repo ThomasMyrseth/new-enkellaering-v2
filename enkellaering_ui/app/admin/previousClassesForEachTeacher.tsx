@@ -3,6 +3,7 @@
 import { Copy } from 'lucide-react';
 
 import { TeacherStudent } from './types';
+import { Qualification } from '@/components/ui/teacherCard/typesAndData';
 
 import { DeleteClass } from '../min-side-laerer/deleteClass';
 import { Switch } from '@/components/ui/switch';
@@ -17,15 +18,21 @@ const ToggleFilterPreviousClasses = ({
   passFilterDigital,
   passFilterPhysical,
   passFilterLocation,
+  passFilterQualification,
+  qualifications,
 }: {
   passFilterDigital: (v: boolean) => void;
   passFilterPhysical: (v: boolean) => void;
   passFilterLocation: (v: string) => void;
+  passFilterQualification: (v: string | null) => void;
+  qualifications: string[];
 }) => {
   const [filterDigital, setFilterDigital] = useState(false);
   const [filterPhysical, setFilterPhysical] = useState(false);
   const [open, setOpen] = useState(false);
+  const [openQualification, setOpenQualification] = useState(false);
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
+  const [selectedQualification, setSelectedQualification] = useState<string | null>(null);
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const cities = ["Oslo", "Trondheim"];
 
@@ -35,10 +42,16 @@ const ToggleFilterPreviousClasses = ({
     setOpen(false);
   };
 
+  const handleQualificationSelect = (value: string | null) => {
+    setSelectedQualification(value);
+    passFilterQualification(value);
+    setOpenQualification(false);
+  };
+
   return (
     <div className="flex flex-col items-center space-y-4 mb-4 ">
-      <div className="w-full flex justify-between">
-        <div className="flex flex-row items-center space-x-4 w-full">
+      <div className="w-full flex flex-row justify-between">
+        <div className="flex flex-row items-center space-x-2 w-full">
           <Switch
             id="digital-filter"
             checked={filterDigital}
@@ -49,7 +62,7 @@ const ToggleFilterPreviousClasses = ({
           />
           <Label htmlFor="digital-filter">Kun digital</Label>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 w-full">
           <Switch
             id="physical-filter"
             checked={filterPhysical}
@@ -61,60 +74,118 @@ const ToggleFilterPreviousClasses = ({
           <Label htmlFor="physical-filter">Kun fysisk</Label>
         </div>
       </div>
-      {isDesktop ? (
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger asChild>
-            <Button variant="outline" className="w-[150px] justify-start">
-              {selectedCity || "Søk etter by"}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-[200px] p-0" align="start">
-            <Command>
-              <CommandInput placeholder="Filter..." />
-              <CommandList>
-                <CommandEmpty>No results found.</CommandEmpty>
-                <CommandGroup>
-                  <CommandItem onSelect={() => handleCitySelect(null)}>
-                    Fjern filter
-                  </CommandItem>
-                  {cities.map((city) => (
-                    <CommandItem key={city} value={city} onSelect={() => handleCitySelect(city)}>
-                      {city}
+      <div className='w-full flex flex-row space-x-4'>
+        {isDesktop ? (
+            <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+                <Button variant="outline" className="w-[150px] justify-start">
+                {selectedCity || "Søk etter by"}
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[200px] p-0" align="start">
+                <Command>
+                <CommandInput placeholder="Filter..." />
+                <CommandList>
+                    <CommandEmpty>No results found.</CommandEmpty>
+                    <CommandGroup>
+                    <CommandItem onSelect={() => handleCitySelect(null)}>
+                        Fjern filter
                     </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
-      ) : (
-        <Drawer open={open} onOpenChange={setOpen}>
-          <DrawerTrigger asChild>
-            <Button variant="outline" className="w-[150px] justify-start">
-              {selectedCity || "Søk etter by"}
-            </Button>
-          </DrawerTrigger>
-          <DrawerContent>
-            <Command>
-              <CommandInput placeholder="Filter..." />
-              <CommandList>
-                <CommandEmpty>No results found.</CommandEmpty>
-                <CommandGroup>
-                  <CommandItem onSelect={() => handleCitySelect(null)}>
-                    Fjern filter
-                  </CommandItem>
-                  {cities.map((city) => (
-                    <CommandItem key={city} value={city} onSelect={() => handleCitySelect(city)}>
-                      {city}
+                    {cities.map((city) => (
+                        <CommandItem key={city} value={city} onSelect={() => handleCitySelect(city)}>
+                        {city}
+                        </CommandItem>
+                    ))}
+                    </CommandGroup>
+                </CommandList>
+                </Command>
+            </PopoverContent>
+            </Popover>
+        ) : (
+            <Drawer open={open} onOpenChange={setOpen}>
+            <DrawerTrigger asChild>
+                <Button variant="outline" className="w-[150px] justify-start">
+                {selectedCity || "Søk etter by"}
+                </Button>
+            </DrawerTrigger>
+            <DrawerContent>
+                <Command>
+                <CommandInput placeholder="Filter..." />
+                <CommandList>
+                    <CommandEmpty>No results found.</CommandEmpty>
+                    <CommandGroup>
+                    <CommandItem onSelect={() => handleCitySelect(null)}>
+                        Fjern filter
                     </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </DrawerContent>
-        </Drawer>
-      )}
+                    {cities.map((city) => (
+                        <CommandItem key={city} value={city} onSelect={() => handleCitySelect(city)}>
+                        {city}
+                        </CommandItem>
+                    ))}
+                    </CommandGroup>
+                </CommandList>
+                </Command>
+            </DrawerContent>
+            </Drawer>
+        )}
+
+        {/* Qualification Filter */}
+        {isDesktop ? (
+            <Popover open={openQualification} onOpenChange={setOpenQualification}>
+            <PopoverTrigger asChild>
+                <Button variant="outline" className="w-[150px] justify-start">
+                {selectedQualification || "Søk etter fag"}
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[200px] p-0" align="start">
+                <Command>
+                <CommandInput placeholder="Filter..." />
+                <CommandList>
+                    <CommandEmpty>No results found.</CommandEmpty>
+                    <CommandGroup>
+                    <CommandItem onSelect={() => handleQualificationSelect(null)}>
+                        Fjern filter
+                    </CommandItem>
+                    {qualifications.map((qualification) => (
+                        <CommandItem key={qualification} value={qualification} onSelect={() => handleQualificationSelect(qualification)}>
+                        {qualification}
+                        </CommandItem>
+                    ))}
+                    </CommandGroup>
+                </CommandList>
+                </Command>
+            </PopoverContent>
+            </Popover>
+        ) : (
+            <Drawer open={openQualification} onOpenChange={setOpenQualification}>
+            <DrawerTrigger asChild>
+                <Button variant="outline" className="w-[150px] justify-start">
+                {selectedQualification || "Søk etter fag"}
+                </Button>
+            </DrawerTrigger>
+            <DrawerContent>
+                <Command>
+                <CommandInput placeholder="Filter..." />
+                <CommandList>
+                    <CommandEmpty>No results found.</CommandEmpty>
+                    <CommandGroup>
+                    <CommandItem onSelect={() => handleQualificationSelect(null)}>
+                        Fjern filter
+                    </CommandItem>
+                    {qualifications.map((qualification) => (
+                        <CommandItem key={qualification} value={qualification} onSelect={() => handleQualificationSelect(qualification)}>
+                        {qualification}
+                        </CommandItem>
+                    ))}
+                    </CommandGroup>
+                </CommandList>
+                </Command>
+            </DrawerContent>
+            </Drawer>
+        )}
+      </div>
     </div>
+
   );
 };
 
@@ -158,7 +229,8 @@ export function PreviousClassesForEachTeacher() {
     const [classesByTeacher, setClassesByTeacher] = useState<classesJoinTeacher[]>([]);
     const [students, setStudents] = useState<Student[]>([]);
     const [teacherStudents, setTeacherStudents] = useState<TeacherStudent[]>([]);
-    
+    const [qualifications, setQualifications] = useState<Qualification[]>([]);
+    const [allQualifications, setAllQualifications] = useState<string[]>([]);
 
     const [loading, setLoading] = useState<boolean>(true)
 
@@ -166,6 +238,7 @@ export function PreviousClassesForEachTeacher() {
     const [filterLocation, setFilterLocation] = useState<string>("");
     const [filterPhysical, setFilterPhysical] = useState<boolean>(false);
     const [filterDigital, setFilterDigital] = useState<boolean>(false);
+    const [filterQualification, setFilterQualification] = useState<string | null>(null);
 
     //get classes, teachers and students for everyone
     useEffect( () => {
@@ -271,10 +344,31 @@ export function PreviousClassesForEachTeacher() {
             setTeacherStudents(ts)
         }
 
+        async function fetchQualifications() {
+            try {
+                const response = await fetch(`${BASEURL}/get-all-qualifications`);
+                if (!response.ok) {
+                    throw new Error("Failed to fetch qualifications");
+                }
+                const data = await response.json();
+                const quals: Qualification[] = data.qualifications || [];
+                setQualifications(quals);
+                
+                // Get unique qualification titles
+                const uniqueTitles = [...new Set(quals.map(q => q.title))];
+                setAllQualifications(uniqueTitles);
+            } catch (error) {
+                console.error("Error fetching qualifications:", error);
+                setQualifications([]);
+                setAllQualifications([]);
+            }
+        }
+
         fetchClasses()
         getAllTeachers()
         getAllStudents()
         getAllTeacherStudents()
+        fetchQualifications()
 
     
     },[token])
@@ -322,6 +416,16 @@ export function PreviousClassesForEachTeacher() {
         if (filterLocation && loc !== filterLocation) return false;
         if (filterPhysical && !ct.teacher.physical_tutouring) return false;
         if (filterDigital && !ct.teacher.digital_tutouring) return false;
+        
+        // Check qualification filter
+        if (filterQualification) {
+            const teacherQualifications = qualifications.filter(q => 
+                q.user_id === ct.teacher.user_id && q.passed === true
+            );
+            const teacherQualificationTitles = teacherQualifications.map(q => q.title);
+            if (!teacherQualificationTitles.includes(filterQualification)) return false;
+        }
+        
         return true;
     });
 
@@ -330,8 +434,10 @@ export function PreviousClassesForEachTeacher() {
           passFilterDigital={setFilterDigital}
           passFilterPhysical={setFilterPhysical}
           passFilterLocation={setFilterLocation}
+          passFilterQualification={setFilterQualification}
+          qualifications={allQualifications}
         />
-        <h1 className="text-xl">En oversikt over tidligere timer for hver lærer</h1>
+        <h1 className="text-xl">Oversikt over tidligere timer for hver lærer</h1>
 
         {filteredTeachers.map((ct :classesJoinTeacher, index) => {
             const classes :Classes[] = ct.classes

@@ -177,12 +177,12 @@ def insert_quiz_result(user_id: str, quiz_id: str, passed: bool,
     execute_modify(
         """
         INSERT INTO public.quiz_results (
-            user_id, quiz_id, passed, number_of_corrects,
+            attempt_id, user_id, quiz_id, passed, number_of_corrects,
             number_of_questions, created_at
-        ) VALUES (%s, %s, %s, %s, %s, %s)
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s)
         """,
         (
-            user_id, quiz_id, passed,
+            str(uuid.uuid4()), user_id, quiz_id, passed,
             number_of_corrects, number_of_questions,
             datetime.now(timezone.utc)
         )

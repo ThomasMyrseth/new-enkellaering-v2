@@ -54,7 +54,7 @@ def get_quiz_meta_data_route():
     quiz_id = request.json.get('quiz_id')
     try:
         data = get_quiz_meta_data(quiz_id)
-        return jsonify({"quizzes": data}), 200
+        return jsonify({"quizzes": data[0]}), 200 #return the first and only quiz with quiz_id=xxx
     except Exception as e:
         logging.error(f"Error retrieving quiz metadata: {e}")
         return jsonify({"message": str(e)}), 500
@@ -94,6 +94,7 @@ def submit_quiz_route(user_id):
         insert_quiz_result(user_id, quiz_id, passed, number_of_corrects, number_of_questions)
         return jsonify({"message": "Quiz submitted successfully"}), 200
     except Exception as e:
+        print(f"Error submitting quiz result: {e}")
         logging.error(f"Error submitting quiz result: {e}")
         return jsonify({"message": str(e)}), 500
 
