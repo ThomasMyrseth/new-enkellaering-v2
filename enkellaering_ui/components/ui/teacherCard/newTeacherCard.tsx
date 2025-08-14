@@ -322,18 +322,20 @@ export function TeacherFocusCards() {
                         >
                         {active.teacher.firstname}, {active.teacher.location}
                         </motion.h3>
-                        <motion.p
-                            layoutId={`description-${active.teacher.firstname}-${id}`}
-                            className="flex flex-row w-60 text-neutral-600 dark:text-white text-center md:text-left overflow-x-scroll scrollbar-hide"
-                        >
-                            {[...new Set(active.qualifications)].sort().map((qualification: string, index: number) => (
-                                <div className="m-1 px-4 py-2 bg-neutral-100 dark:bg-neutral-600 rounded-xl" key={index}>
-                                    <span className="rounded-lg mx-1 p-2 text-xs inline-block whitespace-nowrap">
-                                        {qualification}
-                                    </span>
-                                </div>
-                            ))}
-                    </motion.p>
+                        <div className="relative w-60">
+                            <motion.div
+                                layoutId={`description-${active.teacher.firstname}-${id}`}
+                                className="flex flex-row text-neutral-600 dark:text-white text-center md:text-left overflow-x-auto"
+                                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                            >
+                                {[...new Set(active.qualifications)].sort().map((qualification: string, index: number) => (
+                                        <div key={index} className="bg-neutral-200 dark:bg-neutral-600 rounded-lg scrollbar-hide mx-1 p-2 text-xs inline-block whitespace-nowrap">
+                                            {qualification}
+                                        </div>
+                                ))}
+                            </motion.div>
+                            <div className="absolute top-0 right-0 w-12 h-full bg-gradient-to-l from-white via-white/80 dark:from-neutral-800 dark:via-neutral-800/80 to-transparent pointer-events-none"></div>
+                        </div>
                         
                     
                     </div>
@@ -427,14 +429,18 @@ export function TeacherFocusCards() {
                                 </span>
                             </span>
                         </motion.h3>
-                        <motion.p
-                            layoutId={`description-${card.teacher.firstname}-${id}`}
-                            className="w-40 m-2 text-neutral-600 dark:text-neutral-400 text-center md:text-left overflow-x-scroll scrollbar-hide"
-                        >
-                            {[...new Set(card.qualifications)].sort().map((qualification: string, index: number) => (
-                                <span key={index} className="whitespace-nowrap rounded-lg bg-ne utral-100 mx-1 p-2 text-xs">{qualification}</span>
-                            ))}
-                        </motion.p>
+                        <div className="relative w-40 m-2">
+                            <motion.p
+                                layoutId={`description-${card.teacher.firstname}-${id}`}
+                                className="text-neutral-600 dark:text-neutral-400 text-center md:text-left flex overflow-x-auto"
+                                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                            >
+                                {[...new Set(card.qualifications)].sort().map((qualification: string, index: number) => (
+                                    <span key={index} className="whitespace-nowrap rounded-full bg-neutral-200 dark:bg-neutral-600 mx-1 p-2 text-xs">{qualification}</span>
+                                ))}
+                            </motion.p>
+                            <div className="absolute top-0 right-0 w-10 h-full bg-gradient-to-l from-white via-white/80 dark:from-neutral-900 dark:via-neutral-900/80 to-transparent pointer-events-none"></div>
+                        </div>
                         <div className="flex flex-row">
                             <motion.p className={`rounded-lg m-2 p-1 ${card.teacher.digital_tutouring? 'text-emerald-400': 'text-rose-400'}`}>
                                 <Laptop/> digital
