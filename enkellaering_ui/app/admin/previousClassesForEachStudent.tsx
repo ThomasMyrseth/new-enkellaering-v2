@@ -52,10 +52,33 @@ export function PreviousClassesForEachStudent() {
             const ts: TeacherStudent[] = await getTeacherStudent(token)
 
             if (t) {
-                setTeachers(t)
-            }   
+                //order alfabetcically
+                t.sort((a: Teacher, b: Teacher) => {
+                    const nameA = a.firstname.toUpperCase();
+                    const nameB = b.firstname.toUpperCase();
+                    if (nameA < nameB) {
+                        return -1;
+                    }
+                    if (nameA > nameB) {
+                        return 1;
+                    }
+                    return 0;
+                });
+                setTeachers(t);
+            }
             if (s) {
-                setStudents(s)
+                s.sort((a: Student, b: Student) => {
+                    const nameA = a.firstname_parent.toUpperCase();
+                    const nameB = b.firstname_parent.toUpperCase();
+                    if (nameA < nameB) {
+                        return -1;
+                    }
+                    if (nameA > nameB) {
+                        return 1;
+                    }
+                    return 0;
+                });
+                setStudents(s);
             }
             if (c) {
                 setClasses(c)

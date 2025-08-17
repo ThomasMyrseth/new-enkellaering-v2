@@ -25,6 +25,19 @@ export const InactiveStudents = () => {
                 return
             }
             const s: Student[] =  await getStudents(token)
+
+            //alfabetcical sort
+            s.sort((a: Student, b: Student) => {
+                const nameA = a.firstname_parent.toUpperCase();
+                const nameB = b.firstname_parent.toUpperCase();
+                if (nameA < nameB) {
+                    return -1;
+                }
+                if (nameA > nameB) {
+                    return 1;
+                }
+                return 0;
+            });
             setStudents(s)
         }
 

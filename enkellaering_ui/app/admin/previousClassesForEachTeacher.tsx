@@ -293,6 +293,20 @@ export function PreviousClassesForEachTeacher() {
             }
 
             else {
+
+                //order the teachers alfabetically
+                teachers.sort( (a :Teacher, b :Teacher) => {
+                    const nameA = a.firstname.toUpperCase()
+                    const nameB = b.firstname.toUpperCase()
+                    if (nameA < nameB) {
+                        return -1
+                    }
+                    if (nameA > nameB) {
+                        return 1
+                    }
+                    return 0
+                })
+                
                 setTeachers(teachers)
             }
         }

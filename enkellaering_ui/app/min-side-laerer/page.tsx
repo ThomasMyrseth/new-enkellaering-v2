@@ -92,7 +92,20 @@ async function fetchTeacherName(token :string) {
 
     if (response.ok) {
         const data = await response.json()
-        return data.teacher
+
+        //order the teachers alfabetically
+        const teachers = data.teachers.sort( (a :Teacher, b :Teacher) => {
+            const nameA = a.firstname.toUpperCase()
+            const nameB = b.firstname.toUpperCase()
+            if (nameA < nameB) {
+                return -1
+            }
+            if (nameA > nameB) {
+                return 1
+            }
+            return 0
+        })
+        return teachers
     }
 
     else {

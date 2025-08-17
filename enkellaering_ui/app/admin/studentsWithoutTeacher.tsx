@@ -32,6 +32,19 @@ export const StudentsWithoutAnyTeachers = ({token, BASEURL} : {token :string, BA
       const data = await response.json()
       const s = data.students
 
+      //order the students alfabetically
+      s.sort( (a :Student, b :Student) => {
+          const nameA = a.firstname_parent.toUpperCase()
+          const nameB = b.firstname_parent.toUpperCase()
+          if (nameA < nameB) {
+              return -1
+          }
+          if (nameA > nameB) {
+              return 1
+          }
+          return 0
+      })
+
       setStudents(s)
     }
 
