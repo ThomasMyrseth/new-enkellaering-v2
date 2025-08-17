@@ -6,7 +6,7 @@ import { Classes, TeacherStudent } from "../admin/types";
 import { Teacher, Student } from "../admin/types";
 import { AddNewClass } from "./addNewClass";
 
-const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080/server";
+const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080";
 
 import { NewStudentsWithPreferredTeacherWorkflowActions} from "./newStudents"
 import QuizStatusPage from "./quiz";
@@ -29,28 +29,29 @@ export default function LaererPage() {
 
     useEffect(() => {
         async function getData() {
-            const students = await fetchStudents(token);
-            const classes = await fetchClasses(token);
-            const teacher = await fetchTeacherName(token);
+            const s = await fetchStudents(token);
+            const c = await fetchClasses(token);
+            const t = await fetchTeacherName(token);
             const tss: TeacherStudent[] = await fetchTeacherStudents(token);
 
-            // Build a set of valid student IDs for fast lookup
-            const studentIds = new Set(students.map((s: Student) => s.user_id));
-
-            // Filter only those teacher-student records matching this teacher and existing students
-            const ts = tss.filter((ts: TeacherStudent) =>
-                ts.teacher_user_id === teacher.user_id &&
-                studentIds.has(ts.student_user_id)
-            );
-
-            if (!teacher) {
+            if (!t) {
                 router.push('/login-laerer')
                 return
             }
 
-            setTeacher(teacher)
-            setClasses(classes)
-            setStudents(students)
+            // Build a set of valid student IDs for fast lookup
+            const studentIds = new Set((s || []).map((s: Student) => s.user_id));
+
+            // Filter only those teacher-student records matching this teacher and existing students
+            const ts = (tss || []).filter((ts: TeacherStudent) =>
+                ts.teacher_user_id === t.user_id &&
+                studentIds.has(ts.student_user_id)
+            );
+
+
+            setTeacher(t)
+            setClasses(c)
+            setStudents(s)
             setTeacherStudents(ts);
         }
 
@@ -92,22 +93,8 @@ async function fetchTeacherName(token :string) {
 
     if (response.ok) {
         const data = await response.json()
-
-        //order the teachers alfabetically
-        const teachers = data.teachers.sort( (a :Teacher, b :Teacher) => {
-            const nameA = a.firstname.toUpperCase()
-            const nameB = b.firstname.toUpperCase()
-            if (nameA < nameB) {
-                return -1
-            }
-            if (nameA > nameB) {
-                return 1
-            }
-            return 0
-        })
-        return teachers
+        return data.teacher
     }
-
     else {
         return false
     }
@@ -145,7 +132,7 @@ async function fetchStudents(token :string) {
 
     let students = r.students
 
-    //order the students alfabetically
+    // order the students alfabetically
     students = students.sort( (a :Student, b :Student) => {
         const nameA = a.firstname_parent.toUpperCase()
         const nameB = b.firstname_parent.toUpperCase()
