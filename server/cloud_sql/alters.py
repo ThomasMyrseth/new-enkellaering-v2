@@ -255,7 +255,6 @@ def update_teacher_profile(
     teacher_user_id: str,
     firstname: str,
     lastname: str,
-    email: str,
     phone: str,
     address: str,
     postal_code: str,
@@ -268,7 +267,6 @@ def update_teacher_profile(
         UPDATE public.teachers
         SET firstname = %s,
             lastname = %s,
-            email = %s,
             phone = %s,
             address = %s,
             postal_code = %s,
@@ -279,7 +277,7 @@ def update_teacher_profile(
         WHERE user_id = %s
     """
     return execute_modify(sql, (
-        firstname, lastname, email, phone, address, postal_code,
+        firstname, lastname, phone, address, postal_code,
         additional_comments, location, physical, digital,
         teacher_user_id
     ))
@@ -303,3 +301,17 @@ def update_travel_payment(travel_payment: dict, admin_user_id: str):
         travel_payment["teacher_user_id"],
         admin_user_id
     ))
+
+def retireTeacher(teacherUserId :str, adminUserId: str):
+    sql = """
+        UPDATE public.teachers
+        SET resigned = TRUE,
+        resigned_at = NOW()
+        WHERE user_id = %s
+          AND EXISTS (
+              SELECT 1 FROM public.teachers t
+              WHERE t.user_id = %s
+              AND t.admin=TRUE
+          )
+    """
+    return execute_modify(sql, (teacherUserId, adminUserId))
