@@ -13,6 +13,17 @@ import {
 } from "@/components/ui/command";
 import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const ToggleFilterPreviousClasses = ({
   passFilterDigital,
@@ -642,7 +653,10 @@ export function PreviousClassesForEachTeacher() {
                             </AccordionItem>
                         </Accordion>
 
-                        <PayTeacherPopover teacher={ct.teacher} classes={ct.classes} teacherStudents={teacherStudents}/>
+                        <div className="flex flex-row w-full justify-between pt-2">
+                            <PayTeacherPopover teacher={ct.teacher} classes={ct.classes} teacherStudents={teacherStudents}/>
+                            <RetireTeacher teacher={ct.teacher} />
+                        </div>
 
                         <p className="my-4">
                             Totalt ufakturerte timer fra {ct.teacher.firstname}: <span className="text-red-400">{totalUninvoicedHoursByTeacher}h, {totalUninvoicedByTeacher}kr.</span> <br/>
@@ -970,3 +984,49 @@ const saveNotes = async ( notes :string, teacherUserId :string) => {
         alert("An error occurred. Please try again.");
     }
 }
+
+const handleRetireTeacher = async (teacher: Teacher) => {
+    const token = localStorage.getItem('token')
+
+    try {
+        const response = await fetch(`${BASEURL}/retire-teacher`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                "teacher_user_id": teacher.user_id
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error: ${response.status} - ${response.statusText}`);
+        }
+
+        toast(`${teacher.firstname} ${teacher.lastname} har blitt pensjonert`)
+
+    } catch (error) {
+        alert(`Failed to retire teacher: ${error}`);
+    }
+}
+
+const RetireTeacher = ({ teacher }: { teacher: Teacher }) => {
+    return(<>
+         <AlertDialog>
+            <AlertDialogTrigger><Button className="bg-red-400 dark:bg-red-800 text-white dark:text-white">Pensjonér {teacher.firstname}</Button></AlertDialogTrigger>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                <AlertDialogTitle>Er du sikker på du vil pensjonere denne læreren?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    Dette kan ikke angres. Læreren vil ikke lenger kunne ta nye elever eller registrere timer.
+                </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                <AlertDialogCancel>Kanseler</AlertDialogCancel>
+                <AlertDialogAction onClick={ () => handleRetireTeacher(teacher)}>Fortsett</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+    </>)
+};

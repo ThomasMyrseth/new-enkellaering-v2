@@ -20,7 +20,6 @@ export function ProfileForm( {teacher} : {teacher : Teacher}) {
   // State variables for the profile fields
   const [firstname, setFirstname] = useState<string>(teacher.firstname);
   const [lastname, setLastname] = useState<string>(teacher.lastname);
-  const [email, setEmail] = useState<string>(teacher.email);
   const [phone, setPhone] = useState<string>(teacher.phone);
   const [address, setAddress] = useState<string>(teacher.address);
   const [postalCode, setPostalCode] = useState<string>(teacher.postal_code);
@@ -32,8 +31,8 @@ export function ProfileForm( {teacher} : {teacher : Teacher}) {
 
   // Simple form validation for required fields
   const validateForm = () => {
-    if (!firstname.trim() || !lastname.trim() || !email.trim() || !phone.trim()) {
-      toast("Fornavn, etternavn, telefon og epost er påkrevd.");
+    if (!firstname.trim() || !lastname.trim() || !phone.trim()) {
+      toast("Fornavn, etternavn og telefon er påkrevd.");
       return false;
     }
     // Validate postal code if provided (expecting 4 digits)
@@ -61,7 +60,6 @@ export function ProfileForm( {teacher} : {teacher : Teacher}) {
         body: JSON.stringify({
           firstname: firstname,
           lastname: lastname,
-          email: email,
           phone: phone.replace(/\s+/g, ""),
           address: address,
           postal_code: postalCode.replace(/\s+/g, ""),
@@ -111,17 +109,6 @@ export function ProfileForm( {teacher} : {teacher : Teacher}) {
             placeholder="Etternavn"
             value={lastname}
             onChange={(e) => setLastname(e.target.value)}
-          />
-        </LabelInputContainer>
-        {/* Email */}
-        <LabelInputContainer>
-          <Label htmlFor="email">Epost</Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="epost@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
           />
         </LabelInputContainer>
         {/* Phone */}

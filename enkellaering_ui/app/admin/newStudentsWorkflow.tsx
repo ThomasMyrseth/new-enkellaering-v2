@@ -92,10 +92,13 @@ export function NewStudentsWorkflow() {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
 
 
 const NewStudentTable =( {newStudents} : {newStudents : NewStudent[]})  => {
     const [teachers, setTeachers] = useState<Teacher[]>([])
+    const [hideCompleted, setHideCompleted] = useState<boolean>(false)
     const token = localStorage.getItem('token')
 
     //order newStudents by created_at
@@ -106,7 +109,12 @@ const NewStudentTable =( {newStudents} : {newStudents : NewStudent[]})  => {
     });
 
     //remove new students who have a preffered teacher
-    newStudents = newStudents.filter(ns => !ns.preffered_teacher)
+    let filteredStudents = newStudents.filter(ns => !ns.preffered_teacher && !ns.hidden)
+    
+    // Filter out completed students if switch is enabled
+    if (hideCompleted) {
+        filteredStudents = filteredStudents.filter(ns => !ns.has_finished_onboarding)
+    }
 
 
     //get all the teachers and pass it to newStudentRow
@@ -144,8 +152,17 @@ const NewStudentTable =( {newStudents} : {newStudents : NewStudent[]})  => {
     },[token])
 
     return (<div className=" w-full sm:w-full bg-white dark:bg-black rounded-sm shadow-lg flex flex-col items-center justify-center">
+        <div className="flex items-center space-x-2 m-4">
+            <Switch
+                id="hide-completed"
+                checked={hideCompleted}
+                onCheckedChange={setHideCompleted}
+            />
+            <Label htmlFor="hide-completed">Skjul elever som har fullført oppstart</Label>
+        </div>
+
         <Table>
-                <TableCaption>Arbeidsoversikt for ny elev</TableCaption>
+                <TableCaption>Arbeidsoversikt for ny elev ({filteredStudents.length})</TableCaption>
                     <TableHeader>
                         <TableRow>
                             <TableHead>Telefonnummer & dato opprettet</TableHead>
@@ -165,10 +182,7 @@ const NewStudentTable =( {newStudents} : {newStudents : NewStudent[]})  => {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {newStudents.map( ns => {
-                            if (ns.hidden) {
-                                return null
-                            }
+                        {filteredStudents.map( ns => {
                             return <NewStudentRow key={ns.new_student_id} ns={ns} teachers={teachers}/>
                         })}
                     </TableBody>

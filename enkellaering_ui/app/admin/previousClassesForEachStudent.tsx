@@ -729,7 +729,7 @@ const RemoveTeacherDialog = ({ student, teacher, teacherStudent }: { student: St
                             handleUpdateTravelPay(travelPayToTeacher, travelPayFromStudent, student.user_id, teacher.user_id);
                     }}>Lagre</Button>
                     <Button className="bg-red-400 dark:bg-red-400" onClick={() => handleRemoveTeacher(student, teacher)}>Fjern {teacher.firstname} fra {student.firstname_parent}</Button>
-                    <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                    <AlertDialogCancel>Exit</AlertDialogCancel>
                 </AlertDialogContent>
             </AlertDialogContent>
         </AlertDialog>
