@@ -92,12 +92,6 @@ export function NewStudentsWorkflow() {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
-import {
-    Accordion,
-    AccordionContent,
-    AccordionItem,
-    AccordionTrigger,
-} from "@/components/ui/accordion"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 
@@ -121,9 +115,6 @@ const NewStudentTable =( {newStudents} : {newStudents : NewStudent[]})  => {
     if (hideCompleted) {
         filteredStudents = filteredStudents.filter(ns => !ns.has_finished_onboarding)
     }
-
-    const firstFiveStudents = filteredStudents.slice(0, 5);
-    const remainingStudents = filteredStudents.slice(5);
 
 
     //get all the teachers and pass it to newStudentRow
