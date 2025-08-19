@@ -34,6 +34,10 @@ def get_all_teachers():
     sql = "SELECT * FROM public.teachers WHERE resigned = FALSE"
     return execute_query(sql)
 
+def get_all_teachers_inc_resigned():
+    sql = "SELECT * FROM public.teachers"
+    return execute_query(sql)
+
 def get_all_students(admin_user_id: str):
     sql = """
         SELECT * FROM public.students

@@ -315,3 +315,16 @@ def retireTeacher(teacherUserId :str, adminUserId: str):
           )
     """
     return execute_modify(sql, (teacherUserId, adminUserId))
+
+def reactivateTeacher(teacherUserId :str, adminUserId: str):
+    sql = """
+        UPDATE public.teachers
+        SET resigned = False
+        WHERE user_id = %s
+          AND EXISTS (
+              SELECT 1 FROM public.teachers t
+              WHERE t.user_id = %s
+              AND t.admin=TRUE
+          )
+    """
+    return execute_modify(sql, (teacherUserId, adminUserId))

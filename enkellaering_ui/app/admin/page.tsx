@@ -13,6 +13,7 @@ import Quiz from "./quiz/main";
 
 import { Teacher } from "./types";
 import { InactiveStudents } from "./inactiveStudents";
+import { ResignedTeachers } from "./resignedTeachers";
 
 
 
@@ -79,6 +80,7 @@ export default function AdminPage() {
           <PreviousClassesForEachStudent />
           <NewStudentsWorkflow />
           <InactiveStudents />
+          <ResignedTeachers />
           <Quiz/>
 
         </div>

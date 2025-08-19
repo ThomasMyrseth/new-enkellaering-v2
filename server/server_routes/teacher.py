@@ -48,7 +48,16 @@ def get_all_teachers_route():
     except Exception as e:
         logging.exception("Failed to fetch all teachers")
         return jsonify({"message": str(e)}), 500
-
+    
+from cloud_sql.gets import get_all_teachers_inc_resigned
+@teacher_bp.route('/get-all-teachers-inc-resigned', methods=["GET"])
+def get_all_teachers_inc_resigned_route():
+    try:
+        teachers = get_all_teachers_inc_resigned()
+        return jsonify({"teachers": teachers}), 200
+    except Exception as e:
+        logging.exception("Failed to fetch all teachers including resigned")
+        return jsonify({"message": str(e)}), 500
 
 @teacher_bp.route('/get-all-teachers-join-students', methods=["GET"])
 def get_all_teachers_join_students_route():
@@ -173,4 +182,23 @@ def retire_teacher_route(user_id):
         return jsonify({"message": "Teacher retired successfully"}), 200
     except Exception as e:
         logging.exception(f"Failed to retire teacher {teacher_user_id}: {e}")
+        return jsonify({"message": str(e)}), 500
+    
+
+from cloud_sql.alters import reactivateTeacher
+@teacher_bp.route('/reactivate-teacher', methods=["POST"])
+@token_required
+def reactivate_teacher_route(user_id):
+    data = request.get_json() or {}
+    teacher_user_id = data.get('teacher_user_id')
+    admin_user_id = user_id
+
+    if not teacher_user_id:
+        return jsonify({"message": "Missing teacher_user_id"}), 400
+
+    try:
+        reactivateTeacher(teacher_user_id, admin_user_id)
+        return jsonify({"message": "Teacher reactivated successfully"}), 200
+    except Exception as e:
+        logging.exception(f"Failed to reactivate teacher {teacher_user_id}: {e}")
         return jsonify({"message": str(e)}), 500

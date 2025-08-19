@@ -12,6 +12,12 @@ import {
 } from "@/components/ui/table"
 
 import { Button } from "@/components/ui/button"
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+} from "@/components/ui/accordion"
 
 export const InactiveStudents = () => {
     const [students, setStudents] = useState<Student[]>([])
@@ -26,17 +32,11 @@ export const InactiveStudents = () => {
             }
             const s: Student[] =  await getStudents(token)
 
-            //alfabetcical sort
-            s.sort((a: Student, b: Student) => {
-                const nameA = a.firstname_parent.toUpperCase();
-                const nameB = b.firstname_parent.toUpperCase();
-                if (nameA < nameB) {
-                    return -1;
-                }
-                if (nameA > nameB) {
-                    return 1;
-                }
-                return 0;
+            //order by name
+            s.sort((a, b) => {
+                const nameA = `${a.firstname_parent} ${a.lastname_parent}`.toLowerCase();
+                const nameB = `${b.firstname_parent} ${b.lastname_parent}`.toLowerCase();
+                return nameA.localeCompare(nameB);
             });
             setStudents(s)
         }
@@ -46,53 +46,83 @@ export const InactiveStudents = () => {
 
     
 
+    const inactiveStudents = students.filter(s => s.is_active === false);
+    const firstFiveStudents = inactiveStudents.slice(0, 5);
+    const remainingStudents = inactiveStudents.slice(5);
+
+    const StudentRow = ({ student }: { student: Student }) => (
+        <TableRow key={student.user_id}>
+            <TableCell>
+                {student.firstname_parent} {student.lastname_parent}
+            </TableCell>
+            <TableCell>
+                {student.phone_parent}
+            </TableCell>
+            <TableCell>
+                {student.firstname_student} {student.lastname_student}
+            </TableCell>
+            <TableCell>
+                {student.phone_student}
+            </TableCell>
+            <TableCell>
+                <Button className="w-full" onClick={() => handleSetActive(student)}>
+                    Sett {student.firstname_parent} til aktiv
+                </Button>
+            </TableCell>
+        </TableRow>
+    );
+
     return(<div className="w-full flex flex-col items-center justify-center shadow-lg dark:bg-black bg-white rounded-lg m-4 p-4">
-    <h3 className="pt-4">Inaktive elever</h3>
-        <Table>
-            <TableHeader>
-                <TableRow>
-                    <TableHead>Forelder</TableHead>
-                    <TableHead>Forelders tlf</TableHead>
-
-                    <TableHead>Elev</TableHead>
-                    <TableHead>Elev tlf</TableHead>
-                </TableRow>
-            </TableHeader>
-            <TableBody key={'2'}>
-                {students.map( (s :Student) => {
-
-                    //do not display students that are active
-                if (s.is_active===true) {
-                    return null
-                }
-                else {
-                    return (<>
-                        <TableRow key={s.user_id}>
-                            <TableCell>
-                                {s.firstname_parent} {s.lastname_parent}
-                            </TableCell>
-                            <TableCell>
-                                {s.phone_parent}
-                            </TableCell>
-
-                            <TableCell>
-                                {s.firstname_student} {s.lastname_student}
-                            </TableCell>
-                            <TableCell>
-                                {s.phone_student}
-                            </TableCell>
-                            <TableCell>
-                                <Button className="w-full" onClick={() => handleSetActive(s)}>
-                                    Sett {s.firstname_parent} til aktiv
-                                </Button>
-                            </TableCell>
-                        </TableRow>
-                    </>)
-                }    
-                })
-                }
-            </TableBody>
-        </Table>   
+        <h3 className="pt-4">Inaktive elever ({inactiveStudents.length})</h3>
+        
+        {inactiveStudents.length === 0 ? (
+            <p className="text-gray-500 mt-4">Ingen inaktive elever funnet</p>
+        ) : (
+            <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="inactive-students">
+                    <AccordionTrigger>
+                        {inactiveStudents.length > 5 ? 
+                            `Vis alle inaktive elever (${inactiveStudents.length})` : 
+                            `Inaktive elever (${inactiveStudents.length})`
+                        }
+                    </AccordionTrigger>
+                    <AccordionContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Forelder</TableHead>
+                                    <TableHead>Forelders tlf</TableHead>
+                                    <TableHead>Elev</TableHead>
+                                    <TableHead>Elev tlf</TableHead>
+                                    <TableHead>Handlinger</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {firstFiveStudents.map(student => (
+                                    <StudentRow key={student.user_id} student={student} />
+                                ))}
+                                {remainingStudents.length > 0 && (
+                                    <Accordion type="single" collapsible className="w-full">
+                                        <AccordionItem value="more-students">
+                                            <AccordionTrigger>
+                                                <TableCell colSpan={5} className="text-center p-2">
+                                                    Vis {remainingStudents.length} til
+                                                </TableCell>
+                                            </AccordionTrigger>
+                                            <AccordionContent>
+                                                {remainingStudents.map(student => (
+                                                    <StudentRow key={student.user_id} student={student} />
+                                                ))}
+                                            </AccordionContent>
+                                        </AccordionItem>
+                                    </Accordion>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </AccordionContent>
+                </AccordionItem>
+            </Accordion>
+        )}
     </div>)
 }
 
