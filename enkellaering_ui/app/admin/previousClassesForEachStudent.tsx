@@ -121,7 +121,7 @@ export function PreviousClassesForEachStudent() {
                 .map((ts) => ts.teacher_user_id);
 
             const myTeachers: Teacher[] = teachers.filter((t) => 
-                myTeacherUserIds.includes(t.user_id)
+                myTeacherUserIds.includes(t.user_id) && t.resigned === false
             );
 
             //calculate total univoiced ammount
