@@ -47,8 +47,6 @@ export const InactiveStudents = () => {
     
 
     const inactiveStudents = students.filter(s => s.is_active === false);
-    const firstFiveStudents = inactiveStudents.slice(0, 5);
-    const remainingStudents = inactiveStudents.slice(5);
 
     const StudentRow = ({ student }: { student: Student }) => (
         <TableRow key={student.user_id}>
@@ -81,10 +79,7 @@ export const InactiveStudents = () => {
             <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="inactive-students">
                     <AccordionTrigger>
-                        {inactiveStudents.length > 5 ? 
-                            `Vis alle inaktive elever (${inactiveStudents.length})` : 
-                            `Inaktive elever (${inactiveStudents.length})`
-                        }
+                        Inaktive elever ({inactiveStudents.length})
                     </AccordionTrigger>
                     <AccordionContent>
                         <Table>
@@ -98,25 +93,9 @@ export const InactiveStudents = () => {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {firstFiveStudents.map(student => (
+                                {inactiveStudents.map(student => (
                                     <StudentRow key={student.user_id} student={student} />
                                 ))}
-                                {remainingStudents.length > 0 && (
-                                    <Accordion type="single" collapsible className="w-full">
-                                        <AccordionItem value="more-students">
-                                            <AccordionTrigger>
-                                                <TableCell colSpan={5} className="text-center p-2">
-                                                    Vis {remainingStudents.length} til
-                                                </TableCell>
-                                            </AccordionTrigger>
-                                            <AccordionContent>
-                                                {remainingStudents.map(student => (
-                                                    <StudentRow key={student.user_id} student={student} />
-                                                ))}
-                                            </AccordionContent>
-                                        </AccordionItem>
-                                    </Accordion>
-                                )}
                             </TableBody>
                         </Table>
                     </AccordionContent>
