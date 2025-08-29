@@ -197,6 +197,11 @@ export function PreviousClassesForEachStudent() {
                             {s.phone_parent}
                         </p>
                         <div className="flex flex-col">
+                            {!myTeachers.length && 
+                                <p className="text-red-500">
+                                    Mangler lærer
+                                </p>
+                            }
                             <p className={`
                                     ${hoursOfClassesLastFourWeeks<s.est_hours_per_week*4 ? "text-red-300" : "text-neutral-400"} 
                                 `}>
