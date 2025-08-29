@@ -83,6 +83,7 @@ def fetch_classes_for_teacher(user_id):
     except Exception as e:
         return jsonify({"message": str(e)}), 500
 
+import threading
 from .email import sendNewClassToStudentMail
 from cloud_sql.gets import get_student_by_user_id, get_teacher_by_user_id
 @classes_bp.route('/upload-new-class', methods=["POST"])
@@ -119,7 +120,10 @@ def upload_new_class(user_id):
             number_of_students=number_of_students
         ))
 
-    #send an email to students about the new class
+
+     #insert the class
+    
+    #get info on teacher and student
     try:
         student = get_student_by_user_id(student_ids[0])  # Ensure at least one student exists
         teacher = get_teacher_by_user_id(user_id)  # Ensure the teacher exists
@@ -134,18 +138,39 @@ def upload_new_class(user_id):
         print(f"Error fetching student or teacher: {e}")
         return jsonify({"message": str(e)}), 500
 
+    #insert the class
+    try:
+        insert_classes(classes)
+    except Exception as e:
+        print(f"Error inserting class: {e}")
+        return jsonify({"message": str(e)}), 500
+    
+
+    #send the email using threads
+    try:
+        email_thread = threading.Thread(
+                target=send_email_for_new_class_async,
+                args=(
+                    classes,
+                    student,
+                    teacher,
+                ),
+                daemon=True  # Thread will not prevent program from exiting
+            )
+        email_thread.start()
+    except Exception as e:
+        logging.error(f"Error starting email thread: {e}, but class already inserted")
+
+    return jsonify({"message": "Class successfully inserted"}), 200
+
+def send_email_for_new_class_async(classes, student, teacher):
     try:
         sendNewClassToStudentMail(student['firstname_student'], teacher['firstname'], student['firstname_parent'], classes[0].comment, classes[0].started_at, student['email_parent'])
     except Exception as e:
         logging.error(f"Error sending email: {e}")
         print(f"Error sending email: {e}")
-        return jsonify({"message": f"Error sending email: {e}"}), 500
-    try:
-        insert_classes(classes)
-        return jsonify({"message": "Class inserted successfully"}), 200
-    except Exception as e:
-        print(f"Error inserting class: {e}")
-        return jsonify({"message": str(e)}), 500
+        raise Exception({"message": f"Error sending email: {e}"})
+
 
 @classes_bp.route('/delete-class', methods=["POST"])
 @token_required

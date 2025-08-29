@@ -312,7 +312,8 @@ def sendInactiveStudentsMailToAdmin ():
     #get all the admins
     try:
         admins :List = get_all_admins()
-        admins.append("kontakt@enkellaering.no")
+        admin_emails = [admin['email'] for admin in admins]
+        admin_emails.append("kontakt@enkellaering.no")
     except Exception as e:
         print(e)
         return jsonify({"message": f"Error getting the admins emails: {e}"})
@@ -375,7 +376,7 @@ def sendInactiveStudentsMailToAdmin ():
 
         params: resend.Emails.SendParams = {
             "from": "Enkel Læring <kontakt@enkellaering.no>",
-            "to": [admin['email'] for admin in admins],
+            "to": admin_emails,
             "subject": "Elever med få timer",
             "html": html
         }
