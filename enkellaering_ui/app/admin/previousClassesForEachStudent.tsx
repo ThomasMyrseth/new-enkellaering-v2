@@ -282,6 +282,7 @@ export function PreviousClassesForEachStudent() {
                     <TableHeader>
                         <TableRow>
                             <TableHead className="w-[100px]">Dato</TableHead>
+                            <TableHead>Lærer</TableHead>
                             <TableHead>Varighet</TableHead>
                             <TableHead>Fakturert elev</TableHead>
                             <TableHead className="text-right">Fakturert beløp</TableHead>
@@ -308,9 +309,13 @@ export function PreviousClassesForEachStudent() {
                             ts.teacher_user_id === c.teacher_user_id
                         )?.travel_pay_from_student || 0);
                         
+                        const classTeacher = teachers.find(t => t.user_id === c.teacher_user_id);
+                        const teacherName = classTeacher ? `${classTeacher.firstname} ${classTeacher.lastname}` : "Ukjent lærer";
+
                         return (
                         <TableRow key={index} className={`${c.was_canselled===true? 'bg-red-50 dark:bg-red-950' : ''}`}>
                             <TableCell className="font-medium">{c.started_at}</TableCell>
+                            <TableCell>{teacherName}</TableCell>
                             <TableCell>{`${durationHours}t ${durationMinutes}min`}</TableCell>
                             <TableCell>
                             {c.invoiced_student ? (
@@ -785,15 +790,15 @@ async function getStudents(token :string) {
 }
 
 async function getTeachers(token :string) {
-    const response = await fetch(`${BASEURL}/get-all-teachers`, {
+    const response = await fetch(`${BASEURL}/get-all-teachers-inc-resigned`, {
         method: "GET",
         headers: {
             'Authorization': `Bearer ${token}`
-        }
+        },
     });
 
     if (!response.ok) {
-        alert("Error fetching teachers and stidents " + response.statusText);
+        alert("Error fetching teachers and students " + response.statusText);
         return [];
     }
 
