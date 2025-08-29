@@ -672,6 +672,7 @@ export function PreviousClassesForEachTeacher() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead className="w-[100px]">Dato</TableHead>
+                                    <TableHead>Elev</TableHead>
                                     <TableHead>Varighet</TableHead>
                                     <TableHead>Fakturert elev</TableHead>
                                     <TableHead className="text-right">Fakturert beløp</TableHead>
@@ -708,10 +709,13 @@ export function PreviousClassesForEachTeacher() {
                                     ts.teacher_user_id === c.teacher_user_id
                                 )?.travel_pay_to_teacher || 0)
 
+                                const classStudent = students.find(s => s.user_id === c.student_user_id);
+                                const studentName = classStudent ? `${classStudent.firstname_student} ${classStudent.lastname_student}` : "Ukjent elev";
                                 
                                 return (
                                 <TableRow key={index}>
                                     <TableCell className="font-medium">{c.started_at}</TableCell>
+                                    <TableCell>{studentName}</TableCell>
                                     <TableCell>{`${durationHours}t ${durationMinutes}min`}</TableCell>
                                     <TableCell>
                                     {c.invoiced_student ? (

@@ -55,8 +55,6 @@ export const ResignedTeachers = () => {
     
 
     const resignedTeachers = teachers.filter(t => t.resigned === true);
-    const firstFiveTeachers = resignedTeachers.slice(0, 5);
-    const remainingTeachers = resignedTeachers.slice(5);
 
     const TeacherRow = ({ teacher }: { teacher: Teacher }) => (
         <TableRow key={teacher.user_id}>
@@ -89,10 +87,7 @@ export const ResignedTeachers = () => {
             <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="resigned-teachers">
                     <AccordionTrigger>
-                        {resignedTeachers.length > 5 ? 
-                            `Vis alle pensjonerte lærere (${resignedTeachers.length})` : 
-                            `Pensjonerte lærere (${resignedTeachers.length})`
-                        }
+                        Pensjonerte lærere ({resignedTeachers.length})
                     </AccordionTrigger>
                     <AccordionContent>
                         <Table>
@@ -106,25 +101,9 @@ export const ResignedTeachers = () => {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {firstFiveTeachers.map(teacher => (
+                                {resignedTeachers.map(teacher => (
                                     <TeacherRow key={teacher.user_id} teacher={teacher} />
                                 ))}
-                                {remainingTeachers.length > 0 && (
-                                    <Accordion type="single" collapsible className="w-full">
-                                        <AccordionItem value="more-teachers">
-                                            <AccordionTrigger>
-                                                <TableCell colSpan={5} className="text-center p-2">
-                                                    Vis {remainingTeachers.length} til
-                                                </TableCell>
-                                            </AccordionTrigger>
-                                            <AccordionContent>
-                                                {remainingTeachers.map(teacher => (
-                                                    <TeacherRow key={teacher.user_id} teacher={teacher} />
-                                                ))}
-                                            </AccordionContent>
-                                        </AccordionItem>
-                                    </Accordion>
-                                )}
                             </TableBody>
                         </Table>
                     </AccordionContent>
