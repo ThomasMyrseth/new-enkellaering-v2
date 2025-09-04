@@ -17,6 +17,7 @@ def download_all_teacher_images():
     image_urls = [
         f"https://storage.googleapis.com/{bucket_name}/{blob.name}"
         for blob in blobs
+        if not blob.name.endswith('/') and blob.size > 0  # Filter out directories and empty objects
     ]
 
     return image_urls
