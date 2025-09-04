@@ -94,10 +94,10 @@ def get_all_images_and_about_mes():
             user_id = a['user_id']
             image = ''
             #find the image
-            for image in images:
-                image_user_id = image.split("/")[-2]
+            for image_url in images:
+                image_user_id = image_url.split("/")[-2]
                 if image_user_id == user_id:
-                    image = image
+                    image = image_url
                     break #stop after the first match
 
             f = {}
