@@ -94,7 +94,7 @@ const buildTeacherCards = (teachers: ExpandedTeacher[], reviews: Review[], image
             teacher: teacher,
             reviews: teacherReviews,
             description: imageAndAboutMe.about_me || '',
-            src: imageAndAboutMe.image || '',
+            src: imageAndAboutMe.image || fallbackAboutMe.image,
             qualifications: qualificationTitles,
         }
 
