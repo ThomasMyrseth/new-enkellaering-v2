@@ -6,7 +6,7 @@ from typing import List
 load_dotenv()
 import logging
 from zoneinfo import ZoneInfo
-from datetime import datetime
+from datetime import datetime, time
 from babel.dates import format_datetime
 
 from cloud_sql.gets import get_students_with_few_classes, get_all_admins
@@ -269,6 +269,7 @@ def sendNewStudentToAdminMail(newStudentPhone: str):
                 "html": html_content
             })
             print(f"✅ Email sent to {email}")
+            sleep(3)
         except Exception as e:
             print(f"❌ Failed to send to {email}: {e}")
             raise e
@@ -443,6 +444,7 @@ def sendNewOrderEmailToAdmin( firstname_parent:str, lastname_parent:str, phone_p
                 "html": html_content
             })
             print(f"✅ Email sent to {email}")
+            sleep(3) #avoid rate limits
         except Exception as e:
             print(f"❌ Failed to send to {email}: {e}")
             raise e
@@ -655,6 +657,7 @@ def sendEmailToAdminAboutNewTeacherReferal(referalName :str, referalEmail :str, 
 
     # Send email to admins
     for email in emails:
+        sleep(3) #rate limits
         try:
             response = resend.Emails.send({
                 "from": FROM_EMAIL,

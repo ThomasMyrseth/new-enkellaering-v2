@@ -1,4 +1,6 @@
+from concurrent.futures import thread
 import re
+import threading
 from flask import Blueprint, request, jsonify
 from datetime import datetime
 import logging
@@ -276,11 +278,14 @@ def submit_new_student_route():
     except Exception as e:
         print(f"Error inserting new student: {e}")
         return jsonify({"message": str(e)}), 500
-    try:
-        sendNewStudentToAdminMail(newStudentPhone=phone)
-    except Exception as e:
-        print(f"Error sending email about the new student: {e}")
-        return jsonify({"message": f"Error sending email about the new student: {e}"}), 500
+
+    t = threading.Thread(
+        target=sendNewStudentToAdminMail,
+        args=(phone,),
+        daemon=True  # doesn't block process exit
+    )
+    t.start()
+    
     return jsonify({"message": "New student successfully inserted"}), 200
     
 
@@ -386,31 +391,34 @@ def request_new_teacher_route(user_id):
             sendNewStudentToTeacherMail(receipientTeacherMail=teacher.get('email', ''), teachername=name)
     except Exception as e:
         return jsonify({"messsage": f"Error sending email to teacher: {e}"}), 500
-    # send an email to admin
+
     try:
-        student_list = get_student_by_user_id(user_id)
-        student_row = student_list[0] if student_list else None
-        if student_row:
-            sendNewOrderEmailToAdmin(
+        insert_new_student_order(user_id, teacher_user_id, accept=None, physical_or_digital=physical_or_digital, location=location, comments=comments)
+    except Exception as e:
+        print(f"Error inserting new student order: {e}")
+        return jsonify({"message": f"Error inserting new student order {e}"}), 500
+    
+    #send email to admin
+
+    student_list = get_student_by_user_id(user_id)
+    student_row = student_list[0] if student_list else None
+    if student_row:
+        thread = threading.Thread(
+            target=sendNewOrderEmailToAdmin,
+            args=(
                 student_row.get('firstname_parent', ''),
                 student_row.get('lastname_parent', ''),
                 student_row.get('phone_parent', ''),
                 teacher.get('firstname', '') if teacher else '',
                 teacher.get('lastname', '') if teacher else '',
                 teacher.get('phone', '') if teacher else ''
-            )
-        else:
-            return jsonify({"message": "Student not found"}), 404
-    except Exception as e:
-        print(f"Error sending email about new order: {e}")
-        return jsonify({"message": f"Error sending email about new order {e}"})
-    try:
-        insert_new_student_order(user_id, teacher_user_id, accept=None, physical_or_digital=physical_or_digital, location=location, comments=comments)
-        return jsonify({"message": "inserted new student order"}), 200
-    except Exception as e:
-        print(f"Error inserting new student order: {e}")
-        return jsonify({"message": f"Error inserting new student order {e}"}), 500
+            ),            daemon=True  # doesn't block process exit
+        )
+        thread.start()
+    else:
+        return jsonify({"message": "Student not found"}), 404
 
+    return jsonify({"message": "inserted new student order"}), 200
 
 @order_bp.route('/get-new-orders', methods=['GET'])
 @token_required
@@ -575,10 +583,12 @@ def submit_new_teacher_referal_route(user_id):
         logging.error(f"Error inserting new teacher referal: {e}")
         return jsonify({"message": f"An error occured {e}"}), 500
     
-    try:
-        sendEmailToAdminAboutNewTeacherReferal(referal_name, referal_email, referal_phone, user_id)
-    except Exception as e:
-        logging.error(f"Error sending email to admin about new teacher referal: {e}")
-        return jsonify({"message": f"Error sending email to admin about new teacher referal {e}"}), 500
+    thread = threading.Thread(
+        target=sendEmailToAdminAboutNewTeacherReferal,
+        args=(referal_name, referal_email, referal_phone, user_id),
+        daemon=True  # doesn't block process exit
+    )
+    thread.start()
+
     
     return jsonify({"message": "New teacher referal submitted successfully"}), 200
