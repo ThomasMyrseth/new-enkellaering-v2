@@ -358,10 +358,13 @@ def submit_new_referal_route():
         "referee_account_number": account_number,
         "preffered_teacher": None
     }
-    try:
-        sendNewStudentToAdminMail(newStudentPhone=referal_phone)
-    except Exception as e:
-        return jsonify({"message": f"Error sending email about the new student: {e}"}), 500
+    thread = threading.Thread(
+        target=sendNewStudentToAdminMail,
+        args=(referal_phone,),
+        daemon=True  # doesn't block process exit
+    )
+    thread.start()
+
     try:
         insert_new_student(ns)
     except Exception as e:

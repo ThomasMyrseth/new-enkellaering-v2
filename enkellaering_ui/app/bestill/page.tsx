@@ -33,6 +33,7 @@ function IndividualPrices() {
           className="flex flex-col w-full items-center justify-center font-bold text-neutral-600 dark:text-white"
         >
         <p className="w-full text-center text-3xl relative bg-clip-text text-transparent bg-no-repeat bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500 py-4">540 kroner per time<br/><span className="font-light">- individuell*</span></p>
+        <p className="font-light">Ved fysisk undervisning påfølger det et reisetillegg på 100kr per undervisningsøkt</p>
         </CardItem>
         <CardItem
           as="p"
@@ -82,6 +83,7 @@ function GroupPrices() {
           className="flex flex-col w-full items-center justify-center font-bold text-neutral-600 dark:text-white"
         >
         <p className="w-full text-center text-3xl relative bg-clip-text text-transparent bg-no-repeat bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500 py-4">350 kroner per person<br/><span className="font-light">- gruppe*</span></p>
+          <p className="font-light">Ved fysisk undervisning påfølger det et reisetillegg på 50kr per person per undervisningsøkt</p>
         </CardItem>
         <CardItem
           as="p"
