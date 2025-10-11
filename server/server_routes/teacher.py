@@ -69,6 +69,7 @@ def get_all_teachers_join_students_route():
         return jsonify({"message": str(e)}), 500
 
 
+
 @teacher_bp.route('/toggle-wants-more-students', methods=["POST"])
 @token_required
 def toggle_want_more_students_route(user_id):
@@ -76,9 +77,11 @@ def toggle_want_more_students_route(user_id):
     physical = data.get('physical')
     digital = data.get('digital')
     if physical is None or digital is None:
+        print("Missing physical or digital flags")
+        print("Received data:", data)
         return jsonify({"message": "Missing physical or digital flags"}), 400
     try:
-        toggle_want_more_students(user_id, physical, digital)
+        toggle_want_more_students( physical, digital, user_id)
         return jsonify({"message": "Settings updated"}), 200
     except Exception as e:
         logging.exception("Failed to toggle wants-more-students")

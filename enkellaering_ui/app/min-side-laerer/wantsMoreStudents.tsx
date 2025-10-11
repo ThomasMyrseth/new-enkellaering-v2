@@ -16,8 +16,8 @@ import { toast } from "sonner";
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080";
 
 export const WantMoreStudents = ({teacher} : {teacher :Teacher}) => {
-  const [digitalTutoring, setDigitalTutoring] = useState<boolean>(teacher.digital_tutouring);
-  const [physicalTutoring, setPhysicalTutoring] = useState<boolean>(teacher.physical_tutouring);
+  const [digitalTutoring, setDigitalTutoring] = useState<boolean>(teacher.digital_tutouring || false);
+  const [physicalTutoring, setPhysicalTutoring] = useState<boolean>(teacher.physical_tutouring || false);
 
   const handleDigital = () => {
     const newVal = !digitalTutoring
@@ -60,7 +60,7 @@ const setWantMoreStudents = async (p :boolean, d: boolean) => {
             "Authorization": `Bearer ${token}`, // Correct Authorization header format
             "Content-Type": "application/json"  // Ensure the server knows it's JSON
         },
-        body: JSON.stringify({ physical: p, digital: d}) // Use body instead of data
+        body: JSON.stringify({ "physical": p, "digital": d}) // Use body instead of data
     });
 
     if (!response.ok) {
