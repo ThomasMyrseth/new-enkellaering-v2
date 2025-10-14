@@ -98,7 +98,8 @@ import { Label } from "@/components/ui/label"
 
 const NewStudentTable =( {newStudents} : {newStudents : NewStudent[]})  => {
     const [teachers, setTeachers] = useState<Teacher[]>([])
-    const [hideCompleted, setHideCompleted] = useState<boolean>(false)
+    const [hideCompleted, setHideCompleted] = useState<boolean>(true)
+    const [onlyShowUnpaidReferals, setOnlyShowUnpaidReferrals] = useState<boolean>(false)
     const token = localStorage.getItem('token')
 
     //order newStudents by created_at
@@ -113,7 +114,13 @@ const NewStudentTable =( {newStudents} : {newStudents : NewStudent[]})  => {
     
     // Filter out completed students if switch is enabled
     if (hideCompleted) {
+        setOnlyShowUnpaidReferrals(false)
         filteredStudents = filteredStudents.filter(ns => !ns.has_finished_onboarding)
+    }
+
+    if (onlyShowUnpaidReferals) {
+        setHideCompleted(false)
+        filteredStudents = filteredStudents.filter(ns => ns.from_referal && !ns.paid_referee)
     }
 
 
@@ -152,13 +159,23 @@ const NewStudentTable =( {newStudents} : {newStudents : NewStudent[]})  => {
     },[token])
 
     return (<div className=" w-full sm:w-full bg-white dark:bg-black rounded-sm shadow-lg flex flex-col items-center justify-center">
-        <div className="flex items-center space-x-2 m-4">
-            <Switch
-                id="hide-completed"
-                checked={hideCompleted}
-                onCheckedChange={setHideCompleted}
-            />
-            <Label htmlFor="hide-completed">Skjul elever som har fullført oppstart</Label>
+        <div className="flex flex-col space-y-2 items-center">
+            <div className="flex items-center space-x-2 m-4">
+                <Switch
+                    id="hide-completed"
+                    checked={hideCompleted}
+                    onCheckedChange={setHideCompleted}
+                />
+                <Label htmlFor="hide-completed">Skjul elever som har fullført oppstart</Label>
+            </div>
+            <div className="flex items-center space-x-2 m-4">
+                <Switch
+                    id="only-show-unpaid-referals"
+                    checked={onlyShowUnpaidReferals}
+                    onCheckedChange={setOnlyShowUnpaidReferrals}
+                />
+                <Label htmlFor="only-show-unpaid-referals">Vis kun elever som er referanser og som ikke er betalt</Label>
+            </div>
         </div>
 
         <Table>
