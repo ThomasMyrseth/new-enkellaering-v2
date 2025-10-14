@@ -111,15 +111,13 @@ const NewStudentTable =( {newStudents} : {newStudents : NewStudent[]})  => {
 
     //remove new students who have a preffered teacher
     let filteredStudents = newStudents.filter(ns => !ns.preffered_teacher && !ns.hidden)
-    
+
     // Filter out completed students if switch is enabled
     if (hideCompleted) {
-        setOnlyShowUnpaidReferrals(false)
         filteredStudents = filteredStudents.filter(ns => !ns.has_finished_onboarding)
     }
 
     if (onlyShowUnpaidReferals) {
-        setHideCompleted(false)
         filteredStudents = filteredStudents.filter(ns => ns.from_referal && !ns.paid_referee)
     }
 
@@ -164,7 +162,10 @@ const NewStudentTable =( {newStudents} : {newStudents : NewStudent[]})  => {
                 <Switch
                     id="hide-completed"
                     checked={hideCompleted}
-                    onCheckedChange={setHideCompleted}
+                    onCheckedChange={(checked) => {
+                        setHideCompleted(checked)
+                        if (checked) setOnlyShowUnpaidReferrals(false)
+                    }}
                 />
                 <Label htmlFor="hide-completed">Skjul elever som har fullført oppstart</Label>
             </div>
@@ -172,7 +173,10 @@ const NewStudentTable =( {newStudents} : {newStudents : NewStudent[]})  => {
                 <Switch
                     id="only-show-unpaid-referals"
                     checked={onlyShowUnpaidReferals}
-                    onCheckedChange={setOnlyShowUnpaidReferrals}
+                    onCheckedChange={(checked) => {
+                        setOnlyShowUnpaidReferrals(checked)
+                        if (checked) setHideCompleted(false)
+                    }}
                 />
                 <Label htmlFor="only-show-unpaid-referals">Vis kun elever som er referanser og som ikke er betalt</Label>
             </div>
