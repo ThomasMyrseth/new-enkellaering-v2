@@ -121,6 +121,10 @@ const NewStudentTable =( {newStudents} : {newStudents : NewStudent[]})  => {
         filteredStudents = filteredStudents.filter(ns => ns.from_referal && !ns.paid_referee)
     }
 
+    if (hideCompleted && onlyShowUnpaidReferals) {
+        filteredStudents = filteredStudents.filter(ns => !ns.has_finished_onboarding && ns.from_referal && !ns.paid_referee)
+    }
+
 
     //get all the teachers and pass it to newStudentRow
     useEffect( () => {
@@ -164,7 +168,6 @@ const NewStudentTable =( {newStudents} : {newStudents : NewStudent[]})  => {
                     checked={hideCompleted}
                     onCheckedChange={(checked) => {
                         setHideCompleted(checked)
-                        if (checked) setOnlyShowUnpaidReferrals(false)
                     }}
                 />
                 <Label htmlFor="hide-completed">Skjul elever som har fullført oppstart</Label>
@@ -175,7 +178,6 @@ const NewStudentTable =( {newStudents} : {newStudents : NewStudent[]})  => {
                     checked={onlyShowUnpaidReferals}
                     onCheckedChange={(checked) => {
                         setOnlyShowUnpaidReferrals(checked)
-                        if (checked) setHideCompleted(false)
                     }}
                 />
                 <Label htmlFor="only-show-unpaid-referals">Vis kun elever som er referanser og som ikke er betalt</Label>
