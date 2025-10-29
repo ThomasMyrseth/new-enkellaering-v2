@@ -194,7 +194,7 @@ export function PreviousClassesForEachStudent() {
                         <p className="text-start">
                             {s.firstname_parent} {s.lastname_parent} <br/>
                             & {s.firstname_student} {s.lastname_student} <br/>
-                            {s.phone_parent}
+                            {s.phone_parent} | {s.phone_student}
                         </p>
                         <div className="flex flex-col">
                             {!myTeachers.length && 
