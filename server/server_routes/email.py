@@ -9,7 +9,7 @@ from zoneinfo import ZoneInfo
 from datetime import datetime, time
 from babel.dates import format_datetime
 
-from cloud_sql.gets import get_students_with_few_classes, get_all_admins
+from db.gets import get_students_with_few_classes, get_all_admins
 
 resend.api_key = os.getenv('RESEND_API_KEY')
 FROM_EMAIL = os.getenv("MAIL_USERNAME") or "kontakt@enkellaering.no"
@@ -614,7 +614,7 @@ def sendEmailsToTeacherAndStudentAboutFewClasses(teachersAndStudents :dict):
         raise e
 
 
-from cloud_sql.gets import get_all_admins, get_teacher_by_user_id
+from db.gets import get_all_admins, get_teacher_by_user_id
 def sendEmailToAdminAboutNewTeacherReferal(referalName :str, referalEmail :str, referalPhone :str, teacherUserId :str):
     
     try:

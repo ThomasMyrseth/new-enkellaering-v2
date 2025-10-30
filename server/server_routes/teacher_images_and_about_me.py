@@ -2,10 +2,10 @@ from flask import Blueprint, request, jsonify
 import logging
 
 from .config import token_required
-from cloud_sql.buckets.uploads import upload_or_replace_image_in_bucket
-from cloud_sql.inserts import upsert_about_me_text
-from cloud_sql.buckets.downloads import download_all_teacher_images
-from cloud_sql.gets import get_all_about_me_texts
+from db.buckets.uploads import upload_or_replace_image_in_bucket
+from db.inserts import upsert_about_me_text
+from db.buckets.downloads import download_all_teacher_images
+from db.gets import get_all_about_me_texts
 
 teacher_images_bp = Blueprint('teacher_images', __name__)
 import mimetypes

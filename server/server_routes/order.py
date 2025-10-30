@@ -6,7 +6,7 @@ from datetime import datetime
 import logging
 
 from .config import token_required
-from cloud_sql.gets import (
+from db.gets import (
     get_all_new_students,
     get_all_students_without_teacher,
     get_new_orders_for_teacher,
@@ -15,19 +15,19 @@ from cloud_sql.gets import (
     get_new_orders,
     get_teacher_student
 )
-from cloud_sql.inserts import (
+from db.inserts import (
     insert_new_student,
     insert_new_student_order,
     insert_new_student_with_preferred_teacher,
     add_teacher_to_new_student
 )
-from cloud_sql.alters import (
+from db.alters import (
     alter_new_student,
     set_your_teacher as cloud_set_your_teacher,
     cancel_new_order,
     update_new_order as cloud_update_new_order,
 )
-from cloud_sql.deletes import (
+from db.deletes import (
     hide_new_student,
     hide_new_order_from_new_students_table,
     remove_teacher_from_student as cloud_remove_teacher_from_student,
@@ -564,7 +564,7 @@ def assign_teacher_for_student(user_id):
 
 
 
-from cloud_sql.inserts import insertNewTeacherReferal
+from db.inserts import insertNewTeacherReferal
 from server_routes.email import sendEmailToAdminAboutNewTeacherReferal
 @order_bp.route('/submit-new-teacher-referal', methods=["POST"])
 @token_required

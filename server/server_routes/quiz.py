@@ -3,7 +3,7 @@ from datetime import datetime
 import logging
 
 from .config import token_required
-from cloud_sql.gets import (
+from db.gets import (
     get_all_quizzes,
     get_all_qualifications,
     get_quiz_meta_data,
@@ -11,13 +11,13 @@ from cloud_sql.gets import (
     get_quiz_status,
     is_user_admin
 )
-from cloud_sql.inserts import (
+from db.inserts import (
     insert_quiz_result,
     insert_quiz,
     upload_image,
     insert_quiz_questions
 )
-from cloud_sql.deletes import delete_quizzes
+from db.deletes import delete_quizzes
 
 import json
 import tempfile

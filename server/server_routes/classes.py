@@ -2,23 +2,27 @@ from flask import Blueprint, request, jsonify
 from datetime import datetime
 import logging
 
+import threading
+from .email import sendNewClassToStudentMail
+from db.gets import get_student_by_user_id, get_teacher_by_user_id
+
 from .config import token_required
-from cloud_sql.gets import (
+from db.gets import (
     get_classes_for_student,
     get_classes_for_teacher,
     get_all_classes
 )
-from cloud_sql.alters import (
+from db.alters import (
     set_classes_to_invoiced,
     set_classes_to_paid
 )
-from cloud_sql.gets import get_classes_by_teacher as fetch_classes_for_teacher_fn
-from cloud_sql.inserts import insert_classes
-from cloud_sql.deletes import delete_class
+from db.gets import get_classes_by_teacher as fetch_classes_for_teacher_fn
+from db.inserts import insert_classes
+from db.deletes import delete_class
 
 classes_bp = Blueprint('classes', __name__)
 
-from cloud_sql.sql_types import Classes
+from db.sql_types import Classes
 import uuid
 
 @classes_bp.route('/get-classes-for-student', methods=["GET"])
@@ -83,9 +87,7 @@ def fetch_classes_for_teacher(user_id):
     except Exception as e:
         return jsonify({"message": str(e)}), 500
 
-import threading
-from .email import sendNewClassToStudentMail
-from cloud_sql.gets import get_student_by_user_id, get_teacher_by_user_id
+
 @classes_bp.route('/upload-new-class', methods=["POST"])
 @token_required
 def upload_new_class(user_id):
@@ -186,7 +188,7 @@ def delete_class_route(user_id):
         return jsonify({"message": str(e)}), 500
     
 
-from cloud_sql.gets import get_students_with_few_classes
+from db.gets import get_students_with_few_classes
 from server_routes.email import sendEmailsToTeacherAndStudentAboutFewClasses
 @classes_bp.route('/send-email-to-teachers-and-students-with-few-classes', methods=["GET"])
 def send_email_to_teachers_and_students_with_few_classes_route():

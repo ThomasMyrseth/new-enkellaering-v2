@@ -3,20 +3,20 @@ from datetime import datetime
 import logging
 
 from .config import generate_token
-from cloud_sql.gets import (
+from db.gets import (
     get_student_by_email,
     get_new_student_by_phone,
     get_teacher_by_email,
     is_user_admin
 )
 
-from cloud_sql.sql_types import Students, Teacher
-from cloud_sql.inserts import (
+from db.sql_types import Students, Teacher
+from db.inserts import (
     insert_student,
     insert_teacher,
     insert_new_student_order
 )
-from cloud_sql.alters import set_has_signed_up
+from db.alters import set_has_signed_up
 
 from firebase_admin import auth
 

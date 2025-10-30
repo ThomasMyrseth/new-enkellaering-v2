@@ -2,8 +2,8 @@ from flask import Blueprint, jsonify, request
 import os
 
 from .config import token_required
-from cloud_sql.gets import is_user_admin
-from cloud_sql.alters import update_travel_payment
+from db.gets import is_user_admin
+from db.alters import update_travel_payment
 
 admin_bp = Blueprint('admin', __name__)
 
