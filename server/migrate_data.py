@@ -7,6 +7,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 import os
 from dotenv import load_dotenv
+from datetime import datetime
 
 load_dotenv()
 
@@ -75,9 +76,18 @@ NULLABLE_FOREIGN_KEYS = {
 }
 
 
+def debug_print(message):
+    """Print message with timestamp"""
+    timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
+    print(f"[{timestamp}] {message}")
+
+
 def get_connection(config):
     """Create database connection"""
-    return psycopg2.connect(**config)
+    debug_print(f"Attempting connection to {config.get('host')}:{config.get('port')}...")
+    conn = psycopg2.connect(**config)
+    debug_print("Connection established successfully")
+    return conn
 
 
 def get_column_names(connection, table_name):
@@ -99,6 +109,7 @@ def get_column_names(connection, table_name):
 
 def migrate_table(table_name, source_conn, dest_conn):
     """Migrate a single table from source to destination"""
+    start_time = datetime.now()
     print(f"\n{'='*60}")
     print(f"Migrating table: {table_name}")
     print(f"{'='*60}")
@@ -110,20 +121,26 @@ def migrate_table(table_name, source_conn, dest_conn):
 
     try:
         # Get column names from source
+        debug_print(f"Fetching column names for {table_name}...")
         source_columns = get_column_names(source_conn, table_name)
         if not source_columns:
             print(f"⚠️  Table {table_name} not found or has no columns")
             return (0, 0)
+        debug_print(f"Found {len(source_columns)} columns: {', '.join(source_columns[:5])}{'...' if len(source_columns) > 5 else ''}")
 
         # Fetch all data from source
+        debug_print(f"Executing SELECT query on source database...")
         source_column_list = ', '.join(source_columns)
         source_cursor.execute(f"SELECT {source_column_list} FROM public.{table_name}")
+        debug_print("Fetching all rows from source...")
         rows = source_cursor.fetchall()
 
         if not rows:
+            debug_print(f"Table {table_name} is empty - skipping")
             print(f"✓ Table {table_name} is empty - skipping")
             return (0, 0)
 
+        debug_print(f"Successfully fetched {len(rows)} rows from source")
         print(f"Found {len(rows)} rows to migrate")
 
         # Map column names for destination (handle schema differences)
@@ -162,9 +179,22 @@ def migrate_table(table_name, source_conn, dest_conn):
         if nullable_fks:
             print(f"  Cleaning empty strings to NULL for: {', '.join(nullable_fks)}")
 
-        for i in range(0, len(rows), batch_size):
+        debug_print(f"Starting batch insertion (batch size: {batch_size})...")
+        total_batches = (len(rows) + batch_size - 1) // batch_size
+
+        for batch_num, i in enumerate(range(0, len(rows), batch_size), 1):
+            batch_start_time = datetime.now()
+            debug_print(f"Processing batch {batch_num}/{total_batches} (rows {i+1} to {min(i+batch_size, len(rows))})...")
+
             batch = rows[i:i + batch_size]
-            for row in batch:
+            batch_migrated = 0
+            batch_skipped = 0
+
+            for row_num, row in enumerate(batch, start=i+1):
+                # Show progress every 100 rows
+                if row_num % 100 == 0:
+                    debug_print(f"  Processing row {row_num}/{len(rows)} ({(row_num/len(rows)*100):.1f}%)")
+
                 # Get values from source columns
                 values = []
                 for idx, col in enumerate(source_columns):
@@ -191,23 +221,34 @@ def migrate_table(table_name, source_conn, dest_conn):
                     dest_cursor.execute(insert_sql, tuple(values))
                     dest_cursor.execute("RELEASE SAVEPOINT row_insert")
                     migrated_count += 1
+                    batch_migrated += 1
                 except psycopg2.errors.ForeignKeyViolation as fk_error:
                     # Skip rows with orphaned foreign keys (referencing non-existent records)
                     dest_cursor.execute("ROLLBACK TO SAVEPOINT row_insert")
                     skipped_rows += 1
+                    batch_skipped += 1
                     if skipped_rows <= 5:  # Only print first 5 to avoid spam
+                        debug_print(f"  ⚠️  Row {row_num}: Skipping due to missing foreign key")
                         print(f"  ⚠️  Skipping row due to missing foreign key: {str(fk_error).split('DETAIL:')[0].strip()}")
 
+            debug_print(f"Committing batch {batch_num}...")
             dest_conn.commit()
-            progress_msg = f"  Migrated {min(i + batch_size, len(rows) - skipped_rows)}/{len(rows)} rows"
+
+            batch_elapsed = (datetime.now() - batch_start_time).total_seconds()
+            rows_per_sec = len(batch) / batch_elapsed if batch_elapsed > 0 else 0
+            debug_print(f"Batch {batch_num} committed in {batch_elapsed:.2f}s ({rows_per_sec:.1f} rows/sec)")
+
+            progress_msg = f"  Migrated {migrated_count}/{len(rows)} rows ({(migrated_count/len(rows)*100):.1f}%)"
             if skipped_rows > 0:
                 progress_msg += f" (skipped {skipped_rows} orphaned records)"
-            print(progress_msg + "...")
+            print(progress_msg)
 
-        summary = f"✓ Successfully migrated {migrated_count} rows from {table_name}"
+        elapsed_time = (datetime.now() - start_time).total_seconds()
+        summary = f"✓ Successfully migrated {migrated_count} rows from {table_name} in {elapsed_time:.2f}s"
         if skipped_rows > 0:
             summary += f" (⚠️  {skipped_rows} orphaned records skipped)"
         print(summary)
+        debug_print(f"Table {table_name} migration completed")
         return (migrated_count, skipped_rows)
 
     except Exception as e:
@@ -233,6 +274,7 @@ def verify_migration(source_conn, dest_conn):
 
     all_match = True
     for table in MIGRATION_ORDER:
+        debug_print(f"Verifying table: {table}...")
         source_cursor.execute(f"SELECT COUNT(*) FROM public.{table}")
         source_count = source_cursor.fetchone()[0]
 
@@ -242,6 +284,7 @@ def verify_migration(source_conn, dest_conn):
         status = "✓ OK" if source_count == dest_count else "✗ MISMATCH"
         if source_count != dest_count:
             all_match = False
+            debug_print(f"  MISMATCH: {table} - Source: {source_count}, Dest: {dest_count}")
 
         print(f"{table:<25} {source_count:<15} {dest_count:<15} {status:<10}")
 
@@ -281,26 +324,43 @@ def main():
         # Migrate each table
         total_rows = 0
         total_skipped = 0
-        for table in MIGRATION_ORDER:
+        migration_start_time = datetime.now()
+
+        debug_print(f"Starting migration of {len(MIGRATION_ORDER)} tables...")
+        for table_num, table in enumerate(MIGRATION_ORDER, 1):
+            debug_print(f"\n{'*'*60}")
+            debug_print(f"TABLE {table_num}/{len(MIGRATION_ORDER)}: {table}")
+            debug_print(f"{'*'*60}")
+
             rows_migrated, rows_skipped = migrate_table(table, source_conn, dest_conn)
             total_rows += rows_migrated
             total_skipped += rows_skipped
 
+            elapsed = (datetime.now() - migration_start_time).total_seconds()
+            debug_print(f"Overall progress: {table_num}/{len(MIGRATION_ORDER)} tables completed, {total_rows} total rows migrated, {elapsed:.1f}s elapsed")
+
+        total_elapsed = (datetime.now() - migration_start_time).total_seconds()
         print(f"\n{'='*60}")
         print(f"MIGRATION COMPLETE")
         print(f"{'='*60}")
         print(f"Total rows migrated: {total_rows}")
+        print(f"Total time elapsed: {total_elapsed:.2f}s ({total_elapsed/60:.1f} minutes)")
+        if total_rows > 0:
+            print(f"Average speed: {total_rows/total_elapsed:.1f} rows/second")
         if total_skipped > 0:
             print(f"Total orphaned records skipped: {total_skipped}")
             print("\n⚠️  Note: Skipped records reference non-existent foreign keys")
             print("   This indicates data integrity issues in the source database")
 
         # Verify migration
+        debug_print("\nStarting verification phase...")
         if verify_migration(source_conn, dest_conn):
             print("\n✓ VERIFICATION PASSED - All row counts match!")
+            debug_print("Verification completed successfully")
         else:
             print("\n⚠️  VERIFICATION FAILED - Some counts don't match")
             print("Check the table above for details")
+            debug_print("Verification found mismatches")
 
     except Exception as e:
         print(f"\n✗ Migration failed: {e}")
