@@ -187,7 +187,7 @@ CREATE TABLE classes (
     comment TEXT,
     paid_teacher BOOLEAN,
     invoiced_student BOOLEAN,
-    was_canceled BOOLEAN,
+    was_canselled BOOLEAN,
     invoiced_student_at TIMESTAMPTZ,
     paid_teacher_at TIMESTAMPTZ,
     groupclass BOOLEAN,
@@ -289,7 +289,7 @@ CREATE TABLE new_students (
     paid_referee_at TIMESTAMPTZ,
     referee_name TEXT,
     hidden BOOLEAN,
-    preffered_teacher TEXT,
+    preferred_teacher TEXT,
     referee_account_number TEXT,
     CONSTRAINT fk_new_student_teacher
         FOREIGN KEY (assigned_teacher_user_id)
