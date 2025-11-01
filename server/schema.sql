@@ -36,18 +36,18 @@ CREATE TABLE teachers (
     hourly_pay TEXT,
     additional_comments TEXT,
     created_at TIMESTAMPTZ,
-    admin TEXT,
-    resigned TEXT,
+    admin BOOLEAN,
+    resigned BOOLEAN,
     resigned_at TIMESTAMPTZ,
     location TEXT,
-    digital_tutouring TEXT,
-    physical_tutouring TEXT,
+    digital_tutouring BOOLEAN,
+    physical_tutouring BOOLEAN,
     notes TEXT
 );
 
 COMMENT ON TABLE teachers IS 'Teacher profiles and account information';
-COMMENT ON COLUMN teachers.admin IS 'TRUE/FALSE string - indicates admin privileges';
-COMMENT ON COLUMN teachers.resigned IS 'TRUE/FALSE string - indicates if teacher has resigned';
+COMMENT ON COLUMN teachers.admin IS 'TRUE/FALSE bool - indicates admin privileges';
+COMMENT ON COLUMN teachers.resigned IS 'TRUE/FALSE bool - indicates if teacher has resigned';
 
 -- Table: students (create early as it's referenced by others)
 CREATE TABLE students (
@@ -63,15 +63,15 @@ CREATE TABLE students (
     address TEXT,
     postal_code TEXT,
     main_subjects TEXT,
-    has_physical_tutoring TEXT,
+    has_physical_tutoring BOOLEAN,
     additional_comments TEXT,
-    est_hours_per_week TEXT,
-    is_active TEXT,
+    est_hours_per_week DOUBLE PRECISION,
+    is_active BOOLEAN,
     notes TEXT
 );
 
 COMMENT ON TABLE students IS 'Student profiles with parent and student information';
-COMMENT ON COLUMN students.is_active IS 'TRUE/FALSE string - indicates if student account is active';
+COMMENT ON COLUMN students.is_active IS 'TRUE/FALSE bool - indicates if student account is active';
 
 -- ============================================================================
 -- QUIZ SYSTEM TABLES
@@ -82,9 +82,9 @@ CREATE TABLE quizzes (
     quiz_id UUID PRIMARY KEY,
     title TEXT,
     image_url TEXT,
-    pass_threshold TEXT,
+    pass_threshold DOUBLE PRECISION,
     created_at TIMESTAMPTZ,
-    number_of_questions TEXT,
+    number_of_questions INTEGER,
     content TEXT
 );
 
@@ -117,9 +117,9 @@ CREATE TABLE quiz_results (
     attempt_id UUID PRIMARY KEY,
     user_id TEXT,
     quiz_id UUID,
-    passed TEXT,
-    number_of_corrects TEXT,
-    number_of_questions TEXT,
+    passed BOOLEAN,
+    number_of_corrects INTEGER,
+    number_of_questions INTEGER,
     created_at TIMESTAMPTZ,
     CONSTRAINT fk_quiz_result_quiz
         FOREIGN KEY (quiz_id)
@@ -185,13 +185,13 @@ CREATE TABLE classes (
     started_at TIMESTAMPTZ,
     ended_at TIMESTAMPTZ,
     comment TEXT,
-    paid_teacher TEXT,
-    invoiced_student TEXT,
-    was_canselled TEXT,
+    paid_teacher BOOLEAN,
+    invoiced_student BOOLEAN,
+    was_canceled BOOLEAN,
     invoiced_student_at TIMESTAMPTZ,
     paid_teacher_at TIMESTAMPTZ,
-    groupclass TEXT,
-    number_of_students TEXT,
+    groupclass BOOLEAN,
+    number_of_students INTEGER,
     CONSTRAINT fk_class_teacher
         FOREIGN KEY (teacher_user_id)
         REFERENCES teachers(user_id)
@@ -217,14 +217,14 @@ CREATE TABLE teacher_student (
     row_id UUID PRIMARY KEY,
     teacher_user_id TEXT,
     student_user_id TEXT,
-    teacher_accepted_student TEXT,
-    physical_or_digital TEXT,
+    teacher_accepted_student BOOLEAN,
+    physical_or_digital BOOLEAN,
     preferred_location TEXT,
     created_at TIMESTAMPTZ,
-    hidden TEXT,
+    hidden BOOLEAN,
     order_comments TEXT,
-    travel_pay_to_teacher TEXT,
-    travel_pay_from_student TEXT,
+    travel_pay_to_teacher INTEGER,
+    travel_pay_from_student INTEGER,
     CONSTRAINT fk_teacher_student_teacher
         FOREIGN KEY (teacher_user_id)
         REFERENCES teachers(user_id)
@@ -247,7 +247,7 @@ CREATE TABLE reviews (
     student_user_id TEXT,
     student_name TEXT,
     created_at TIMESTAMPTZ,
-    rating TEXT,
+    rating INTEGER,
     comment TEXT,
     CONSTRAINT fk_review_teacher
         FOREIGN KEY (teacher_user_id)
@@ -270,25 +270,25 @@ COMMENT ON COLUMN reviews.rating IS 'Numeric rating (typically 1-5)';
 CREATE TABLE new_students (
     new_student_id UUID PRIMARY KEY,
     phone TEXT,
-    has_called TEXT,
+    has_called BOOLEAN,
     created_at TIMESTAMPTZ,
-    called_at TEXT,
-    has_answered TEXT,
-    answered_at TEXT,
-    has_signed_up TEXT,
+    called_at TIMESTAMPTZ,
+    has_answered BOOLEAN,
+    answered_at TIMESTAMPTZ,
+    has_signed_up BOOLEAN,
     signed_up_at TIMESTAMPTZ,
-    from_referal TEXT,
+    from_referal BOOLEAN,
     referee_phone TEXT,
-    has_assigned_teacher TEXT,
-    assigned_teacher_at TEXT,
+    has_assigned_teacher BOOLEAN,
+    assigned_teacher_at TIMESTAMPTZ,
     assigned_teacher_user_id TEXT,
-    has_finished_onboarding TEXT,
-    finished_onboarding_at TEXT,
+    has_finished_onboarding BOOLEAN,
+    finished_onboarding_at TIMESTAMPTZ,
     comments TEXT,
-    paid_referee TEXT,
-    paid_referee_at TEXT,
+    paid_referee BOOLEAN,
+    paid_referee_at TIMESTAMPTZ,
     referee_name TEXT,
-    hidden TEXT,
+    hidden BOOLEAN,
     preffered_teacher TEXT,
     referee_account_number TEXT,
     CONSTRAINT fk_new_student_teacher
