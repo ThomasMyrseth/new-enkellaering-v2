@@ -28,7 +28,7 @@ SUPABASE_CONFIG = {
     'dbname': 'postgres',
     'user': 'postgres.clfgrepvidmzconiqqrt',
     # 'pool_mode': 'transaction',
-    'password': 'ASSWORD'  # ⚠️ UPDATE THIS
+    'password': os.getenv("SUPABASE_DB_PASSWORD")  # ⚠️ UPDATE THIS
 }
 
 # Table migration order (respects foreign keys)

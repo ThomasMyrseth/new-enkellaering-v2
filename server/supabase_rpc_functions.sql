@@ -1,8 +1,9 @@
 -- ============================================================================
--- SUPABASE MIGRATION SQL SCRIPT
+-- SUPABASE MIGRATION SQL SCRIPT - CORRECTED VERSION
 -- ============================================================================
 -- This script creates all necessary RPC functions and schema changes
 -- for migrating from Cloud SQL to Supabase
+-- ALL TYPES NOW MATCH THE SCHEMA EXACTLY
 --
 -- INSTRUCTIONS:
 -- 1. Open your Supabase project dashboard
@@ -19,32 +20,6 @@
 ALTER TABLE public.about_me_texts
 ADD COLUMN IF NOT EXISTS image_url TEXT;
 
--- Rename image column to image_url in questions table
-DO $$
-BEGIN
-    IF EXISTS (
-        SELECT 1 FROM information_schema.columns
-        WHERE table_schema = 'public'
-        AND table_name = 'questions'
-        AND column_name = 'image'
-    ) THEN
-        ALTER TABLE public.questions RENAME COLUMN image TO image_url;
-    END IF;
-END $$;
-
--- Rename image column to image_url in quizzes table (if it exists)
-DO $$
-BEGIN
-    IF EXISTS (
-        SELECT 1 FROM information_schema.columns
-        WHERE table_schema = 'public'
-        AND table_name = 'quizzes'
-        AND column_name = 'image'
-    ) THEN
-        ALTER TABLE public.quizzes RENAME COLUMN image TO image_url;
-    END IF;
-END $$;
-
 -- ============================================================================
 -- PART 2: RPC FUNCTIONS
 -- ============================================================================
@@ -56,7 +31,7 @@ END $$;
 CREATE OR REPLACE FUNCTION public.get_student_for_teacher(teacher_id TEXT)
 RETURNS TABLE (
     user_id TEXT,
-    created_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMPTZ,
     firstname_parent TEXT,
     lastname_parent TEXT,
     email_parent TEXT,
@@ -67,10 +42,10 @@ RETURNS TABLE (
     address TEXT,
     postal_code TEXT,
     main_subjects TEXT,
-    has_physical_tutoring TEXT,
+    has_physical_tutoring BOOLEAN,
     additional_comments TEXT,
-    est_hours_per_week TEXT,
-    is_active TEXT,
+    est_hours_per_week DOUBLE PRECISION,
+    is_active BOOLEAN,
     notes TEXT
 )
 LANGUAGE plpgsql
@@ -81,8 +56,8 @@ BEGIN
     FROM public.students s
     JOIN public.teacher_student ts ON s.user_id = ts.student_user_id
     WHERE ts.teacher_user_id = teacher_id
-      AND ts.teacher_accepted_student = 'TRUE'
-      AND (ts.hidden IS NULL OR ts.hidden != 'TRUE');
+      AND ts.teacher_accepted_student = TRUE
+      AND (ts.hidden IS NULL OR ts.hidden != TRUE);
 END;
 $$;
 
@@ -101,13 +76,13 @@ RETURNS TABLE (
     postal_code TEXT,
     hourly_pay TEXT,
     additional_comments TEXT,
-    created_at TIMESTAMP WITH TIME ZONE,
-    admin TEXT,
-    resigned TEXT,
-    resigned_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMPTZ,
+    admin BOOLEAN,
+    resigned BOOLEAN,
+    resigned_at TIMESTAMPTZ,
     location TEXT,
-    digital_tutouring TEXT,
-    physical_tutouring TEXT,
+    digital_tutouring BOOLEAN,
+    physical_tutouring BOOLEAN,
     notes TEXT
 )
 LANGUAGE plpgsql
@@ -118,8 +93,8 @@ BEGIN
     FROM public.teachers t
     JOIN public.teacher_student ts ON t.user_id = ts.teacher_user_id
     WHERE ts.student_user_id = student_id
-      AND ts.teacher_accepted_student = 'TRUE'
-      AND (ts.hidden IS NULL OR ts.hidden != 'TRUE');
+      AND ts.teacher_accepted_student = TRUE
+      AND (ts.hidden IS NULL OR ts.hidden != TRUE);
 END;
 $$;
 
@@ -146,7 +121,7 @@ BEGIN
     JOIN public.teachers t ON ts.teacher_user_id = t.user_id
     WHERE ts.teacher_user_id = teacher_id
       AND ts.teacher_accepted_student IS NULL
-      AND (ts.hidden IS NULL OR ts.hidden = 'FALSE');
+      AND (ts.hidden IS NULL OR ts.hidden = FALSE);
 
     RETURN COALESCE(result, '[]'::jsonb);
 END;
@@ -194,7 +169,7 @@ BEGIN
         FROM public.classes
         WHERE started_at::date > threshold_date
     )
-      AND s.is_active = 'TRUE'
+      AND s.is_active = TRUE
       AND ts.row_id = (
           SELECT MIN(row_id)
           FROM public.teacher_student ts2
@@ -212,7 +187,7 @@ $$;
 CREATE OR REPLACE FUNCTION public.get_students_without_teacher()
 RETURNS TABLE (
     user_id TEXT,
-    created_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMPTZ,
     firstname_parent TEXT,
     lastname_parent TEXT,
     email_parent TEXT,
@@ -223,10 +198,10 @@ RETURNS TABLE (
     address TEXT,
     postal_code TEXT,
     main_subjects TEXT,
-    has_physical_tutoring TEXT,
+    has_physical_tutoring BOOLEAN,
     additional_comments TEXT,
-    est_hours_per_week TEXT,
-    is_active TEXT,
+    est_hours_per_week DOUBLE PRECISION,
+    is_active BOOLEAN,
     notes TEXT
 )
 LANGUAGE plpgsql
@@ -239,11 +214,11 @@ BEGIN
         SELECT student_user_id
         FROM public.teacher_student AS ts
         JOIN public.teachers AS t ON ts.teacher_user_id = t.user_id
-        WHERE ts.teacher_accepted_student = 'TRUE'
-          AND (ts.hidden = 'FALSE' OR ts.hidden IS NULL)
-          AND t.resigned = 'FALSE'
+        WHERE ts.teacher_accepted_student = TRUE
+          AND (ts.hidden = FALSE OR ts.hidden IS NULL)
+          AND t.resigned = FALSE
     )
-    AND s.is_active = 'TRUE';
+    AND s.is_active = TRUE;
 END;
 $$;
 
@@ -254,7 +229,7 @@ $$;
 CREATE OR REPLACE FUNCTION public.get_all_students_without_teacher(admin_id TEXT)
 RETURNS TABLE (
     user_id TEXT,
-    created_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMPTZ,
     firstname_parent TEXT,
     lastname_parent TEXT,
     email_parent TEXT,
@@ -265,10 +240,10 @@ RETURNS TABLE (
     address TEXT,
     postal_code TEXT,
     main_subjects TEXT,
-    has_physical_tutoring TEXT,
+    has_physical_tutoring BOOLEAN,
     additional_comments TEXT,
-    est_hours_per_week TEXT,
-    is_active TEXT,
+    est_hours_per_week DOUBLE PRECISION,
+    is_active BOOLEAN,
     notes TEXT
 )
 LANGUAGE plpgsql
@@ -277,7 +252,7 @@ BEGIN
     -- Verify admin
     IF NOT EXISTS (
         SELECT 1 FROM public.teachers
-        WHERE user_id = admin_id AND admin = 'TRUE'
+        WHERE user_id = admin_id AND admin = TRUE
     ) THEN
         RAISE EXCEPTION 'User is not an admin';
     END IF;
@@ -290,8 +265,8 @@ BEGIN
     WHERE s.user_id NOT IN (
         SELECT student_user_id
         FROM public.teacher_student
-        WHERE teacher_accepted_student = 'TRUE'
-          AND (hidden = 'FALSE' OR hidden IS NULL)
+        WHERE teacher_accepted_student = TRUE
+          AND (hidden = FALSE OR hidden IS NULL)
     );
 END;
 $$;
@@ -329,15 +304,15 @@ BEGIN
             (class_record->>'class_id')::UUID,
             (class_record->>'teacher_user_id')::TEXT,
             (class_record->>'student_user_id')::TEXT,
-            (class_record->>'created_at')::TIMESTAMP WITH TIME ZONE,
-            (class_record->>'started_at')::TIMESTAMP WITH TIME ZONE,
-            (class_record->>'ended_at')::TIMESTAMP WITH TIME ZONE,
+            (class_record->>'created_at')::TIMESTAMPTZ,
+            (class_record->>'started_at')::TIMESTAMPTZ,
+            (class_record->>'ended_at')::TIMESTAMPTZ,
             (class_record->>'comment')::TEXT,
-            (class_record->>'paid_teacher')::TEXT,
-            (class_record->>'invoiced_student')::TEXT,
-            (class_record->>'was_canselled')::TEXT,
-            (class_record->>'groupclass')::TEXT,
-            (class_record->>'number_of_students')::TEXT
+            (class_record->>'paid_teacher')::BOOLEAN,
+            (class_record->>'invoiced_student')::BOOLEAN,
+            (class_record->>'was_canselled')::BOOLEAN,
+            (class_record->>'groupclass')::BOOLEAN,
+            (class_record->>'number_of_students')::INTEGER
         );
     END LOOP;
 
@@ -368,22 +343,22 @@ BEGIN
     -- Update with all 16 fields from updates_json
     UPDATE public.new_students
     SET
-        has_called = COALESCE((updates_json->>'has_called')::TEXT, has_called),
-        called_at = COALESCE((updates_json->>'called_at')::TEXT, called_at),
-        has_answered = COALESCE((updates_json->>'has_answered')::TEXT, has_answered),
-        answered_at = COALESCE((updates_json->>'answered_at')::TEXT, answered_at),
-        has_signed_up = COALESCE((updates_json->>'has_signed_up')::TEXT, has_signed_up),
-        signed_up_at = COALESCE((updates_json->>'signed_up_at')::TIMESTAMP WITH TIME ZONE, signed_up_at),
-        from_referal = COALESCE((updates_json->>'from_referal')::TEXT, from_referal),
+        has_called = COALESCE((updates_json->>'has_called')::BOOLEAN, has_called),
+        called_at = COALESCE((updates_json->>'called_at')::TIMESTAMPTZ, called_at),
+        has_answered = COALESCE((updates_json->>'has_answered')::BOOLEAN, has_answered),
+        answered_at = COALESCE((updates_json->>'answered_at')::TIMESTAMPTZ, answered_at),
+        has_signed_up = COALESCE((updates_json->>'has_signed_up')::BOOLEAN, has_signed_up),
+        signed_up_at = COALESCE((updates_json->>'signed_up_at')::TIMESTAMPTZ, signed_up_at),
+        from_referal = COALESCE((updates_json->>'from_referal')::BOOLEAN, from_referal),
         referee_phone = COALESCE((updates_json->>'referee_phone')::TEXT, referee_phone),
-        has_assigned_teacher = COALESCE((updates_json->>'has_assigned_teacher')::TEXT, has_assigned_teacher),
-        assigned_teacher_at = COALESCE((updates_json->>'assigned_teacher_at')::TEXT, assigned_teacher_at),
+        has_assigned_teacher = COALESCE((updates_json->>'has_assigned_teacher')::BOOLEAN, has_assigned_teacher),
+        assigned_teacher_at = COALESCE((updates_json->>'assigned_teacher_at')::TIMESTAMPTZ, assigned_teacher_at),
         assigned_teacher_user_id = COALESCE((updates_json->>'assigned_teacher_user_id')::TEXT, assigned_teacher_user_id),
-        has_finished_onboarding = COALESCE((updates_json->>'has_finished_onboarding')::TEXT, has_finished_onboarding),
-        finished_onboarding_at = COALESCE((updates_json->>'finished_onboarding_at')::TEXT, finished_onboarding_at),
+        has_finished_onboarding = COALESCE((updates_json->>'has_finished_onboarding')::BOOLEAN, has_finished_onboarding),
+        finished_onboarding_at = COALESCE((updates_json->>'finished_onboarding_at')::TIMESTAMPTZ, finished_onboarding_at),
         comments = COALESCE((updates_json->>'comments')::TEXT, comments),
-        paid_referee = COALESCE((updates_json->>'paid_referee')::TEXT, paid_referee),
-        paid_referee_at = COALESCE((updates_json->>'paid_referee_at')::TEXT, paid_referee_at)
+        paid_referee = COALESCE((updates_json->>'paid_referee')::BOOLEAN, paid_referee),
+        paid_referee_at = COALESCE((updates_json->>'paid_referee_at')::TIMESTAMPTZ, paid_referee_at)
     WHERE new_student_id = alter_new_student.new_student_id;
 
     RETURN TRUE;
@@ -405,11 +380,11 @@ BEGIN
     UPDATE public.teacher_student
     SET
         teacher_accepted_student = COALESCE(
-            (updates_json->>'teacher_accepted_student')::TEXT,
+            (updates_json->>'teacher_accepted_student')::BOOLEAN,
             teacher_accepted_student
         ),
         physical_or_digital = COALESCE(
-            (updates_json->>'physical_or_digital')::TEXT,
+            (updates_json->>'physical_or_digital')::BOOLEAN,
             physical_or_digital
         ),
         preferred_location = COALESCE(
@@ -444,7 +419,7 @@ BEGIN
     -- Verify admin rights
     IF NOT EXISTS (
         SELECT 1 FROM public.teachers
-        WHERE user_id = admin_id AND admin = 'TRUE'
+        WHERE user_id = admin_id AND admin = TRUE
     ) THEN
         RAISE EXCEPTION 'User is not an admin';
     END IF;
@@ -476,13 +451,13 @@ BEGIN
     -- Verify admin
     IF NOT EXISTS (
         SELECT 1 FROM public.teachers
-        WHERE user_id = admin_id AND admin = 'TRUE'
+        WHERE user_id = admin_id AND admin = TRUE
     ) THEN
         RAISE EXCEPTION 'User is not an admin';
     END IF;
 
     UPDATE public.classes
-    SET invoiced_student = 'TRUE',
+    SET invoiced_student = TRUE,
         invoiced_student_at = NOW()
     WHERE class_id = ANY(class_ids);
 
@@ -505,13 +480,13 @@ BEGIN
     -- Verify admin
     IF NOT EXISTS (
         SELECT 1 FROM public.teachers
-        WHERE user_id = admin_id AND admin = 'TRUE'
+        WHERE user_id = admin_id AND admin = TRUE
     ) THEN
         RAISE EXCEPTION 'User is not an admin';
     END IF;
 
     UPDATE public.classes
-    SET paid_teacher = 'TRUE',
+    SET paid_teacher = TRUE,
         paid_teacher_at = NOW()
     WHERE class_id = ANY(class_ids);
 
@@ -523,5 +498,8 @@ $$;
 -- END OF SCRIPT
 -- ============================================================================
 -- All RPC functions and schema changes have been created successfully!
--- You can now proceed with migrating your Python application code.
+-- Type corrections made:
+-- - Changed all TEXT comparisons ('TRUE'/'FALSE') to BOOLEAN (TRUE/FALSE)
+-- - Changed TIMESTAMP WITH TIME ZONE to TIMESTAMPTZ for consistency
+-- - Ensured all types match the schema exactly
 -- ============================================================================
