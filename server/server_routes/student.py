@@ -45,6 +45,7 @@ def get_all_students_route(user_id):
         students = get_all_students(user_id)
         return jsonify({"students": students}), 200
     except Exception as e:
+        print("error getting all students:", e)
         return jsonify({"message": str(e)}), 500
 
 

@@ -1,5 +1,6 @@
 from typing import Optional
 from decimal import Decimal
+from db.gets import is_admin
 from supabase_client import supabase
 
 def alter_new_student(new_student_id: str, admin_user_id: str, updates: dict):
@@ -33,8 +34,8 @@ def change_teacher_by_user_id(
 ):
     """Change teacher for a student (admin validated)"""
     # Verify admin
-    admin_response = supabase.table('teachers').select('admin').eq('user_id', admin_user_id).execute()
-    if not admin_response.data or admin_response.data[0]['admin'] != 'TRUE':
+    admin_response = is_admin(admin_user_id)
+    if not admin_response:
         raise ValueError("User is not an admin")
 
     # Update teacher
@@ -45,8 +46,8 @@ def change_teacher_by_user_id(
 def remove_teacher_from_student(student_user_id: str, teacher_user_id: str, admin_user_id: str):
     """Remove teacher from student by setting hidden to TRUE (admin validated)"""
     # Verify admin
-    admin_response = supabase.table('teachers').select('admin').eq('user_id', admin_user_id).execute()
-    if not admin_response.data or admin_response.data[0]['admin'] != 'TRUE':
+    admin_response = is_admin(admin_user_id)
+    if not admin_response:
         raise ValueError("User is not an admin")
 
     # Update to hidden
@@ -73,8 +74,8 @@ def set_classes_to_paid(class_ids: list, admin_user_id: str):
 def set_student_to_inactive(student_user_id: str, admin_user_id: str):
     """Set student to inactive (admin validated)"""
     # Verify admin
-    admin_response = supabase.table('teachers').select('admin').eq('user_id', admin_user_id).execute()
-    if not admin_response.data or admin_response.data[0]['admin'] != 'TRUE':
+    admin_response = is_admin(admin_user_id)
+    if not admin_response:
         raise ValueError("User is not an admin")
 
     # Update student
@@ -88,8 +89,8 @@ def set_student_to_active(student_user_id: str, admin_user_id: str):
     print("admin_user_id", admin_user_id)
 
     # Verify admin
-    admin_response = supabase.table('teachers').select('admin').eq('user_id', admin_user_id).execute()
-    if not admin_response.data or admin_response.data[0]['admin'] != 'TRUE':
+    admin_response = is_admin(admin_user_id)
+    if not admin_response:
         raise ValueError("User is not an admin")
 
     # Update student
@@ -107,8 +108,8 @@ def toggle_want_more_students(physical: bool, digital: bool, teacher_user_id: st
 def update_student_notes(admin_user_id: str, student_user_id: str, notes: str):
     """Update student notes (admin validated)"""
     # Verify admin
-    admin_response = supabase.table('teachers').select('admin').eq('user_id', admin_user_id).execute()
-    if not admin_response.data or admin_response.data[0]['admin'] != 'TRUE':
+    admin_response = is_admin(admin_user_id)
+    if not admin_response:
         raise ValueError("User is not an admin")
 
     # Update notes
@@ -119,8 +120,8 @@ def update_student_notes(admin_user_id: str, student_user_id: str, notes: str):
 def update_teacher_notes(admin_user_id: str, teacher_user_id: str, notes: str):
     """Update teacher notes (admin validated)"""
     # Verify admin
-    admin_response = supabase.table('teachers').select('admin').eq('user_id', admin_user_id).execute()
-    if not admin_response.data or admin_response.data[0]['admin'] != 'TRUE':
+    admin_response = is_admin(admin_user_id)
+    if not admin_response:
         raise ValueError("User is not an admin")
 
     # Update notes
@@ -191,8 +192,8 @@ def update_teacher_profile(
 def update_travel_payment(travel_payment: dict, admin_user_id: str):
     """Update travel payment for teacher-student relationship (admin validated)"""
     # Verify admin
-    admin_response = supabase.table('teachers').select('admin').eq('user_id', admin_user_id).execute()
-    if not admin_response.data or admin_response.data[0]['admin'] != 'TRUE':
+    admin_response = is_admin(admin_user_id)
+    if not admin_response:
         raise ValueError("User is not an admin")
 
     # Update travel payment
@@ -206,8 +207,8 @@ def retireTeacher(teacherUserId: str, adminUserId: str):
     from datetime import datetime, timezone
 
     # Verify admin
-    admin_response = supabase.table('teachers').select('admin').eq('user_id', adminUserId).execute()
-    if not admin_response.data or admin_response.data[0]['admin'] != 'TRUE':
+    admin_response = is_admin(adminUserId)
+    if not admin_response:
         raise ValueError("User is not an admin")
 
     # Retire teacher
@@ -219,8 +220,8 @@ def retireTeacher(teacherUserId: str, adminUserId: str):
 def reactivateTeacher(teacherUserId: str, adminUserId: str):
     """Reactivate a teacher (admin validated)"""
     # Verify admin
-    admin_response = supabase.table('teachers').select('admin').eq('user_id', adminUserId).execute()
-    if not admin_response.data or admin_response.data[0]['admin'] != 'TRUE':
+    admin_response = is_admin(adminUserId)
+    if not admin_response:
         raise ValueError("User is not an admin")
 
     # Reactivate teacher

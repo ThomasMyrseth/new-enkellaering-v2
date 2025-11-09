@@ -1,5 +1,8 @@
+from typing import Optional
 import uuid
 from datetime import datetime, timezone
+
+from db.gets import is_admin
 from .sql_types import Classes, Teacher, Students, NewStudents, NewStudentWithPreferredTeacher
 from supabase_client import supabase
 
@@ -117,7 +120,7 @@ def insert_classes(classes: list[Classes]):
     supabase.rpc('insert_classes_batch', {'classes_json': classes_json}).execute()
     return True
 
-def upsert_about_me_text(text: str, user_id: str, firstname: str, lastname: str, image_url: str = None):
+def upsert_about_me_text(text: str, user_id: str, firstname: str, lastname: str, image_url: Optional[str] = None):
     """Upsert about_me text with optional image_url"""
     data = {
         'user_id': user_id,
@@ -276,8 +279,8 @@ def add_teacher_to_new_student(
 ):
     """Add a teacher to a new student (admin validated)"""
     # Verify admin
-    admin_response = supabase.table('teachers').select('admin').eq('user_id', admin_user_id).execute()
-    if not admin_response.data or admin_response.data[0]['admin'] != 'TRUE':
+    admin_response = is_admin(admin_user_id)
+    if not admin_response:
         raise ValueError("Admin teacher does not exist or is not admin")
 
     # Insert the teacher_student record

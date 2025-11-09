@@ -14,8 +14,8 @@ def get_all_teachers_inc_resigned():
 def get_all_students(admin_user_id: str):
     """Get all students (admin validated)"""
     # Check if user is admin
-    admin_response = supabase.table('teachers').select('admin').eq('user_id', admin_user_id).execute()
-    if not admin_response.data or admin_response.data[0]['admin'] != 'TRUE':
+    admin_response = is_admin(admin_user_id)
+    if not admin_response:
         raise ValueError("User is not an admin")
 
     response = supabase.table('students').select('*').execute()
@@ -34,8 +34,8 @@ def get_student_by_user_id(user_id: str):
 def get_all_referrals(admin_user_id: str):
     """Get all referrals (admin validated)"""
     # Check if user is admin
-    admin_response = supabase.table('teachers').select('admin').eq('user_id', admin_user_id).execute()
-    if not admin_response.data or admin_response.data[0]['admin'] != 'TRUE':
+    admin_response = is_admin(admin_user_id)
+    if not admin_response:
         raise ValueError("User is not an admin")
 
     response = supabase.table('teacher_referrals').select('*').execute()
@@ -44,8 +44,8 @@ def get_all_referrals(admin_user_id: str):
 def get_referral_by_user_id(admin_user_id: str, target_referee_user_id: str):
     """Get referral by user_id (admin validated)"""
     # Check if user is admin
-    admin_response = supabase.table('teachers').select('admin').eq('user_id', admin_user_id).execute()
-    if not admin_response.data or admin_response.data[0]['admin'] != 'TRUE':
+    admin_response = is_admin(admin_user_id)
+    if not admin_response:
         raise ValueError("User is not an admin")
 
     response = supabase.table('teacher_referrals').select('*').eq('referee_teacher_user_id', target_referee_user_id).execute()
@@ -54,8 +54,8 @@ def get_referral_by_user_id(admin_user_id: str, target_referee_user_id: str):
 def get_all_new_students(admin_user_id: str):
     """Get all new students (admin validated)"""
     # Check if user is admin
-    admin_response = supabase.table('teachers').select('admin').eq('user_id', admin_user_id).execute()
-    if not admin_response.data or admin_response.data[0]['admin'] != 'TRUE':
+    admin_response = is_admin(admin_user_id)
+    if not admin_response:
         raise ValueError("User is not an admin")
 
     response = supabase.table('new_students').select('*').execute()
@@ -79,8 +79,8 @@ def get_new_student_by_phone(phone: str):
 def get_all_classes(admin_user_id: str):
     """Get all classes (admin validated)"""
     # Check if user is admin
-    admin_response = supabase.table('teachers').select('admin').eq('user_id', admin_user_id).execute()
-    if not admin_response.data or admin_response.data[0]['admin'] != 'TRUE':
+    admin_response = is_admin(admin_user_id)
+    if not admin_response:
         raise ValueError("User is not an admin")
 
     response = supabase.table('classes').select('*').execute()
@@ -89,8 +89,8 @@ def get_all_classes(admin_user_id: str):
 def get_class_by_teacher_and_student_id(admin_user_id: str, teacher_user_id: str, student_user_id: str):
     """Get class by teacher and student ID (admin validated)"""
     # Check if user is admin
-    admin_response = supabase.table('teachers').select('admin').eq('user_id', admin_user_id).execute()
-    if not admin_response.data or admin_response.data[0]['admin'] != 'TRUE':
+    admin_response = is_admin(admin_user_id)
+    if not admin_response:
         raise ValueError("User is not an admin")
 
     response = supabase.table('classes').select('*').eq('teacher_user_id', teacher_user_id).eq('student_user_id', student_user_id).execute()
@@ -247,3 +247,10 @@ def get_teachers_without_quizes():
     ]
 
     return teachers_without_quizzes
+
+
+
+def is_admin(user_id: str) -> bool:
+    """Check if a user is an admin"""
+    response = supabase.table('teachers').select('admin').eq('user_id', user_id).execute()
+    return bool(response.data and response.data[0].get("admin"))

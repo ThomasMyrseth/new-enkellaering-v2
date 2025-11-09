@@ -1,10 +1,11 @@
+from db.gets import is_admin
 from supabase_client import supabase
 
 def hide_new_student(row_id: str, admin_user_id: str):
     """Hide a new student order (admin validated)"""
     # Verify admin
-    admin_response = supabase.table('teachers').select('admin').eq('user_id', admin_user_id).execute()
-    if not admin_response.data or admin_response.data[0]['admin'] != 'TRUE':
+    admin_response = is_admin(admin_user_id)
+    if not admin_response:
         raise ValueError("User is not an admin")
 
     # Set hidden to TRUE
@@ -15,8 +16,8 @@ def hide_new_student(row_id: str, admin_user_id: str):
 def hide_new_order_from_new_students_table(new_student_id: str, admin_user_id: str):
     """Hide a new order from new_students table (admin validated)"""
     # Verify admin
-    admin_response = supabase.table('teachers').select('admin').eq('user_id', admin_user_id).execute()
-    if not admin_response.data or admin_response.data[0]['admin'] != 'TRUE':
+    admin_response = is_admin(admin_user_id)
+    if not admin_response:
         raise ValueError("User is not an admin")
 
     # Set hidden to TRUE
@@ -35,8 +36,8 @@ def delete_review(student_user_id: str, teacher_user_id: str):
 def remove_teacher_from_student(teacher_user_id: str, student_user_id: str, admin_user_id: str):
     """Remove teacher from student by setting hidden to TRUE (admin validated)"""
     # Verify admin
-    admin_response = supabase.table('teachers').select('admin').eq('user_id', admin_user_id).execute()
-    if not admin_response.data or admin_response.data[0]['admin'] != 'TRUE':
+    admin_response = is_admin(admin_user_id)    
+    if not admin_response:
         raise ValueError("User is not an admin")
 
     # Set hidden to TRUE
