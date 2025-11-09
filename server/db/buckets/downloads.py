@@ -5,7 +5,7 @@ def download_all_teacher_images():
     Fetches all teacher images from the 'teacher_images/' folder in the bucket.
     Returns a list of image URLs.
     """
-    bucket_name = "enkellaering_images"
+    bucket_name = "enkellaering-images"
     folder_prefix = "teacher_images/"
 
     # Initialize the client

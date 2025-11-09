@@ -1,12 +1,13 @@
 from typing import Optional
 from decimal import Decimal
+from uuid import uuid4
 from db.gets import is_admin
 from supabase_client import supabase
 
 def alter_new_student(new_student_id: str, admin_user_id: str, updates: dict):
     """Update new_student with 16 dynamic fields (uses RPC function)"""
     response = supabase.rpc('alter_new_student', {
-        'new_student_id': new_student_id,
+        'new_student_id_parameter':  new_student_id,
         'admin_id': admin_user_id,
         'updates_json': updates
     }).execute()

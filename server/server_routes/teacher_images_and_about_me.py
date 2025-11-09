@@ -45,7 +45,7 @@ def upload_file(user_id):
     standardized_filename = f"{user_id}-profile_picture{file_extension}"
 
     # Define Google Cloud Storage bucket and path
-    bucket_name = "enkellaering_images"
+    bucket_name = "enkellaering-images"
     destination_blob_name = f"teacher_images/{user_id}/{standardized_filename}"
 
 

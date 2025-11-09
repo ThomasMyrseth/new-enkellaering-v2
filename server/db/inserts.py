@@ -339,7 +339,7 @@ def uploadRecumeToStorage(
     Returns:
         Public URL of the uploaded resume
     """
-    bucket_name = "resumes"
+    bucket_name = "enkellaering-resumes"
     destination_path = f"{firstname}_{lastname}/{filename}"
 
     try:

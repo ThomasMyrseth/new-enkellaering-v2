@@ -105,9 +105,6 @@ def update_new_student_workflow(user_id):
         "signed_up_at": data.get("signed_up_at"),
         "from_referal": data.get("from_referal"),
         "referee_phone": data.get("referee_phone"),
-        "has_assigned_teacher": data.get("has_assigned_teacher"),
-        "assigned_teacher_at": data.get("assigned_teacher_at"),
-        "assigned_teacher_user_id": data.get("teacher_user_id"),
         "has_finished_onboarding": data.get("has_finished_onboarding"),
         "finished_onboarding_at": data.get("finished_onboarding_at"),
         "comments": data.get("comments"),
@@ -174,7 +171,6 @@ def validate_new_student_data(data: dict) -> tuple[bool, str]:
         "has_answered": bool,
         "has_signed_up": bool,
         "from_referal": bool,
-        "has_assigned_teacher": bool,
     }
 
     optional_fields = {
@@ -182,8 +178,6 @@ def validate_new_student_data(data: dict) -> tuple[bool, str]:
         "answered_at": str,
         "signed_up_at": str,
         "referee_phone": str,
-        "assigned_teacher_at": str,
-        "teacher_user_id": str,
         "has_finished_onboarding": bool,
         "finished_onboarding_at": str,
         "comments": str,
@@ -254,7 +248,7 @@ def submit_new_student_route():
             "new_student_id": str(uuid.uuid4()),
             "phone": phone,
             "preffered_teacher": '',
-            "created_at": datetime.now(norway_tz),
+            "created_at": datetime.now(norway_tz).isoformat(),
             "has_called": False,
             "called_at": None,
             "has_answered": False,
@@ -337,7 +331,7 @@ def submit_new_referal_route():
     ns = {
         "new_student_id": str(uuid.uuid4()),
         "phone": referal_phone,
-        "created_at": datetime.now(norway_tz),
+        "created_at": datetime.now(norway_tz).isoformat(),
         "has_called": False,
         "called_at": None,
         "has_answered": False,

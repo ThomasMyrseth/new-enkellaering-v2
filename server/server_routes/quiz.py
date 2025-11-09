@@ -37,8 +37,6 @@ def get_all_quizzes_route():
         logging.error(f"Error retrieving quizzes: {e}")
         return jsonify({"message": str(e)}), 500
 
-//
-
 @quiz_bp.route('/get-all-qualifications', methods=["GET"])
 def get_all_qualifications_route():
     try:

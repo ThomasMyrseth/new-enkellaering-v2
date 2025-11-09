@@ -13,10 +13,10 @@ load_dotenv()
 
 # Cloud SQL (source)
 CLOUD_SQL_CONFIG = {
-    'host': os.getenv('DB_HOST'),  # 34.39.52.34
+    'host': os.getenv('DB_HOST', '34.39.52.34'),  # 34.39.52.34
     'port': int(os.getenv('DB_PORT', 5432)),
-    'dbname': os.getenv('DB_NAME'),  # enkel_laering
-    'user': os.getenv('DB_USER'),  # enkel-laering-db-user
+    'dbname': os.getenv('DB_NAME', 'enkel_laering'),  # enkel_laering
+    'user': os.getenv('DB_USER', 'enkel-laering-db-user'),  # enkel-laering-db-user
     'password': os.getenv('DB_USER_PASSWORD')
 }
 
@@ -64,9 +64,14 @@ DEFAULT_COLUMNS = {
     }
 }
 
+# Columns to exclude from migration (exist in Cloud SQL but removed in Supabase)
+COLUMNS_TO_EXCLUDE = {
+    'new_students': ['assigned_teacher_user_id', 'has_assigned_teacher', 'assigned_teacher_at']
+}
+
 # Columns that should convert empty strings to NULL (for foreign key constraints)
 NULLABLE_FOREIGN_KEYS = {
-    'new_students': ['assigned_teacher_user_id'],
+    # 'new_students' has no foreign keys in Supabase schema
     'classes': ['teacher_user_id', 'student_user_id'],
     'teacher_student': ['teacher_user_id', 'student_user_id'],
     'reviews': ['teacher_user_id', 'student_user_id'],
@@ -126,6 +131,14 @@ def migrate_table(table_name, source_conn, dest_conn):
         if not source_columns:
             print(f"⚠️  Table {table_name} not found or has no columns")
             return (0, 0)
+
+        # Filter out excluded columns (columns that exist in source but not in destination)
+        excluded_cols = COLUMNS_TO_EXCLUDE.get(table_name, [])
+        if excluded_cols:
+            original_count = len(source_columns)
+            source_columns = [col for col in source_columns if col not in excluded_cols]
+            print(f"  Excluding {original_count - len(source_columns)} columns: {', '.join(excluded_cols)}")
+
         debug_print(f"Found {len(source_columns)} columns: {', '.join(source_columns[:5])}{'...' if len(source_columns) > 5 else ''}")
 
         # Fetch all data from source

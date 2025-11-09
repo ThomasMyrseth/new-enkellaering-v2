@@ -10,15 +10,19 @@
 -- 2. Go to SQL Editor
 -- 3. Copy and paste this entire file
 -- 4. Run the script
--- ============================================================================
 
--- ============================================================================
--- PART 1: SCHEMA CHANGES
--- ============================================================================
-
--- Add image_url column to about_me_texts table
-ALTER TABLE public.about_me_texts
-ADD COLUMN IF NOT EXISTS image_url TEXT;
+DROP FUNCTION IF EXISTS public.get_student_for_teacher(TEXT);
+DROP FUNCTION IF EXISTS public.get_teacher_for_student(TEXT);
+DROP FUNCTION IF EXISTS public.get_new_orders_for_teacher(TEXT);
+DROP FUNCTION IF EXISTS public.get_students_with_few_classes(INT);
+DROP FUNCTION IF EXISTS public.get_students_without_teacher();
+DROP FUNCTION IF EXISTS public.get_all_students_without_teacher(TEXT);
+DROP FUNCTION IF EXISTS public.insert_classes_batch(JSONB);
+DROP FUNCTION IF EXISTS public.alter_new_student(UUID, TEXT, JSONB);
+DROP FUNCTION IF EXISTS public.update_new_order_dynamic(UUID, JSONB);
+DROP FUNCTION IF EXISTS public.delete_quizzes_cascade(TEXT, UUID[]);
+DROP FUNCTION IF EXISTS public.set_classes_invoiced_batch(UUID[], TEXT);
+DROP FUNCTION IF EXISTS public.set_classes_paid_batch(UUID[], TEXT);
 
 -- ============================================================================
 -- PART 2: RPC FUNCTIONS
@@ -325,7 +329,7 @@ $$;
 -- Description: Update new_student with 16 dynamic fields (admin validated)
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.alter_new_student(
-    new_student_id UUID,
+    new_student_id_parameter UUID,
     admin_id TEXT,
     updates_json JSONB
 )
@@ -351,15 +355,12 @@ BEGIN
         signed_up_at = COALESCE((updates_json->>'signed_up_at')::TIMESTAMPTZ, signed_up_at),
         from_referal = COALESCE((updates_json->>'from_referal')::BOOLEAN, from_referal),
         referee_phone = COALESCE((updates_json->>'referee_phone')::TEXT, referee_phone),
-        has_assigned_teacher = COALESCE((updates_json->>'has_assigned_teacher')::BOOLEAN, has_assigned_teacher),
-        assigned_teacher_at = COALESCE((updates_json->>'assigned_teacher_at')::TIMESTAMPTZ, assigned_teacher_at),
-        assigned_teacher_user_id = COALESCE((updates_json->>'assigned_teacher_user_id')::TEXT, assigned_teacher_user_id),
         has_finished_onboarding = COALESCE((updates_json->>'has_finished_onboarding')::BOOLEAN, has_finished_onboarding),
         finished_onboarding_at = COALESCE((updates_json->>'finished_onboarding_at')::TIMESTAMPTZ, finished_onboarding_at),
         comments = COALESCE((updates_json->>'comments')::TEXT, comments),
         paid_referee = COALESCE((updates_json->>'paid_referee')::BOOLEAN, paid_referee),
         paid_referee_at = COALESCE((updates_json->>'paid_referee_at')::TIMESTAMPTZ, paid_referee_at)
-    WHERE new_student_id = alter_new_student.new_student_id;
+    WHERE new_students.new_student_id = new_student_id_parameter;
 
     RETURN TRUE;
 END;

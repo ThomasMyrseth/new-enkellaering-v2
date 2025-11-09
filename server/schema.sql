@@ -279,9 +279,6 @@ CREATE TABLE new_students (
     signed_up_at TIMESTAMPTZ,
     from_referal BOOLEAN,
     referee_phone TEXT,
-    has_assigned_teacher BOOLEAN,
-    assigned_teacher_at TIMESTAMPTZ,
-    assigned_teacher_user_id TEXT,
     has_finished_onboarding BOOLEAN,
     finished_onboarding_at TIMESTAMPTZ,
     comments TEXT,
@@ -290,11 +287,7 @@ CREATE TABLE new_students (
     referee_name TEXT,
     hidden BOOLEAN,
     preffered_teacher TEXT,
-    referee_account_number TEXT,
-    CONSTRAINT fk_new_student_teacher
-        FOREIGN KEY (assigned_teacher_user_id)
-        REFERENCES teachers(user_id)
-        ON DELETE SET NULL
+    referee_account_number TEXT
 );
 
 COMMENT ON TABLE new_students IS 'Lead tracking for potential new students';
@@ -338,7 +331,6 @@ CREATE INDEX idx_reviews_student ON reviews(student_user_id);
 CREATE INDEX idx_teacher_student_teacher ON teacher_student(teacher_user_id);
 CREATE INDEX idx_teacher_student_student ON teacher_student(student_user_id);
 CREATE INDEX idx_teacher_referrals_teacher ON teacher_referrals(referee_teacher_user_id);
-CREATE INDEX idx_new_students_teacher ON new_students(assigned_teacher_user_id);
 
 -- Additional performance indexes
 CREATE INDEX idx_classes_started_at ON classes(started_at);
