@@ -31,25 +31,26 @@ app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'None'
 
 #app.config['SESSION_COOKIE_DOMAIN'] = 'enkellaering-service-895641904484.europe-west2.run.app'
-app.config['SESSION_COOKIE_DOMAIN'] = 'https://enkellaering-service-prototype-895641904484.europe-west2.run.app'
+app.config['SESSION_COOKIE_DOMAIN'] = 'enkellaering-service-prototype-895641904484.europe-west2.run.app'
 #app.config['SESSION_COOKIE_DOMAIN'] = 'localhost'
 
 
-CORS(app, resources={
-    r"/*": {
-        "origins": [
-            "https://new-enkellaering-v2.vercel.app",
-            "http://localhost:3000",
-            "https://enkellaering.no",
-            "https://www.enkellaering.no",
-        ]
+CORS(app, 
+    resources={
+        r"/*": {
+            "origins": [
+                "https://new-enkellaering-v2.vercel.app",
+                "http://localhost:3000",
+                "https://enkellaering.no",
+                "https://www.enkellaering.no",
+            ],
+            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # ← ADD THIS
+            "allow_headers": ["Content-Type", "Authorization", "X-Requested-With"],  # ← ADD THIS
+            "supports_credentials": True,
+            "max_age": 3600
+        }
     }
-}, supports_credentials=True)
-
-PROJECT_ID = os.getenv('PROJECT_ID')
-USER_DATASET = os.getenv('USER_DATASET')
-CLASSES_DATASET = os.getenv('CLASSES_DATASET')
-NEW_STUDENTS_DATASET = os.getenv('NEW_STUDENTS_DATASET')
+)
 
 
 logging.basicConfig(level=logging.INFO)
