@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, request
 import os
 
 from .config import token_required
-from db.gets import is_user_admin
+from db.gets import is_admin, is_user_admin
 from db.alters import update_travel_payment
 
 admin_bp = Blueprint('admin', __name__)
@@ -43,7 +43,7 @@ def update_travel_payment_route(user_id):
 
     # Verify admin rights
     try:
-        if not is_user_admin(admin_user_id):
+        if not is_admin(admin_user_id):
             return jsonify({"error": "User is not an admin"}), 403
     except Exception as e:
         return jsonify({"error": str(e)}), 500

@@ -74,42 +74,12 @@ def get_all_images_and_about_mes():
         # Fetch about me texts
         about_mes = get_all_about_me_texts()
 
-        # Fetch teacher images
-        images = download_all_teacher_images()
-
         if not about_mes:
+            print("Error getting about me texts")
             return jsonify({"message": "Error getting about me texts"}), 500
-        
-        if not images:
-            return jsonify({"message": "Error getting images"}), 500
 
-        formatted_data = []
-
-        for i in range(len(about_mes)):
-            a = about_mes[i]
-
-            about_me = a['about_me']
-            firstname = a['firstname']
-            lastname = a['lastname']
-            user_id = a['user_id']
-            image = ''
-            #find the image
-            for image_url in images:
-                image_user_id = image_url.split("/")[-2]
-                if image_user_id == user_id:
-                    image = image_url
-                    break #stop after the first match
-
-            f = {}
-            f['about_me'] = about_me
-            f['firstname'] = firstname
-            f['lastname'] = lastname
-            f['user_id'] = user_id
-            f['image'] = image
-
-            formatted_data.append(f)
-
-        return jsonify({"data": formatted_data}), 200
+        return jsonify({"data": about_mes}), 200
     
     except Exception as e:
+        print(f"Error fetching teacher images and about me texts: {e}")
         return jsonify({"message": str(e)}), 500

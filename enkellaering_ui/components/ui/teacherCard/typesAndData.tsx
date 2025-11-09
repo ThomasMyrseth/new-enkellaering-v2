@@ -49,7 +49,7 @@ export type AboutMe = {
     about_me :string;
     firstname :string;
     lastname :string;
-    image :string;
+    image_url :string;
 }
 
 

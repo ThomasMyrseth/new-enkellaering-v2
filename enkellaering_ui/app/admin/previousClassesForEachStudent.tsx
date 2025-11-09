@@ -911,7 +911,6 @@ const SetTeacherCombobox = ({
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <div
-            role="combobox"
             aria-expanded={open}
             className="w-[200px] justify-start flex flex-row"
           >

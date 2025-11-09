@@ -14,6 +14,7 @@
 DROP FUNCTION IF EXISTS public.get_student_for_teacher(TEXT);
 DROP FUNCTION IF EXISTS public.get_teacher_for_student(TEXT);
 DROP FUNCTION IF EXISTS public.get_new_orders_for_teacher(TEXT);
+DROP FUNCTION IF EXISTS public.get_new_orders_for_student(TEXT);
 DROP FUNCTION IF EXISTS public.get_students_with_few_classes(INT);
 DROP FUNCTION IF EXISTS public.get_students_without_teacher();
 DROP FUNCTION IF EXISTS public.get_all_students_without_teacher(TEXT);
@@ -116,15 +117,43 @@ BEGIN
     SELECT jsonb_agg(
         jsonb_build_object(
             'teacher_student', row_to_json(ts.*),
-            'student', row_to_json(s.*),
-            'teacher', row_to_json(t.*)
+            'student', row_to_json(s.*)
         )
     ) INTO result
     FROM public.teacher_student ts
     JOIN public.students s ON ts.student_user_id = s.user_id
-    JOIN public.teachers t ON ts.teacher_user_id = t.user_id
     WHERE ts.teacher_user_id = teacher_id
       AND ts.teacher_accepted_student IS NULL
+      AND (ts.hidden IS NULL OR ts.hidden = FALSE);
+
+    RETURN COALESCE(result, '[]'::jsonb);
+END;
+$$;
+
+-- ----------------------------------------------------------------------------
+-- FUNCTION 3B: get_new_orders_for_student
+-- Description: Get all new orders (pending acceptances) for a student with teacher and about_me
+-- Returns: TeacherOrderJoinTeacher type { teacher, order, about_me }
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.get_new_orders_for_student(student_id TEXT)
+RETURNS JSONB
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    result JSONB;
+BEGIN
+    SELECT jsonb_agg(
+        jsonb_build_object(
+            'order', row_to_json(ts.*),
+            'teacher', row_to_json(t.*),
+            'about_me', row_to_json(am.*)
+        )
+    ) INTO result
+    FROM public.teacher_student ts
+    JOIN public.teachers t ON ts.teacher_user_id = t.user_id
+    LEFT JOIN public.about_me_texts am ON t.user_id = am.user_id
+    WHERE ts.student_user_id = student_id
+      AND (ts.teacher_accepted_student IS NULL OR ts.teacher_accepted_student = FALSE)
       AND (ts.hidden IS NULL OR ts.hidden = FALSE);
 
     RETURN COALESCE(result, '[]'::jsonb);

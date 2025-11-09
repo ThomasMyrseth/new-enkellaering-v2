@@ -1,7 +1,8 @@
-import { TeacherOrderWithTeacherData } from "../types";
+import { TeacherOrderJoinTeacher } from "../types";
+
 
 // Get all the new orders
-const getNewTeachers = async (BASEURL: string, token: string): Promise<TeacherOrderWithTeacherData[]> => {
+const getNewTeachers = async (BASEURL: string, token: string): Promise<TeacherOrderJoinTeacher[]> => {
     try {
         const res = await fetch(`${BASEURL}/get-new-orders`, {
             method: "GET",
@@ -15,7 +16,7 @@ const getNewTeachers = async (BASEURL: string, token: string): Promise<TeacherOr
         }
 
         const data = await res.json();
-        return data.teachers as TeacherOrderWithTeacherData[] || [];
+        return data.teachers as TeacherOrderJoinTeacher[] || [];
     } catch (e: unknown) {
       if (e instanceof Error) {
         throw new Error(`Failed to get new students: ${e.message}`);
@@ -57,7 +58,7 @@ export interface TeacherImageAndAboutMe {
     firstname: string;
     lastname: string;
     user_id: string;
-    image: string;
+    image_url: string;
   }
   
   // Get all teacher images and about me texts.

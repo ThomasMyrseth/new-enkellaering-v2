@@ -3,15 +3,12 @@
 import React, { useEffect, useState } from "react";
 import { Carousel } from "@/components/ui/apple-cards-carousel"; // reusing your carousel component
 import OrderCard from "./orderCard";
-import { TeacherOrderWithTeacherData } from "../types"; // adjust the import based on your project structure
-import { getNewTeachers, getAllTeacherImagesAndAboutMes } from "./getPushData";
+import { getNewTeachers } from "./getPushData";
+import { TeacherOrderJoinTeacher } from "../types";
 
-type Order = {
-    teacherOrder :TeacherOrderWithTeacherData;
-    imageURL :string;
-}
+
 export default function OrderCardsCarouselDemo() {
-    const [orders, setOrders] = useState<Order[]>([])
+    const [orders, setOrders] = useState<TeacherOrderJoinTeacher[]>([])
     const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8080'
     const token = localStorage.getItem('token') || ''
 
@@ -20,30 +17,13 @@ export default function OrderCardsCarouselDemo() {
 
             try {
                 const orders = await getNewTeachers(BASEURL, token)
-                const images = await getAllTeacherImagesAndAboutMes(BASEURL, token)
-
-                console.log("Orders", orders)
-                console.log("Images", images)
-
-                //blend them together
-                const blendedOrders: Order[] = orders.map((order: TeacherOrderWithTeacherData) => {
-                    const foundImage = images.find(
-                      (img) => img.user_id === order.teacher_user_id
-                    );
-              
-                    return {
-                      teacherOrder: order,
-                      imageURL: foundImage ? foundImage.image : "/enkel_laering_transparent.png", // Provide a default value if no image is found.
-                      handleDelete: deleteOrder
-                    };
-                });
-
+                
                 //filter them by date
-                blendedOrders.sort((a, b) => {
-                    return new Date(b.teacherOrder.created_at).getTime() - new Date(a.teacherOrder.created_at).getTime();
+                orders.sort((a, b) => {
+                    return new Date(b.order.created_at).getTime() - new Date(a.order.created_at).getTime();
                 });
                 
-                setOrders(blendedOrders)
+                setOrders(orders)
             }
             catch (error) {
                 alert(`Klarte ikke å hente inn dine nye bestillinger ${error}`)
@@ -56,17 +36,17 @@ export default function OrderCardsCarouselDemo() {
     const deleteOrder = (rowId: string) => {
       setOrders((prevOrders) =>
         prevOrders.filter(
-          (order) => order.teacherOrder.row_id !== rowId
+          (order) => order.order.row_id !== rowId
         )
       );
     };
 
     const cards = orders
-      .map((order: Order) => {
-        if (order.teacherOrder.hidden) {
+      .map((order: TeacherOrderJoinTeacher) => {
+        if (order.order.hidden) {
           return null;
         }
-        return <OrderCard key={order.teacherOrder.row_id} order={order} handleUIDelete={deleteOrder}/>;
+        return <OrderCard key={order.order.row_id} order={order} handleUIDelete={deleteOrder}/>;
       })
       .filter((card): card is JSX.Element => card !== null);
 

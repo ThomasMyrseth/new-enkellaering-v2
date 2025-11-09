@@ -252,8 +252,8 @@ def insert_quiz_questions(questions: list[dict]):
 def insert_new_student_order(
     student_user_id: str,
     teacher_user_id: str,
-    accept: bool,
-    physical_or_digital: bool,
+    accept: Optional[bool],
+    physical_or_digital: Optional[bool],
     location: str,
     comments: str
 ):
@@ -262,8 +262,8 @@ def insert_new_student_order(
         'row_id': str(uuid.uuid4()),
         'student_user_id': student_user_id,
         'teacher_user_id': teacher_user_id,
-        'teacher_accepted_student': str(accept),
-        'physical_or_digital': str(physical_or_digital),
+        'teacher_accepted_student': accept,
+        'physical_or_digital': physical_or_digital,
         'preferred_location': location,
         'order_comments': comments,
         'created_at': datetime.now(timezone.utc).isoformat(),

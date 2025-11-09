@@ -3,14 +3,12 @@
 import { useEffect } from "react";
 import { Carousel } from "@/components/ui/apple-cards-carousel";
 
-import { NewTeacherOrder } from "./types";
-
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080";
 
 export function NewStudentsWithPreferredTeacherWorkflowActions() {
   const token = localStorage.getItem("token") || '';
   const [loading, setLoading] = useState<boolean>(true);
-  const [newStudents, setNewStudents] = useState<NewTeacherOrder[]>([]);
+  const [newStudents, setNewStudents] = useState<TeacherOrderJoinStudent[]>([]);
 
 
 
@@ -35,15 +33,15 @@ export function NewStudentsWithPreferredTeacherWorkflowActions() {
 }
 
 
-const NewStudentWithPreferredTeacherActionsTable = ({newStudents,}: {newStudents: NewTeacherOrder[];}) => {
+const NewStudentWithPreferredTeacherActionsTable = ({newStudents,}: {newStudents: TeacherOrderJoinStudent[];}) => {
   
   // Order new students by created_at (most recent first)
-  newStudents.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  newStudents.sort((a, b) => new Date(b.teacher_student.created_at).getTime() - new Date(a.teacher_student.created_at).getTime());
 
   const cards = newStudents.map((ns) => {
     return (
       <NewStudentWithPreferredTeacherActionsCard
-        key={ns.row_id}
+        key={ns.teacher_student.row_id}
         ns={ns}
       />
     );
@@ -74,26 +72,27 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { TeacherOrderJoinStudent } from "../min-side/types";
 
 
 
-export default function NewStudentWithPreferredTeacherActionsCard({ ns }: { ns :NewTeacherOrder}) {
+export default function NewStudentWithPreferredTeacherActionsCard({ ns }: { ns :TeacherOrderJoinStudent}) {
   const [openDialog, setOpenDialog] = useState<boolean>(false)
   const token = localStorage.getItem('token') || ''
-  const formattedDate = new Date(ns.created_at).toLocaleDateString("nb-NO", {
+  const formattedDate = new Date(ns.teacher_student.created_at).toLocaleDateString("nb-NO", {
     day: "2-digit",
     month: "long",
     year: "numeric",
   });
 
   const teachingMethod =
-    ns.physical_or_digital === true
+    ns.teacher_student.physical_or_digital === true
       ? "Fysisk"
-      : ns.physical_or_digital === false
+      : ns.teacher_student.physical_or_digital === false
       ? "Digital"
       : "Vet ikke";
 
-  const handleAcceptClick = (value: boolean, order :NewTeacherOrder) => {
+  const handleAcceptClick = (value: boolean, order :TeacherOrderJoinStudent) => {
     setOpenDialog(false)
     handleSaveClick(value, token, order)
   }
@@ -113,22 +112,25 @@ export default function NewStudentWithPreferredTeacherActionsCard({ ns }: { ns :
           </div>
           <div className="p-4">
             <h3 className="text-lg font-bold">
-              {ns.firstname_parent} {ns.lastname_parent}
+              {ns.student.firstname_parent} {ns.student.lastname_parent} & <br/>
+              {ns.student.firstname_student} {ns.student.lastname_student}
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-300">{formattedDate}</p>
             <p className="mt-2 text-sm">
-              <span className="font-semibold">Contact:</span> {ns.phone_parent}
+              <span className="font-semibold">Telefon forelder:</span> {ns.student.phone_parent}
+              <br/>
+              <span className="font-semibold">Telefon elev:</span> {ns.student.phone_student}
             </p>
             <p className="mt-2 text-sm">
               <span className="font-semibold">Method:</span> {teachingMethod}
             </p>
-            {ns.physical_or_digital === true && ns.preferred_location && (
+            {ns.teacher_student.physical_or_digital === true && ns.teacher_student.preferred_location && (
               <p className="mt-2 text-sm">
-                <span className="font-semibold">Location:</span> {ns.preferred_location}
+                <span className="font-semibold">Location:</span> {ns.teacher_student.preferred_location}
               </p>
             )}
             <p className="mt-2 text-sm">
-              <span className="font-semibold">Comments:</span> {ns.order_comments}
+              <span className="font-semibold">Comments:</span> {ns.teacher_student.order_comments}
             </p>
           </div>
         </div>
@@ -171,12 +173,13 @@ async function getNewStudents(token :string) {
     return [];
   }
   const data = await response.json();
-  const students :NewTeacherOrder[] = data.new_orders || [];
+  console.log("New students data:", data);
+  const students :TeacherOrderJoinStudent[] = data.new_orders || [];
   return students
 }
 
 
-const handleSaveClick = async (accept :boolean, token :string, ns :NewTeacherOrder) => {
+const handleSaveClick = async (accept :boolean, token :string, ns :TeacherOrderJoinStudent) => {
   const response = await fetch(`${BASEURL}/teacher-accepts`, {
     method: "POST",
     headers: {
@@ -184,12 +187,10 @@ const handleSaveClick = async (accept :boolean, token :string, ns :NewTeacherOrd
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      row_id: ns.row_id,
-      student_user_id :ns.student_user_id,
-      firstname_student : ns.firstname_parent,
-      mail_student: ns.email_parent,
-      firstname_teacher: ns.firstname,
-      lastname_teacher: ns.lastname,
+      row_id: ns.teacher_student.row_id,
+      student_user_id :ns.teacher_student.student_user_id,
+      firstname_student : ns.student.firstname_parent,
+      mail_student: ns.student.email_parent,
       accept: accept,
     }),
   });
@@ -200,9 +201,9 @@ const handleSaveClick = async (accept :boolean, token :string, ns :NewTeacherOrd
     return;
   }
   if (accept) {
-    toast(`Du takker ja til ${ns.firstname_parent}`)
+    toast(`Du takker ja til ${ns.student.firstname_parent}`)
   }
   if(!accept) {
-    toast(`Du takker nei til ${ns.firstname_parent}`)
+    toast(`Du takker nei til ${ns.student.firstname_parent}`)
   }
 };

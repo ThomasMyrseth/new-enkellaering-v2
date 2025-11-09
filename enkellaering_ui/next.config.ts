@@ -15,7 +15,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "storage.googleapis.com",
+        hostname: "clfgrepvidmzconiqqrt.supabase.co",
       },
       {
         protocol: "https",

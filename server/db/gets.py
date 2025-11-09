@@ -188,8 +188,8 @@ def get_all_qualifications():
     return response.data
 
 def get_new_orders(student_user_id: str):
-    """Get new orders for student (pending teacher acceptances)"""
-    response = supabase.table('teacher_student').select('*, teachers(*)').eq('student_user_id', student_user_id).or_('teacher_accepted_student.is.null,teacher_accepted_student.eq.FALSE').or_('hidden.is.null,hidden.eq.FALSE').execute()
+    """Get new orders for student (pending teacher acceptances) - returns TeacherOrderJoinTeacher[]"""
+    response = supabase.rpc('get_new_orders_for_student', {'student_id': student_user_id}).execute()
     return response.data
 
 def get_teacher_student():
