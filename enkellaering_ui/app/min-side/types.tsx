@@ -74,7 +74,7 @@ export type TeacherOrder = {
 
 export type TeacherOrderJoinTeacher = {
     teacher :Teacher;
-    teacher_student :TeacherOrder;
+    order :TeacherOrder;
     about_me :AboutMe;
 }
 

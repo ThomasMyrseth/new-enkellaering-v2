@@ -68,10 +68,10 @@ const saveToDB = async ({ questions }: { questions: QuestionWithFileType[] }) =>
     }));
     formData.append('questions', JSON.stringify(questionsData));
     
-    // Append files separately with unique keys
-    questions.forEach((q, index) => {
+    // Append files separately with unique keys in format: quiz_id-----question_id
+    questions.forEach((q) => {
       if (q.image) {
-        formData.append(`image_${index}`, q.image);
+        formData.append(`${q.quiz_id}-----${q.question_id}`, q.image);
       }
     });
 

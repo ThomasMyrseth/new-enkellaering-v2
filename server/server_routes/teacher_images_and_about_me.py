@@ -52,7 +52,7 @@ def upload_file(user_id):
 
     try:
         # Upload directly from file object
-        upload_or_replace_image_in_bucket(bucket_name, file, destination_blob_name)
+        url = upload_or_replace_image_in_bucket(bucket_name, file, destination_blob_name)
 
     except Exception as e:
         logging.error(f"Error uploading image, {str(e)}")
@@ -60,7 +60,7 @@ def upload_file(user_id):
     
     try:
         # Insert about_me text into BigQuery
-        upsert_about_me_text(user_id=user_id, text=about_me, firstname=firstname, lastname=lastname)
+        upsert_about_me_text(user_id=user_id, text=about_me, firstname=firstname, lastname=lastname, image_url=url)
 
         return jsonify({"message": f"File uploaded successfully to {destination_blob_name}"}), 200
     except Exception as e:

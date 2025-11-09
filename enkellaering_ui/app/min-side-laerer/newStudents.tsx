@@ -122,15 +122,15 @@ export default function NewStudentWithPreferredTeacherActionsCard({ ns }: { ns :
               <span className="font-semibold">Telefon elev:</span> {ns.student.phone_student}
             </p>
             <p className="mt-2 text-sm">
-              <span className="font-semibold">Method:</span> {teachingMethod}
+              <span className="font-semibold">Undervisningsform:</span> {teachingMethod}
             </p>
             {ns.teacher_student.physical_or_digital === true && ns.teacher_student.preferred_location && (
               <p className="mt-2 text-sm">
-                <span className="font-semibold">Location:</span> {ns.teacher_student.preferred_location}
+                <span className="font-semibold">Sted:</span> {ns.teacher_student.preferred_location}
               </p>
             )}
             <p className="mt-2 text-sm">
-              <span className="font-semibold">Comments:</span> {ns.teacher_student.order_comments}
+              <span className="font-semibold">Kommentar:</span> {ns.teacher_student.order_comments}
             </p>
           </div>
         </div>

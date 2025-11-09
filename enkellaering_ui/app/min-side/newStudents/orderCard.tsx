@@ -29,17 +29,17 @@ export default function OrderCard({ order, handleUIDelete }: {order: TeacherOrde
   const router = useRouter();
   // State for the editable fields
   const [physicalOrDigital, setPhysicalOrDigital] = useState<boolean>(
-    order.teacher_student.physical_or_digital
+    order.order.physical_or_digital
   );
   const [comments, setComments] = useState<string>(
-    order.teacher_student.order_comments
+    order.order.order_comments
   );
   const [meetingLocation, setMeetingLocation] = useState<string>(
-    order.teacher_student.preferred_location
+    order.order.preferred_location
   );
 
   const formattedDate = new Date(
-    order.teacher_student.created_at
+    order.order.created_at
   ).toLocaleDateString("nb-NO", {
     day: "2-digit",
     month: "long",
@@ -49,7 +49,7 @@ export default function OrderCard({ order, handleUIDelete }: {order: TeacherOrde
   const teachingMethod = physicalOrDigital ? "Fysisk" : "Digitalt";
 
   // Determine teacher acceptance status.
-  const teacherAccepted = order.teacher_student.teacher_accepted_student;
+  const teacherAccepted = order.order.teacher_accepted_student;
   const acceptanceText =
     teacherAccepted === true
       ? "Ja"
@@ -72,7 +72,7 @@ export default function OrderCard({ order, handleUIDelete }: {order: TeacherOrde
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          row_id: order.teacher_student.row_id,
+          row_id: order.order.row_id,
           physical_or_digital: physicalOrDigital,
           meeting_location: meetingLocation,
           comments: comments,
@@ -93,7 +93,7 @@ export default function OrderCard({ order, handleUIDelete }: {order: TeacherOrde
   const handleDelete = async () => {
 
     //update the UI
-    handleUIDelete(order.teacher_student.row_id)
+    handleUIDelete(order.order.row_id)
 
     const token = localStorage.getItem("token");
     if (!token) {
@@ -107,7 +107,7 @@ export default function OrderCard({ order, handleUIDelete }: {order: TeacherOrde
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ row_id: order.teacher_student.row_id }),
+        body: JSON.stringify({ row_id: order.order.row_id }),
       });
       if (!response.ok) {
         alert("Error deleting order");

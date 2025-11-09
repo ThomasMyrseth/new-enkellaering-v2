@@ -98,7 +98,7 @@ CREATE TABLE questions (
     quiz_id UUID,
     question TEXT,
     answer_options TEXT,
-    correct_option TEXT,
+    correct_option INTEGER,
     image_url TEXT,
     time_limit TEXT,
     created_at TIMESTAMPTZ,

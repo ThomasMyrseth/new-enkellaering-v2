@@ -16,14 +16,14 @@ export default function OrderCardsCarouselDemo() {
         async function fetchOrders() {
 
             try {
-                const orders = await getNewTeachers(BASEURL, token)
+                const o = await getNewTeachers(BASEURL, token)
                 
                 //filter them by date
-                orders.sort((a, b) => {
+                o.sort((a, b) => {
                     return new Date(b.order.created_at).getTime() - new Date(a.order.created_at).getTime();
                 });
                 
-                setOrders(orders)
+                setOrders(o)
             }
             catch (error) {
                 alert(`Klarte ikke å hente inn dine nye bestillinger ${error}`)

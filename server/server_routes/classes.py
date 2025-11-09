@@ -51,7 +51,7 @@ def get_all_classes_route(user_id):
         return jsonify({"classes": classes}), 200
     except Exception as e:
         print("error getting all classes:", e)
-        return jsonify({"message": str(e)}), 400
+        return jsonify({"message": str(e)}), 500
 
 @classes_bp.route('/set-classes-to-invoiced', methods=["POST"])
 @token_required

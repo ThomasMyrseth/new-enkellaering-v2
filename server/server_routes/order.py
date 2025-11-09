@@ -482,12 +482,14 @@ def teacher_accepts_route(user_id):
     student_user_id = data.get('student_user_id')
     firstname = data.get('firstname_student')
     mail = data.get('mail_student')
-    teacher_firstname = data.get('firstname_teacher')
-    teacher_lastname = data.get('lastname_teacher')
     accept = data.get('accept')
-    if not (row_id and student_user_id and firstname and teacher_firstname and teacher_lastname and mail):
+    if not (row_id and student_user_id and firstname and mail):
         return jsonify({"message": "Missing fields"}), 400
     try:
+        teacher = get_teacher_by_user_id(teacher_user_id)[0]
+        teacher_firstname = teacher.get('firstname', '')
+        teacher_lastname = teacher.get('lastname', '')
+
         name = teacher_firstname + " " + teacher_lastname
         sendAcceptOrRejectToStudentMail(studentName=firstname, teacherName=name, acceptOrReject=accept, receipientStudentMail=mail)
     except Exception as e:

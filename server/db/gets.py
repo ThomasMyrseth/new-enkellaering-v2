@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from supabase_client import supabase
+import json
+import re
 
 def get_all_teachers():
     """Get all active teachers (not resigned)"""
@@ -155,7 +157,33 @@ def get_quiz_meta_data(quiz_id: str):
 def get_quiz(quiz_id: str):
     """Get all questions for a quiz"""
     response = supabase.table('questions').select('*').eq('quiz_id', quiz_id).execute()
-    return response.data
+    questions = response.data
+
+    # Parse answer_options if it's a string (PostgreSQL array format)
+    for question in questions:
+        if 'answer_options' in question and isinstance(question['answer_options'], str):
+            try:
+                answer_str = question['answer_options']
+
+                # Convert PostgreSQL array format to JSON array format
+                # Replace outer {} with []
+                answer_str = answer_str.replace('{', '[', 1)
+                answer_str = answer_str[::-1].replace('}', ']', 1)[::-1]
+
+                # Replace escaped quotes \" with regular quotes "
+                answer_str = answer_str.replace('\\"', '"')
+
+                # Wrap unquoted items in quotes using regex
+                # Match items that aren't already quoted
+                answer_str = re.sub(r'(?<=[,\[])\s*([^",\[\]]+)\s*(?=[,\]])', r'"\1"', answer_str)
+
+                # Parse as JSON
+                question['answer_options'] = json.loads(answer_str)
+            except (json.JSONDecodeError, TypeError, ValueError):
+                # If parsing fails, keep the original value
+                pass
+
+    return questions
 
 def get_quiz_status(user_id: str):
     """Get quiz status for a user (combines quizzes and results)"""
@@ -175,11 +203,6 @@ def get_all_reviews():
     """Get all reviews"""
     response = supabase.table('reviews').select('*').execute()
     return response.data
-
-def is_user_admin(user_id: str):
-    """Check if user is an admin"""
-    response = supabase.table('teachers').select('admin').eq('user_id', user_id).execute()
-    return bool(response.data and response.data[0].get("admin") == 'TRUE')
 
 def get_all_qualifications():
     """Get all qualifications (quizzes with passed results)"""

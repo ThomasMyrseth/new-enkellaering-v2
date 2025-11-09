@@ -142,13 +142,16 @@ function SignupFormContent() {
             
             router.push(`/min-side`);
         }).catch(err => {
+            setIsSendDisabled(false)
             console.error("Failed to parse response JSON:", err);
         });
       } else {
+        setIsSendDisabled(false)
         const errorData = await response.json();
         alert(`Signup failed: ${errorData.error}`);
       }
     } catch (error) {
+      setIsSendDisabled(false)
       console.error("Signup error:", error);
       alert("An unexpected error occurred. Please try again.");
     }
