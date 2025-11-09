@@ -21,12 +21,13 @@ export type QuizResult = {
 };
 
 export type Quiz = {
+  content: string;
   created_at: string; // Timestamp as a string
-  image: string; // URL string
+  image_url: string; // URL string
+  number_of_questions: number;
   pass_threshold: number;
   quiz_id: string;
   title: string;
-  content: string;
 };
 
 export type QuizStatus = {
