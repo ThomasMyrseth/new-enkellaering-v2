@@ -274,7 +274,7 @@ const fetchCards = async (token :string, baseUrl :string) => {
                 title: quiz.title,
                 description: "beskrivelse av quizen",
                 status: status,
-                src: quiz.image,
+                src: quiz.image_url,
                 ctaText: ctaText,
                 ctaLink: `/quiz/${quiz.quiz_id}`,
                 content: quiz.content

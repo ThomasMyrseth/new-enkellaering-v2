@@ -3,11 +3,11 @@
 
 import React from "react"
 import { useEffect, useState } from "react"
-import { QuizType } from "./types"
 import { useRouter } from "next/navigation"
 import { FocusCards } from "@/components/ui/focus-cards"
 import { motion } from "framer-motion";
 import { LampContainer } from "@/components/ui/lamp"
+import { Quiz } from "../min-side-laerer/types"
 
 
 export function QuizPageComponent({description} : {description?: string}) {
@@ -15,7 +15,7 @@ export function QuizPageComponent({description} : {description?: string}) {
     const baseUrl :string= process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8080'
     const router = useRouter()
     
-    const [quizzes, setQuizzes] = useState<QuizType[]>([])
+    const [quizzes, setQuizzes] = useState<Quiz[]>([])
 
     //fetch token
     useEffect(() => {
@@ -54,9 +54,9 @@ export function QuizPageComponent({description} : {description?: string}) {
    }
 
 
-   const cards = quizzes.map((quiz: QuizType) => ({
+   const cards = quizzes.map((quiz: Quiz) => ({
         title: quiz.title,
-        src: quiz.image || "/enkel_laering_transparent.png",
+        src: quiz.image_url || "/enkel_laering_transparent.png",
         description: "",
         onClick: () => handleSetSelectedQuiz(quiz.quiz_id),
     }));

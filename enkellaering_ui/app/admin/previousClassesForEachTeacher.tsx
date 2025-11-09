@@ -380,7 +380,7 @@ export function PreviousClassesForEachTeacher() {
                 setQualifications(quals);
                 
                 // Get unique qualification titles
-                const uniqueTitles = [...new Set(quals.map(q => q.title))];
+                const uniqueTitles = [...new Set(quals.map(q => q.quizzes.title))];
                 setAllQualifications(uniqueTitles);
             } catch (error) {
                 console.error("Error fetching qualifications:", error);
@@ -447,7 +447,7 @@ export function PreviousClassesForEachTeacher() {
             const teacherQualifications = qualifications.filter(q => 
                 q.user_id === ct.teacher.user_id && q.passed === true
             );
-            const teacherQualificationTitles = teacherQualifications.map(q => q.title);
+            const teacherQualificationTitles = teacherQualifications.map(q => q.quizzes.title);
             if (!teacherQualificationTitles.includes(filterQualification)) return false;
         }
         

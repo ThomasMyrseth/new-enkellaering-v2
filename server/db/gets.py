@@ -184,6 +184,7 @@ def is_user_admin(user_id: str):
 def get_all_qualifications():
     """Get all qualifications (quizzes with passed results)"""
     response = supabase.table('quiz_results').select('*, quizzes(*)').eq('passed', 'TRUE').execute()
+    
     return response.data
 
 def get_new_orders(student_user_id: str):
