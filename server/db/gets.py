@@ -207,8 +207,14 @@ def get_all_reviews():
 def get_all_qualifications():
     """Get all qualifications (quizzes with passed results)"""
     response = supabase.table('quiz_results').select('*, quizzes(*)').eq('passed', 'TRUE').execute()
-    
-    return response.data
+
+    # Filter out any results where the quiz has been deleted (quizzes is null)
+    valid_qualifications = [
+        result for result in response.data
+        if result.get('quizzes') is not None
+    ]
+
+    return valid_qualifications
 
 def get_new_orders(student_user_id: str):
     """Get new orders for student (pending teacher acceptances) - returns TeacherOrderJoinTeacher[]"""
