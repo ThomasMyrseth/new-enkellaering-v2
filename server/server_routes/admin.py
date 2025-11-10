@@ -2,8 +2,8 @@ from flask import Blueprint, jsonify, request
 import os
 
 from .config import token_required
-from cloud_sql.gets import is_user_admin
-from cloud_sql.alters import update_travel_payment
+from db.gets import is_admin
+from db.alters import update_travel_payment
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -12,7 +12,7 @@ admin_bp = Blueprint('admin', __name__)
 def is_admin_route(user_id):
     """Check whether the given user is an admin via Cloud SQL"""
     try:
-        res = is_user_admin(user_id)
+        res = is_admin(user_id)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     return jsonify({"is_admin": res}), 200
@@ -43,7 +43,7 @@ def update_travel_payment_route(user_id):
 
     # Verify admin rights
     try:
-        if not is_user_admin(admin_user_id):
+        if not is_admin(admin_user_id):
             return jsonify({"error": "User is not an admin"}), 403
     except Exception as e:
         return jsonify({"error": str(e)}), 500

@@ -63,6 +63,7 @@ const getAllQualifications = async () => {
             throw new Error("Failed to fetch qualifications");
         }
         const data = await response.json();
+        console.log("Fetched qualifications:", data);
         return data.qualifications || [];
     }
 
@@ -78,7 +79,7 @@ const buildTeacherCards = (teachers: ExpandedTeacher[], reviews: Review[], image
 
     const fallbackAboutMe: AboutMe = {
         about_me: "Jeg har ikke skrevet noe enda",
-        image: "/enkel_laering_transparent.png",
+        image_url: "/enkel_laering_transparent.png",
         user_id: '0',
         firstname: 'Enkel',
         lastname: 'Læring'
@@ -88,13 +89,13 @@ const buildTeacherCards = (teachers: ExpandedTeacher[], reviews: Review[], image
         const teacherReviews :Review[]= reviews.filter((review) => review.teacher_user_id === teacher.user_id);
         const imageAndAboutMe :AboutMe= imagesAndAboutMes.find((i) => i.user_id === teacher.user_id) || fallbackAboutMe;
         const teacherQualifications :Qualification[]= qualifications.filter((qualification) => qualification.user_id === teacher.user_id && qualification.passed === true);
-        const qualificationTitles :string[]= teacherQualifications.map((qualification) => qualification.title);
+        const qualificationTitles :string[]= teacherQualifications.map((qualification) => qualification.quizzes.title);
         
         const card :CardType = {
             teacher: teacher,
             reviews: teacherReviews,
             description: imageAndAboutMe.about_me || '',
-            src: imageAndAboutMe.image || fallbackAboutMe.image,
+            src: imageAndAboutMe.image_url || fallbackAboutMe.image_url,
             qualifications: qualificationTitles,
         }
 

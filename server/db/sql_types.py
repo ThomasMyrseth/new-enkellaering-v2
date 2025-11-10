@@ -98,13 +98,10 @@ class NewStudents:
         has_signed_up: bool,
         from_referal: bool,
         has_finished_onboarding: bool,
-        has_assigned_teacher: bool,
 
         called_at: Optional[datetime] = None,
         answered_at: Optional[datetime] = None,
         signed_up_at: Optional[datetime] = None,
-        assigned_teacher_at: Optional[datetime] = None,
-        assigned_teacher_user_id: Optional[str] = None,
         finished_onboarding_at: Optional[datetime] = None,
 
         referee_phone: Optional[str] = None,
@@ -126,10 +123,7 @@ class NewStudents:
         self.signed_up_at = signed_up_at
         self.from_referal = from_referal
         self.referee_phone = referee_phone
-        self.has_assigned_teacher = has_assigned_teacher
-        self.assigned_teacher_at = assigned_teacher_at
         self.has_finished_onboarding = has_finished_onboarding
-        self.assigned_teacher_user_id = assigned_teacher_user_id
         self.finished_onboarding_at = finished_onboarding_at
         self.comments = comments
         self.referee_name = referee_name

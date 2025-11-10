@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import React, { useState } from "react";
-import { TeacherOrderWithTeacherData } from "../types";
+import { TeacherOrderJoinTeacher } from "../types";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,30 +21,25 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
-interface Order {
-  teacherOrder: TeacherOrderWithTeacherData;
-  imageURL: string;
-}
-
 
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080";
 
-export default function OrderCard({ order, handleUIDelete }: {order: Order, handleUIDelete :(rowId :string) => void}) {
+export default function OrderCard({ order, handleUIDelete }: {order: TeacherOrderJoinTeacher, handleUIDelete :(rowId :string) => void}) {
   const router = useRouter();
   // State for the editable fields
   const [physicalOrDigital, setPhysicalOrDigital] = useState<boolean>(
-    order.teacherOrder.physical_or_digital
+    order.order.physical_or_digital
   );
   const [comments, setComments] = useState<string>(
-    order.teacherOrder.order_comments
+    order.order.order_comments
   );
   const [meetingLocation, setMeetingLocation] = useState<string>(
-    order.teacherOrder.preferred_location
+    order.order.preferred_location
   );
 
   const formattedDate = new Date(
-    order.teacherOrder.created_at
+    order.order.created_at
   ).toLocaleDateString("nb-NO", {
     day: "2-digit",
     month: "long",
@@ -54,7 +49,7 @@ export default function OrderCard({ order, handleUIDelete }: {order: Order, hand
   const teachingMethod = physicalOrDigital ? "Fysisk" : "Digitalt";
 
   // Determine teacher acceptance status.
-  const teacherAccepted = order.teacherOrder.teacher_accepted_student;
+  const teacherAccepted = order.order.teacher_accepted_student;
   const acceptanceText =
     teacherAccepted === true
       ? "Ja"
@@ -77,7 +72,7 @@ export default function OrderCard({ order, handleUIDelete }: {order: Order, hand
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          row_id: order.teacherOrder.row_id,
+          row_id: order.order.row_id,
           physical_or_digital: physicalOrDigital,
           meeting_location: meetingLocation,
           comments: comments,
@@ -98,7 +93,7 @@ export default function OrderCard({ order, handleUIDelete }: {order: Order, hand
   const handleDelete = async () => {
 
     //update the UI
-    handleUIDelete(order.teacherOrder.row_id)
+    handleUIDelete(order.order.row_id)
 
     const token = localStorage.getItem("token");
     if (!token) {
@@ -112,7 +107,7 @@ export default function OrderCard({ order, handleUIDelete }: {order: Order, hand
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ row_id: order.teacherOrder.row_id }),
+        body: JSON.stringify({ row_id: order.order.row_id }),
       });
       if (!response.ok) {
         alert("Error deleting order");
@@ -138,7 +133,7 @@ export default function OrderCard({ order, handleUIDelete }: {order: Order, hand
           )}
           <div className="w-full h-40 relative">
             <Image
-              src={order.imageURL}
+              src={order.about_me? order.about_me.image_url || '/enkel_laering_transparent.png' : '/enkel_laering_transparent.png'}
               alt="Order image"
               layout="fill"
               objectFit="cover"
@@ -147,15 +142,15 @@ export default function OrderCard({ order, handleUIDelete }: {order: Order, hand
           </div>
           <div className="p-4">
             <h3 className="text-lg font-bold">
-              {order.teacherOrder.firstname}{" "}
-              {order.teacherOrder.lastname}
+              {order.teacher.firstname}{" "}
+              {order.teacher.lastname}
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-300">
               {formattedDate}
             </p>
             <p className="mt-2 text-sm">
               <span className="font-semibold">Tlf:</span>{" "}
-              {order.teacherOrder.phone}
+              {order.teacher.phone}
             </p>
             <p className="mt-2 text-sm">
               <span className="font-semibold">Hvordan:</span> {teachingMethod}

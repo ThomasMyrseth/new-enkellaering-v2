@@ -187,7 +187,7 @@ const Quiz: React.FC<QuizProps> = ({
               questionNumber={index + 1}
               options={question.answer_options}
               correctOption={question.correct_option}
-              image={question.image}
+              image={question.image_url}
               onSubmitAnswer={incrementCorrectAnswer}
               timeLimit={question.time_limit}
             />

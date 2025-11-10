@@ -11,7 +11,7 @@ FROM_EMAIL = os.getenv("MAIL_USERNAME") or "kontakt@enkellaering.no"
 
 job_bp = Blueprint('job', __name__)
 
-from cloud_sql.inserts import insertJobApplication, uploadRecumeToStorage
+from db.inserts import insertJobApplication, uploadRecumeToStorage
 @job_bp.route('/upload-job-application', methods=['POST'])
 def uploadJobApplicationRoute():
     firstname = request.form.get("firstname")

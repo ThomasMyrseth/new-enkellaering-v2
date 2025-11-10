@@ -6,7 +6,7 @@ from datetime import datetime
 import logging
 
 from .config import token_required
-from cloud_sql.gets import (
+from db.gets import (
     get_all_new_students,
     get_all_students_without_teacher,
     get_new_orders_for_teacher,
@@ -15,19 +15,19 @@ from cloud_sql.gets import (
     get_new_orders,
     get_teacher_student
 )
-from cloud_sql.inserts import (
+from db.inserts import (
     insert_new_student,
     insert_new_student_order,
     insert_new_student_with_preferred_teacher,
     add_teacher_to_new_student
 )
-from cloud_sql.alters import (
+from db.alters import (
     alter_new_student,
     set_your_teacher as cloud_set_your_teacher,
     cancel_new_order,
     update_new_order as cloud_update_new_order,
 )
-from cloud_sql.deletes import (
+from db.deletes import (
     hide_new_student,
     hide_new_order_from_new_students_table,
     remove_teacher_from_student as cloud_remove_teacher_from_student,
@@ -105,9 +105,6 @@ def update_new_student_workflow(user_id):
         "signed_up_at": data.get("signed_up_at"),
         "from_referal": data.get("from_referal"),
         "referee_phone": data.get("referee_phone"),
-        "has_assigned_teacher": data.get("has_assigned_teacher"),
-        "assigned_teacher_at": data.get("assigned_teacher_at"),
-        "assigned_teacher_user_id": data.get("teacher_user_id"),
         "has_finished_onboarding": data.get("has_finished_onboarding"),
         "finished_onboarding_at": data.get("finished_onboarding_at"),
         "comments": data.get("comments"),
@@ -124,29 +121,22 @@ def update_new_student_workflow(user_id):
         logging.error(f"Error updating new student: {e}")
         return jsonify({"message": str(e)}), 500
 
-    if data.get("has_assigned_teacher"):
-        try:
-            cloud_set_your_teacher(data["phone"], data["teacher_user_id"])
-        except Exception as e:
-            logging.error(f"Error setting your_teacher: {e}")
-            return jsonify({"message": str(e)}), 500
-
     return jsonify({"message": "Updated new student successfully"}), 200
 
 def clean_updates(updates: dict):
     """Ensure all fields have valid default values."""
     boolean_fields = [
         "has_called", "has_answered", "has_signed_up", "from_referal",
-        "has_assigned_teacher", "has_finished_onboarding", "paid_referee"
+        "has_finished_onboarding", "paid_referee"
     ]
     
     timestamp_fields = [
-        "called_at", "answered_at", "signed_up_at", "assigned_teacher_at",
+        "called_at", "answered_at", "signed_up_at",
         "finished_onboarding_at", "paid_referee_at"
     ]
     
     string_fields = [
-        "referee_phone", "assigned_teacher_user_id", "comments"
+        "referee_phone", "comments"
     ]
     
     # Set default values for missing or `None` fields
@@ -174,7 +164,6 @@ def validate_new_student_data(data: dict) -> tuple[bool, str]:
         "has_answered": bool,
         "has_signed_up": bool,
         "from_referal": bool,
-        "has_assigned_teacher": bool,
     }
 
     optional_fields = {
@@ -182,8 +171,6 @@ def validate_new_student_data(data: dict) -> tuple[bool, str]:
         "answered_at": str,
         "signed_up_at": str,
         "referee_phone": str,
-        "assigned_teacher_at": str,
-        "teacher_user_id": str,
         "has_finished_onboarding": bool,
         "finished_onboarding_at": str,
         "comments": str,
@@ -254,7 +241,7 @@ def submit_new_student_route():
             "new_student_id": str(uuid.uuid4()),
             "phone": phone,
             "preffered_teacher": '',
-            "created_at": datetime.now(norway_tz),
+            "created_at": datetime.now(norway_tz).isoformat(),
             "has_called": False,
             "called_at": None,
             "has_answered": False,
@@ -265,9 +252,6 @@ def submit_new_student_route():
             "referee_phone": None,
             "referee_name": None,
             "referee_account_number": None,
-            "has_assigned_teacher": False,
-            "assigned_teacher_at": None,
-            "assigned_teacher_user_id": None,
             "has_finished_onboarding": False,
             "finished_onboarding_at": None,
             "comments": None,
@@ -276,7 +260,7 @@ def submit_new_student_route():
         }
         insert_new_student(ns)
     except Exception as e:
-        print(f"Error inserting new student: {e}")
+        logging.error(f"Error inserting new student: {e}")
         return jsonify({"message": str(e)}), 500
 
     t = threading.Thread(
@@ -337,7 +321,7 @@ def submit_new_referal_route():
     ns = {
         "new_student_id": str(uuid.uuid4()),
         "phone": referal_phone,
-        "created_at": datetime.now(norway_tz),
+        "created_at": datetime.now(norway_tz).isoformat(),
         "has_called": False,
         "called_at": None,
         "has_answered": False,
@@ -347,9 +331,6 @@ def submit_new_referal_route():
         "from_referal": True,
         "referee_phone": referee_phone,
         "referee_name": referee_name,
-        "has_assigned_teacher": False,
-        "assigned_teacher_at": None,
-        "assigned_teacher_user_id": None,
         "has_finished_onboarding": False,
         "finished_onboarding_at": None,
         "comments": None,
@@ -488,12 +469,14 @@ def teacher_accepts_route(user_id):
     student_user_id = data.get('student_user_id')
     firstname = data.get('firstname_student')
     mail = data.get('mail_student')
-    teacher_firstname = data.get('firstname_teacher')
-    teacher_lastname = data.get('lastname_teacher')
     accept = data.get('accept')
-    if not (row_id and student_user_id and firstname and teacher_firstname and teacher_lastname and mail):
+    if not (row_id and student_user_id and firstname and mail):
         return jsonify({"message": "Missing fields"}), 400
     try:
+        teacher = get_teacher_by_user_id(teacher_user_id)[0]
+        teacher_firstname = teacher.get('firstname', '')
+        teacher_lastname = teacher.get('lastname', '')
+
         name = teacher_firstname + " " + teacher_lastname
         sendAcceptOrRejectToStudentMail(studentName=firstname, teacherName=name, acceptOrReject=accept, receipientStudentMail=mail)
     except Exception as e:
@@ -564,7 +547,7 @@ def assign_teacher_for_student(user_id):
 
 
 
-from cloud_sql.inserts import insertNewTeacherReferal
+from db.inserts import insertNewTeacherReferal
 from server_routes.email import sendEmailToAdminAboutNewTeacherReferal
 @order_bp.route('/submit-new-teacher-referal', methods=["POST"])
 @token_required

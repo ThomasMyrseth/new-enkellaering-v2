@@ -1,3 +1,5 @@
+import { AboutMe } from "@/components/ui/teacherCard/typesAndData"
+
 export type Student = {
     user_id: string,
     firstname_parent: string,
@@ -73,33 +75,11 @@ export type TeacherOrder = {
 export type TeacherOrderJoinTeacher = {
     teacher :Teacher;
     order :TeacherOrder;
+    about_me :AboutMe;
 }
 
-export type TeacherOrderWithTeacherData = {
-  additional_comments: string;
-  address: string;
-  admin: boolean;
-  created_at: string;
-  digital_tutouring: boolean;
-  email: string;
-  firstname: string;
-  hidden: boolean;
-  hourly_pay: string;
-  lastname: string;
-  location: string;
-  order_comments: string;
-  phone: string;
-  physical_or_digital: boolean;
-  physical_tutouring: boolean;
-  postal_code: string;
-  preferred_location: string;
-  resigned: boolean;
-  resigned_at: string | null;
-  row_id: string;
-  student_user_id: string;
-  teacher_accepted_student: boolean | null;
-  teacher_user_id: string;
-  travel_pay_from_student: number | null;
-  travel_pay_to_teacher: number | null;
-  user_id: string;
+export type TeacherOrderJoinStudent = {
+    student :Student;
+    teacher_student :TeacherOrder;
 }
+

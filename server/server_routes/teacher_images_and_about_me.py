@@ -2,10 +2,10 @@ from flask import Blueprint, request, jsonify
 import logging
 
 from .config import token_required
-from cloud_sql.buckets.uploads import upload_or_replace_image_in_bucket
-from cloud_sql.inserts import upsert_about_me_text
-from cloud_sql.buckets.downloads import download_all_teacher_images
-from cloud_sql.gets import get_all_about_me_texts
+from db.buckets.uploads import upload_or_replace_image_in_bucket
+from db.inserts import upsert_about_me_text
+from db.buckets.downloads import download_all_teacher_images
+from db.gets import get_all_about_me_texts
 
 teacher_images_bp = Blueprint('teacher_images', __name__)
 import mimetypes
@@ -45,14 +45,14 @@ def upload_file(user_id):
     standardized_filename = f"{user_id}-profile_picture{file_extension}"
 
     # Define Google Cloud Storage bucket and path
-    bucket_name = "enkellaering_images"
+    bucket_name = "enkellaering-images"
     destination_blob_name = f"teacher_images/{user_id}/{standardized_filename}"
 
 
 
     try:
         # Upload directly from file object
-        upload_or_replace_image_in_bucket(bucket_name, file, destination_blob_name)
+        url = upload_or_replace_image_in_bucket(bucket_name, file, destination_blob_name)
 
     except Exception as e:
         logging.error(f"Error uploading image, {str(e)}")
@@ -60,7 +60,7 @@ def upload_file(user_id):
     
     try:
         # Insert about_me text into BigQuery
-        upsert_about_me_text(user_id=user_id, text=about_me, firstname=firstname, lastname=lastname)
+        upsert_about_me_text(user_id=user_id, text=about_me, firstname=firstname, lastname=lastname, image_url=url)
 
         return jsonify({"message": f"File uploaded successfully to {destination_blob_name}"}), 200
     except Exception as e:
@@ -74,42 +74,12 @@ def get_all_images_and_about_mes():
         # Fetch about me texts
         about_mes = get_all_about_me_texts()
 
-        # Fetch teacher images
-        images = download_all_teacher_images()
-
         if not about_mes:
-            return jsonify({"message": "Error getting about me texts"}), 500
-        
-        if not images:
-            return jsonify({"message": "Error getting images"}), 500
+            logging.error("About mes is empty")
+            return jsonify({"message": "About mes are empty"}), 500
 
-        formatted_data = []
-
-        for i in range(len(about_mes)):
-            a = about_mes[i]
-
-            about_me = a['about_me']
-            firstname = a['firstname']
-            lastname = a['lastname']
-            user_id = a['user_id']
-            image = ''
-            #find the image
-            for image_url in images:
-                image_user_id = image_url.split("/")[-2]
-                if image_user_id == user_id:
-                    image = image_url
-                    break #stop after the first match
-
-            f = {}
-            f['about_me'] = about_me
-            f['firstname'] = firstname
-            f['lastname'] = lastname
-            f['user_id'] = user_id
-            f['image'] = image
-
-            formatted_data.append(f)
-
-        return jsonify({"data": formatted_data}), 200
+        return jsonify({"data": about_mes}), 200
     
     except Exception as e:
+        logging.error(f"Error fetching teacher images and about me texts: {e}")
         return jsonify({"message": str(e)}), 500

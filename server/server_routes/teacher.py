@@ -2,13 +2,13 @@ from flask import Blueprint, request, jsonify
 import logging
 
 from .config import token_required
-from cloud_sql.gets import (
+from db.gets import (
     get_teacher_by_user_id,
     get_teacher_for_student,
     get_all_teachers,
     get_all_teachers_join_students
 )
-from cloud_sql.alters import (
+from db.alters import (
     toggle_want_more_students,
     update_teacher_profile
 )
@@ -49,7 +49,7 @@ def get_all_teachers_route():
         logging.exception("Failed to fetch all teachers")
         return jsonify({"message": str(e)}), 500
     
-from cloud_sql.gets import get_all_teachers_inc_resigned
+from db.gets import get_all_teachers_inc_resigned
 @teacher_bp.route('/get-all-teachers-inc-resigned', methods=["GET"])
 def get_all_teachers_inc_resigned_route():
     try:
@@ -114,7 +114,7 @@ def update_teacher_profile_route(user_id):
         return jsonify({"message": str(e)}), 500
 
 
-from cloud_sql.alters import update_teacher_notes
+from db.alters import update_teacher_notes
 @teacher_bp.route('/upload-notes-about-teacher', methods=["POST"])
 @token_required
 def upload_notes_about_teacher_route(user_id):
@@ -131,7 +131,7 @@ def upload_notes_about_teacher_route(user_id):
         return jsonify({"message": str(e)}), 500
     
 
-from cloud_sql.gets import get_teachers_without_about_me
+from db.gets import get_teachers_without_about_me
 from server_routes.email import sendEmailsToAddAboutMeText
 @teacher_bp.route('/send-email-to-teachers-without-about-me', methods=["GET"])
 def send_email_to_teachers_without_about_me_route():
@@ -149,7 +149,7 @@ def send_email_to_teachers_without_about_me_route():
         return jsonify({"message": str(e)}), 500
     
 
-from cloud_sql.gets import get_teachers_without_quizes
+from db.gets import get_teachers_without_quizes
 from server_routes.email import sendEmailsToTeacherAboutTakingQuiz
 @teacher_bp.route('/send-email-to-teachers-without-quizes', methods=["GET"])
 def send_email_to_teachers_without_quizes_route():
@@ -167,7 +167,7 @@ def send_email_to_teachers_without_quizes_route():
         return jsonify({"message": str(e)}), 500
     
 
-from cloud_sql.alters import retireTeacher
+from db.alters import retireTeacher
 @teacher_bp.route('/retire-teacher', methods=["POST"])
 @token_required
 def retire_teacher_route(user_id):
@@ -188,7 +188,7 @@ def retire_teacher_route(user_id):
         return jsonify({"message": str(e)}), 500
     
 
-from cloud_sql.alters import reactivateTeacher
+from db.alters import reactivateTeacher
 @teacher_bp.route('/reactivate-teacher', methods=["POST"])
 @token_required
 def reactivate_teacher_route(user_id):

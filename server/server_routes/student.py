@@ -1,13 +1,13 @@
 from flask import Blueprint, request, jsonify
 
 from .config import token_required
-from cloud_sql.gets import (
+from db.gets import (
     get_student_for_teacher,
     get_student_by_user_id,
     get_all_students,
     get_students_without_teacher
 )
-from cloud_sql.alters import (
+from db.alters import (
     set_student_to_inactive,
     set_student_to_active,
     update_student_notes
@@ -45,6 +45,7 @@ def get_all_students_route(user_id):
         students = get_all_students(user_id)
         return jsonify({"students": students}), 200
     except Exception as e:
+        print("error getting all students:", e)
         return jsonify({"message": str(e)}), 500
 
 

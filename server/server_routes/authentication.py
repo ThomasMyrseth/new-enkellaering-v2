@@ -3,20 +3,19 @@ from datetime import datetime
 import logging
 
 from .config import generate_token
-from cloud_sql.gets import (
+from db.gets import (
     get_student_by_email,
     get_new_student_by_phone,
     get_teacher_by_email,
-    is_user_admin
 )
 
-from cloud_sql.sql_types import Students, Teacher
-from cloud_sql.inserts import (
+from db.sql_types import Students, Teacher
+from db.inserts import (
     insert_student,
     insert_teacher,
     insert_new_student_order
 )
-from cloud_sql.alters import set_has_signed_up
+from db.alters import set_has_signed_up
 
 from firebase_admin import auth
 
@@ -41,7 +40,7 @@ def register():
         phone_parent = data.get("phone_parent")
         firstname_student = data.get("firstname_student")
         lastname_student = data.get("lastname_student")
-        created_at = datetime.now()
+        created_at = datetime.now().isoformat()
         main_subjects = data.get("main_subjects") or ""
         additional_comments = data.get("additional_comments") or ""
         address = data.get("address")
@@ -118,7 +117,7 @@ def register_teacher():
         address = data.get("address") or "N/A"
         postal_code = data.get("postal_code") or "0000"
         hourly_pay = data.get("hourly_pay") or "250"
-        created_at = datetime.now()
+        created_at = datetime.now().isoformat()
         additional_comments = data.get("additional_comments") or ""
         location = data.get('location')
         physical = data.get('physical_tutouring')

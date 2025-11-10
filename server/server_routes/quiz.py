@@ -3,21 +3,21 @@ from datetime import datetime
 import logging
 
 from .config import token_required
-from cloud_sql.gets import (
+from db.gets import (
     get_all_quizzes,
     get_all_qualifications,
     get_quiz_meta_data,
     get_quiz,
     get_quiz_status,
-    is_user_admin
+    is_admin,
 )
-from cloud_sql.inserts import (
+from db.inserts import (
     insert_quiz_result,
     insert_quiz,
     upload_image,
     insert_quiz_questions
 )
-from cloud_sql.deletes import delete_quizzes
+from db.deletes import delete_quizzes
 
 import json
 import tempfile
@@ -36,7 +36,6 @@ def get_all_quizzes_route():
     except Exception as e:
         logging.error(f"Error retrieving quizzes: {e}")
         return jsonify({"message": str(e)}), 500
-
 
 @quiz_bp.route('/get-all-qualifications', methods=["GET"])
 def get_all_qualifications_route():
@@ -113,7 +112,7 @@ def get_quiz_status_route(user_id):
 @quiz_bp.route('/upload-quiz', methods=["POST"])
 @token_required
 def upload_quiz_route(user_id):
-    if not is_user_admin(user_id):
+    if not is_admin(user_id):
         return jsonify({"message": "User is not admin"}), 403
 
     file = request.files.get("image")
@@ -143,7 +142,7 @@ def upload_quiz_route(user_id):
 @quiz_bp.route('/upload-questions', methods=["POST"])
 @token_required
 def upload_questions_route(user_id):
-    if not is_user_admin(user_id):
+    if not is_admin(user_id):
         return jsonify({"message": "User is not admin"}), 403
 
     questions = request.form.get('questions')
@@ -188,7 +187,7 @@ def upload_questions_route(user_id):
 @quiz_bp.route('/delete-quiz', methods=["POST"])
 @token_required
 def delete_quiz_route(user_id):
-    if not is_user_admin(user_id):
+    if not is_admin(user_id):
         return jsonify({"message": "User is not admin"}), 403
 
     quiz_ids = request.json.get('quiz_ids', [])

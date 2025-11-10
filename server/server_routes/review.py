@@ -1,8 +1,8 @@
 from flask import Blueprint, request, jsonify
 from .config import token_required
-from cloud_sql.inserts import insert_review
-from cloud_sql.deletes import delete_review
-from cloud_sql.gets import get_all_reviews
+from db.inserts import insert_review
+from db.deletes import delete_review
+from db.gets import get_all_reviews
 
 review_bp = Blueprint('review', __name__)
 

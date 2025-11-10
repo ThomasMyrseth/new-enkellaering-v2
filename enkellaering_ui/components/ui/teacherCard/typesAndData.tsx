@@ -1,4 +1,5 @@
 import { Teacher, Review } from "@/app/admin/types";
+import { Quiz } from "@/app/min-side-laerer/types";
 
 
 export type CardType = {
@@ -33,15 +34,13 @@ export type ExpandedTeacher = {
 }
 
 export type Qualification = {
-    content :string;
+    attempt_id :string;
     created_at :string;
-    image :string;
     number_of_corrects :number;
     number_of_questions :number;
-    pass_threshold :number;
     passed :boolean;
     quiz_id :string;
-    title :string;
+    quizzes: Quiz;
     user_id :string;
 }
 
@@ -50,7 +49,7 @@ export type AboutMe = {
     about_me :string;
     firstname :string;
     lastname :string;
-    image :string;
+    image_url :string;
 }
 
 

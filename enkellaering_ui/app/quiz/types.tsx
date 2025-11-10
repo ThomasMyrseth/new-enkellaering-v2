@@ -5,7 +5,7 @@ export type QuestionType = {
     question :string;
     answer_options: string[];
     correct_option: number;
-    image :string;
+    image_url :string;
     time_limit :number;
 }
 
@@ -28,10 +28,13 @@ export type FullQuizType = {
     questions :QuestionType[];
 }
 
-export type QuizType = {
+export type QuizMetaDataType = {
     quiz_id :string;
     title :string;
-    image :string | null;
-    pass_threshold :number;
+    content :string;
     created_at :string;
+    image_url :string;
+    number_of_questions: number;
+    pass_threshold :number;
 }
+

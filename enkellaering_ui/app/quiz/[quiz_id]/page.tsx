@@ -1,7 +1,7 @@
 "use client"
 import React from "react"
 import { useState, useEffect } from "react"
-import { FullQuizType, QuestionType } from "../types"
+import { QuizMetaDataType, QuestionType } from "../types"
 import Quiz from "../quiz"
 import { useParams } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton"
@@ -12,7 +12,7 @@ export default function QuizPage() {
     const params = useParams();
     const quiz_id = params?.quiz_id as string; 
     const [quiz, setQuiz] = useState<QuestionType[]>([])
-    const [quizMetaData, setQuizMetaData] = useState<FullQuizType | null>(null)
+    const [quizMetaData, setQuizMetaData] = useState<QuizMetaDataType | null>(null)
 
 
     //fetch token
@@ -40,6 +40,7 @@ export default function QuizPage() {
 
             if (res.ok) {
                 const data = await res.json()
+                console.log("Quiz data:", data.quiz);
                 setQuiz(data.quiz)
             }
         }
@@ -57,6 +58,7 @@ export default function QuizPage() {
 
             if (res.ok) {
                 const data = await res.json()
+                console.log("Quiz meta data:", data.quizzes);
                 setQuizMetaData(data.quizzes)
             }
         }

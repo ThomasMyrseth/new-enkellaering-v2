@@ -831,7 +831,7 @@ async function getTeacherStudent(token: string) {
     const teacherStudent: TeacherStudent[] = data.teacher_student;
 
     if (!teacherStudent || teacherStudent.length === 0) {
-        alert("Ingen tilkoblinger funnet");
+        alert("Ingen tilkoblinger mellom elev og lærer funnet (teacherStudent)");
         console.log("No teacher-student relationships found");
         return [];
     }
@@ -911,7 +911,6 @@ const SetTeacherCombobox = ({
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <div
-            role="combobox"
             aria-expanded={open}
             className="w-[200px] justify-start flex flex-row"
           >
