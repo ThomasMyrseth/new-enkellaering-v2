@@ -62,8 +62,6 @@ def insert_new_student(new_student):
         'from_referal': new_student["from_referal"],
         'referee_phone': new_student["referee_phone"],
         'referee_name': new_student["referee_name"],
-        'has_assigned_teacher': new_student["has_assigned_teacher"],
-        'assigned_teacher_at': new_student["assigned_teacher_at"],
         'has_finished_onboarding': new_student["has_finished_onboarding"],
         'finished_onboarding_at': new_student["finished_onboarding_at"],
         'comments': new_student["comments"],
@@ -288,9 +286,9 @@ def add_teacher_to_new_student(
         'row_id': str(uuid.uuid4()),
         'teacher_user_id': teacher_user_id,
         'student_user_id': student_user_id,
-        'teacher_accepted_student': 'TRUE',
+        'teacher_accepted_student': True,
         'created_at': datetime.now(timezone.utc).isoformat(),
-        'hidden': 'FALSE',
+        'hidden': False,
         'order_comments': ''
     }
     supabase.table('teacher_student').insert(data).execute()

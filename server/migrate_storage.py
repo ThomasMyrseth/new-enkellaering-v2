@@ -33,10 +33,11 @@ SUPABASE_SERVICE_ROLE_KEY = os.getenv('SUPABASE_SERVICE_ROLE_KEY')
 if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY:
     raise ValueError("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in .env file")
 
-# Bucket mappings: GCS bucket -> Supabase bucket
+# Bucket mappings: GCS bucket -> Supabase buckets
+# Note: enkellaering_images will be split based on file paths
 BUCKET_MAPPINGS = {
     'enkellaering-resumes': 'enkellaering-resumes',
-    'enkellaering_images': 'enkellaering-images'
+    'enkellaering_images': 'multiple'  # Routed by path: quiz_* → quiz-images, teacher_images → enkellaering-images
 }
 
 
@@ -66,10 +67,55 @@ def sanitize_filename(filename):
     return '/'.join(sanitized_parts)
 
 
-def migrate_bucket(gcs_client, supabase, source_bucket_name, dest_bucket_name):
-    """Migrate all files from one GCS bucket to Supabase bucket"""
+def determine_target_bucket(source_bucket, file_path):
+    """
+    Determine target Supabase bucket based on GCS bucket and file path.
+
+    Args:
+        source_bucket: GCS bucket name
+        file_path: File path within bucket (e.g., "quiz_images/uuid/file.png")
+
+    Returns:
+        Target Supabase bucket name
+    """
+    if source_bucket == 'enkellaering-resumes':
+        return 'enkellaering-resumes'
+
+    elif source_bucket == 'enkellaering_images':
+        # Route based on path prefix
+        if file_path.startswith('quiz_covers/') or file_path.startswith('quiz_images/'):
+            return 'quiz-images'
+        elif file_path.startswith('teacher_images/'):
+            return 'enkellaering-images'
+        else:
+            # Default to enkellaering-images for unknown paths
+            debug_print(f"  ⚠️  Unknown path pattern: {file_path}, defaulting to enkellaering-images")
+            return 'enkellaering-images'
+
+    else:
+        raise ValueError(f"Unknown source bucket: {source_bucket}")
+
+
+def migrate_bucket(gcs_client, supabase, source_bucket_name):
+    """
+    Migrate all files from one GCS bucket to Supabase bucket(s).
+
+    Files are routed to different Supabase buckets based on their path:
+    - enkellaering_images/quiz_covers/* → quiz-images
+    - enkellaering_images/quiz_images/* → quiz-images
+    - enkellaering_images/teacher_images/* → enkellaering-images
+    - enkellaering-resumes/resumes/* → enkellaering-resumes
+
+    Args:
+        gcs_client: Google Cloud Storage client
+        supabase: Supabase client
+        source_bucket_name: GCS bucket to migrate from
+    """
     print(f"\n{'='*60}")
-    print(f"Migrating: {source_bucket_name} -> {dest_bucket_name}")
+    if source_bucket_name == 'enkellaering_images':
+        print(f"Migrating: {source_bucket_name} → quiz-images + enkellaering-images (path-based routing)")
+    else:
+        print(f"Migrating: {source_bucket_name} → enkellaering-resumes")
     print(f"{'='*60}")
 
     url_mappings = []
@@ -97,6 +143,10 @@ def migrate_bucket(gcs_client, supabase, source_bucket_name, dest_bucket_name):
             try:
                 debug_print(f"[{i}/{len(blobs)}] Processing: {blob.name}")
 
+                # Determine target bucket based on file path
+                target_bucket = determine_target_bucket(source_bucket_name, blob.name)
+                debug_print(f"  Target bucket: {target_bucket}")
+
                 # Get old GCS URL
                 old_url = f"https://storage.googleapis.com/{source_bucket_name}/{blob.name}"
 
@@ -117,10 +167,10 @@ def migrate_bucket(gcs_client, supabase, source_bucket_name, dest_bucket_name):
                 file_data = blob.download_as_bytes()
 
                 # Upload to Supabase
-                debug_print(f"  Uploading to Supabase bucket '{dest_bucket_name}' as '{sanitized_name}'...")
+                debug_print(f"  Uploading to Supabase bucket '{target_bucket}' as '{sanitized_name}'...")
 
                 # Upload with upsert (overwrites if exists)
-                result = supabase.storage.from_(dest_bucket_name).upload(
+                result = supabase.storage.from_(target_bucket).upload(
                     sanitized_name,
                     file_data,
                     file_options={
@@ -130,7 +180,7 @@ def migrate_bucket(gcs_client, supabase, source_bucket_name, dest_bucket_name):
                 )
 
                 # Get new Supabase URL (public URL)
-                new_url = supabase.storage.from_(dest_bucket_name).get_public_url(sanitized_name)
+                new_url = supabase.storage.from_(target_bucket).get_public_url(sanitized_name)
 
                 debug_print(f"  ✓ Migrated successfully")
                 print(f"  [{i}/{len(blobs)}] ✓ {blob.name} ({size_mb:.2f}MB)")
@@ -141,7 +191,7 @@ def migrate_bucket(gcs_client, supabase, source_bucket_name, dest_bucket_name):
                     'sanitized_file_name': sanitized_name,
                     'old_url': old_url,
                     'new_url': new_url,
-                    'bucket': dest_bucket_name,
+                    'bucket': target_bucket,
                     'size_bytes': blob.size,
                     'content_type': blob.content_type
                 })
@@ -158,13 +208,15 @@ def migrate_bucket(gcs_client, supabase, source_bucket_name, dest_bucket_name):
                     # Still track the URL mapping even if file exists
                     old_url = f"https://storage.googleapis.com/{source_bucket_name}/{blob.name}"
                     sanitized_name = sanitize_filename(blob.name)
-                    new_url = supabase.storage.from_(dest_bucket_name).get_public_url(sanitized_name)
+                    # Determine target bucket (same logic as above)
+                    target_bucket_fallback = determine_target_bucket(source_bucket_name, blob.name)
+                    new_url = supabase.storage.from_(target_bucket_fallback).get_public_url(sanitized_name)
                     url_mappings.append({
                         'original_file_name': blob.name,
                         'sanitized_file_name': sanitized_name,
                         'old_url': old_url,
                         'new_url': new_url,
-                        'bucket': dest_bucket_name,
+                        'bucket': target_bucket_fallback,
                         'size_bytes': blob.size,
                         'content_type': blob.content_type
                     })
@@ -208,17 +260,19 @@ def generate_update_sql(all_mappings, output_file='update_storage_urls.sql'):
         'job_applications': 0
     }
 
-    # Group mappings by bucket
-    images_mappings = [m for m in all_mappings if m['bucket'] == 'enkellaering-images']
+    # Group mappings by bucket type
+    quiz_images_mappings = [m for m in all_mappings if m['bucket'] == 'quiz-images']
+    profile_images_mappings = [m for m in all_mappings if m['bucket'] == 'enkellaering-images']
     resumes_mappings = [m for m in all_mappings if m['bucket'] == 'enkellaering-resumes']
 
-    # Generate UPDATE statements for images
-    if images_mappings:
+    # Generate UPDATE statements for quiz images
+    if quiz_images_mappings:
         sql_statements.append("-- ============================================================================")
-        sql_statements.append("-- UPDATE IMAGE URLS (enkellaering_images -> enkellaering-images)")
+        sql_statements.append("-- UPDATE QUIZ IMAGE URLS")
+        sql_statements.append("-- (GCS enkellaering_images/quiz_* -> Supabase quiz-images)")
         sql_statements.append("-- ============================================================================\n")
 
-        for mapping in images_mappings:
+        for mapping in quiz_images_mappings:
             old_url = mapping['old_url']
             new_url = mapping['new_url']
 
@@ -242,7 +296,26 @@ def generate_update_sql(all_mappings, output_file='update_storage_urls.sql'):
             )
             stats['questions'] += 1
 
-            # Update about_me_texts table
+            sql_statements.append("")  # Blank line for readability
+
+    # Generate UPDATE statements for profile images
+    if profile_images_mappings:
+        sql_statements.append("\n-- ============================================================================")
+        sql_statements.append("-- UPDATE PROFILE IMAGE URLS")
+        sql_statements.append("-- (GCS enkellaering_images/teacher_images -> Supabase enkellaering-images)")
+        sql_statements.append("-- ============================================================================\n")
+
+        for mapping in profile_images_mappings:
+            old_url = mapping['old_url']
+            new_url = mapping['new_url']
+
+            sql_statements.append(f"-- Original: {mapping['original_file_name']}")
+            if mapping['original_file_name'] != mapping['sanitized_file_name']:
+                sql_statements.append(f"-- Sanitized: {mapping['sanitized_file_name']}")
+            sql_statements.append(f"-- Old: {old_url}")
+            sql_statements.append(f"-- New: {new_url}\n")
+
+            # Update about_me_texts table (only profile images)
             sql_statements.append(
                 f"UPDATE about_me_texts SET image_url = '{new_url}' "
                 f"WHERE image_url = '{old_url}';"
@@ -323,13 +396,15 @@ def main():
     print("GOOGLE CLOUD STORAGE → SUPABASE STORAGE MIGRATION")
     print("="*60)
     print(f"\n⚠️  This will migrate files from GCS to Supabase")
-    print(f"\nBuckets to migrate:")
-    for gcs_bucket, supabase_bucket in BUCKET_MAPPINGS.items():
-        print(f"  • {gcs_bucket} → {supabase_bucket}")
+    print(f"\nBucket routing (automatic based on file paths):")
+    print(f"  • enkellaering_images/quiz_covers/* → quiz-images")
+    print(f"  • enkellaering_images/quiz_images/* → quiz-images")
+    print(f"  • enkellaering_images/teacher_images/* → enkellaering-images")
+    print(f"  • enkellaering-resumes/resumes/* → enkellaering-resumes")
 
     print(f"\n⚠️  Make sure you have:")
-    print(f"   1. Created Supabase buckets: enkellaering-resumes, enkellaering-images")
-    print(f"   2. Set both buckets to PUBLIC in Supabase Dashboard")
+    print(f"   1. Created Supabase buckets: enkellaering-resumes, enkellaering-images, quiz-images")
+    print(f"   2. Set all three buckets to PUBLIC in Supabase Dashboard")
     print(f"   3. google_service_account.json exists in current directory")
     print(f"   4. Added SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY to .env")
     print()
@@ -361,8 +436,14 @@ def main():
     migration_start = datetime.now()
 
     try:
-        for gcs_bucket, supabase_bucket in BUCKET_MAPPINGS.items():
-            mappings = migrate_bucket(gcs_client, supabase, gcs_bucket, supabase_bucket)
+        # Migrate resumes bucket
+        if 'enkellaering-resumes' in BUCKET_MAPPINGS:
+            mappings = migrate_bucket(gcs_client, supabase, 'enkellaering-resumes')
+            all_url_mappings.extend(mappings)
+
+        # Migrate images bucket (automatically routes to quiz-images or enkellaering-images based on path)
+        if 'enkellaering_images' in BUCKET_MAPPINGS:
+            mappings = migrate_bucket(gcs_client, supabase, 'enkellaering_images')
             all_url_mappings.extend(mappings)
 
         total_elapsed = (datetime.now() - migration_start).total_seconds()

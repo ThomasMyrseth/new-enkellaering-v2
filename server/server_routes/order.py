@@ -121,29 +121,22 @@ def update_new_student_workflow(user_id):
         logging.error(f"Error updating new student: {e}")
         return jsonify({"message": str(e)}), 500
 
-    if data.get("has_assigned_teacher"):
-        try:
-            cloud_set_your_teacher(data["phone"], data["teacher_user_id"])
-        except Exception as e:
-            logging.error(f"Error setting your_teacher: {e}")
-            return jsonify({"message": str(e)}), 500
-
     return jsonify({"message": "Updated new student successfully"}), 200
 
 def clean_updates(updates: dict):
     """Ensure all fields have valid default values."""
     boolean_fields = [
         "has_called", "has_answered", "has_signed_up", "from_referal",
-        "has_assigned_teacher", "has_finished_onboarding", "paid_referee"
+        "has_finished_onboarding", "paid_referee"
     ]
     
     timestamp_fields = [
-        "called_at", "answered_at", "signed_up_at", "assigned_teacher_at",
+        "called_at", "answered_at", "signed_up_at",
         "finished_onboarding_at", "paid_referee_at"
     ]
     
     string_fields = [
-        "referee_phone", "assigned_teacher_user_id", "comments"
+        "referee_phone", "comments"
     ]
     
     # Set default values for missing or `None` fields
@@ -259,9 +252,6 @@ def submit_new_student_route():
             "referee_phone": None,
             "referee_name": None,
             "referee_account_number": None,
-            "has_assigned_teacher": False,
-            "assigned_teacher_at": None,
-            "assigned_teacher_user_id": None,
             "has_finished_onboarding": False,
             "finished_onboarding_at": None,
             "comments": None,
@@ -270,7 +260,7 @@ def submit_new_student_route():
         }
         insert_new_student(ns)
     except Exception as e:
-        print(f"Error inserting new student: {e}")
+        logging.error(f"Error inserting new student: {e}")
         return jsonify({"message": str(e)}), 500
 
     t = threading.Thread(
@@ -341,9 +331,6 @@ def submit_new_referal_route():
         "from_referal": True,
         "referee_phone": referee_phone,
         "referee_name": referee_name,
-        "has_assigned_teacher": False,
-        "assigned_teacher_at": None,
-        "assigned_teacher_user_id": None,
         "has_finished_onboarding": False,
         "finished_onboarding_at": None,
         "comments": None,

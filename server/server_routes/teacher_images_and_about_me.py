@@ -75,11 +75,11 @@ def get_all_images_and_about_mes():
         about_mes = get_all_about_me_texts()
 
         if not about_mes:
-            print("Error getting about me texts")
-            return jsonify({"message": "Error getting about me texts"}), 500
+            logging.error("About mes is empty")
+            return jsonify({"message": "About mes are empty"}), 500
 
         return jsonify({"data": about_mes}), 200
     
     except Exception as e:
-        print(f"Error fetching teacher images and about me texts: {e}")
+        logging.error(f"Error fetching teacher images and about me texts: {e}")
         return jsonify({"message": str(e)}), 500
