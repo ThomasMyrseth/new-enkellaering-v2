@@ -216,6 +216,11 @@ def get_all_qualifications():
 
     return valid_qualifications
 
+def get_all_quiz_types():
+    """Get all quiz types"""
+    response = supabase.table('quizzes').select('*').execute()
+    return response.data
+
 def get_new_orders(student_user_id: str):
     """Get new orders for student (pending teacher acceptances) - returns TeacherOrderJoinTeacher[]"""
     response = supabase.rpc('get_new_orders_for_student', {'student_id': student_user_id}).execute()

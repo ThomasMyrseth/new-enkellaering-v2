@@ -45,6 +45,15 @@ def get_all_qualifications_route():
     except Exception as e:
         logging.error(f"Error retrieving qualifications: {e}")
         return jsonify({"message": str(e)}), 500
+    
+@quiz_bp.route('/get-all-qualification-types', methods=["GET"])
+def get_all_qualification_types_route():
+    try:
+        q = get_all_quizzes()
+        return jsonify({"quizzes": q}), 200
+    except Exception as e:
+        logging.error(f"Error retrieving quizzes: {e}")
+        return jsonify({"message": str(e)}), 500
 
 
 

@@ -146,7 +146,7 @@ export const getMyOrders = async () => {
 export const getAllAvailableQualifications = async (): Promise<string[]> => {
     try {
         const [qualifications] = await Promise.all([
-            fetch(`${BASEURL}/get-all-qualifications`),
+            fetch(`${BASEURL}/get-all-qualification-types`),
         ]);
 
         if (!qualifications.ok) {
@@ -154,7 +154,8 @@ export const getAllAvailableQualifications = async (): Promise<string[]> => {
         }
 
         const qualificationsData = await qualifications.json();
-        const qs :Quiz[]= qualificationsData.qualifications || [];
+        console.log("Qualifications data fetched:", qualificationsData);
+        const qs :Quiz[]= qualificationsData.quizzes || [];
 
         const qualificationsList = qs.map( (q) => {
             return q.title
