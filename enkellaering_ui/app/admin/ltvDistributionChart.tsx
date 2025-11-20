@@ -6,6 +6,19 @@ interface LTVDistributionChartProps {
     data: LTVDistributionBucket[];
 }
 
+interface TooltipPayload {
+    value?: number;
+    payload?: {
+        rangeStart?: number;
+    };
+}
+
+interface CustomTooltipProps {
+    active?: boolean;
+    payload?: TooltipPayload[];
+    label?: string;
+}
+
 export default function LTVDistributionChart({ data }: LTVDistributionChartProps) {
     const formatCurrency = (value: number) => {
         return new Intl.NumberFormat('nb-NO', {
@@ -24,7 +37,7 @@ export default function LTVDistributionChart({ data }: LTVDistributionChartProps
         rangeStart: bucket.rangeStart
     }));
 
-    const CustomTooltip = ({ active, payload, label }: any) => {
+    const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
         if (active && payload && payload.length) {
             const rangeStart = payload[0]?.payload?.rangeStart || 0;
             const totalStudents = (payload[0]?.value || 0) + (payload[1]?.value || 0);
