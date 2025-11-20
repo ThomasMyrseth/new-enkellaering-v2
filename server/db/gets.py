@@ -346,7 +346,8 @@ def get_analytics_dashboard(admin_user_id: str):
     # Get current year start
     now = datetime.now(timezone.utc)
     year_start = datetime(now.year, 1, 1, tzinfo=timezone.utc)
-    sixty_days_ago = now - timedelta(days=60)
+    one_eighty_days_ago = now - timedelta(days=180)
+    ninety_days_ago = now - timedelta(days=90)
 
     # Initialize aggregations
     total_revenue_ytd = 0
@@ -461,25 +462,35 @@ def get_analytics_dashboard(admin_user_id: str):
 
     # Calculate active students and churn
     active_students = []
-    churned_students = []
+    churned_students = []  # For LTV distribution: is_active=false OR no classes in 90 days
+    active_marked_students = 0  # Students marked as is_active=true
+    inactive_among_active = 0   # Students marked active but no classes in 90 days (for churn rate)
 
     for student in students:
         student_id = student['user_id']
         is_active = student.get('is_active', True)
         last_class = student_last_class.get(student_id)
 
-        # Churn definition: is_active=false OR no classes in 60 days
-        is_churned = not is_active or (last_class is None or last_class < sixty_days_ago)
+        # For LTV distribution: churned = is_active=false OR no classes in 90 days
+        is_churned_for_ltv = not is_active or (not last_class or last_class < ninety_days_ago)
 
-        if is_churned:
+        if is_churned_for_ltv:
             churned_students.append(student_id)
         else:
             active_students.append(student_id)
 
-    total_students = len(students)
+        # For churn rate: count students marked as active in the system
+        if is_active:
+            active_marked_students += 1
+
+            # Check if they've had a class in the last 90 days
+            if not last_class or last_class < ninety_days_ago:
+                inactive_among_active += 1
+
     active_students_count = len(active_students)
-    churned_count = len(churned_students)
-    churn_rate = (churned_count / total_students * 100) if total_students > 0 else 0
+
+    # Churn rate: percentage of active students who haven't had classes in 90 days
+    churn_rate = (inactive_among_active / active_marked_students * 100) if active_marked_students > 0 else 0
 
     # Calculate active teachers
     active_teachers_count = sum(1 for t in teachers if not t.get('resigned', False))

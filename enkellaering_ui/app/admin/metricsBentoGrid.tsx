@@ -146,7 +146,7 @@ export default function MetricsBentoGrid({
                 <CardContent>
                     <div className="text-2xl font-bold">{formatPercentage(churnRate)}</div>
                     <p className="text-xs text-muted-foreground">
-                        Inactive or no class in 60d
+                        Active students with no class in 90d
                     </p>
                 </CardContent>
             </Card>
