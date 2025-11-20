@@ -1,5 +1,6 @@
 from db.gets import is_admin
 from supabase_client import supabase
+from db.gets import is_admin
 
 def hide_new_student(row_id: str, admin_user_id: str):
     """Hide a new student order (admin validated)"""
@@ -26,8 +27,20 @@ def hide_new_order_from_new_students_table(new_student_id: str, admin_user_id: s
     }).eq('new_student_id', new_student_id).execute()
 
 def delete_class(teacher_user_id: str, class_id: str):
-    """Delete a class by class_id and teacher_user_id"""
-    supabase.table('classes').delete().eq('class_id', class_id).eq('teacher_user_id', teacher_user_id).execute()
+
+    #check if the user is admin
+    admin_response = is_admin(teacher_user_id)
+
+    #is the user is not admin, delete only if the class belongs to the teacher
+    if not admin_response:
+        print("not admin")
+        """Delete a class by class_id and teacher_user_id"""
+        supabase.table('classes').delete().eq('class_id', class_id).eq('teacher_user_id', teacher_user_id).execute()
+    
+    else:
+        print("is admin")
+        """Delete a class by class_id"""
+        supabase.table('classes').delete().eq('class_id', class_id).execute()
 
 def delete_review(student_user_id: str, teacher_user_id: str):
     """Delete a review by student_user_id and teacher_user_id"""
