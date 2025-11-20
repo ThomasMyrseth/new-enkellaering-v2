@@ -423,28 +423,30 @@ def get_analytics_dashboard(admin_user_id: str):
         monthly_revenue[month_key]['revenue'] += revenue
         monthly_revenue[month_key]['profit'] += profit
 
-        # Teacher revenue
-        teacher_id = cls.get('teacher_user_id')
-        if teacher_id:
-            teacher_name = f"{cls.get('teachers', {}).get('firstname', '')} {cls.get('teachers', {}).get('lastname', '')}" if cls.get('teachers') else 'Unknown'
-            if teacher_id not in teacher_revenue:
-                teacher_revenue[teacher_id] = {
-                    'teacherName': teacher_name,
-                    'revenue': 0,
-                    'classCount': 0,
-                    'totalHours': 0
-                }
-            teacher_revenue[teacher_id]['revenue'] += revenue
-            teacher_revenue[teacher_id]['classCount'] += 1
-            teacher_revenue[teacher_id]['totalHours'] += duration_hours
+        # Teacher revenue (YTD only)
+        if started_at >= year_start:
+            teacher_id = cls.get('teacher_user_id')
+            if teacher_id:
+                teacher_name = f"{cls.get('teachers', {}).get('firstname', '')} {cls.get('teachers', {}).get('lastname', '')}" if cls.get('teachers') else 'Unknown'
+                if teacher_id not in teacher_revenue:
+                    teacher_revenue[teacher_id] = {
+                        'teacherName': teacher_name,
+                        'revenue': 0,
+                        'classCount': 0,
+                        'totalHours': 0
+                    }
+                teacher_revenue[teacher_id]['revenue'] += revenue
+                teacher_revenue[teacher_id]['classCount'] += 1
+                teacher_revenue[teacher_id]['totalHours'] += duration_hours
 
-        # Location revenue
-        location = cls.get('teachers', {}).get('location', 'Unknown') if cls.get('teachers') else 'Unknown'
-        if location:
-            if location not in location_revenue:
-                location_revenue[location] = {'revenue': 0, 'classCount': 0}
-            location_revenue[location]['revenue'] += revenue
-            location_revenue[location]['classCount'] += 1
+        # Location revenue (YTD only)
+        if started_at >= year_start:
+            location = cls.get('teachers', {}).get('location', 'Unknown') if cls.get('teachers') else 'Unknown'
+            if location:
+                if location not in location_revenue:
+                    location_revenue[location] = {'revenue': 0, 'classCount': 0}
+                location_revenue[location]['revenue'] += revenue
+                location_revenue[location]['classCount'] += 1
 
         # Student LTV tracking
         student_id = cls.get('student_user_id')

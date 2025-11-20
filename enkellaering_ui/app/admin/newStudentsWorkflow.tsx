@@ -30,13 +30,6 @@ const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
 
 
 
-
-
-
-
-
-
-
 export function NewStudentsWorkflow() {
     const token = localStorage.getItem('token')
     const [loading, setLoading] = useState<boolean>(true)

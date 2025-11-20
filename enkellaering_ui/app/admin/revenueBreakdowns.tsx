@@ -99,8 +99,8 @@ export default function RevenueBreakdowns({
             {/* Revenue by Location */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Revenue by Location</CardTitle>
-                    <CardDescription>Revenue distribution across locations</CardDescription>
+                    <CardTitle>Revenue by Location (YTD)</CardTitle>
+                    <CardDescription>Year-to-date revenue distribution across locations</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <ResponsiveContainer width="100%" height={300}>
@@ -127,8 +127,8 @@ export default function RevenueBreakdowns({
             {/* Revenue by Teacher */}
             <Card className="lg:col-span-2">
                 <CardHeader>
-                    <CardTitle>Revenue by Teacher</CardTitle>
-                    <CardDescription>Top 10 teachers by revenue generated</CardDescription>
+                    <CardTitle>Revenue by Teacher (YTD)</CardTitle>
+                    <CardDescription>Top 10 teachers by year-to-date revenue generated</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <ResponsiveContainer width="100%" height={350}>
