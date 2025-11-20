@@ -259,3 +259,50 @@ export type StudentsWithoutTeacher = {
     digital_tutouring: boolean | null;
     physical_tutouring: boolean | null;
 }
+
+export type LTVDistributionBucket = {
+    rangeLabel: string; // e.g., "0-1000", "1000-2000", "100000+"
+    activeCount: number;
+    churnedCount: number;
+    rangeStart: number;
+    rangeEnd: number | null; // null for the final bucket (100000+)
+};
+
+export type MonthlyRevenue = {
+    month: string; // e.g., "2025-01", "2025-02"
+    revenue: number;
+    profit: number;
+};
+
+export type TeacherRevenue = {
+    teacherId: string;
+    teacherName: string;
+    revenue: number;
+    classCount: number;
+    totalHours: number;
+};
+
+export type LocationRevenue = {
+    location: string;
+    revenue: number;
+    classCount: number;
+};
+
+export type AnalyticsDashboard = {
+    // YTD Metrics
+    totalRevenueYTD: number;
+    totalProfitYTD: number;
+    activeStudentsCount: number;
+    activeTeachersCount: number;
+    averageHourlyMargin: number;
+    averageLTVPerStudent: number;
+    churnRate: number;
+    classesThisWeek: number;
+    classesOneMonthAgoWeek: number;
+
+    // Distributions and Breakdowns
+    ltvDistribution: LTVDistributionBucket[];
+    revenueByMonth: MonthlyRevenue[];
+    revenueByTeacher: TeacherRevenue[];
+    revenueByLocation: LocationRevenue[];
+};

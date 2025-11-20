@@ -288,3 +288,282 @@ def is_admin(user_id: str) -> bool:
     """Check if a user is an admin"""
     response = supabase.table('teachers').select('admin').eq('user_id', user_id).execute()
     return bool(response.data and response.data[0].get("admin"))
+
+def get_analytics_dashboard(admin_user_id: str):
+    """Get comprehensive analytics dashboard data (admin validated)"""
+    # Check if user is admin
+    admin_response = is_admin(admin_user_id)
+    if not admin_response:
+        raise ValueError("User is not an admin")
+
+    # Fetch all necessary data separately
+    classes_response = supabase.table('classes').select('*, teachers(hourly_pay, firstname, lastname, location)').eq('was_canselled', 'FALSE').execute()
+    students_response = supabase.table('students').select('user_id, is_active, created_at').execute()
+    teachers_response = supabase.table('teachers').select('user_id, resigned').execute()
+    teacher_student_response = supabase.table('teacher_student').select('teacher_user_id, student_user_id, travel_pay_to_teacher, order_comments').execute()
+
+    classes = classes_response.data
+    students = students_response.data
+    teachers = teachers_response.data
+    teacher_student_relations = teacher_student_response.data
+
+    # Create a lookup dictionary for teacher_student relationships
+    # Key: (teacher_user_id, student_user_id), Value: relationship data
+    ts_lookup = {}
+    for ts in teacher_student_relations:
+        key = (ts.get('teacher_user_id'), ts.get('student_user_id'))
+        ts_lookup[key] = ts
+
+    # Calculate metrics
+    from datetime import datetime, timedelta
+    import re
+
+    def parse_datetime(dt_string):
+        """Parse datetime string handling various formats"""
+        if not dt_string:
+            return None
+        try:
+            # Normalize the datetime string
+            dt_normalized = dt_string.replace('Z', '+00:00')
+
+            # Handle fractional seconds with varying precision (e.g., .75 vs .750000)
+            # Match ISO format with optional fractional seconds
+            match = re.match(r'^(\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2})\.?(\d*)([+-]\d{2}:\d{2})?$', dt_normalized)
+            if match:
+                base_dt, fraction, tz = match.groups()
+                # Pad or truncate fraction to 6 digits (microseconds)
+                if fraction:
+                    fraction = fraction.ljust(6, '0')[:6]
+                    dt_normalized = f"{base_dt}.{fraction}{tz or ''}"
+                else:
+                    dt_normalized = f"{base_dt}{tz or ''}"
+
+            return datetime.fromisoformat(dt_normalized)
+        except (ValueError, AttributeError) as e:
+            print(f"Failed to parse datetime '{dt_string}': {e}")
+            return None
+
+    # Get current year start
+    now = datetime.now(timezone.utc)
+    year_start = datetime(now.year, 1, 1, tzinfo=timezone.utc)
+    sixty_days_ago = now - timedelta(days=60)
+
+    # Initialize aggregations
+    total_revenue_ytd = 0
+    total_profit_ytd = 0
+    total_teacher_cost_ytd = 0
+    total_hours_ytd = 0
+
+    monthly_revenue = {}
+    teacher_revenue = {}
+    location_revenue = {}
+    student_ltv = {}
+    student_last_class = {}
+
+    # Track classes this week and one month ago
+    classes_this_week = 0
+    classes_one_month_ago_week = 0
+    week_start = now - timedelta(days=now.weekday())  # Monday of current week
+    week_end = week_start + timedelta(days=7)
+    one_month_ago = now - timedelta(days=30)
+    one_month_ago_week_start = one_month_ago - timedelta(days=one_month_ago.weekday())
+    one_month_ago_week_end = one_month_ago_week_start + timedelta(days=7)
+
+    # Process classes
+    for cls in classes:
+        started_at = parse_datetime(cls.get('started_at'))
+        ended_at = parse_datetime(cls.get('ended_at'))
+
+        if not started_at or not ended_at:
+            continue
+
+        # Track classes this week
+        if week_start <= started_at < week_end:
+            classes_this_week += 1
+
+        # Track classes one month ago (same week)
+        if one_month_ago_week_start <= started_at < one_month_ago_week_end:
+            classes_one_month_ago_week += 1
+
+        # Calculate duration in hours
+        duration_hours = (ended_at - started_at).total_seconds() / 3600
+
+        # Calculate revenue
+        is_group = cls.get('groupclass', False)
+        num_students = cls.get('number_of_students', 1) if is_group else 1
+        hourly_rate = 350 if is_group else 540
+        revenue = duration_hours * hourly_rate * num_students
+
+        # Calculate teacher cost
+        teacher_hourly_pay = float(cls.get('teachers', {}).get('hourly_pay', 0)) if cls.get('teachers') else 0
+        teacher_cost = duration_hours * teacher_hourly_pay
+
+        # Get teacher_student relationship for travel cost and subject
+        teacher_id = cls.get('teacher_user_id')
+        student_id = cls.get('student_user_id')
+        ts_relation = ts_lookup.get((teacher_id, student_id), {})
+
+        # Add travel compensation
+        travel_cost = ts_relation.get('travel_pay_to_teacher', 0) or 0
+        total_cost = teacher_cost + travel_cost
+
+        profit = revenue - total_cost
+
+        # YTD calculations
+        if started_at >= year_start:
+            total_revenue_ytd += revenue
+            total_profit_ytd += profit
+            total_teacher_cost_ytd += total_cost
+            total_hours_ytd += duration_hours
+
+        # Monthly revenue (last 12 months)
+        month_key = started_at.strftime('%Y-%m')
+        if month_key not in monthly_revenue:
+            monthly_revenue[month_key] = {'revenue': 0, 'profit': 0}
+        monthly_revenue[month_key]['revenue'] += revenue
+        monthly_revenue[month_key]['profit'] += profit
+
+        # Teacher revenue
+        teacher_id = cls.get('teacher_user_id')
+        if teacher_id:
+            teacher_name = f"{cls.get('teachers', {}).get('firstname', '')} {cls.get('teachers', {}).get('lastname', '')}" if cls.get('teachers') else 'Unknown'
+            if teacher_id not in teacher_revenue:
+                teacher_revenue[teacher_id] = {
+                    'teacherName': teacher_name,
+                    'revenue': 0,
+                    'classCount': 0,
+                    'totalHours': 0
+                }
+            teacher_revenue[teacher_id]['revenue'] += revenue
+            teacher_revenue[teacher_id]['classCount'] += 1
+            teacher_revenue[teacher_id]['totalHours'] += duration_hours
+
+        # Location revenue
+        location = cls.get('teachers', {}).get('location', 'Unknown') if cls.get('teachers') else 'Unknown'
+        if location:
+            if location not in location_revenue:
+                location_revenue[location] = {'revenue': 0, 'classCount': 0}
+            location_revenue[location]['revenue'] += revenue
+            location_revenue[location]['classCount'] += 1
+
+        # Student LTV tracking
+        student_id = cls.get('student_user_id')
+        if student_id:
+            if student_id not in student_ltv:
+                student_ltv[student_id] = 0
+            student_ltv[student_id] += revenue
+
+            # Track last class date
+            if student_id not in student_last_class or started_at > student_last_class[student_id]:
+                student_last_class[student_id] = started_at
+
+    # Calculate active students and churn
+    active_students = []
+    churned_students = []
+
+    for student in students:
+        student_id = student['user_id']
+        is_active = student.get('is_active', True)
+        last_class = student_last_class.get(student_id)
+
+        # Churn definition: is_active=false OR no classes in 60 days
+        is_churned = not is_active or (last_class is None or last_class < sixty_days_ago)
+
+        if is_churned:
+            churned_students.append(student_id)
+        else:
+            active_students.append(student_id)
+
+    total_students = len(students)
+    active_students_count = len(active_students)
+    churned_count = len(churned_students)
+    churn_rate = (churned_count / total_students * 100) if total_students > 0 else 0
+
+    # Calculate active teachers
+    active_teachers_count = sum(1 for t in teachers if not t.get('resigned', False))
+
+    # Calculate average hourly margin
+    avg_hourly_margin = ((total_revenue_ytd - total_teacher_cost_ytd) / total_hours_ytd) if total_hours_ytd > 0 else 0
+
+    # Calculate average LTV
+    total_ltv = sum(student_ltv.values())
+    avg_ltv = total_ltv / len(student_ltv) if student_ltv else 0
+
+    # Calculate LTV distribution
+    ltv_buckets = [0, 1000, 2000, 5000, 10000, 20000, 50000, 100000]
+    ltv_distribution = []
+
+    for i in range(len(ltv_buckets) - 1):
+        start = ltv_buckets[i]
+        end = ltv_buckets[i + 1]
+        active_count = sum(1 for sid in active_students if start <= student_ltv.get(sid, 0) < end)
+        churned_count_bucket = sum(1 for sid in churned_students if start <= student_ltv.get(sid, 0) < end)
+
+        ltv_distribution.append({
+            'rangeLabel': f"{start}-{end}",
+            'rangeStart': start,
+            'rangeEnd': end,
+            'activeCount': active_count,
+            'churnedCount': churned_count_bucket
+        })
+
+    # Add final bucket for >100000
+    active_count_final = sum(1 for sid in active_students if student_ltv.get(sid, 0) >= 100000)
+    churned_count_final = sum(1 for sid in churned_students if student_ltv.get(sid, 0) >= 100000)
+    ltv_distribution.append({
+        'rangeLabel': '100000+',
+        'rangeStart': 100000,
+        'rangeEnd': None,  # Use None instead of float('inf') for JSON compatibility
+        'activeCount': active_count_final,
+        'churnedCount': churned_count_final
+    })
+
+    # Format monthly revenue (last 12 months)
+    twelve_months_ago = now - timedelta(days=365)
+    revenue_by_month = []
+    for month_key in sorted(monthly_revenue.keys()):
+        month_date = datetime.strptime(month_key, '%Y-%m')
+        if month_date.replace(tzinfo=timezone.utc) >= twelve_months_ago:
+            revenue_by_month.append({
+                'month': month_key,
+                'revenue': monthly_revenue[month_key]['revenue'],
+                'profit': monthly_revenue[month_key]['profit']
+            })
+
+    # Format teacher revenue
+    revenue_by_teacher = [
+        {
+            'teacherId': teacher_id,
+            'teacherName': data['teacherName'],
+            'revenue': data['revenue'],
+            'classCount': data['classCount'],
+            'totalHours': data['totalHours']
+        }
+        for teacher_id, data in sorted(teacher_revenue.items(), key=lambda x: x[1]['revenue'], reverse=True)
+    ]
+
+    # Format location revenue
+    revenue_by_location = [
+        {
+            'location': location,
+            'revenue': data['revenue'],
+            'classCount': data['classCount']
+        }
+        for location, data in sorted(location_revenue.items(), key=lambda x: x[1]['revenue'], reverse=True)
+    ]
+
+    return {
+        'totalRevenueYTD': round(total_revenue_ytd, 2),
+        'totalProfitYTD': round(total_profit_ytd, 2),
+        'activeStudentsCount': active_students_count,
+        'activeTeachersCount': active_teachers_count,
+        'averageHourlyMargin': round(avg_hourly_margin, 2),
+        'averageLTVPerStudent': round(avg_ltv, 2),
+        'churnRate': round(churn_rate, 2),
+        'classesThisWeek': classes_this_week,
+        'classesOneMonthAgoWeek': classes_one_month_ago_week,
+        'ltvDistribution': ltv_distribution,
+        'revenueByMonth': revenue_by_month,
+        'revenueByTeacher': revenue_by_teacher,
+        'revenueByLocation': revenue_by_location
+    }

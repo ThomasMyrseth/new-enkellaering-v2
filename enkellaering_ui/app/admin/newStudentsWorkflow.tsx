@@ -23,7 +23,8 @@ import {
   } from "@/components/ui/alert-dialog"
   
 import { useEffect, useState } from "react"
-import { NewStudent, Teacher } from "./types";
+import { NewStudent } from "./types";
+import { toast } from "sonner";
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
 
@@ -97,10 +98,8 @@ import { Label } from "@/components/ui/label"
 
 
 const NewStudentTable =( {newStudents} : {newStudents : NewStudent[]})  => {
-    const [teachers, setTeachers] = useState<Teacher[]>([])
     const [hideCompleted, setHideCompleted] = useState<boolean>(true)
     const [onlyShowUnpaidReferals, setOnlyShowUnpaidReferrals] = useState<boolean>(false)
-    const token = localStorage.getItem('token')
 
     //order newStudents by created_at
     newStudents.sort((a, b) => {
@@ -124,41 +123,6 @@ const NewStudentTable =( {newStudents} : {newStudents : NewStudent[]})  => {
     if (hideCompleted && onlyShowUnpaidReferals) {
         filteredStudents = filteredStudents.filter(ns => !ns.has_finished_onboarding && ns.from_referal && !ns.paid_referee)
     }
-
-
-    //get all the teachers and pass it to newStudentRow
-    useEffect( () => {
-        async function getAllTeachers() {
-
-            const response = await fetch(`${BASEURL}/get-all-teachers`, {
-                method: "GET",
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            })
-
-            if (!response.ok) {
-                alert("Error fetching teachers " + response.statusText)
-                setTeachers([])
-                return null
-            }
-
-            const data = await response.json()
-            const teachers :Teacher[] = data.teachers
-
-            if (teachers.length===0) {
-                alert("No teachers found")
-                setTeachers([])
-                return null
-            }
-
-            else {
-                setTeachers(teachers)
-            }
-        }
-
-        getAllTeachers()
-    },[token])
 
     return (<div className=" w-full sm:w-full bg-white dark:bg-black rounded-sm shadow-lg flex flex-col items-center justify-center">
         <div className="flex flex-col space-y-2 items-center">
@@ -191,11 +155,6 @@ const NewStudentTable =( {newStudents} : {newStudents : NewStudent[]})  => {
                             <TableHead>Telefonnummer & dato opprettet</TableHead>
                             <TableHead>Jeg har ringt</TableHead>
                             <TableHead>Ny elev har svart</TableHead>
-
-                            <TableHead>Ny elev har opprettet konto</TableHead>
-
-                            <TableHead>Læreren er</TableHead>
-
                             <TableHead>Ny elev er en referanse</TableHead>
                             <TableHead>Referansen er betalt</TableHead>
                             <TableHead>Ny elev har fullført oppstart</TableHead>
@@ -206,7 +165,7 @@ const NewStudentTable =( {newStudents} : {newStudents : NewStudent[]})  => {
                     </TableHeader>
                     <TableBody>
                         {filteredStudents.map( ns => {
-                            return <NewStudentRow key={ns.new_student_id} ns={ns} teachers={teachers}/>
+                            return <NewStudentRow key={ns.new_student_id} ns={ns}/>
                         })}
                     </TableBody>
                 </Table>   
@@ -214,22 +173,16 @@ const NewStudentTable =( {newStudents} : {newStudents : NewStudent[]})  => {
 }
 
 
-function NewStudentRow({ ns, teachers }: { ns: NewStudent, teachers :Teacher[] }) {
+function NewStudentRow({ ns }: { ns: NewStudent }) {
     const token = localStorage.getItem('token')
 
     const [hasCalled, setHasCalled] = useState<boolean>(ns.has_called)
     const [calledAt, setCalledAt] = useState<Date>(new Date(ns.called_at))
     const [hasAnswered, setHasAnswered] = useState<boolean>(ns.has_answered)
     const [answeredAt, setAnsweredAt] = useState<Date>(new Date(ns.answered_at))
-    const hasSignedUp =ns.has_signed_up
-    const signedUpAt = new Date(ns.signed_up_at)
     
     const fromReferal = ns.from_referal
     const refereePhone = ns.referee_phone
-   
-    const [hasAssignedTeacher, setHasAssignedTeacher] = useState<boolean>(ns.has_assigned_teacher)
-    const [assignedTeacherAt, setAssignedTeacherAt] = useState<Date>(new Date(ns.assigned_teacher_at))
-    const [assingedTeacherUserId, setAssignedTeacherUserId] = useState<string | null> (ns.assigned_teacher_user_id || null)
     
     const [paidReferee, setPaidReferee] = useState<boolean>(ns.paid_referee)
     const [paidRefereeAt, setPaidRefereeAt] = useState<Date>(new Date(ns.paid_referee_at))
@@ -254,12 +207,6 @@ function NewStudentRow({ ns, teachers }: { ns: NewStudent, teachers :Teacher[] }
         const isAnswered = value === "Ja"; // Convert value to boolean
         setHasAnswered(isAnswered)
         setAnsweredAt(new Date())
-    }
-
-    const handleAssignTeacher = (teacherUserId :string) => {
-        setHasAssignedTeacher(true)
-        setAssignedTeacherAt(new Date())
-        setAssignedTeacherUserId(teacherUserId)
     }
 
     const handleSetFinishedOnboarding = (value :string) => {
@@ -289,13 +236,8 @@ function NewStudentRow({ ns, teachers }: { ns: NewStudent, teachers :Teacher[] }
                 "called_at": calledAt || null,
                 "has_answered": hasAnswered,
                 "answered_at": answeredAt || null,
-                "has_signed_up": hasSignedUp,
-                "signed_up_at": signedUpAt || null,
                 "from_referal": fromReferal,
                 "referee_phone": refereePhone || null,
-                "has_assigned_teacher": hasAssignedTeacher,
-                "teacher_user_id":  assingedTeacherUserId || null,
-                "assigned_teacher_at": assignedTeacherAt || null,
                 "has_finished_onboarding": hasFinishedOnboarding,
                 "finished_onboarding_at": finishedOnboardingAt || null,
                 "comments": comments || null,
@@ -370,20 +312,6 @@ function NewStudentRow({ ns, teachers }: { ns: NewStudent, teachers :Teacher[] }
             </RadioGroup>
         </TableCell>
 
-        <TableCell className="min-w-40">
-            {hasSignedUp ? (
-                <span className="text-green-400">Ja</span>
-            ) : (
-                <span className="text-red-400">Nei</span>
-            )}
-        </TableCell>
-
-
-
-        <TableCell className="min-w-80">
-            <SetTeacherCombobox teachers={teachers} passSelectedTeacher={handleAssignTeacher} ns={ns}/>
-        </TableCell>
-
 
         <TableCell className="min-w-60">
             {fromReferal ? (
@@ -440,99 +368,3 @@ function NewStudentRow({ ns, teachers }: { ns: NewStudent, teachers :Teacher[] }
     </TableRow>
     )
 }
-
-
-import { cn } from "@/lib/utils"
-import { Check, ChevronsUpDown } from "lucide-react"
-
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import { toast } from "sonner";
-
-
-const SetTeacherCombobox = ({ ns, teachers, passSelectedTeacher }: { 
-    ns: NewStudent, 
-    teachers: Teacher[], 
-    passSelectedTeacher: (userId: string) => void 
-  }) => {
-    const [teacherUserId, setTeacherUserId] = useState<string | null>(
-      ns.assigned_teacher_user_id || null
-    );
-    const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(
-      teachers.find((teacher) => teacher.user_id === ns.assigned_teacher_user_id) || null
-    );
-    const [open, setOpen] = useState<boolean>(false);
-  
-    useEffect(() => {
-      setTeacherUserId(ns.assigned_teacher_user_id || null);
-      setSelectedTeacher(
-        teachers.find((teacher) => teacher.user_id === ns.assigned_teacher_user_id) || null
-      );
-    }, [ns.assigned_teacher_user_id, teachers]);
-  
-    const getTeacherName = (teacher: Teacher | null) =>
-      teacher ? `${teacher.firstname} ${teacher.lastname}` : "Ingen lærer tildelt";
-  
-    const handleSelectTeacher = (userId: string) => {
-      setTeacherUserId(userId);
-      const selectedTeacher = teachers.find((teacher) => teacher.user_id === userId) || null;
-      setSelectedTeacher(selectedTeacher);
-      passSelectedTeacher(userId);
-    };
-  
-    return (
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            role="combobox"
-            aria-expanded={open}
-            className="w-[200px] justify-between"
-            disabled={!ns.has_signed_up || teachers.length === 0}
-          >
-            {getTeacherName(selectedTeacher)}
-            <ChevronsUpDown className="opacity-50" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-[200px] p-0">
-          <Command>
-            <CommandInput placeholder="Søk etter lærer..." />
-            <CommandList>
-              <CommandEmpty>Ingen lærere funnet</CommandEmpty>
-              <CommandGroup>
-                {teachers.map((teacher) => (
-                  <CommandItem
-                    key={teacher.user_id}
-                    value={teacher.user_id}
-                    onSelect={(currentValue) => {
-                      handleSelectTeacher(currentValue);
-                      setOpen(false);
-                    }}
-                  >
-                    {getTeacherName(teacher)}
-                    <Check
-                      className={cn(
-                        "ml-auto",
-                        teacherUserId === teacher.user_id ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
-    );
-  };
