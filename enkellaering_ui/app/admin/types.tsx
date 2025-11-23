@@ -189,8 +189,6 @@ export type NewStudent = {
     called_at :string;
     has_answered: boolean;
     answered_at: string;
-    has_signed_up: boolean;
-    signed_up_at: string;
     from_referal: boolean;
     referee_phone: string;
     has_assigned_teacher: boolean;

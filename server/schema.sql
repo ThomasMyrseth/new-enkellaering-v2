@@ -275,8 +275,6 @@ CREATE TABLE new_students (
     called_at TIMESTAMPTZ,
     has_answered BOOLEAN,
     answered_at TIMESTAMPTZ,
-    has_signed_up BOOLEAN,
-    signed_up_at TIMESTAMPTZ,
     from_referal BOOLEAN,
     referee_phone TEXT,
     has_finished_onboarding BOOLEAN,
@@ -293,7 +291,6 @@ CREATE TABLE new_students (
 COMMENT ON TABLE new_students IS 'Lead tracking for potential new students';
 COMMENT ON COLUMN new_students.has_called IS 'TRUE/FALSE string - tracking call attempts';
 COMMENT ON COLUMN new_students.has_answered IS 'TRUE/FALSE string - tracking call success';
-COMMENT ON COLUMN new_students.has_signed_up IS 'TRUE/FALSE string - converted to student';
 COMMENT ON COLUMN new_students.hidden IS 'TRUE/FALSE string - soft delete flag';
 
 -- ============================================================================

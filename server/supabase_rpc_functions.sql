@@ -380,8 +380,6 @@ BEGIN
         called_at = COALESCE((updates_json->>'called_at')::TIMESTAMPTZ, called_at),
         has_answered = COALESCE((updates_json->>'has_answered')::BOOLEAN, has_answered),
         answered_at = COALESCE((updates_json->>'answered_at')::TIMESTAMPTZ, answered_at),
-        has_signed_up = COALESCE((updates_json->>'has_signed_up')::BOOLEAN, has_signed_up),
-        signed_up_at = COALESCE((updates_json->>'signed_up_at')::TIMESTAMPTZ, signed_up_at),
         from_referal = COALESCE((updates_json->>'from_referal')::BOOLEAN, from_referal),
         referee_phone = COALESCE((updates_json->>'referee_phone')::TEXT, referee_phone),
         has_finished_onboarding = COALESCE((updates_json->>'has_finished_onboarding')::BOOLEAN, has_finished_onboarding),

@@ -95,13 +95,11 @@ class NewStudents:
         created_at: datetime,
         preffered_teacher :str,
         has_answered: bool,
-        has_signed_up: bool,
         from_referal: bool,
         has_finished_onboarding: bool,
 
         called_at: Optional[datetime] = None,
         answered_at: Optional[datetime] = None,
-        signed_up_at: Optional[datetime] = None,
         finished_onboarding_at: Optional[datetime] = None,
 
         referee_phone: Optional[str] = None,
@@ -119,8 +117,6 @@ class NewStudents:
         self.preffered_teacher = preffered_teacher
         self.has_answered = has_answered
         self.answered_at = answered_at
-        self.has_signed_up = has_signed_up
-        self.signed_up_at = signed_up_at
         self.from_referal = from_referal
         self.referee_phone = referee_phone
         self.has_finished_onboarding = has_finished_onboarding

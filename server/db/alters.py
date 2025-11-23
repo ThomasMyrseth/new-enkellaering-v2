@@ -13,14 +13,6 @@ def alter_new_student(new_student_id: str, admin_user_id: str, updates: dict):
     }).execute()
     return response.data
 
-def set_has_signed_up(phone: str):
-    """Set has_signed_up to TRUE for a new student"""
-    from datetime import datetime, timezone
-    supabase.table('new_students').update({
-        'has_signed_up': 'TRUE',
-        'signed_up_at': datetime.now(timezone.utc).isoformat()
-    }).eq('phone', phone).execute()
-
 def set_your_teacher(phone: str, your_teacher: str):
     """Set your_teacher field for a student"""
     supabase.table('students').update({

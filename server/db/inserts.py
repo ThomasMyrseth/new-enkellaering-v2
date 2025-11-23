@@ -57,8 +57,6 @@ def insert_new_student(new_student):
         'called_at': new_student["called_at"],
         'has_answered': new_student["has_answered"],
         'answered_at': new_student["answered_at"],
-        'has_signed_up': new_student["has_signed_up"],
-        'signed_up_at': new_student["signed_up_at"],
         'from_referal': new_student["from_referal"],
         'referee_phone': new_student["referee_phone"],
         'referee_name': new_student["referee_name"],

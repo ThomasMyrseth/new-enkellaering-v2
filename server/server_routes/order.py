@@ -101,8 +101,6 @@ def update_new_student_workflow(user_id):
         "called_at": data.get("called_at"),
         "has_answered": data.get("has_answered"),
         "answered_at": data.get("answered_at"),
-        "has_signed_up": data.get("has_signed_up"),
-        "signed_up_at": data.get("signed_up_at"),
         "from_referal": data.get("from_referal"),
         "referee_phone": data.get("referee_phone"),
         "has_finished_onboarding": data.get("has_finished_onboarding"),
@@ -126,12 +124,12 @@ def update_new_student_workflow(user_id):
 def clean_updates(updates: dict):
     """Ensure all fields have valid default values."""
     boolean_fields = [
-        "has_called", "has_answered", "has_signed_up", "from_referal",
+        "has_called", "has_answered", "from_referal",
         "has_finished_onboarding", "paid_referee"
     ]
     
     timestamp_fields = [
-        "called_at", "answered_at", "signed_up_at",
+        "called_at", "answered_at"
         "finished_onboarding_at", "paid_referee_at"
     ]
     
@@ -162,14 +160,12 @@ def validate_new_student_data(data: dict) -> tuple[bool, str]:
         "new_student_id": str,
         "has_called": bool,
         "has_answered": bool,
-        "has_signed_up": bool,
         "from_referal": bool,
     }
 
     optional_fields = {
         "called_at": str,
         "answered_at": str,
-        "signed_up_at": str,
         "referee_phone": str,
         "has_finished_onboarding": bool,
         "finished_onboarding_at": str,
@@ -246,8 +242,6 @@ def submit_new_student_route():
             "called_at": None,
             "has_answered": False,
             "answered_at": None,
-            "has_signed_up": False,
-            "signed_up_at": None,
             "from_referal": False,
             "referee_phone": None,
             "referee_name": None,
@@ -290,13 +284,11 @@ def submit_new_student_with_preffered_route():
         "created_at": datetime.now(pytz.timezone("Europe/Oslo")),
         "preferred_teacher": preffered_teacher or '',
         "teacher_answered": False,
-        "student_signed_up": False,
         "teacher_has_accepted": False,
         "hidden": False,
         "physical_or_digital": physical_or_digital,
         "called_at": None,
         "answered_at": None,
-        "signed_up_at": None,
         "teacher_accepted_at": None,
         "comments": None
     }
@@ -326,8 +318,6 @@ def submit_new_referal_route():
         "called_at": None,
         "has_answered": False,
         "answered_at": None,
-        "has_signed_up": False,
-        "signed_up_at": None,
         "from_referal": True,
         "referee_phone": referee_phone,
         "referee_name": referee_name,

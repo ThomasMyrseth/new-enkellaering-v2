@@ -15,7 +15,6 @@ from db.inserts import (
     insert_teacher,
     insert_new_student_order
 )
-from db.alters import set_has_signed_up
 
 from firebase_admin import auth
 
@@ -74,10 +73,6 @@ def register():
             is_active=True
         )
         insert_student(new_student)
-
-        recent = get_new_student_by_phone(phone_parent)
-        if recent:
-            set_has_signed_up(phone_parent)
 
         session['user_id'] = user_id
         token = generate_token(user_id)
