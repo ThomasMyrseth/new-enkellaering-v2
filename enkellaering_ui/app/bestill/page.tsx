@@ -1,3 +1,4 @@
+"use client"
 import NewStudentForm from "@/components/newStudentForm";
 import Image from "next/image";
 import React from "react";
