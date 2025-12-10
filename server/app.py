@@ -1,15 +1,12 @@
-from flask import Flask, request, jsonify
+from flask import Flask, jsonify
 from datetime import datetime
 from dotenv import load_dotenv
 import os
-from flask.sessions import SessionInterface, SessionMixin
 from flask_cors import CORS
 from dotenv import load_dotenv
 import logging
 from datetime import timedelta
-from uuid import uuid4
 from firebase_admin import credentials, initialize_app
-from server_routes.config import firestore_client
  
 load_dotenv()
 app = Flask(__name__)
@@ -84,104 +81,9 @@ app.register_blueprint(job_bp, url_prefix="")
 
 
 
-from flask.sessions import SessionInterface, SessionMixin
-from datetime import datetime, timedelta
-from uuid import uuid4
+from datetime import timedelta
 import logging
 from server_routes.config import token_required
-
-class FirestoreSession(dict, SessionMixin):
-    """
-    Our custom session class that extends dictionary-like behavior
-    and Flask's SessionMixin.
-    """
-    pass
-
-
-class FirestoreSessionInterface(SessionInterface):
-    """
-    A session interface that stores session data in Firestore.
-    """
-
-    def __init__(self, db_client, collection_name="sessions"):
-        self.db_client = db_client
-        self.collection_name = collection_name
-
-    def _get_doc_ref(self, session_id):
-        return self.db_client.collection(self.collection_name).document(session_id)
-
-    def open_session(self, app, request):
-        """Load session data from Firestore, if it exists."""
-        cookie_name = app.config.get('SESSION_COOKIE_NAME', 'session')
-        session_id = request.cookies.get(cookie_name)
-        if session_id:
-            try:
-                doc_ref = self._get_doc_ref(session_id)
-                doc = doc_ref.get()
-                if doc.exists:
-                    data = doc.to_dict()
-                    expires_at_str = data.get('expires_at')
-                    if expires_at_str:
-                        expires_at = datetime.fromisoformat(expires_at_str)
-                        if datetime.utcnow() > expires_at:
-                            # Session expired; return a new empty session
-                            return FirestoreSession()
-                    return FirestoreSession(data)
-            except Exception as e:
-                app.logger.error(f"Error retrieving session {session_id}: {e}")
-        return FirestoreSession()
-
-    def save_session(self, app, session, response):
-        """Save or clear session data in Firestore, then set the cookie."""
-        cookie_name = app.config.get('SESSION_COOKIE_NAME', 'session')
-
-        # 1. If session is empty, remove from Firestore (cleanup) and return
-        if not session:
-            session_id = request.cookies.get(cookie_name)
-            if session_id is not None:
-                try:
-                    doc_ref = self._get_doc_ref(session_id)
-                    doc_ref.delete()
-                except Exception as e:
-                    app.logger.error(f"Error deleting session {session_id}: {e}")
-            return
-
-        # 2. Otherwise, upsert the session into Firestore
-        session_id = request.cookies.get(cookie_name)
-        # If there is no cookie, generate a fresh session ID
-        if not session_id:
-            session_id = str(uuid4())
-
-        # 3. Set session expiration
-        expires_at = datetime.now() + app.config.get('PERMANENT_SESSION_LIFETIME', timedelta(hours=1))
-        session['expires_at'] = expires_at.isoformat()
-
-        # 4. Write session data to Firestore
-        try:
-            doc_ref = self._get_doc_ref(session_id)
-            doc_ref.set(dict(session))  # Convert the session to a dict
-        except Exception as e:
-            app.logger.error(f"Error saving session {session_id}: {e}")
-
-        # 5. Set the cookie; ensure both `cookie_name` and `session_id` are strings
-        response.set_cookie(
-            cookie_name,               # Must be a string
-            str(session_id),           # Must be a string
-            httponly=True,
-            secure=app.config['SESSION_COOKIE_SECURE'],
-            samesite=app.config['SESSION_COOKIE_SAMESITE'],
-        )
-
-    def is_null_session(self, session):
-        """Tell Flask if the session is empty."""
-        # Return True if `session` is None or has no keys
-        return not session or len(session) == 0
-
-
-
-
-# Use our custom session interface
-app.session_interface = FirestoreSessionInterface(firestore_client)
 
 
 # Initialize Firebase Admin SDK
