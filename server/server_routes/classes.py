@@ -3,7 +3,7 @@ from datetime import datetime
 import logging
 
 import threading
-from .email import sendNewClassToStudentMail, sendNewClassToTeacherMail, send_email_for_new_class_async
+from .email import send_email_for_new_class_async
 from db.gets import get_student_by_user_id, get_teacher_by_user_id
 
 from .config import token_required

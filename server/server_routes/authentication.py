@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, session
+from flask import Blueprint, request, jsonify
 from datetime import datetime
 import logging
 
@@ -74,7 +74,6 @@ def register():
         )
         insert_student(new_student)
 
-        session['user_id'] = user_id
         token = generate_token(user_id)
         logging.info(f"Student {user_id} registered.")
 
@@ -141,7 +140,6 @@ def register_teacher():
         )
         insert_teacher(new_teacher)
 
-        session['user_id'] = user_id
         token = generate_token(user_id)
         logging.info(f"Teacher {user_id} registered.")
         return jsonify({"message": "User registered successfully.", "user_id": user_id, "token": token}), 200
@@ -172,7 +170,6 @@ def login():
             return jsonify({"error": "User not found"}), 401
 
         user = users[0]
-        session['user_id'] = user['user_id']
         token = generate_token(user['user_id'])
         return jsonify({"message": "Login successful", "user_id": user['user_id'], "token": token}), 200
 
@@ -199,7 +196,6 @@ def login_teacher():
             return jsonify({"error": "User not found"}), 401
 
         user = teachers[0]
-        session['user_id'] = user['user_id']
         token = generate_token(user['user_id'])
         return jsonify({"message": "Login successful", "user_id": user['user_id'], "token": token}), 200
 
