@@ -489,6 +489,10 @@ function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUse
             return true;
         }
 
+        // Create an AbortController for timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
         try {
             const response = await fetch(`${BASEURL}/upload-new-class`, {
             method: "POST",
@@ -505,8 +509,11 @@ function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUse
                 groupclass : groupClass,
                 number_of_students: numberOfStudents,
             }),
+            signal: controller.signal, // Add timeout signal
             });
-    
+
+            clearTimeout(timeoutId); // Clear timeout if request completes
+
             if (!response.ok) {
                 alert("En feil skjedde prøv igjen");
                 setUploadSuccessfull(false);
@@ -519,8 +526,17 @@ function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUse
                 return true;
             }
         } catch (error) {
-            console.error("Error uploading class:", error);
-            alert("En feil skjedde prøv igjen");
+            clearTimeout(timeoutId); // Clear timeout on error
+
+            // Check if error is due to timeout
+            if (error instanceof Error && error.name === 'AbortError') {
+                console.error("Request timed out after 30 seconds");
+                alert("Forespørselen tok for lang tid. Vennligst prøv igjen.");
+            } else {
+                console.error("Error uploading class:", error);
+                alert("En feil skjedde prøv igjen");
+            }
+
             setUploadSuccessfull(false);
             setIsSendButtonDisabled(false);
             return true;

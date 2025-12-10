@@ -3,7 +3,7 @@ from datetime import datetime
 import logging
 
 import threading
-from .email import sendNewClassToStudentMail
+from .email import sendNewClassToStudentMail, sendNewClassToTeacherMail
 from db.gets import get_student_by_user_id, get_teacher_by_user_id
 
 from .config import token_required
@@ -155,8 +155,10 @@ def upload_new_class(user_id):
                 target=send_email_for_new_class_async,
                 args=(
                     classes,
-                    student,
+                    student_ids,
                     teacher,
+                    groupclass,
+                    number_of_students,
                 ),
                 daemon=True  # Thread will not prevent program from exiting
             )
@@ -166,13 +168,66 @@ def upload_new_class(user_id):
 
     return jsonify({"message": "Class successfully inserted"}), 200
 
-def send_email_for_new_class_async(classes, student, teacher):
+def send_email_for_new_class_async(classes, student_ids, teacher, groupclass, number_of_students):
+    """
+    Send emails to students and teacher about the new class.
+    Runs in a separate thread to avoid blocking the HTTP response.
+    """
     try:
-        sendNewClassToStudentMail(student['firstname_student'], teacher['firstname'], student['firstname_parent'], classes[0].comment, classes[0].started_at, student['email_parent'])
+        # Get all student information for email sending
+        students = []
+        for sid in student_ids:
+            try:
+                student = get_student_by_user_id(sid)
+                if isinstance(student, list) and student:
+                    student = student[0]
+                students.append(student)
+            except Exception as e:
+                logging.error(f"Error fetching student {sid}: {e}")
+                continue
+
+        if not students:
+            logging.error("No students found for sending emails")
+            return
+
+        # Send email to each student/parent
+        for student in students:
+            try:
+                sendNewClassToStudentMail(
+                    studentName=student['firstname_student'],
+                    teacherName=teacher['firstname'],
+                    parentName=student['firstname_parent'],
+                    comment=classes[0].comment,
+                    classDate=classes[0].started_at,
+                    receipientStudentMail=student['email_parent']
+                )
+                logging.info(f"Student email sent successfully to {student['email_parent']}")
+            except Exception as e:
+                logging.error(f"Error sending email to student {student['email_parent']}: {e}")
+                # Continue to next student even if one fails
+
+        # Prepare student names for teacher email
+        student_names = ", ".join([f"{s['firstname_student']} {s['lastname_student']}" for s in students])
+
+        # Send email to teacher
+        try:
+            sendNewClassToTeacherMail(
+                teacherName=f"{teacher['firstname']} {teacher['lastname']}",
+                studentNames=student_names,
+                startedAt=classes[0].started_at,
+                endedAt=classes[0].ended_at,
+                comment=classes[0].comment,
+                recipientTeacherEmail=teacher['email'],
+                groupClass=groupclass,
+                numberOfStudents=number_of_students if number_of_students else len(students)
+            )
+            logging.info(f"Teacher email sent successfully to {teacher['email']}")
+        except Exception as e:
+            logging.error(f"Error sending email to teacher {teacher['email']}: {e}")
+
     except Exception as e:
-        logging.error(f"Error sending email: {e}")
-        print(f"Error sending email: {e}")
-        raise Exception({"message": f"Error sending email: {e}"})
+        logging.error(f"Error in email thread: {e}")
+        # Don't raise - we're in a daemon thread, just log the error
 
 
 @classes_bp.route('/delete-class', methods=["POST"])

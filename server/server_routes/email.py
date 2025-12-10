@@ -197,6 +197,107 @@ def sendNewClassToStudentMail(studentName: str, teacherName: str, parentName :st
         print("❌ Failed to send email:", e)
         raise e
 
+def sendNewClassToTeacherMail(teacherName: str, studentNames: str, startedAt: str, endedAt: str, comment: str, recipientTeacherEmail: str, groupClass: bool = False, numberOfStudents: int = 1):
+    """
+    Send confirmation email to teacher after they upload a new class.
+
+    Args:
+        teacherName: Name of the teacher
+        studentNames: Name(s) of the student(s) - comma separated if multiple
+        startedAt: ISO datetime string when class started
+        endedAt: ISO datetime string when class ended
+        comment: Teacher's comment about the class
+        recipientTeacherEmail: Teacher's email address
+        groupClass: Whether this was a group class
+        numberOfStudents: Number of students in the class
+    """
+    try:
+        # Parse and format start date
+        try:
+            start_dt = datetime.fromisoformat(startedAt.replace('Z', '+00:00'))
+            end_dt = datetime.fromisoformat(endedAt.replace('Z', '+00:00'))
+
+            # Convert to Europe/Oslo timezone
+            local_zone = ZoneInfo("Europe/Oslo")
+            start_dt = start_dt.astimezone(local_zone)
+            end_dt = end_dt.astimezone(local_zone)
+
+            # Calculate duration
+            duration_seconds = (end_dt - start_dt).total_seconds()
+            hours = int(duration_seconds // 3600)
+            minutes = int((duration_seconds % 3600) // 60)
+
+            # Format duration in Norwegian
+            if hours > 0 and minutes > 0:
+                duration_text = f"{hours} time{'r' if hours > 1 else ''} og {minutes} minutter"
+            elif hours > 0:
+                duration_text = f"{hours} time{'r' if hours > 1 else ''}"
+            else:
+                duration_text = f"{minutes} minutter"
+
+        except Exception:
+            formatted_startDate = startedAt  # Fallback
+            duration_text = "Ukjent varighet"
+        else:
+            # Format using Babel in Norwegian
+            try:
+                formatted_startDate = format_datetime(
+                    start_dt,
+                    "EEEE dd. MMMM yyyy, 'kl.' HH:mm",
+                    locale="nb"
+                )
+            except Exception:
+                formatted_startDate = start_dt.strftime("%Y-%m-%d %H:%M %Z")
+
+        # Build student info text
+        if groupClass and numberOfStudents > 1:
+            student_info = f"gruppetime med {numberOfStudents} elever ({studentNames})"
+        else:
+            student_info = f"time med {studentNames}"
+
+        # HTML email body for teacher
+        html_content = f"""
+        <div style="font-family: sans-serif; background-color: #f9f9f9; padding: 30px;">
+            <h1>Timen din er registrert!</h1>
+            <br/>
+            <div style="background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                <p style="font-size: 16px;"><strong>Hei {teacherName}!</strong></p>
+                <br/>
+                <p>Din {student_info} er nå registrert i systemet.</p>
+                <br/>
+                <p><strong>Detaljer:</strong></p>
+                <ul style="color: #555;">
+                    <li><strong>Elev(er):</strong> {studentNames}</li>
+                    <li><strong>Dato og tid:</strong> {formatted_startDate}</li>
+                    <li><strong>Varighet:</strong> {duration_text}</li>
+                </ul>
+                <br/>
+                <p><strong>Din kommentar:</strong></p>
+                <p style="color: #555; font-style: italic;">"{comment}"</p>
+                <br/>
+                <p style="color: #777; font-size: 14px;">
+                    Eleven(e) har mottatt en bekreftelse med din kommentar. Du kan se alle dine timer på Min Side.
+                </p>
+                <a href="https://enkellaering.no/min-side-laerer" style="display:inline-block; margin-top: 15px; background-color:#6366F1; color:white; padding:10px 16px; border-radius:5px; text-decoration:none;">Gå til Min Side</a>
+            </div>
+        </div>
+        """
+
+        # Send the email
+        response = resend.Emails.send({
+            "from": FROM_EMAIL,
+            "to": recipientTeacherEmail,
+            "subject": f"Time registrert: {studentNames} den {formatted_startDate.split(',')[0] if ',' in formatted_startDate else formatted_startDate}",
+            "html": html_content
+        })
+
+        print(f"✅ Teacher email sent to {recipientTeacherEmail}:", response)
+        return response
+
+    except Exception as e:
+        print(f"❌ Failed to send teacher email to {recipientTeacherEmail}:", e)
+        raise e
+
 def sendAcceptOrRejectToStudentMail(studentName: str, teacherName: str, acceptOrReject: bool, receipientStudentMail: str):
     try:
         accept_text = 'godkjent' if acceptOrReject else 'avslått'
