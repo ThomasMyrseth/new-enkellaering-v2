@@ -129,7 +129,9 @@ def upload_new_class(user_id):
     #get info on teacher and student
     try:
         student = get_student_by_user_id(student_ids[0])  # Ensure at least one student exists
+        logging.info("fetched info about student")
         teacher = get_teacher_by_user_id(user_id)  # Ensure the teacher exists
+        logging.info("fetched info about teacher")
 
         # If get_student_by_user_id returns a list, use the first element
         if isinstance(student, list) and student:
@@ -143,7 +145,9 @@ def upload_new_class(user_id):
 
     #insert the class
     try:
+        logging.info("inserting new class into db")
         insert_classes(classes)
+        logging.info("inserted new class into db")
     except Exception as e:
         print(f"Error inserting class: {e}")
         return jsonify({"message": str(e)}), 500
@@ -151,6 +155,7 @@ def upload_new_class(user_id):
 
     #send the email using threads
     try:
+        logging.info("starting email thread for new class")
         email_thread = threading.Thread(
                 target=send_email_for_new_class_async,
                 args=(

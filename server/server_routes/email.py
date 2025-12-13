@@ -8,6 +8,7 @@ import logging
 from zoneinfo import ZoneInfo
 from datetime import datetime, time
 from babel.dates import format_datetime
+from db.gets import get_student_by_user_id
 
 from db.gets import get_students_with_few_classes, get_all_admins
 
