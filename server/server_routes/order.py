@@ -1,9 +1,11 @@
-from concurrent.futures import thread
 import re
-import threading
+import json
+import os
 from flask import Blueprint, request, jsonify
 from datetime import datetime
 import logging
+
+from google.cloud import pubsub_v1
 
 from .config import token_required
 from db.gets import (
@@ -37,6 +39,15 @@ from db.deletes import (
 
 order_bp = Blueprint('order', __name__)
 
+# Initialize Pub/Sub publisher
+publisher = pubsub_v1.PublisherClient()
+GCP_PROJECT_ID = os.getenv('GCP_PROJECT_ID', 'your-project-id')
+
+# Topic paths
+TOPIC_NEW_STUDENT_ADMIN = publisher.topic_path(GCP_PROJECT_ID, "send-new-student-admin-email")
+TOPIC_NEW_ORDER_ADMIN = publisher.topic_path(GCP_PROJECT_ID, "send-new-order-admin-email")
+TOPIC_TEACHER_REFERAL_ADMIN = publisher.topic_path(GCP_PROJECT_ID, "send-teacher-referal-admin-email")
+TOPIC_STUDENT_TEACHER_NOTIFICATION = publisher.topic_path(GCP_PROJECT_ID, "send-student-teacher-notification-email")
 
 
 @order_bp.route('/get-new-students', methods=["GET"])
@@ -223,7 +234,7 @@ def delete_new_student_from_new_students_table_route(user_id):
 
 import uuid
 import pytz
-from .email import sendNewStudentToAdminMail
+
 @order_bp.route('/submit-new-student', methods = ["POST"])
 def submit_new_student_route():
     data = request.get_json()
@@ -257,13 +268,19 @@ def submit_new_student_route():
         logging.error(f"Error inserting new student: {e}")
         return jsonify({"message": str(e)}), 500
 
-    t = threading.Thread(
-        target=sendNewStudentToAdminMail,
-        args=(phone,),
-        daemon=True  # doesn't block process exit
-    )
-    t.start()
-    
+    # Publish email job to Pub/Sub
+    try:
+        logging.info("Publishing new student admin email job to Pub/Sub")
+        message = {"phone": str(phone)}
+        publisher.publish(
+            TOPIC_NEW_STUDENT_ADMIN,
+            json.dumps(message).encode("utf-8")
+        )
+        logging.info(f"New student admin email job published successfully: {message}")
+    except Exception as e:
+        # Student is already inserted - don't fail the request
+        logging.error(f"Failed to publish email job: {e}, but student already inserted")
+
     return jsonify({"message": "New student successfully inserted"}), 200
     
 
@@ -329,24 +346,31 @@ def submit_new_referal_route():
         "referee_account_number": account_number,
         "preffered_teacher": None
     }
-    thread = threading.Thread(
-        target=sendNewStudentToAdminMail,
-        args=(referal_phone,),
-        daemon=True  # doesn't block process exit
-    )
-    thread.start()
 
     try:
         insert_new_student(ns)
     except Exception as e:
         return jsonify({"message": str(e)}), 500
+
+    # Publish email job to Pub/Sub
+    try:
+        logging.info("Publishing new referral student admin email job to Pub/Sub")
+        message = {"phone": str(referal_phone)}
+        publisher.publish(
+            TOPIC_NEW_STUDENT_ADMIN,
+            json.dumps(message).encode("utf-8")
+        )
+        logging.info(f"New referral student admin email job published successfully: {message}")
+    except Exception as e:
+        # Student is already inserted - don't fail the request
+        logging.error(f"Failed to publish email job: {e}, but student already inserted")
+
     return jsonify({"message": "New student successfully inserted"}), 200
 
 
 
 
 
-from .email import sendNewStudentToTeacherMail, sendNewOrderEmailToAdmin
 @order_bp.route('/request-new-teacher', methods=["POST"])
 @token_required
 def request_new_teacher_route(user_id):
@@ -357,40 +381,68 @@ def request_new_teacher_route(user_id):
     comments = data.get('comments') or ''
     if not user_id or not teacher_user_id or physical_or_digital is None:
         return jsonify({"message": "Missing required fields"}), 400
+
+    # Get teacher and student info
     try:
         teacher_list = get_teacher_by_user_id(teacher_user_id)
         teacher = teacher_list[0] if teacher_list else None
-        if teacher:
-            name = teacher.get('firstname', '') + " " + teacher.get('lastname', '')
-            sendNewStudentToTeacherMail(receipientTeacherMail=teacher.get('email', ''), teachername=name)
     except Exception as e:
-        return jsonify({"messsage": f"Error sending email to teacher: {e}"}), 500
+        logging.error(f"Error fetching teacher: {e}")
+        return jsonify({"message": f"Error fetching teacher: {e}"}), 500
 
+    try:
+        student_list = get_student_by_user_id(user_id)
+        student_row = student_list[0] if student_list else None
+        if not student_row:
+            return jsonify({"message": "Student not found"}), 404
+    except Exception as e:
+        logging.error(f"Error fetching student: {e}")
+        return jsonify({"message": f"Error fetching student: {e}"}), 500
+
+    # Insert the order
     try:
         insert_new_student_order(user_id, teacher_user_id, accept=None, physical_or_digital=physical_or_digital, location=location, comments=comments)
     except Exception as e:
-        print(f"Error inserting new student order: {e}")
+        logging.error(f"Error inserting new student order: {e}")
         return jsonify({"message": f"Error inserting new student order {e}"}), 500
-    
-    #send email to admin
 
-    student_list = get_student_by_user_id(user_id)
-    student_row = student_list[0] if student_list else None
-    if student_row:
-        thread = threading.Thread(
-            target=sendNewOrderEmailToAdmin,
-            args=(
-                student_row.get('firstname_parent', ''),
-                student_row.get('lastname_parent', ''),
-                student_row.get('phone_parent', ''),
-                teacher.get('firstname', '') if teacher else '',
-                teacher.get('lastname', '') if teacher else '',
-                teacher.get('phone', '') if teacher else ''
-            ),            daemon=True  # doesn't block process exit
+    # Publish email to teacher (async)
+    if teacher:
+        try:
+            logging.info("Publishing new student to teacher email job to Pub/Sub")
+            name = str(teacher.get('firstname', '')) + " " + str(teacher.get('lastname', ''))
+            message = {
+                "email_type": "new_student_to_teacher",
+                "teacher_email": str(teacher.get('email', '')),
+                "teacher_name": str(name)
+            }
+            publisher.publish(
+                TOPIC_STUDENT_TEACHER_NOTIFICATION,
+                json.dumps(message).encode("utf-8")
+            )
+            logging.info(f"New student to teacher email job published successfully: {message}")
+        except Exception as e:
+            logging.error(f"Failed to publish teacher email job: {e}, but order already inserted")
+
+    # Publish email to admin (async)
+    try:
+        logging.info("Publishing new order admin email job to Pub/Sub")
+        message = {
+            "firstname_parent": str(student_row.get('firstname_parent', '')),
+            "lastname_parent": str(student_row.get('lastname_parent', '')),
+            "phone_parent": str(student_row.get('phone_parent', '')),
+            "teacher_firstname": str(teacher.get('firstname', '')) if teacher else '',
+            "teacher_lastname": str(teacher.get('lastname', '')) if teacher else '',
+            "teacher_phone": str(teacher.get('phone', '')) if teacher else ''
+        }
+        publisher.publish(
+            TOPIC_NEW_ORDER_ADMIN,
+            json.dumps(message).encode("utf-8")
         )
-        thread.start()
-    else:
-        return jsonify({"message": "Student not found"}), 404
+        logging.info(f"New order admin email job published successfully: {message}")
+    except Exception as e:
+        # Order is already inserted - don't fail the request
+        logging.error(f"Failed to publish admin email job: {e}, but order already inserted")
 
     return jsonify({"message": "inserted new student order"}), 200
 
@@ -447,7 +499,6 @@ def update_order_data_route(user_id):
         return jsonify({"message": f"Error updating new order {e}"}), 500
 
 
-from .email import sendAcceptOrRejectToStudentMail
 @order_bp.route('/teacher-accepts', methods=["POST"])
 @token_required
 def teacher_accepts_route(user_id):
@@ -462,22 +513,44 @@ def teacher_accepts_route(user_id):
     accept = data.get('accept')
     if not (row_id and student_user_id and firstname and mail):
         return jsonify({"message": "Missing fields"}), 400
+
+    # Get teacher info
     try:
         teacher = get_teacher_by_user_id(teacher_user_id)[0]
         teacher_firstname = teacher.get('firstname', '')
         teacher_lastname = teacher.get('lastname', '')
-
         name = teacher_firstname + " " + teacher_lastname
-        sendAcceptOrRejectToStudentMail(studentName=firstname, teacherName=name, acceptOrReject=accept, receipientStudentMail=mail)
     except Exception as e:
-        print(f"Error sending email: {e}")
-        return jsonify({"message": f"Error sending email {e}"}), 500
+        logging.error(f"Error fetching teacher: {e}")
+        return jsonify({"message": f"Error fetching teacher {e}"}), 500
+
+    # Update the order first
     try:
         cloud_update_new_order(row_id, True, None, None, None)
-        return jsonify({"message": "Updated new order"}), 200
     except Exception as e:
-        print(f"Error updating new order: {e}")
+        logging.error(f"Error updating new order: {e}")
         return jsonify({"message": f"Error updating new order {e}"}), 500
+
+    # Publish email job to Pub/Sub (async)
+    try:
+        logging.info("Publishing accept/reject student email job to Pub/Sub")
+        message = {
+            "email_type": "accept_reject_to_student",
+            "student_name": str(firstname),
+            "teacher_name": str(name),
+            "accept_or_reject": bool(accept),
+            "student_email": str(mail)
+        }
+        publisher.publish(
+            TOPIC_STUDENT_TEACHER_NOTIFICATION,
+            json.dumps(message).encode("utf-8")
+        )
+        logging.info(f"Accept/reject student email job published successfully: {message}")
+    except Exception as e:
+        # Order is already updated - don't fail the request
+        logging.error(f"Failed to publish email job: {e}, but order already updated")
+
+    return jsonify({"message": "Updated new order"}), 200
 
 @order_bp.route('/remove-teacher-from-student', methods=["POST"])
 @token_required
@@ -538,7 +611,7 @@ def assign_teacher_for_student(user_id):
 
 
 from db.inserts import insertNewTeacherReferal
-from server_routes.email import sendEmailToAdminAboutNewTeacherReferal
+
 @order_bp.route('/submit-new-teacher-referal', methods=["POST"])
 @token_required
 def submit_new_teacher_referal_route(user_id):
@@ -558,13 +631,23 @@ def submit_new_teacher_referal_route(user_id):
     except Exception as e:
         logging.error(f"Error inserting new teacher referal: {e}")
         return jsonify({"message": f"An error occured {e}"}), 500
-    
-    thread = threading.Thread(
-        target=sendEmailToAdminAboutNewTeacherReferal,
-        args=(referal_name, referal_email, referal_phone, user_id),
-        daemon=True  # doesn't block process exit
-    )
-    thread.start()
 
-    
+    # Publish email job to Pub/Sub
+    try:
+        logging.info("Publishing teacher referral admin email job to Pub/Sub")
+        message = {
+            "referal_name": str(referal_name),
+            "referal_email": str(referal_email) if referal_email else "",
+            "referal_phone": str(referal_phone),
+            "teacher_user_id": str(user_id)
+        }
+        publisher.publish(
+            TOPIC_TEACHER_REFERAL_ADMIN,
+            json.dumps(message).encode("utf-8")
+        )
+        logging.info(f"Teacher referral admin email job published successfully: {message}")
+    except Exception as e:
+        # Referral is already inserted - don't fail the request
+        logging.error(f"Failed to publish email job: {e}, but referral already inserted")
+
     return jsonify({"message": "New teacher referal submitted successfully"}), 200

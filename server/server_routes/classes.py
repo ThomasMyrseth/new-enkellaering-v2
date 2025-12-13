@@ -1,9 +1,10 @@
 from flask import Blueprint, request, jsonify
 from datetime import datetime
 import logging
+import json
+import os
 
-import threading
-from .email import send_email_for_new_class_async
+from google.cloud import pubsub_v1
 from db.gets import get_student_by_user_id, get_teacher_by_user_id
 
 from .config import token_required
@@ -24,6 +25,11 @@ classes_bp = Blueprint('classes', __name__)
 
 from db.sql_types import Classes
 import uuid
+
+# Initialize Pub/Sub publisher
+publisher = pubsub_v1.PublisherClient()
+GCP_PROJECT_ID = os.getenv('GCP_PROJECT_ID', 'your-project-id')
+TOPIC_PATH = publisher.topic_path(GCP_PROJECT_ID, "send-class-email")
 
 @classes_bp.route('/get-classes-for-student', methods=["GET"])
 @token_required
@@ -153,23 +159,27 @@ def upload_new_class(user_id):
         return jsonify({"message": str(e)}), 500
     
 
-    #send the email using threads
+    # Publish email job to Pub/Sub
     try:
-        logging.info("starting email thread for new class")
-        email_thread = threading.Thread(
-                target=send_email_for_new_class_async,
-                args=(
-                    classes,
-                    student_ids,
-                    teacher,
-                    groupclass,
-                    number_of_students,
-                ),
-                daemon=True  # Thread will not prevent program from exiting
-            )
-        email_thread.start()
+        logging.info("Publishing email job to Pub/Sub for new class")
+        message = {
+            "class_ids": [str(c.class_id) for c in classes],  # Ensure strings
+            "student_ids": [str(sid) for sid in student_ids],  # Ensure strings
+            "teacher_user_id": str(user_id),
+            "groupclass": bool(groupclass),
+            "number_of_students": int(number_of_students) if number_of_students else 1
+        }
+
+        # Publish to Pub/Sub
+        publisher.publish(
+            TOPIC_PATH,
+            json.dumps(message).encode("utf-8")
+        )
+        logging.info(f"Email job published successfully. Message: {message}")
+        logging.info("Email job published to Pub/Sub successfully")
     except Exception as e:
-        logging.error(f"Error starting email thread: {e}, but class already inserted")
+        # IMPORTANT: Class is already inserted - don't fail the request
+        logging.error(f"Failed to publish email job to Pub/Sub: {e}, but class already inserted")
 
     return jsonify({"message": "Class successfully inserted"}), 200
 

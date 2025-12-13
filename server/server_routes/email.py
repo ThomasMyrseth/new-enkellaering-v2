@@ -1,5 +1,5 @@
 import os
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 from dotenv import load_dotenv
 import resend
 from typing import List
@@ -8,8 +8,10 @@ import logging
 from zoneinfo import ZoneInfo
 from datetime import datetime, time
 from babel.dates import format_datetime
-from db.gets import get_student_by_user_id
+import base64
+import json
 
+from db.gets import get_student_by_user_id, get_students_by_user_ids, get_classes_by_ids, get_teacher_by_user_id
 from db.gets import get_students_with_few_classes, get_all_admins
 
 resend.api_key = os.getenv('RESEND_API_KEY')
@@ -17,6 +19,29 @@ FROM_EMAIL = os.getenv("MAIL_USERNAME") or "kontakt@enkellaering.no"
 
 
 mail_bp = Blueprint('mail', __name__)
+
+
+from google.cloud import pubsub_v1
+import os
+
+project_id = os.getenv("GCP_PROJECT_ID", 'no_project_id')
+publisher = pubsub_v1.PublisherClient()
+
+topics = [
+    "send-class-email",
+    "send-new-order-admin-email",
+    "send-teacher-referal-admin-email",
+    "send-student-teacher-notification-email"
+]
+
+for topic_name in topics:
+    topic_path = publisher.topic_path(project_id, topic_name)
+    try:
+        publisher.get_topic(request={"topic": topic_path})
+        print(f"Topic exists: {topic_name}")
+    except:
+        publisher.create_topic(request={"name": topic_path})
+        print(f"Created topic: {topic_name}")
 
 # This route builds and sends the email dynamically on request
 @mail_bp.route('/send-hello-email', methods=['GET'])
@@ -42,26 +67,14 @@ def send_hello_email_route():
 
 
 
-def send_email_for_new_class_async(classes, student_ids, teacher, groupclass, number_of_students):
+def send_email_for_new_class(classes, students, teacher, groupclass, number_of_students):
     """
     Send emails to students and teacher about the new class.
-    Runs in a separate thread to avoid blocking the HTTP response.
+    Now accepts pre-fetched students instead of student_ids.
     """
     try:
-        # Get all student information for email sending
-        students = []
-        for sid in student_ids:
-            try:
-                student = get_student_by_user_id(sid)
-                if isinstance(student, list) and student:
-                    student = student[0]
-                students.append(student)
-            except Exception as e:
-                logging.error(f"Error fetching student {sid}: {e}")
-                continue
-
         if not students:
-            logging.error("No students found for sending emails")
+            logging.error("No students provided for sending emails")
             return
 
         # Send email to each student/parent
@@ -833,3 +846,264 @@ def sendEmailToAdminAboutNewTeacherReferal(referalName :str, referalEmail :str, 
             raise e
 
     return True
+
+
+@mail_bp.route('/pubsub/send-class-email', methods=["POST"])
+def send_class_email_pubsub():
+    """
+    Pub/Sub subscriber endpoint to send emails for new classes.
+    Receives messages from Google Cloud Pub/Sub with class information.
+    """
+    envelope = request.get_json()
+    if not envelope or "message" not in envelope:
+        logging.error("Bad Request: No message in Pub/Sub envelope")
+        return "Bad Request", 400
+
+    try:
+        # Decode the Pub/Sub message
+        payload = base64.b64decode(envelope["message"]["data"]).decode("utf-8")
+        data = json.loads(payload)
+
+        # Extract data from message
+        class_ids = data.get("class_ids", [])
+        student_ids = data.get("student_ids", [])
+        teacher_user_id = data.get("teacher_user_id")
+        groupclass = data.get("groupclass", False)
+        number_of_students = data.get("number_of_students", 1)
+
+        # Ensure class_ids and student_ids are lists (handle stringified lists)
+        if isinstance(class_ids, str):
+            class_ids = json.loads(class_ids)
+        if isinstance(student_ids, str):
+            student_ids = json.loads(student_ids)
+
+        # Ensure they are proper lists (not tuples, generators, etc.)
+        class_ids = list(class_ids) if class_ids else []
+        student_ids = list(student_ids) if student_ids else []
+
+        # Ensure all IDs are strings
+        class_ids = [str(cid) for cid in class_ids]
+        student_ids = [str(sid) for sid in student_ids]
+
+        logging.info(f"Processing class email: class_ids={class_ids}, student_ids={student_ids}, teacher={teacher_user_id}")
+        logging.info(f"Types: class_ids={type(class_ids)}, student_ids={type(student_ids)}")
+
+        if not (class_ids and student_ids and teacher_user_id):
+            logging.error("Missing required fields in Pub/Sub message")
+            return "Bad Request: Missing required fields", 400
+
+        # Fetch data from database
+        logging.info(f"Fetching classes with IDs: {class_ids}")
+        classes = get_classes_by_ids(class_ids)
+        logging.info(f"Fetching students with IDs: {student_ids}")
+        students = get_students_by_user_ids(student_ids)
+        teacher = get_teacher_by_user_id(teacher_user_id)
+
+        # Handle list responses
+        if isinstance(teacher, list) and teacher:
+            teacher = teacher[0]
+
+        if not classes or not students or not teacher:
+            logging.error(f"Failed to fetch data: classes={bool(classes)}, students={bool(students)}, teacher={bool(teacher)}")
+            return "Error: Failed to fetch required data", 500
+
+        # Send emails
+        send_email_for_new_class(
+            classes=classes,
+            students=students,
+            teacher=teacher,
+            groupclass=groupclass,
+            number_of_students=number_of_students
+        )
+
+        logging.info(f"Successfully sent emails for classes: {class_ids}")
+        return "OK", 200
+
+    except Exception as e:
+        logging.exception("Failed to process Pub/Sub message for sending class emails")
+        # Return 500 so Pub/Sub will retry
+        return "Error", 500
+
+
+@mail_bp.route('/pubsub/send-new-student-admin-email', methods=["POST"])
+def send_new_student_admin_email_pubsub():
+    """
+    Pub/Sub subscriber endpoint to send admin emails for new students.
+    """
+    envelope = request.get_json()
+    if not envelope or "message" not in envelope:
+        logging.error("Bad Request: No message in Pub/Sub envelope")
+        return "Bad Request", 400
+
+    try:
+        # Decode the Pub/Sub message
+        payload = base64.b64decode(envelope["message"]["data"]).decode("utf-8")
+        data = json.loads(payload)
+
+        # Extract data from message
+        phone = data.get("phone")
+
+        if not phone:
+            logging.error("Missing phone in Pub/Sub message")
+            return "Bad Request: Missing phone", 400
+
+        # Send email to admins
+        sendNewStudentToAdminMail(phone)
+
+        logging.info(f"Successfully sent new student admin email for phone: {phone}")
+        return "OK", 200
+
+    except Exception as e:
+        logging.exception("Failed to process Pub/Sub message for new student admin email")
+        # Return 500 so Pub/Sub will retry
+        return "Error", 500
+
+
+@mail_bp.route('/pubsub/send-new-order-admin-email', methods=["POST"])
+def send_new_order_admin_email_pubsub():
+    """
+    Pub/Sub subscriber endpoint to send admin emails for new orders.
+    """
+    envelope = request.get_json()
+    if not envelope or "message" not in envelope:
+        logging.error("Bad Request: No message in Pub/Sub envelope")
+        return "Bad Request", 400
+
+    try:
+        # Decode the Pub/Sub message
+        payload = base64.b64decode(envelope["message"]["data"]).decode("utf-8")
+        data = json.loads(payload)
+
+        # Extract data from message
+        firstname_parent = data.get("firstname_parent")
+        lastname_parent = data.get("lastname_parent")
+        phone_parent = data.get("phone_parent")
+        teacher_firstname = data.get("teacher_firstname")
+        teacher_lastname = data.get("teacher_lastname")
+        teacher_phone = data.get("teacher_phone")
+
+        if not all([firstname_parent, lastname_parent, phone_parent]):
+            logging.error("Missing required fields in Pub/Sub message")
+            return "Bad Request: Missing required fields", 400
+
+        # Send email to admins
+        sendNewOrderEmailToAdmin(
+            firstname_parent,
+            lastname_parent,
+            phone_parent,
+            teacher_firstname or "",
+            teacher_lastname or "",
+            teacher_phone or ""
+        )
+
+        logging.info(f"Successfully sent new order admin email for {firstname_parent} {lastname_parent}")
+        return "OK", 200
+
+    except Exception as e:
+        logging.exception("Failed to process Pub/Sub message for new order admin email")
+        # Return 500 so Pub/Sub will retry
+        return "Error", 500
+
+
+@mail_bp.route('/pubsub/send-teacher-referal-admin-email', methods=["POST"])
+def send_teacher_referal_admin_email_pubsub():
+    """
+    Pub/Sub subscriber endpoint to send admin emails for teacher referrals.
+    """
+    envelope = request.get_json()
+    if not envelope or "message" not in envelope:
+        logging.error("Bad Request: No message in Pub/Sub envelope")
+        return "Bad Request", 400
+
+    try:
+        # Decode the Pub/Sub message
+        payload = base64.b64decode(envelope["message"]["data"]).decode("utf-8")
+        data = json.loads(payload)
+
+        # Extract data from message
+        referal_name = data.get("referal_name")
+        referal_email = data.get("referal_email")
+        referal_phone = data.get("referal_phone")
+        teacher_user_id = data.get("teacher_user_id")
+
+        if not all([referal_name, referal_phone, teacher_user_id]):
+            logging.error("Missing required fields in Pub/Sub message")
+            return "Bad Request: Missing required fields", 400
+
+        # Send email to admins
+        sendEmailToAdminAboutNewTeacherReferal(
+            referal_name,
+            referal_email or "",
+            referal_phone,
+            teacher_user_id
+        )
+
+        logging.info(f"Successfully sent teacher referral admin email for {referal_name}")
+        return "OK", 200
+
+    except Exception as e:
+        logging.exception("Failed to process Pub/Sub message for teacher referral admin email")
+        # Return 500 so Pub/Sub will retry
+        return "Error", 500
+
+
+@mail_bp.route('/pubsub/send-student-teacher-notification-email', methods=["POST"])
+def send_student_teacher_notification_email_pubsub():
+    """
+    Pub/Sub subscriber endpoint to send notification emails to students/teachers.
+    Handles both sendNewStudentToTeacherMail and sendAcceptOrRejectToStudentMail.
+    """
+    envelope = request.get_json()
+    if not envelope or "message" not in envelope:
+        logging.error("Bad Request: No message in Pub/Sub envelope")
+        return "Bad Request", 400
+
+    try:
+        # Decode the Pub/Sub message
+        payload = base64.b64decode(envelope["message"]["data"]).decode("utf-8")
+        data = json.loads(payload)
+
+        # Extract email type
+        email_type = data.get("email_type")
+
+        if email_type == "new_student_to_teacher":
+            # Send email to teacher about new student
+            teacher_email = data.get("teacher_email")
+            teacher_name = data.get("teacher_name")
+
+            if not all([teacher_email, teacher_name]):
+                logging.error("Missing required fields for new student to teacher email")
+                return "Bad Request: Missing required fields", 400
+
+            sendNewStudentToTeacherMail(teacher_email, teacher_name)
+            logging.info(f"Successfully sent new student notification to teacher: {teacher_email}")
+
+        elif email_type == "accept_reject_to_student":
+            # Send accept/reject email to student
+            student_name = data.get("student_name")
+            teacher_name = data.get("teacher_name")
+            accept_or_reject = data.get("accept_or_reject")
+            student_email = data.get("student_email")
+
+            if not all([student_name, teacher_name, student_email]) or accept_or_reject is None:
+                logging.error("Missing required fields for accept/reject email")
+                return "Bad Request: Missing required fields", 400
+
+            sendAcceptOrRejectToStudentMail(
+                student_name,
+                teacher_name,
+                accept_or_reject,
+                student_email
+            )
+            logging.info(f"Successfully sent accept/reject email to student: {student_email}")
+
+        else:
+            logging.error(f"Unknown email type: {email_type}")
+            return "Bad Request: Unknown email type", 400
+
+        return "OK", 200
+
+    except Exception as e:
+        logging.exception("Failed to process Pub/Sub message for student/teacher notification email")
+        # Return 500 so Pub/Sub will retry
+        return "Error", 500
