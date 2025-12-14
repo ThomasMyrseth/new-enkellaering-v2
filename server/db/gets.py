@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, timezone
 from supabase_client import supabase
 import json
 import re
+import logging
 
 def get_all_teachers():
     """Get all active teachers (not resigned)"""
@@ -31,6 +32,46 @@ def get_teacher_by_user_id(user_id: str):
 def get_student_by_user_id(user_id: str):
     """Get student by user_id"""
     response = supabase.table('students').select('*').eq('user_id', user_id).execute()
+    return response.data
+
+def get_students_by_user_ids(user_ids: list):
+    """Get multiple students by list of user_ids"""
+    if not user_ids:
+        return []
+
+    # Defensive handling: ensure it's a proper list
+    import logging
+    import json
+
+    logging.info(f"get_students_by_user_ids received: {user_ids}, type: {type(user_ids)}")
+
+    # If it's a string, try to parse it
+    if isinstance(user_ids, str):
+        try:
+            user_ids = json.loads(user_ids)
+            logging.info(f"Parsed string to list: {user_ids}")
+        except:
+            logging.error(f"Failed to parse user_ids string: {user_ids}")
+            return []
+
+    # Ensure it's a list
+    if not isinstance(user_ids, list):
+        user_ids = list(user_ids)
+
+    # Ensure all elements are strings (UUIDs should be strings)
+    user_ids = [str(uid) for uid in user_ids]
+
+    logging.info(f"Final user_ids before query: {user_ids}, type: {type(user_ids)}")
+    logging.info(f"First user_id type: {type(user_ids[0]) if user_ids else 'empty'}")
+
+    # Try using tuple instead of list - some libraries prefer this
+    try:
+        response = supabase.table('students').select('*').in_('user_id', tuple(user_ids)).execute()
+    except Exception as e:
+        logging.error(f"Error with tuple, trying list: {e}")
+        # If tuple fails, try the original list approach
+        response = supabase.table('students').select('*').in_('user_id', user_ids).execute()
+
     return response.data
 
 def get_all_referrals(admin_user_id: str):
@@ -101,6 +142,25 @@ def get_class_by_teacher_and_student_id(admin_user_id: str, teacher_user_id: str
 def get_classes_by_teacher(user_id: str):
     """Get all classes for a teacher"""
     response = supabase.table('classes').select('*').eq('teacher_user_id', user_id).execute()
+    return response.data
+
+
+def get_classes_by_ids(class_ids: list[str]):
+    """Get multiple classes by list of class_ids"""
+    if not class_ids:
+        return []
+
+    logging.info(f"Final class_ids before query: {class_ids}, type: {type(class_ids)}")
+    logging.info(f"First class_id type: {type(class_ids[0]) if class_ids else 'empty'}")
+
+    # Try using tuple instead of list - some libraries prefer this
+    try:
+        response = supabase.table('classes').select('*').in_('class_id', class_ids).execute()
+    except Exception as e:
+        logging.error(f"Error with tuple, trying list: {e}")
+        # If tuple fails, try the original list approach
+        response = supabase.table('classes').select('*').in_('class_id', class_ids).execute()
+
     return response.data
 
 def get_student_for_teacher(teacher_user_id: str):
