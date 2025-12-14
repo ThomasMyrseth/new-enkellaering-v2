@@ -11,7 +11,6 @@ from babel.dates import format_datetime
 import base64
 import json
 
-from db.gets import get_student_by_user_id, get_students_by_user_ids, get_classes_by_ids, get_teacher_by_user_id
 from db.gets import get_students_with_few_classes, get_all_admins
 
 resend.api_key = os.getenv('RESEND_API_KEY')
@@ -84,8 +83,8 @@ def send_email_for_new_class(classes, students, teacher, groupclass, number_of_s
                     studentName=student['firstname_student'],
                     teacherName=teacher['firstname'],
                     parentName=student['firstname_parent'],
-                    comment=classes[0].comment,
-                    classDate=classes[0].started_at,
+                    comment=classes[0].get('comment'),
+                    classDate=classes[0].get('started_at'),
                     receipientStudentMail=student['email_parent']
                 )
                 logging.info(f"Student email sent successfully to {student['email_parent']}")
@@ -101,9 +100,9 @@ def send_email_for_new_class(classes, students, teacher, groupclass, number_of_s
             sendNewClassToTeacherMail(
                 teacherName=f"{teacher['firstname']} {teacher['lastname']}",
                 studentNames=student_names,
-                startedAt=classes[0].started_at,
-                endedAt=classes[0].ended_at,
-                comment=classes[0].comment,
+                startedAt=classes[0].get('started_at'),
+                endedAt=classes[0].get('ended_at'),
+                comment=classes[0].get('comment'),
                 recipientTeacherEmail=teacher['email'],
                 groupClass=groupclass,
                 numberOfStudents=number_of_students if number_of_students else len(students)
@@ -789,25 +788,14 @@ def sendEmailsToTeacherAndStudentAboutFewClasses(teachersAndStudents :dict):
         raise e
 
 
-from db.gets import get_all_admins, get_teacher_by_user_id
-def sendEmailToAdminAboutNewTeacherReferal(referalName :str, referalEmail :str, referalPhone :str, teacherUserId :str):
-    
+def sendEmailToAdminAboutNewTeacherReferal(referalName :str, referalEmail :str, referalPhone :str, teacherName :str):
+
     try:
         admins = get_all_admins()
         emails = [admin['email'] for admin in admins]
         emails.append("kontakt@enkellaering.no")
     except Exception as e:
         raise RuntimeError(f"Error getting the email of admins: {e}")
-    
-    try:
-        teacher = get_teacher_by_user_id(teacherUserId)
-        teacher_row = teacher[0]
-        print(teacher_row)
-        teacherName = f"{teacher_row.get('firstname')} {teacher_row.get('lastname')}"
-        if not teacher_row:
-            raise ValueError(f"No teacher found with user ID {teacherUserId}")
-    except Exception as e:
-        raise RuntimeError(f"Error getting teacher by user ID {teacherUserId}: {e}")
 
     # Email content (HTML)
     html_content = f"""
@@ -862,36 +850,25 @@ def send_class_email_pubsub():
     try:
         # Decode the Pub/Sub message
         payload = base64.b64decode(envelope["message"]["data"]).decode("utf-8")
+        logging.info(f"Decoded Pub/Sub payload: {payload}")
         data = json.loads(payload)
+        logging.info(f"Parsed Pub/Sub data: {data}")
 
         # Extract data from message
-        class_ids = data.get("class_ids", [])
-        student_ids = data.get("student_ids", [])
-        teacher_user_id = data.get("teacher_user_id")
+        classes = data.get("classes", [])
+        students = data.get("students", [])
+        teacher = data.get("teacher")
         groupclass = data.get("groupclass", False)
         number_of_students = data.get("number_of_students", 1)
 
-        if not (class_ids and student_ids and teacher_user_id):
-            logging.error("Missing required fields in Pub/Sub message")
+        logging.info(f"Extracted - classes: {classes}, students: {students}, teacher: {teacher}")
+
+        if not (classes and students and teacher):
+            logging.error(f"Missing required fields in Pub/Sub message. classes={bool(classes)}, students={bool(students)}, teacher={bool(teacher)}")
+            logging.error(f"Full data received: {data}")
             return "Bad Request: Missing required fields", 400
 
-        # Fetch data from database
-        logging.info(f"Fetching classes with IDs: {class_ids}")
-        classes = get_classes_by_ids(class_ids)
-        logging.info(f"Fetching students with IDs: {student_ids}")
-        students = get_students_by_user_ids(student_ids)
-        logging.info(f"Fetching teacher with user ID: {teacher_user_id}")
-        teacher = get_teacher_by_user_id(teacher_user_id)
-
-        # Handle list responses
-        if isinstance(teacher, list) and teacher:
-            teacher = teacher[0]
-
-        if not classes or not students or not teacher:
-            logging.error(f"Failed to fetch data: classes={bool(classes)}, students={bool(students)}, teacher={bool(teacher)}")
-            return "Error: Failed to fetch required data", 500
-
-        # Send emails
+        # Send emails using the data from the message
         send_email_for_new_class(
             classes=classes,
             students=students,
@@ -900,7 +877,7 @@ def send_class_email_pubsub():
             number_of_students=number_of_students
         )
 
-        logging.info(f"Successfully sent emails for classes: {class_ids}")
+        logging.info(f"Successfully sent emails for {len(classes)} class(es)")
         return "OK", 200
 
     except Exception as e:
@@ -967,7 +944,7 @@ def send_new_order_admin_email_pubsub():
         teacher_phone = data.get("teacher_phone")
 
         if not all([firstname_parent, lastname_parent, phone_parent]):
-            logging.error("Missing required fields in Pub/Sub message")
+            logging.error(f"Missing required fields in Pub/Sub message, firstname_parent: {firstname_parent}, lastname_parent: {lastname_parent}, phone_parent: {phone_parent}")
             return "Bad Request: Missing required fields", 400
 
         # Send email to admins
@@ -1008,10 +985,10 @@ def send_teacher_referal_admin_email_pubsub():
         referal_name = data.get("referal_name")
         referal_email = data.get("referal_email")
         referal_phone = data.get("referal_phone")
-        teacher_user_id = data.get("teacher_user_id")
+        teacher_name = data.get("teacher_name")
 
-        if not all([referal_name, referal_phone, teacher_user_id]):
-            logging.error("Missing required fields in Pub/Sub message")
+        if not all([referal_name, referal_phone, teacher_name]):
+            logging.error(f"Missing required fields in Pub/Sub message, referal name: {referal_name}, referal phone: {referal_phone}, teacher name: {teacher_name}")
             return "Bad Request: Missing required fields", 400
 
         # Send email to admins
@@ -1019,7 +996,7 @@ def send_teacher_referal_admin_email_pubsub():
             referal_name,
             referal_email or "",
             referal_phone,
-            teacher_user_id
+            teacher_name
         )
 
         logging.info(f"Successfully sent teacher referral admin email for {referal_name}")

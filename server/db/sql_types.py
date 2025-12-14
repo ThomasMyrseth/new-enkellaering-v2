@@ -187,7 +187,7 @@ class Classes:
         invoiced_student: Optional[bool] = None,
         invoiced_student_at: Optional[str] = None,
     ):
-        self.class_id = class_id,
+        self.class_id = class_id
         self.teacher_user_id = teacher_user_id
         self.student_user_id = student_user_id
         self.created_at = created_at

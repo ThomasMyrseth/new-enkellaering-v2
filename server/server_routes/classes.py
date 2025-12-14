@@ -131,17 +131,27 @@ def upload_new_class(user_id):
 
 
      #insert the class
-    
-    #get info on teacher and student
-    try:
-        student = get_student_by_user_id(student_ids[0])  # Ensure at least one student exists
-        logging.info("fetched info about student")
-        teacher = get_teacher_by_user_id(user_id)  # Ensure the teacher exists
-        logging.info("fetched info about teacher")
 
-        # If get_student_by_user_id returns a list, use the first element
-        if isinstance(student, list) and student:
-            student = student[0]
+    #get info on teacher and all students
+    try:
+        # Fetch all students
+        all_students = []
+        for sid in student_ids:
+            student_info = get_student_by_user_id(sid)
+            if isinstance(student_info, list) and student_info:
+                all_students.append(student_info[0])
+            elif student_info:
+                all_students.append(student_info)
+
+        if not all_students:
+            raise ValueError("No valid students found")
+
+        logging.info(f"Fetched info about {len(all_students)} student(s)")
+
+        # Fetch teacher info
+        teacher = get_teacher_by_user_id(user_id)
+        logging.info("Fetched info about teacher")
+
         # If get_teacher_by_user_id returns a list, use the first element
         if isinstance(teacher, list) and teacher:
             teacher = teacher[0]
@@ -162,10 +172,34 @@ def upload_new_class(user_id):
     # Publish email job to Pub/Sub
     try:
         logging.info("Publishing email job to Pub/Sub for new class")
+
+        # Prepare class data
+        class_data = [{
+            "class_id": c.class_id,
+            "started_at": c.started_at.isoformat() if hasattr(c.started_at, 'isoformat') else str(c.started_at),
+            "ended_at": c.ended_at.isoformat() if hasattr(c.ended_at, 'isoformat') else str(c.ended_at),
+            "comment": c.comment
+        } for c in classes]
+
+        # Prepare student data (use already-fetched data)
+        students_data = [{
+            "firstname_student": student.get('firstname_student'),
+            "lastname_student": student.get('lastname_student'),
+            "firstname_parent": student.get('firstname_parent'),
+            "email_parent": student.get('email_parent')
+        } for student in all_students]
+
+        # Prepare teacher data (use already-fetched data)
+        teacher_data = {
+            "firstname": teacher.get('firstname'),
+            "lastname": teacher.get('lastname'),
+            "email": teacher.get('email')
+        }
+
         message = {
-            "class_ids": [c.class_id[0] for c in classes],  # Ensure strings
-            "student_ids": [sid for sid in student_ids],  # Ensure strings
-            "teacher_user_id": str(user_id),
+            "classes": class_data,
+            "students": students_data,
+            "teacher": teacher_data,
             "groupclass": bool(groupclass),
             "number_of_students": int(number_of_students) if number_of_students else 1
         }

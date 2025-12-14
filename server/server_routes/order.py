@@ -626,6 +626,18 @@ def submit_new_teacher_referal_route(user_id):
         logging.error("Unauthorized access attempt")
         return jsonify({"message": "Unauthorized"}), 402
 
+    # Get teacher info for the email
+    try:
+        teacher_list = get_teacher_by_user_id(user_id)
+        teacher = teacher_list[0] if teacher_list else None
+        if not teacher:
+            logging.error(f"Teacher not found for user_id: {user_id}")
+            return jsonify({"message": "Teacher not found"}), 404
+        teacher_name = f"{teacher.get('firstname', '')} {teacher.get('lastname', '')}"
+    except Exception as e:
+        logging.error(f"Error fetching teacher: {e}")
+        return jsonify({"message": f"Error fetching teacher: {e}"}), 500
+
     try:
         insertNewTeacherReferal(user_id, referal_phone, referal_name, referal_email)
     except Exception as e:
@@ -639,7 +651,7 @@ def submit_new_teacher_referal_route(user_id):
             "referal_name": str(referal_name),
             "referal_email": str(referal_email) if referal_email else "",
             "referal_phone": str(referal_phone),
-            "teacher_user_id": str(user_id)
+            "teacher_name": str(teacher_name)
         }
         publisher.publish(
             TOPIC_TEACHER_REFERAL_ADMIN,
