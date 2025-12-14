@@ -360,7 +360,7 @@ def sendNewClassToTeacherMail(teacherName: str, studentNames: str, startedAt: st
         response = resend.Emails.send({
             "from": FROM_EMAIL,
             "to": recipientTeacherEmail,
-            "subject": f"Time registrert: {studentNames} den {formatted_startDate.split(',')[0] if ',' in formatted_startDate else formatted_startDate}",
+            "subject": f"Time registrert med: {studentNames}, {formatted_startDate.split(',')[0] if ',' in formatted_startDate else formatted_startDate}",
             "html": html_content
         })
 
