@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, timezone
 from supabase_client import supabase
 import json
 import re
+import logging
 
 def get_all_teachers():
     """Get all active teachers (not resigned)"""
@@ -143,39 +144,18 @@ def get_classes_by_teacher(user_id: str):
     response = supabase.table('classes').select('*').eq('teacher_user_id', user_id).execute()
     return response.data
 
-def get_classes_by_ids(class_ids: list):
+
+def get_classes_by_ids(class_ids: list[str]):
     """Get multiple classes by list of class_ids"""
     if not class_ids:
         return []
-
-    # Defensive handling: ensure it's a proper list
-    import logging
-    import json
-
-    logging.info(f"get_classes_by_ids received: {class_ids}, type: {type(class_ids)}")
-
-    # If it's a string, try to parse it
-    if isinstance(class_ids, str):
-        try:
-            class_ids = json.loads(class_ids)
-            logging.info(f"Parsed string to list: {class_ids}")
-        except:
-            logging.error(f"Failed to parse class_ids string: {class_ids}")
-            return []
-
-    # Ensure it's a list
-    if not isinstance(class_ids, list):
-        class_ids = list(class_ids)
-
-    # Ensure all elements are strings (UUIDs should be strings)
-    class_ids = [str(cid) for cid in class_ids]
 
     logging.info(f"Final class_ids before query: {class_ids}, type: {type(class_ids)}")
     logging.info(f"First class_id type: {type(class_ids[0]) if class_ids else 'empty'}")
 
     # Try using tuple instead of list - some libraries prefer this
     try:
-        response = supabase.table('classes').select('*').in_('class_id', tuple(class_ids)).execute()
+        response = supabase.table('classes').select('*').in_('class_id', class_ids).execute()
     except Exception as e:
         logging.error(f"Error with tuple, trying list: {e}")
         # If tuple fails, try the original list approach

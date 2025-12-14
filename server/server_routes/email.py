@@ -871,23 +871,6 @@ def send_class_email_pubsub():
         groupclass = data.get("groupclass", False)
         number_of_students = data.get("number_of_students", 1)
 
-        # Ensure class_ids and student_ids are lists (handle stringified lists)
-        if isinstance(class_ids, str):
-            class_ids = json.loads(class_ids)
-        if isinstance(student_ids, str):
-            student_ids = json.loads(student_ids)
-
-        # Ensure they are proper lists (not tuples, generators, etc.)
-        class_ids = list(class_ids) if class_ids else []
-        student_ids = list(student_ids) if student_ids else []
-
-        # Ensure all IDs are strings
-        class_ids = [str(cid) for cid in class_ids]
-        student_ids = [str(sid) for sid in student_ids]
-
-        logging.info(f"Processing class email: class_ids={class_ids}, student_ids={student_ids}, teacher={teacher_user_id}")
-        logging.info(f"Types: class_ids={type(class_ids)}, student_ids={type(student_ids)}")
-
         if not (class_ids and student_ids and teacher_user_id):
             logging.error("Missing required fields in Pub/Sub message")
             return "Bad Request: Missing required fields", 400
@@ -897,6 +880,7 @@ def send_class_email_pubsub():
         classes = get_classes_by_ids(class_ids)
         logging.info(f"Fetching students with IDs: {student_ids}")
         students = get_students_by_user_ids(student_ids)
+        logging.info(f"Fetching teacher with user ID: {teacher_user_id}")
         teacher = get_teacher_by_user_id(teacher_user_id)
 
         # Handle list responses

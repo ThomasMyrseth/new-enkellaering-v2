@@ -163,12 +163,14 @@ def upload_new_class(user_id):
     try:
         logging.info("Publishing email job to Pub/Sub for new class")
         message = {
-            "class_ids": [str(c.class_id) for c in classes],  # Ensure strings
-            "student_ids": [str(sid) for sid in student_ids],  # Ensure strings
+            "class_ids": [c.class_id[0] for c in classes],  # Ensure strings
+            "student_ids": [sid for sid in student_ids],  # Ensure strings
             "teacher_user_id": str(user_id),
             "groupclass": bool(groupclass),
             "number_of_students": int(number_of_students) if number_of_students else 1
         }
+
+        logging.info(f"Publishing message to Pub/Sub: {message}")
 
         # Publish to Pub/Sub
         publisher.publish(
