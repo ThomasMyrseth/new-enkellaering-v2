@@ -253,7 +253,7 @@ export function TeacherFocusCards() {
                         placeholder='Jeg heter Thomas og trenger hjelp i matte 1t. Jeg ønsker hjelp én gang i uken, men har en prøve i trigonometri om to uker. Håper vi kan øve litt ekstra til den!'
                     />
                 </div>
-                <Button disabled={disableButton} onClick={handleSubmit}>Bestill</Button>
+                <Button variant='secondary' disabled={disableButton} onClick={handleSubmit}>Bestill</Button>
                 <AlertDialogCancel onClick={() => setShowOrderPopover(false)}>Angre</AlertDialogCancel>
             </AlertDialogContent>
         </AlertDialog>
@@ -399,12 +399,12 @@ export function TeacherFocusCards() {
                     </div>)
                 };
 
-                return(<div className=" flex flex-col" key={index}>
+                return(<div className="flex flex-col h-full" key={index}>
                 <motion.div
                 layoutId={`card-${card.teacher.firstname}-${id}`}
                 key={card.teacher.firstname}
                 onClick={() => setActive(card)}
-                className="p-4 flex flex-col hover:bg-neutral-50 dark:hover:bg-neutral-800 rounded-xl cursor-pointer"
+                className="p-4 flex flex-col flex-1 hover:bg-neutral-50 dark:hover:bg-neutral-800 rounded-xl cursor-pointer"
                 >
                 <div className="flex flex-col w-full">
                     <motion.div layoutId={`image-${card.teacher.firstname}-${id}`}>
@@ -429,10 +429,10 @@ export function TeacherFocusCards() {
                                 </span>
                             </span>
                         </motion.h3>
-                        <div className="relative w-40 m-2">
+                        <div className="relative w-40 m-2 min-h-[2.5rem]">
                             <motion.p
                                 layoutId={`description-${card.teacher.firstname}-${id}`}
-                                className="text-neutral-600 dark:text-neutral-400 text-center md:text-left flex overflow-x-auto"
+                                className="text-neutral-600 dark:text-neutral-400 text-center md:text-left flex overflow-x-auto min-h-[2.5rem]"
                                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                             >
                                 {[...new Set(card.qualifications)].sort().map((qualification: string, index: number) => (
@@ -453,6 +453,7 @@ export function TeacherFocusCards() {
                 </div>
                 </motion.div>
                 <Button 
+                    variant='secondary'
                     onClick={() => handleOrderClick(card)}
                     disabled={
                         (!card.teacher.physical_tutouring && !card.teacher.digital_tutouring) ||
