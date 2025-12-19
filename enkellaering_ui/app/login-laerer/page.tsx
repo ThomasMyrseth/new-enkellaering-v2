@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../auth/firebase";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
@@ -106,6 +107,9 @@ export default function LoginForm() {
           Logg inn
         </button>
       </form>
+      <Link href={'/glemt-passord'} className="text-sm text-neutral-600 dark:text-neutral-400 hover:underline">
+        Glemt passord
+      </Link>
     </div>
   );
 }
