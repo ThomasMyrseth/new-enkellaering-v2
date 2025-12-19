@@ -549,6 +549,7 @@ function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUse
         onClick={handleSendClick}
         variant="outline"
         disabled={!allValid || isSendButtonDisabled}
+        className="w-full h-8"
         >
         Last opp ny time
         </Button>

@@ -9,7 +9,7 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-stone-900 text-stone-50 hover:bg-stone-900/90 dark:bg-stone-50 dark:text-stone-900 dark:hover:bg-stone-50/90",
+        default: "",
         destructive:
           "bg-red-500 text-stone-50 hover:bg-red-500/90 dark:bg-red-900 dark:text-stone-50 dark:hover:bg-red-900/90",
         outline:
@@ -37,17 +37,60 @@ export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean
+  loading?: boolean
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
+  ({ className, variant, size, asChild = false, loading = false, disabled, children, ...props }, ref) => {
     const Comp = asChild ? Slot : "button"
+    const isDisabled = disabled || loading
+
+    // Animated ring button for default variant
+    if (variant === "default" || variant === null || variant === undefined) {
+      return (
+        <Comp
+          className={cn(
+            "relative inline-flex overflow-hidden rounded-full p-[5px] dark:p-[1px]",
+            "focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50",
+            size === "sm" && "h-9",
+            size === "default" && "h-12",
+            size === "lg" && "h-14",
+            size === "icon" && "h-10 w-10",
+            className
+          )}
+          ref={ref}
+          disabled={isDisabled}
+          {...props}
+        >
+          <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
+          <span
+            className={cn(
+              "inline-flex h-full w-full items-center justify-center rounded-full text-sm font-medium gap-2 backdrop-blur-3xl",
+              "[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+              loading || disabled
+                ? "bg-transparent text-transparent cursor-not-allowed"
+                : "bg-slate-950 text-white cursor-pointer",
+              size === "sm" && "px-3 py-1 text-xs",
+              size === "default" && "px-3 py-1",
+              size === "lg" && "px-4 py-2 text-base",
+            )}
+          >
+            {children}
+          </span>
+        </Comp>
+      )
+    }
+
+    // Standard button for other variants
     return (
       <Comp
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
+        disabled={isDisabled}
         {...props}
-      />
+      >
+        {children}
+      </Comp>
     )
   }
 )

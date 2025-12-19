@@ -8,6 +8,7 @@ import { auth } from "@/app/auth/firebase";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { Button } from "./button";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -59,13 +60,13 @@ export default function ForgotPassword() {
         </LabelInputContainer>
 
         {/* Submit Button */}
-        <button
+        <Button
           type="submit"
           disabled={loading}
-          className="bg-gradient-to-br from-black to-gray-800 text-white w-full py-2 rounded-md mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full h-8"
         >
           {loading ? "Sender..." : "Send tilbakestillingslenke"}
-        </button>
+        </Button>
       </form>
 
       <Link href={'/login'} className="text-sm text-neutral-600 dark:text-neutral-400 hover:underline">

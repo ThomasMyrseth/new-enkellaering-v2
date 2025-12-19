@@ -8,17 +8,21 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../auth/firebase";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
   const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:5000";
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrorMessage(null);
+    setLoading(true);
 
     try {
       // Authenticate the user with Firebase
@@ -52,14 +56,20 @@ export default function LoginForm() {
         setErrorMessage(`Login failed: ${errorData.error}`);
       }
     } catch (error: unknown) {
+      setLoading(false);
       // Type guard to check if the error is an instance of Error
       if (error instanceof Error) {
         console.error("Login error:", error);
         setErrorMessage(error.message);
+        toast.error('Noe gikk galt')
       } else {
         console.error("Unexpected error:", error);
         setErrorMessage("An unexpected error occurred.");
+        toast.error('Noe gikk galt')
       }
+    }
+    finally {
+      setLoading(false);  
     }
   };
 
@@ -100,12 +110,14 @@ export default function LoginForm() {
         </LabelInputContainer>
 
         {/* Submit Button */}
-        <button
+        <Button
           type="submit"
-          className="bg-gradient-to-br from-black to-gray-800 text-white w-full py-2 rounded-md mt-4"
+          variant="default"
+          loading={loading}
+          className="w-full h-8"
         >
           Logg Inn
-        </button>
+        </Button>
       </form>
       <Link href={'/glemt-passord'} className="text-sm text-neutral-600 dark:text-neutral-400 hover:underline">
         Glemt passord
