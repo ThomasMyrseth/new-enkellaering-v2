@@ -77,7 +77,7 @@ export default function AdminPage() {
         <TeacherName teacher={teacher}/>
         <div className="w-full max-w-full mx-auto space-y-10">
           <AnalyticsOverview />
-          <TasksWorkflow />
+          {/* <TasksWorkflow /> */}
           <StudentsWithoutAnyTeachers token={token} BASEURL={BASEURL} />
           <DailyRevenueChart />
           <PreviousClassesForEachTeacher />
