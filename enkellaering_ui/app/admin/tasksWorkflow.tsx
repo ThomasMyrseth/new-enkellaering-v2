@@ -4,7 +4,6 @@ import { useEffect, useState } from "react"
 import { Task } from "./types"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 
@@ -137,7 +136,7 @@ function TaskCard({ task, onUpdate }: { task: Task, onUpdate: () => void }) {
     }
 
     return (
-        <Card className="flex flex-col h-full">
+        <Card className="flex flex-col h-full w-full">
             <CardHeader>
                 <div className="flex items-center gap-2 mb-2">
                     <span className={`w-3 h-3 rounded-full ${getStatusDotColor()}`}></span>

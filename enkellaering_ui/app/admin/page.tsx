@@ -75,7 +75,7 @@ export default function AdminPage() {
 
     return (<div className="w-full min-h-screen max-w-full bg-stone-100 dark:bg-slate-950 px-4">
         <TeacherName teacher={teacher}/>
-        <div className="w-full max-w-full mx-auto space-y-10">
+        <div className="w-full max-w-full p-4 space-y-10">
           <AnalyticsOverview />
           <TasksWorkflow />
           <StudentsWithoutAnyTeachers token={token} BASEURL={BASEURL} />

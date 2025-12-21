@@ -77,8 +77,8 @@ export function NewStudentsWorkflow() {
     }
 
 
-    return (<div className="w-screen md:w-full overflow-x-auto">
-        <NewStudentTable newStudents={newStudents}/>
+    return (<div className="overflow-x-auto w-full sm:max-w-screen-sm md:max-w-screen-md lg:max-w-screen-lg xl:max-w-screen-xl 2xl:max-w-screen-2xl">
+            <NewStudentTable newStudents={newStudents}/>
     </div>
     )
     
@@ -278,7 +278,7 @@ function NewStudentRow({ ns }: { ns: NewStudent }) {
     }
 
     return(
-    <TableRow className={`${ns.has_finished_onboarding ? "text-gray-400" : ""}`}>
+    <TableRow className={`w-full max-w-full ${ns.has_finished_onboarding ? "text-gray-400" : ""}`}>
         <TableCell className="font-medium min-w-48">{ns.phone.slice(0, 3)} {ns.phone.slice(3, 5)} {ns.phone.slice(5, 10)} {ns.phone.slice(10, 13)} 
                 <br/>
                 {new Intl.DateTimeFormat("nb-NO", {
