@@ -137,6 +137,7 @@ CREATE TABLE public.tasks (
   title text NOT NULL,
   description text NOT NULL,
   status text,
+  type text,
   teacher text DEFAULT 'NULL'::text,
   student text DEFAULT 'NULL'::text,
   completed boolean NOT NULL DEFAULT false,

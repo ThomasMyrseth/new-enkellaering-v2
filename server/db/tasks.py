@@ -17,7 +17,7 @@ def get_students_with_no_classes(number_of_days: int = 21) -> list[dict]:
     return response.data
 
 
-def get_students_who_have_had_task(number_of_days: int = 21) -> list[str]:
+def get_students_who_have_had_task(number_of_days: int = 21, task_type :str = 'followup_student') -> list[str]:
     """
     Retrieve a list of student IDs who have had tasks assigned in the past specified number of weeks.
 
@@ -28,8 +28,8 @@ def get_students_who_have_had_task(number_of_days: int = 21) -> list[str]:
     """
 
     cutof_date = (datetime.now(timezone.utc) - timedelta(days=number_of_days)).isoformat()
-    #query table directly
-    response = supabase.table('tasks').select('student').gte('created_at', cutof_date).execute()
+    #query table directly, filtering by type='followup_student'
+    response = supabase.table('tasks').select('student').gte('created_at', cutof_date).eq('type', task_type).execute()
     student_ids = list(set([task['student'] for task in response.data])) #get a list of unique IDs
 
     return student_ids
@@ -47,7 +47,7 @@ def create_new_tasks(cutoff_days: int = 21) -> None:
     #convert cutof days to number of weeks
     cutoff_weeks = cutoff_days // 7
 
-    students_to_create_tasks_for = [student for student in students_with_no_classes if student not in students_ids_with_tasks]
+    students_to_create_tasks_for = [student for student in students_with_no_classes if student['student']['user_id'] not in students_ids_with_tasks]
 
     for student in students_to_create_tasks_for:
         new_task = {
@@ -55,6 +55,7 @@ def create_new_tasks(cutoff_days: int = 21) -> None:
             'title': f"{student['student']['firstname_student']}  {student['student']['lastname_student']} har ikke hatt timer på {cutoff_weeks} uker",
             'description': f"Studenten {student['student']['firstname_student']} {student['student']['lastname_student']} har ikke hatt noen timer på {cutoff_weeks} uker. Vennligst ta kontakt for å følge opp. Du vil ikke få flere påminnnelser om {student['student']['firstname_student']} på tre uker. Dersom du setter {student['student']['firstname_student']} til inaktiv vil du få ingen varslinger om hen.",
             'status': 'pending',
+            'type': 'followup_student',
             'teacher': student['teacher']['user_id'],
             'student': student['student']['user_id']
         }
@@ -91,4 +92,8 @@ def close_task(task_id: int) -> None:
         task_id (int): The ID of the task to mark as completed
     """
 
-    supabase.table('tasks').update({'completed': True, 'status': 'completed'}).eq('id', task_id).execute()
+    supabase.table('tasks').update({
+        'completed': True,
+        'status': 'completed',
+        'completed_at': datetime.now(timezone.utc).isoformat()
+    }).eq('id', task_id).execute()
