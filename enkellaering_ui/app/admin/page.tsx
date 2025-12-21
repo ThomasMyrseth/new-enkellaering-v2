@@ -15,6 +15,7 @@ import AnalyticsOverview from "./analyticsOverview";
 import { Teacher } from "./types";
 import { InactiveStudents } from "./inactiveStudents";
 import { ResignedTeachers } from "./resignedTeachers";
+import { TasksWorkflow } from "./tasksWorkflow";
 
 
 
@@ -76,6 +77,7 @@ export default function AdminPage() {
         <TeacherName teacher={teacher}/>
         <div className="w-full max-w-full mx-auto space-y-10">
           <AnalyticsOverview />
+          <TasksWorkflow />
           <StudentsWithoutAnyTeachers token={token} BASEURL={BASEURL} />
           <DailyRevenueChart />
           <PreviousClassesForEachTeacher />

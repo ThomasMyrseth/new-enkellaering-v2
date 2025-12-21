@@ -304,3 +304,18 @@ export type AnalyticsDashboard = {
     revenueByTeacher: TeacherRevenue[];
     revenueByLocation: LocationRevenue[];
 };
+
+export type Task = {
+    id: number;
+    created_at: string;
+    title: string;
+    description: string;
+    status: string;
+    type: string;
+    teacher: string;
+    student: string;
+    completed: boolean;
+    completed_at: string | null;
+    student_data?: Student;
+    teacher_data?: Teacher;
+};
