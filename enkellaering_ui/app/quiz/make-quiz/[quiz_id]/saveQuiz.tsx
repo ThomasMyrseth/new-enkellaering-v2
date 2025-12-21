@@ -47,7 +47,7 @@ export const SaveQuiz = ( {questions} : {questions : QuestionWithFileType[]}) =>
           </AlertDialog>
         }
 
-        <Button onClick={() => handleButtonClick()}>
+        <Button onClick={() => handleButtonClick()} className="w-full h-8">
             Lagre
         </Button>
     

@@ -96,7 +96,7 @@ const Question: React.FC<QuestionProps> = ({
 
         <div className="flex flex-row justify-between items-center w-full">
             <p>{timeLeft}/{timeLimit}</p>
-            <Button onClick={handleGoToNextQuestion} className="bg-blue-500 hover:bg-blue-800">
+            <Button onClick={handleGoToNextQuestion} variant="secondary" className="bg-blue-500 hover:bg-blue-800">
                 Neste <ChevronRight />
             </Button>
         </div>
@@ -197,7 +197,7 @@ const Quiz: React.FC<QuizProps> = ({
       })}
       {numberOfQuestionsCompleted === shuffledQuestions.length && (
         <div className="text-center mt-6 ">
-          <Button onClick={handleSubmit} className="text-lg w-1/3 bg-blue-500 dark:bg-blue-500 hover:bg-blue-900 dark:hover:bg-blue-300">
+          <Button onClick={handleSubmit} variant="default" className="w-1/3 h-10">
             Ferdig <TreePalm />
           </Button>
         </div>

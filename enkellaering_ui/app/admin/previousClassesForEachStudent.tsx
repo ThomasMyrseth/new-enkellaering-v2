@@ -476,7 +476,7 @@ const InvoiceStudentPopover = ( {student, classes, teacherStudents} : {student: 
     return (
         <Popover>
         <PopoverTrigger asChild>
-            <Button className="bg-blue-900 dark:bg-blue-800 text-white dark:text-white">Send faktura til {student.firstname_parent} {student.lastname_parent}</Button>
+            <Button variant="secondary">Send faktura til {student.firstname_parent} {student.lastname_parent}</Button>
         </PopoverTrigger>
         <PopoverContent className="w-80">
             {success===true && <p className="text-green-400">Timene er satt til fakturert</p>}
@@ -532,10 +532,10 @@ const InvoiceStudentPopover = ( {student, classes, teacherStudents} : {student: 
             </div>
 
             <div className=" flex flex-row space-x-4 justify-start mt-5">
-                <Button onClick={copyToClipboard} disabled={clickedCopy}>
+                <Button variant="ghost" onClick={copyToClipboard} disabled={clickedCopy}>
                     <Copy/>
                 </Button>
-                <Button onClick={handleSetClassesToInvoiced} disabled={success===true || numberOfClassesToInvoice===0}>Sett timene til fakturert</Button>
+                <Button variant="secondary" onClick={handleSetClassesToInvoiced} disabled={success===true || numberOfClassesToInvoice===0}>Sett timene til fakturert</Button>
             </div>
         </PopoverContent>
         </Popover>
@@ -584,7 +584,7 @@ const SetStudentInactive = ({ student }: { student: Student }) => {
 
     return(<>
          <AlertDialog>
-            <AlertDialogTrigger><Button className="bg-red-400 dark:bg-red-800 text-white dark:text-white">Sett {student.firstname_parent} som inaktiv</Button></AlertDialogTrigger>
+            <AlertDialogTrigger><Button variant="destructive">Sett {student.firstname_parent} som inaktiv</Button></AlertDialogTrigger>
             <AlertDialogContent>
                 <AlertDialogHeader>
                 <AlertDialogTitle>Er du sikker på du vil sette denne eleven som inaktiv</AlertDialogTitle>
@@ -619,7 +619,7 @@ const StudentNotes = ({student} : {student : Student}) => {
                 id="notes" 
                 placeholder="Noter ned generell info om eleven (kun synlig for admin)"
         />
-        <Button onClick={() => {saveNotes(notes, student.user_id)} } className="bg-blue-900 dark:bg-blue-900 dark:text-neutral-100">Lagre</Button>
+        <Button variant="secondary" onClick={() => {saveNotes(notes, student.user_id)} }>Lagre</Button>
     </div>)
 }
 
@@ -713,7 +713,7 @@ const RemoveTeacherDialog = ({ student, teacher, teacherStudent }: { student: St
     return (
         <AlertDialog>
             <AlertDialogTrigger asChild>
-                <Button className="bg-blue-900 dark:bg-blue-800 rounded-xl text-white dark:text-white">{teacher.firstname} {teacher.lastname}</Button>
+                <Button variant="secondary">{teacher.firstname} {teacher.lastname}</Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
                 <AlertDialogHeader>
@@ -735,10 +735,10 @@ const RemoveTeacherDialog = ({ student, teacher, teacherStudent }: { student: St
                         </div>
                     </div>
 
-                    <Button onClick={() => {
+                    <Button variant="secondary" onClick={() => {
                             handleUpdateTravelPay(travelPayToTeacher, travelPayFromStudent, student.user_id, teacher.user_id);
                     }}>Lagre</Button>
-                    <Button className="bg-red-400 dark:bg-red-400" onClick={() => handleRemoveTeacher(student, teacher)}>Fjern {teacher.firstname} fra {student.firstname_parent}</Button>
+                    <Button variant="destructive" onClick={() => handleRemoveTeacher(student, teacher)}>Fjern {teacher.firstname} fra {student.firstname_parent}</Button>
                     <AlertDialogCancel>Exit</AlertDialogCancel>
                 </AlertDialogContent>
             </AlertDialogContent>
@@ -907,7 +907,7 @@ const SetTeacherCombobox = ({
   
     return (<>
         {!showCombobox?
-             <Button className="bg-blue-900 dark:bg-blue-800 text-white dark:text-white rounded-xl" onClick={() => {setShowCombobox(!showCombobox); setOpen(!open)}}>Legg til ny lærer</Button> :
+             <Button variant="secondary" onClick={() => {setShowCombobox(!showCombobox); setOpen(!open)}}>Legg til ny lærer</Button> :
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <div

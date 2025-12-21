@@ -228,7 +228,9 @@ export default function OrderCard({ order, handleUIDelete }: {order: TeacherOrde
               Slett forespørselen
             </Button>
             <AlertDialogAction onClick={handleSaveClick}>
-              Lagre endringer
+              <Button variant="secondary">
+                Lagre endringer
+              </Button>
             </AlertDialogAction>
           </div>
         </AlertDialogFooter>

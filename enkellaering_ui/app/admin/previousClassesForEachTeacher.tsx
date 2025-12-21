@@ -870,7 +870,7 @@ const PayTeacherPopover = ( {teacher, classes, teacherStudents} : {teacher: Teac
     return (
         <Popover>
         <PopoverTrigger asChild>
-            <Button>Betal {teacher.firstname} {teacher.lastname}</Button>
+            <Button variant="secondary">Betal {teacher.firstname} {teacher.lastname}</Button>
         </PopoverTrigger>
         <PopoverContent className="w-80">
             {success===true && <p className="text-green-400">Timene er satt til betalt</p>}
@@ -928,10 +928,10 @@ const PayTeacherPopover = ( {teacher, classes, teacherStudents} : {teacher: Teac
             </div>
 
             <div className=" flex flex-row space-x-4 justify-start mt-5">
-                <Button onClick={copyToClipboard} disabled={clickedCopy}>
+                <Button variant="ghost" onClick={copyToClipboard} disabled={clickedCopy}>
                     <Copy/>
                 </Button>
-                <Button onClick={handleSetClassesToPaid} disabled={success===true || numberOfClassesToPay===0}>Sett timene til betalt</Button>
+                <Button variant="secondary" onClick={handleSetClassesToPaid} disabled={success===true || numberOfClassesToPay===0}>Sett timene til betalt</Button>
             </div>
         </PopoverContent>
         </Popover>
@@ -957,7 +957,7 @@ const TeacherNotes = ({teacher} : {teacher : Teacher}) => {
                 id="notes" 
                 placeholder="Noter ned generell info om læreren (kun synlig for admin)"
         />
-        <Button onClick={() => {saveNotes(notes, teacher.user_id)} } className="bg-blue-900 dark:bg-blue-900 dark:text-neutral-100">Lagre</Button>
+        <Button variant="secondary" onClick={() => saveNotes(notes, teacher.user_id)} className="w-full">Lagre</Button>
     </div>)
 }
 
@@ -1018,7 +1018,7 @@ const handleRetireTeacher = async (teacher: Teacher) => {
 const RetireTeacher = ({ teacher }: { teacher: Teacher }) => {
     return(<>
          <AlertDialog>
-            <AlertDialogTrigger><Button className="bg-red-400 dark:bg-red-800 text-white dark:text-white">Pensjonér {teacher.firstname}</Button></AlertDialogTrigger>
+            <AlertDialogTrigger><Button variant="destructive">Pensjonér {teacher.firstname}</Button></AlertDialogTrigger>
             <AlertDialogContent>
                 <AlertDialogHeader>
                 <AlertDialogTitle>Er du sikker på du vil pensjonere denne læreren?</AlertDialogTitle>

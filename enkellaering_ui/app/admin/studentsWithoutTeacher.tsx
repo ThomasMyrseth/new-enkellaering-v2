@@ -241,7 +241,7 @@ const SetTeacherCombobox = ({
   return (
     <>
       {!showCombobox ?
-        <Button className="bg-blue-900 dark:bg-blue-800 text-white dark:text-white rounded-xl" onClick={() => {setShowCombobox(!showCombobox); setOpen(!open)}}>Legg til ny lærer</Button> :
+        <Button variant="secondary" onClick={() => {setShowCombobox(!showCombobox); setOpen(!open)}}>Legg til ny lærer</Button> :
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <div
@@ -346,7 +346,7 @@ const StudentNotes = ({student, BASEURL, token} : {student : Student, BASEURL: s
         id="notes" 
         placeholder="Noter ned generell info om eleven (kun synlig for admin)"
       />
-      <Button onClick={() => {saveNotes(notes, student.user_id)}} className="bg-blue-900 dark:bg-blue-900 dark:text-neutral-100">Lagre</Button>
+      <Button variant="secondary" onClick={() => {saveNotes(notes, student.user_id)}} className="w-full">Lagre</Button>
     </div>
   )
 }

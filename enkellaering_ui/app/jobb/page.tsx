@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import Image from "next/image";
 import { QuizPageComponent } from "../quiz/quizPageComponent";
+import { Button } from "@/components/ui/button";
 
 const JobDescription = () => {
   return (
@@ -193,12 +194,9 @@ export default function JobPage() {
                             />
                           </LabelInputContainer>
                   <FileUpload onChange={handleFileUpload} title="Last opp din CV her" underText="kun PDF"/>
-                  <button type="submit" disabled={isDisabled===true} className="w-full relative inline-flex h-12 overflow-hidden rounded-full p-[5px] dark:p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50">
-                      <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
-                      <span className={`${isDisabled ? "bg-slate-400" :"inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-slate-950 px-3 py-1 text-sm font-medium text-white backdrop-blur-3xl"}`}>
-                          Send inn
-                      </span>
-                  </button>
+                  <Button type="submit" variant="default" disabled={isDisabled===true} className="w-full h-8">
+                      Send inn
+                  </Button>
                   </div>
               </form>
           </div>

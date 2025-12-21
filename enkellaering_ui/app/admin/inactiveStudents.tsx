@@ -63,7 +63,7 @@ export const InactiveStudents = () => {
                 {student.phone_student}
             </TableCell>
             <TableCell>
-                <Button className="w-full" onClick={() => handleSetActive(student)}>
+                <Button variant="secondary" className="w-full" onClick={() => handleSetActive(student)}>
                     Sett {student.firstname_parent} til aktiv
                 </Button>
             </TableCell>

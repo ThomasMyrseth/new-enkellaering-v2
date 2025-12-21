@@ -201,7 +201,7 @@ const TeacherOrderRow = ({ order }: { order: StudentsWithoutTeacher }) => {
       <TableCell>
         <AlertDialog>
           <AlertDialogTrigger>
-            <Button className="bg-red-400">Slett</Button>
+            <Button variant="destructive">Slett</Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>

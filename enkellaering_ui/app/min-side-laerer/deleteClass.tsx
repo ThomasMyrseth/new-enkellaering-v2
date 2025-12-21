@@ -39,7 +39,7 @@ export const DeleteClass = ({hasPaid, hasInvoiced, classId} : {hasPaid :boolean,
     }
     return (<>
         <Button
-            className={`${(hasPaid || hasInvoiced)? '' :'bg-red-400 dark:bg-red-800 dark:text-neutral-200'} m-0`}
+            variant="destructive"
             disabled={hasPaid || hasInvoiced}
             onClick={handleButtonClick}
         >

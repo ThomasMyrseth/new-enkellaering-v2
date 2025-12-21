@@ -11,6 +11,7 @@ import {
   AlertTitle,
 } from "@/components/ui/alert"
 import { toast } from "sonner";
+import { Button } from "./ui/button";
  
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
 
@@ -124,12 +125,9 @@ export const FileUploadForm = ({firstname, lastname, title} : {firstname? :strin
                 onChange={(e) => setAboutMe(e.target.value)}
             />
 
-            <button disabled={isSendDisabled} className="relative width inline-flex h-12 overflow-hidden rounded-full p-[5px] dark:p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50">
-                <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
-                <span className={`${isSendDisabled ? "bg-slate-400" :"inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-slate-950 px-3 py-1 text-sm font-medium text-white backdrop-blur-3xl"}`}>
+            <Button disabled={isSendDisabled} type="submit" variant="default" className="w-full h-10">
                     Send inn
-                </span>
-            </button>
+            </Button>
       </form>
 
     </div>

@@ -71,7 +71,7 @@ export const ResignedTeachers = () => {
                 {teacher.address}, {teacher.postal_code}
             </TableCell>
             <TableCell>
-                <Button className="w-full" onClick={() => handleReactivateTeacher(teacher)}>
+                <Button variant="secondary" className="w-full" onClick={() => handleReactivateTeacher(teacher)}>
                     Reaktiver {teacher.firstname}
                 </Button>
             </TableCell>

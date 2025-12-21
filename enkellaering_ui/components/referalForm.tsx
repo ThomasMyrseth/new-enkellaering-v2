@@ -158,7 +158,7 @@ export default function ReferalForm() {
         </LabelInputContainer>
 
 
-        <Button type='submit' disabled={isSendDisabled} className="w-full h-10">
+        <Button variant="default" className="w-full h-10" disabled={isSendDisabled} type="submit">
           Verv
         </Button>
         

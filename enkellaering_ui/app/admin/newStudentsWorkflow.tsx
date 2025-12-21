@@ -337,13 +337,13 @@ function NewStudentRow({ ns }: { ns: NewStudent }) {
         </TableCell>
 
         <TableCell>
-            <Button onClick={handleSaveClick}>Lagre endringer i raden</Button>
+            <Button variant="secondary" className="w-full" onClick={handleSaveClick}>Lagre</Button>
         </TableCell>
 
 
         <TableCell>
             <AlertDialog>
-            <AlertDialogTrigger><Button className="bg-red-400 dark:bg-red-800 text-white dark:text-white">Slett ny elev</Button></AlertDialogTrigger>
+            <AlertDialogTrigger><Button variant="destructive">Slett ny elev</Button></AlertDialogTrigger>
             <AlertDialogContent>
                 <AlertDialogHeader>
                 <AlertDialogTitle>Er du sikker på at du vil slette den nye eleven?</AlertDialogTitle>

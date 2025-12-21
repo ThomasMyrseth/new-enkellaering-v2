@@ -143,8 +143,8 @@ export default function NewStudentWithPreferredTeacherActionsCard({ ns }: { ns :
               </AlertDialogDescription>
             </AlertDialogHeader>
             <div className="p-4 space-x-4 w-full flex flex-row items-center">
-                <Button className="bg-green-500 dark:bg-green-400" onClick={() => handleAcceptClick(true, ns)}>Jeg tar denne eleven</Button>
-                <Button className="bg-rose-500 dark:bg-rose-400"  onClick={() => handleAcceptClick(false, ns)}>Jeg ønsker ikke denne eleven</Button>
+                <Button variant="secondary" className="bg-green-500 dark:bg-green-400 text-white" onClick={() => handleAcceptClick(true, ns)}>Jeg tar denne eleven</Button>
+                <Button variant="destructive" onClick={() => handleAcceptClick(false, ns)}>Jeg ønsker ikke denne eleven</Button>
             </div>
         <AlertDialogFooter className="mt-4 flex justify-between">
           <AlertDialogCancel className="" onClick={() => setOpenDialog(false)}>Tilbake</AlertDialogCancel>
