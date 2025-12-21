@@ -29,23 +29,26 @@ def get_all_tasks_route(user_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@task_bp.route('/<int:task_id>/status', methods=["PATCH"])
+@task_bp.route('/<int:task_id>/status', methods=["PUT"])
 @token_required
 def update_task_status_route(user_id, task_id):
     """Update the status of a task (admin only)"""
     try:
         # Verify admin rights
         if not is_admin(user_id):
+            print("User is not an admin")
             return jsonify({"error": "User is not an admin"}), 403
 
         data = request.get_json()
         if not data or 'status' not in data:
+            print("Missing status in request body")
             return jsonify({"error": "Missing status in request body"}), 400
 
         new_status = data.get('status')
         update_status_on_task(task_id, new_status)
         return jsonify({"message": "Task status updated successfully"}), 200
     except Exception as e:
+        print(f"Error updating task status: {e}")
         return jsonify({"error": str(e)}), 500
 
 @task_bp.route('/<int:task_id>/complete', methods=["POST"])

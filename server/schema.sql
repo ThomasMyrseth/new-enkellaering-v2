@@ -138,12 +138,11 @@ CREATE TABLE public.tasks (
   description text NOT NULL,
   status text,
   type text,
-  teacher text DEFAULT 'NULL'::text,
+  teacher_ids text[],
   student text DEFAULT 'NULL'::text,
   completed boolean NOT NULL DEFAULT false,
   completed_at timestamp with time zone,
   CONSTRAINT tasks_pkey PRIMARY KEY (id),
-  CONSTRAINT tasks_teacher_fkey FOREIGN KEY (teacher) REFERENCES public.teachers(user_id),
   CONSTRAINT tasks_student_fkey FOREIGN KEY (student) REFERENCES public.students(user_id)
 );
 CREATE TABLE public.teacher_referrals (

@@ -167,6 +167,7 @@ $$;
 CREATE OR REPLACE FUNCTION public.get_students_with_few_classes(days INT)
 RETURNS JSONB
 LANGUAGE plpgsql
+SECURITY DEFINER
 AS $$
 DECLARE
     threshold_date DATE;
@@ -176,42 +177,54 @@ BEGIN
 
     SELECT jsonb_agg(
         jsonb_build_object(
-            'student', row_to_json(s.*),
-            'teacher_student', row_to_json(ts.*),
-            'teacher', row_to_json(t.*),
+            'student', row_to_json(s),
+            'teacher_student', row_to_json(ts),
+            'teacher', row_to_json(t),
             'last_class_started_at', lc.started_at,
             'last_class_id', lc.class_id
         )
-    ) INTO result
-    FROM public.students s
-    JOIN public.teacher_student ts ON s.user_id = ts.student_user_id
-    JOIN public.teachers t ON t.user_id = ts.teacher_user_id
-    LEFT JOIN (
-        SELECT * FROM (
-            SELECT *,
-                   ROW_NUMBER() OVER (
-                     PARTITION BY student_user_id
-                     ORDER BY started_at DESC
-                   ) AS rn
-            FROM public.classes
-        ) c
-        WHERE rn = 1
-    ) lc ON lc.student_user_id = s.user_id
-    WHERE s.user_id NOT IN (
-        SELECT student_user_id
-        FROM public.classes
-        WHERE started_at::date > threshold_date
     )
-      AND s.is_active = TRUE
+    INTO result
+    FROM public.students s
+    JOIN public.teacher_student ts
+        ON ts.student_user_id = s.user_id
+    JOIN public.teachers t
+        ON t.user_id = ts.teacher_user_id
+    LEFT JOIN (
+        SELECT c1.student_user_id,
+               c1.started_at,
+               c1.class_id
+        FROM public.classes c1
+        WHERE c1.started_at IS NOT NULL
+        ORDER BY c1.student_user_id, c1.started_at DESC
+    ) lc
+        ON lc.student_user_id = s.user_id
+    WHERE s.is_active = TRUE
+      AND NOT EXISTS (
+          SELECT 1
+          FROM public.classes c2
+          WHERE c2.student_user_id = s.user_id
+            AND c2.started_at::date > threshold_date
+      )
       AND ts.row_id = (
-          SELECT MIN(row_id)
+          SELECT ts2.row_id
           FROM public.teacher_student ts2
           WHERE ts2.student_user_id = ts.student_user_id
+          ORDER BY ts2.created_at ASC
+          LIMIT 1
       );
 
     RETURN COALESCE(result, '[]'::jsonb);
 END;
 $$;
+
+--  Lock search path (IMPORTANT)
+ALTER FUNCTION public.get_students_with_few_classes(INT)
+SET search_path = public;
+
+--  Allow RPC access
+GRANT EXECUTE ON FUNCTION public.get_students_with_few_classes(INT)
+TO anon, authenticated, service_role;
 
 -- ----------------------------------------------------------------------------
 -- FUNCTION 5: get_students_without_teacher

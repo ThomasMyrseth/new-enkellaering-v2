@@ -31,6 +31,14 @@ export function TasksWorkflow() {
             const data = await response.json()
             const tasksData: Task[] = data.tasks
 
+            //order alphabetically by firstanme student
+            tasksData.sort((a, b) => {
+                if (a.student_data && b.student_data) {
+                    return a.student_data.firstname_student.localeCompare(b.student_data.firstname_student)
+                }
+                return 0
+            })
+
             setTasks(tasksData)
             setLoading(false)
         } catch (error) {
@@ -75,7 +83,7 @@ function TaskCard({ task, onUpdate }: { task: Task, onUpdate: () => void }) {
     const handleStatusChange = async (newStatus: string) => {
         try {
             const response = await fetch(`${BASEURL}/task/${task.id}/status`, {
-                method: "PATCH",
+                method: "PUT",
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -120,7 +128,7 @@ function TaskCard({ task, onUpdate }: { task: Task, onUpdate: () => void }) {
         switch (status) {
             case "ringt og fått svar":
                 return "bg-green-500"
-            case "ringt men ikke svar":
+            case "ringt men ikke fått svar":
                 return "bg-yellow-500"
             case "ikke startet":
             default:
@@ -150,45 +158,44 @@ function TaskCard({ task, onUpdate }: { task: Task, onUpdate: () => void }) {
                         <span className="text-gray-500">{task.student_data?.phone_parent}</span>
                     </div>
                     <div className="text-sm">
-                        <span className="font-semibold">Lærer:</span>{" "}
-                        {task.teacher_data?.firstname} {task.teacher_data?.lastname}
+                        <span className="font-semibold">Lærere:</span>{" "}
+                        {task.teachers_data && task.teachers_data.length > 0 ? (
+                            <div className="ml-2">
+                                {[...new Map(
+                                    task.teachers_data.map(t => [t.user_id, t])
+                                ).values()].map((teacher, index) => (
+                                    <div key={teacher.user_id}>
+                                    {index + 1}. {teacher.firstname} {teacher.lastname}
+                                    </div>
+                                ))}
+                                </div>
+                        ) : (
+                            <span className="text-gray-500">Ingen lærere</span>
+                        )}
                     </div>
                 </div>
 
                 <div className="space-y-2">
-                    <Label className="text-sm font-semibold">Status:</Label>
-                    <RadioGroup value={status} onValueChange={handleStatusChange}>
-                        <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="ikke startet" id={`${task.id}-not-started`} />
-                            <Label htmlFor={`${task.id}-not-started`} className="flex items-center gap-2 cursor-pointer">
-                                <span className="w-3 h-3 rounded-full bg-red-500"></span>
-                                Ikke startet
-                            </Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="ringt men ikke svar" id={`${task.id}-no-answer`} />
-                            <Label htmlFor={`${task.id}-no-answer`} className="flex items-center gap-2 cursor-pointer">
-                                <span className="w-3 h-3 rounded-full bg-yellow-500"></span>
-                                Ringt men ikke svar
-                            </Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="ringt og fått svar" id={`${task.id}-answered`} />
-                            <Label htmlFor={`${task.id}-answered`} className="flex items-center gap-2 cursor-pointer">
-                                <span className="w-3 h-3 rounded-full bg-green-500"></span>
-                                Ringt og fått svar
-                            </Label>
-                        </div>
-                    </RadioGroup>
+                    <Label htmlFor={`status-${task.id}`} className="text-sm font-semibold">Status:</Label>
+                    <select
+                        id={`status-${task.id}`}
+                        value={status}
+                        onChange={(e) => handleStatusChange(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white"
+                    >
+                        <option value="ikke startet">🔴 Ikke startet</option>
+                        <option value="ringt men ikke svar">🟡 Ringt men ikke svar</option>
+                        <option value="ringt og fått svar">🟢 Ringt og fått svar</option>
+                    </select>
                 </div>
             </CardContent>
             <CardFooter>
                 <Button
                     onClick={handleComplete}
                     className="w-full"
-                    variant="default"
+                    variant="secondary"
                 >
-                    Fullfør
+                    Fullfør og skjul oppgaven
                 </Button>
             </CardFooter>
         </Card>

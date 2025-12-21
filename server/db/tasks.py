@@ -39,6 +39,7 @@ def create_new_tasks(cutoff_days: int = 21) -> None:
     """
     Create new tasks for students who have not attended classes in the past 3 weeks
     and have not had tasks assigned in the past 3 weeks.
+    Creates one task per student with all their teachers.
     """
 
     students_with_no_classes :list[dict] = get_students_with_no_classes(cutoff_days)
@@ -47,17 +48,33 @@ def create_new_tasks(cutoff_days: int = 21) -> None:
     #convert cutof days to number of weeks
     cutoff_weeks = cutoff_days // 7
 
+    # Filter out students who already have tasks
     students_to_create_tasks_for = [student for student in students_with_no_classes if student['student']['user_id'] not in students_ids_with_tasks]
 
+    # Group by student and collect all their UNIQUE teachers
+    student_teachers_map = {}
     for student in students_to_create_tasks_for:
+        student_id = student['student']['user_id']
+        if student_id not in student_teachers_map:
+            student_teachers_map[student_id] = {
+                'student': student['student'],
+                'teacher_ids': set()  # Use set to automatically deduplicate
+            }
+        student_teachers_map[student_id]['teacher_ids'].add(student['teacher']['user_id'])
+
+    # Create one task per student with all their teachers
+    for student_id, data in student_teachers_map.items():
+        student_data = data['student']
+        teacher_ids = list(data['teacher_ids'])  # Convert set to list for PostgreSQL array
+
         new_task = {
             'created_at': datetime.now(timezone.utc).isoformat(),
-            'title': f"{student['student']['firstname_student']}  {student['student']['lastname_student']} har ikke hatt timer på {cutoff_weeks} uker",
-            'description': f"Studenten {student['student']['firstname_student']} {student['student']['lastname_student']} har ikke hatt noen timer på {cutoff_weeks} uker. Vennligst ta kontakt for å følge opp. Du vil ikke få flere påminnnelser om {student['student']['firstname_student']} på tre uker. Dersom du setter {student['student']['firstname_student']} til inaktiv vil du få ingen varslinger om hen.",
+            'title': f"{student_data['firstname_student']} {student_data['lastname_student']} har ikke hatt timer på {cutoff_weeks} uker",
+            'description': f"Studenten {student_data['firstname_student']} {student_data['lastname_student']} har ikke hatt noen timer på {cutoff_weeks} uker. Vennligst ta kontakt for å følge opp. Du vil ikke få flere påminnnelser om {student_data['firstname_student']} på tre uker. Dersom du setter {student_data['firstname_student']} til inaktiv vil du få ingen varslinger om hen.",
             'status': 'pending',
             'type': 'followup_student',
-            'teacher': student['teacher']['user_id'],
-            'student': student['student']['user_id']
+            'teacher_ids': teacher_ids,
+            'student': student_id
         }
         supabase.table('tasks').insert(new_task).execute()
 
@@ -76,15 +93,44 @@ def update_status_on_task(task_id: int, new_status: str) -> None:
 def get_all_open_tasks() -> list[dict]:
     """
     Retrieve all open tasks from the database with student and teacher information.
+    Optimized to fetch all teachers in a single query.
 
     Returns:
         list[dict]: A list of open tasks with embedded student and teacher data
     """
 
+    # Get all open tasks with student data
     response = supabase.table('tasks').select(
-        '*, student_data:students!tasks_student_fkey(*), teacher_data:teachers!tasks_teacher_fkey(*)'
+        '*, student_data:students!tasks_student_fkey(*)'
     ).eq('completed', False).execute()
-    return response.data
+
+    tasks = response.data
+
+    # Collect all unique teacher IDs from all tasks
+    all_teacher_ids = set()
+    for task in tasks:
+        teacher_ids = task.get('teacher_ids', [])
+        if teacher_ids:
+            all_teacher_ids.update(teacher_ids)
+
+    # Fetch all teachers in a single query
+    teachers_map = {}
+    if all_teacher_ids:
+        teachers_response = supabase.table('teachers').select('*').in_('user_id', list(all_teacher_ids)).execute()
+        # Create a map of teacher_id -> teacher data for fast lookup
+        for teacher in teachers_response.data:
+            teachers_map[teacher['user_id']] = teacher
+
+    # Map teachers back to each task
+    for task in tasks:
+        teacher_ids = task.get('teacher_ids', [])
+        if teacher_ids:
+            # Look up each teacher from the map
+            task['teachers_data'] = [teachers_map[tid] for tid in teacher_ids if tid in teachers_map]
+        else:
+            task['teachers_data'] = []
+
+    return tasks
 
 def close_task(task_id: int) -> None:
     """
