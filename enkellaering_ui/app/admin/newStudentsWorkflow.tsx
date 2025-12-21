@@ -77,7 +77,10 @@ export function NewStudentsWorkflow() {
     }
 
 
-    return (<NewStudentTable newStudents={newStudents}/>)
+    return (<div className="w-screen md:w-full overflow-x-auto">
+        <NewStudentTable newStudents={newStudents}/>
+    </div>
+    )
     
 
 }
@@ -117,7 +120,7 @@ const NewStudentTable =( {newStudents} : {newStudents : NewStudent[]})  => {
         filteredStudents = filteredStudents.filter(ns => !ns.has_finished_onboarding && ns.from_referal && !ns.paid_referee)
     }
 
-    return (<div className=" w-full sm:w-full bg-white dark:bg-black rounded-sm shadow-lg flex flex-col items-center justify-center">
+    return (<div className="w-full max-w-full bg-white dark:bg-black rounded-sm shadow-lg flex flex-col items-center justify-center overflow-hidden">
         <div className="flex flex-col space-y-2 items-center">
             <div className="flex items-center space-x-2 m-4">
                 <Switch
@@ -141,6 +144,7 @@ const NewStudentTable =( {newStudents} : {newStudents : NewStudent[]})  => {
             </div>
         </div>
 
+        <div className="overflow-x-auto w-full max-w-full">
         <Table>
                 <TableCaption>Arbeidsoversikt for ny elev ({filteredStudents.length})</TableCaption>
                     <TableHeader>
@@ -161,7 +165,8 @@ const NewStudentTable =( {newStudents} : {newStudents : NewStudent[]})  => {
                             return <NewStudentRow key={ns.new_student_id} ns={ns}/>
                         })}
                     </TableBody>
-                </Table>   
+        </Table>
+        </div>
     </div>)
 }
 
@@ -274,7 +279,7 @@ function NewStudentRow({ ns }: { ns: NewStudent }) {
 
     return(
     <TableRow className={`${ns.has_finished_onboarding ? "text-gray-400" : ""}`}>
-        <TableCell className="font-medium min-w-80">{ns.phone.slice(0, 3)} {ns.phone.slice(3, 5)} {ns.phone.slice(5, 10)} {ns.phone.slice(10, 13)} 
+        <TableCell className="font-medium min-w-48">{ns.phone.slice(0, 3)} {ns.phone.slice(3, 5)} {ns.phone.slice(5, 10)} {ns.phone.slice(10, 13)} 
                 <br/>
                 {new Intl.DateTimeFormat("nb-NO", {
                     day: "2-digit",
@@ -290,7 +295,7 @@ function NewStudentRow({ ns }: { ns: NewStudent }) {
                 </span>
         </TableCell>
 
-        <TableCell className="min-w-40">
+        <TableCell className="min-w-32">
             <RadioGroup onValueChange={handleSetCalled} defaultValue={ns.has_called? "Ja" : "Nei"} value={hasCalled? "Ja" : "Nei"}>
                 <RadioGroupItem value="Ja" className="text-green-400"></RadioGroupItem>
                 <RadioGroupItem value="Nei" className="text-red-400 "></RadioGroupItem>
@@ -298,7 +303,7 @@ function NewStudentRow({ ns }: { ns: NewStudent }) {
         </TableCell>
 
 
-        <TableCell className="min-w-40">
+        <TableCell className="min-w-32">
             <RadioGroup defaultValue={ns.has_answered? "Ja" : "Nei"} value={hasAnswered? "Ja" : "Nei"} onValueChange={handleSetAnswered}>
                 <RadioGroupItem value="Ja" className="text-green-400"></RadioGroupItem>
                 <RadioGroupItem value="Nei" className="text-red-400"></RadioGroupItem>
@@ -306,7 +311,7 @@ function NewStudentRow({ ns }: { ns: NewStudent }) {
         </TableCell>
 
 
-        <TableCell className="min-w-60">
+        <TableCell className="min-w-48">
             {fromReferal ? (
                 <span className="text-gray-400">Fra {ns.referee_name} <br/> tlf: {refereePhone}
                 <br/> kontoNr: {ns.referee_account_number}

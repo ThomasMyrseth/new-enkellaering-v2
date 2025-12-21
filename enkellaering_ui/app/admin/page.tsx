@@ -72,9 +72,9 @@ export default function AdminPage() {
         return <p>Loading...</p>
     }
 
-    return (<div className="flex flex-col items-center justify-center w-full space-y-10 min-h-screen bg-stone-100 dark:bg-slate-950">
+    return (<div className="w-full min-h-screen max-w-full bg-stone-100 dark:bg-slate-950 px-4">
         <TeacherName teacher={teacher}/>
-        <div className="flex flex-col items-center justify-center w-full md:w-3/4 max-w-screen-lg space-y-10 mx-auto px-4">
+        <div className="w-full max-w-full mx-auto space-y-10">
           <AnalyticsOverview />
           <StudentsWithoutAnyTeachers token={token} BASEURL={BASEURL} />
           <DailyRevenueChart />

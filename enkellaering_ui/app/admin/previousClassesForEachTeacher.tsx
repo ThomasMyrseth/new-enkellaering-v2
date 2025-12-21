@@ -454,7 +454,7 @@ export function PreviousClassesForEachTeacher() {
         return true;
     });
 
-    return (<div className="flex flex-col justify-center items-center w-full bg-white dark:bg-black shadow-lg rounded-lg m-4 p-4">
+    return (<div className="flex flex-col justify-center items-center w-full bg-white dark:bg-black shadow-lg rounded-lg p-4">
         <ToggleFilterPreviousClasses
           passFilterDigital={setFilterDigital}
           passFilterPhysical={setFilterPhysical}
@@ -572,7 +572,7 @@ export function PreviousClassesForEachTeacher() {
                             <div className='flex flex-row items-center'>
                                 <div className='text-start'>{ct.teacher.firstname} {ct.teacher.lastname}</div>
                             </div>
-                            <div className='text-start font-extralight mr-2 w-44 text-neutral-400'> 
+                            <div className='text-start font-extralight mr-2 min-w-32 text-neutral-400'> 
                                 <p 
                                     className={`${actualTotalHoursLastFourWeeks<estTotalHoursLastFourWeeks ? 'text-red-400' : ''}`}
                                 >{ actualTotalHoursLastFourWeeks}/{estTotalHoursLastFourWeeks}h siste fire uker</p>
@@ -665,8 +665,9 @@ export function PreviousClassesForEachTeacher() {
                             Total fakturerte timer fra {ct.teacher.firstname}: <span className="text-green-400">{totalInvoicedHoursByTeacher}h, {totalInvoicedByTeacher}kr.</span> <br/>
                             Totalt betalt til {ct.teacher.firstname}: <span className="text-green-400">{totalPaidHoursToTeacher}h, {totalPaidToTeacher}kr.</span>
                         </p>
-                    
 
+
+                        <div className="overflow-x-auto w-full">
                         <Table>
                             <TableCaption>Kronologisk oversikt over alle timer til {ct.teacher.firstname}</TableCaption>
                             <TableHeader>
@@ -742,6 +743,7 @@ export function PreviousClassesForEachTeacher() {
                             })}
                             </TableBody>
                         </Table>
+                        </div>
                     </AccordionContent>
                 </AccordionItem>
             </Accordion>

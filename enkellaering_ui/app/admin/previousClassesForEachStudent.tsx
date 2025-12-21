@@ -98,7 +98,7 @@ export function PreviousClassesForEachStudent() {
     }
 
       
-    return (<div className="flex flex-col justify-center items-center w-full shadow-lg m-4 p-4 bg-white dark:bg-black rounded-lg">
+    return (<div className="flex flex-col justify-center items-center w-full shadow-lg p-4 bg-white dark:bg-black rounded-lg">
         <h1 className="text-xl">En oversikt over tidligere time for hver elev</h1>
 
         {students.map((s :Student, index) => {
@@ -277,6 +277,7 @@ export function PreviousClassesForEachStudent() {
                     <SetStudentInactive student={s} />
                 </div>
 
+                <div className="overflow-x-auto w-full">
                 <Table>
                     <TableCaption>Kronologisk oversikt over alle timer til {s.firstname_parent}</TableCaption>
                     <TableHeader>
@@ -340,6 +341,7 @@ export function PreviousClassesForEachStudent() {
                     })}
                     </TableBody>
                 </Table>
+                </div>
                 </AccordionContent>
             </AccordionItem>
             </Accordion>

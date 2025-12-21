@@ -122,7 +122,7 @@ export const StudentsWithoutAnyTeachers = ({token, BASEURL} : {token :string, BA
   }
 
   return (
-    <div className="flex flex-col justify-center items-center w-full shadow-lg m-4 p-4 bg-white dark:bg-black rounded-lg">
+    <div className="flex flex-col justify-center items-center w-full shadow-lg p-4 bg-white dark:bg-black rounded-lg">
       <h1 className="text-xl mb-4">Elever uten lærer, inaktive elever vises ikke her</h1>
       
       {students.map((s: Student, index) => {

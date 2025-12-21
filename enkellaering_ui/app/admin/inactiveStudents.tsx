@@ -70,7 +70,7 @@ export const InactiveStudents = () => {
         </TableRow>
     );
 
-    return(<div className="w-full flex flex-col items-center justify-center shadow-lg dark:bg-black bg-white rounded-lg m-4 p-4">
+    return(<div className="w-full flex flex-col items-center justify-center shadow-lg dark:bg-black bg-white rounded-lg p-4">
         <h3 className="pt-4">Inaktive elever ({inactiveStudents.length})</h3>
         
         {inactiveStudents.length === 0 ? (
