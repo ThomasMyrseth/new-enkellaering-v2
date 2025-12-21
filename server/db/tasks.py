@@ -75,13 +75,15 @@ def update_status_on_task(task_id: int, new_status: str) -> None:
 
 def get_all_open_tasks() -> list[dict]:
     """
-    Retrieve all open tasks from the database.
+    Retrieve all open tasks from the database with student and teacher information.
 
     Returns:
-        list[dict]: A list of open tasks
+        list[dict]: A list of open tasks with embedded student and teacher data
     """
 
-    response = supabase.table('tasks').select('*').eq('completed', False).execute()
+    response = supabase.table('tasks').select(
+        '*, student_data:students!tasks_student_fkey(*), teacher_data:teachers!tasks_teacher_fkey(*)'
+    ).eq('completed', False).execute()
     return response.data
 
 def close_task(task_id: int) -> None:
