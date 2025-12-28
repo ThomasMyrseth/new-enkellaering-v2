@@ -30,7 +30,8 @@ topics = [
     "send-class-email",
     "send-new-order-admin-email",
     "send-teacher-referal-admin-email",
-    "send-student-teacher-notification-email"
+    "send-student-teacher-notification-email",
+    "send-help-queue-email"
 ]
 
 for topic_name in topics:
@@ -788,6 +789,103 @@ def sendEmailsToTeacherAndStudentAboutFewClasses(teachersAndStudents :dict):
         raise e
 
 
+def sendHelpQueueJoinEmailToStudent(studentName: str, studentEmail: str, zoomLink: str, position: int):
+    """
+    Send email to student when they join the help queue
+    """
+    try:
+        html_content = f"""
+        <div style="font-family: sans-serif; background-color: #f9f9f9; padding: 30px;">
+            <h1>Du er nå i køen for gratis leksehjelp!</h1>
+            <div style="background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                <p style="font-size: 16px;"><strong>Hei {studentName}!</strong></p>
+                <br/>
+                <p style="color: #555;">
+                    Du er nå på plass <strong>{position}</strong> i køen.
+                    Du kan allerede nå bli med i Zoom-møtet ved å klikke på lenken under.
+                </p>
+                <p style="color: #555;">
+                    Du vil bli sluppet inn i møtet når det er din tur. Vennligst vent i venterommet.
+                </p>
+                <br/>
+                <a href="{zoomLink}" style="display:inline-block; margin-top: 15px; background-color:#6366F1; color:white; padding:10px 16px; border-radius:5px; text-decoration:none;">
+                    Bli med i Zoom-møtet
+                </a>
+                <br/><br/>
+                <p style="color: #777; font-size: 14px;">
+                    Zoom-lenke: <a href="{zoomLink}">{zoomLink}</a>
+                </p>
+            </div>
+        </div>
+        """
+
+        response = resend.Emails.send({
+            "from": FROM_EMAIL,
+            "to": studentEmail,
+            "subject": "Du er nå i køen for gratis leksehjelp",
+            "html": html_content
+        })
+
+        print(f"✅ Help queue student email sent to {studentEmail}")
+        return response
+
+    except Exception as e:
+        print(f"❌ Failed to send help queue student email to {studentEmail}: {e}")
+        raise e
+
+
+def sendHelpQueueJoinEmailToTeacher(teacherEmail: str, teacherName: str, studentName: str, subject: str, description: str, position: int, zoomLink: str):
+    """
+    Send email to teacher when a student joins their help queue
+    """
+    try:
+        description_html = f"<p style='color: #555;'><strong>Beskrivelse:</strong> {description}</p>" if description else ""
+
+        html_content = f"""
+        <div style="font-family: sans-serif; background-color: #f9f9f9; padding: 30px;">
+            <h1>Ny elev i køen!</h1>
+            <div style="background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                <p style="font-size: 16px;"><strong>Hei {teacherName}!</strong></p>
+                <br/>
+                <p style="color: #555;">
+                    En ny elev har blitt med i køen din for gratis leksehjelp.
+                </p>
+                <br/>
+                <p style="color: #555;"><strong>Student:</strong> {studentName}</p>
+                <p style="color: #555;"><strong>Emne:</strong> {subject}</p>
+                {description_html}
+                <p style="color: #555;"><strong>Posisjon i køen:</strong> {position}</p>
+                <br/>
+                <p style="color: #555;">
+                    Logg inn på Min Side for å se hele køen og administrere elevene.
+                </p>
+                <br/>
+                <a href="{zoomLink}" style="display:inline-block; margin-top: 15px; background-color:#6366F1; color:white; padding:10px 16px; border-radius:5px; text-decoration:none;">
+                    Åpne Zoom-møtet
+                </a>
+                <br/><br/>
+                <a href="https://enkellaering.no/min-side-laerer" style="display:inline-block; margin-top: 15px; background-color:#e5e7eb; color:#374151; padding:10px 16px; border-radius:5px; text-decoration:none;">
+                    Gå til Min Side
+                </a>
+            </div>
+        </div>
+        """
+
+        response = resend.Emails.send({
+            "from": FROM_EMAIL,
+            "to": teacherEmail,
+            "subject": f"Ny elev i køen: {studentName}",
+            "html": html_content
+        })
+
+        print(f"✅ Help queue teacher email sent to {teacherEmail}")
+        return response
+
+    except Exception as e:
+        print(f"❌ Failed to send help queue teacher email to {teacherEmail}: {e}")
+        raise e
+
+
 def sendEmailToAdminAboutNewTeacherReferal(referalName :str, referalEmail :str, referalPhone :str, teacherName :str):
 
     try:
@@ -1066,5 +1164,74 @@ def send_student_teacher_notification_email_pubsub():
 
     except Exception as e:
         logging.exception("Failed to process Pub/Sub message for student/teacher notification email")
+        # Return 500 so Pub/Sub will retry
+        return "Error", 500
+
+
+@mail_bp.route('/pubsub/send-help-queue-email', methods=["POST"])
+def send_help_queue_email_pubsub():
+    """
+    Pub/Sub subscriber endpoint to send emails when students join help queue.
+    Sends emails to both student and teacher.
+    """
+    envelope = request.get_json()
+    if not envelope or "message" not in envelope:
+        logging.error("Bad Request: No message in Pub/Sub envelope")
+        return "Bad Request", 400
+
+    try:
+        # Decode the Pub/Sub message
+        payload = base64.b64decode(envelope["message"]["data"]).decode("utf-8")
+        data = json.loads(payload)
+
+        # Extract data from message
+        student_name = data.get("student_name")
+        student_email = data.get("student_email")
+        teacher_email = data.get("teacher_email")
+        teacher_name = data.get("teacher_name")
+        subject = data.get("subject")
+        description = data.get("description", "")
+        position = data.get("position")
+        zoom_link = data.get("zoom_link")
+
+        if not all([student_name, teacher_email, teacher_name, subject, zoom_link]):
+            logging.error("Missing required fields in Pub/Sub message for help queue email")
+            return "Bad Request: Missing required fields", 400
+
+        # Send email to student (only if student_email is provided)
+        if student_email:
+            try:
+                sendHelpQueueJoinEmailToStudent(
+                    studentName=student_name,
+                    studentEmail=student_email,
+                    zoomLink=zoom_link,
+                    position=position
+                )
+                logging.info(f"Successfully sent help queue email to student: {student_email}")
+            except Exception as e:
+                logging.error(f"Failed to send email to student {student_email}: {e}")
+                # Continue to send teacher email even if student email fails
+
+        # Send email to teacher
+        try:
+            sendHelpQueueJoinEmailToTeacher(
+                teacherEmail=teacher_email,
+                teacherName=teacher_name,
+                studentName=student_name,
+                subject=subject,
+                description=description,
+                position=position,
+                zoomLink=zoom_link
+            )
+            logging.info(f"Successfully sent help queue email to teacher: {teacher_email}")
+        except Exception as e:
+            logging.error(f"Failed to send email to teacher {teacher_email}: {e}")
+            # Return error so Pub/Sub will retry
+            return "Error", 500
+
+        return "OK", 200
+
+    except Exception as e:
+        logging.exception("Failed to process Pub/Sub message for help queue email")
         # Return 500 so Pub/Sub will retry
         return "Error", 500

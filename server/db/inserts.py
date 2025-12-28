@@ -1,6 +1,10 @@
 from typing import Optional
 import uuid
 from datetime import datetime, timezone
+import logging
+import json
+import os
+from google.cloud import pubsub_v1
 
 from db.gets import is_admin
 from .sql_types import Classes, Teacher, Students, NewStudents, NewStudentWithPreferredTeacher
@@ -389,8 +393,23 @@ def insert_help_queue_entry(student_name: str, student_email: Optional[str], stu
     if not session.data or len(session.data) == 0:
         raise ValueError("Ingen aktive økter tilgjengelig")
 
-    session_id = session.data[0]['session_id']
-    zoom_join_link = session.data[0].get('zoom_join_link')
+    session_data = session.data[0]
+    session_id = session_data['session_id']
+    zoom_join_link = session_data.get('zoom_join_link')
+    teacher_user_id = session_data.get('teacher_user_id')
+
+    # Get teacher information (use maybeSingle to handle missing teachers gracefully)
+    teacher_email = None
+    teacher_name = "Lærer"
+
+    if teacher_user_id:
+        try:
+            teacher_info = supabase.table('teachers').select('email, firstname, lastname').eq('user_id', teacher_user_id).maybeSingle().execute()
+            if teacher_info.data:
+                teacher_email = teacher_info.data.get('email')
+                teacher_name = f"{teacher_info.data.get('firstname', '')} {teacher_info.data.get('lastname', '')}".strip() or "Lærer"
+        except Exception as e:
+            logging.error(f"Failed to fetch teacher info for user_id {teacher_user_id}: {e}")
 
     # Get next position in queue
     queue_count = supabase.table('help_queue').select('queue_id', count='exact').eq('assigned_session_id', session_id).eq('status', 'waiting').execute()
@@ -413,6 +432,34 @@ def insert_help_queue_entry(student_name: str, student_email: Optional[str], stu
     }
 
     supabase.table('help_queue').insert(data).execute()
+
+    # Publish email notification to Pub/Sub
+    if teacher_email and zoom_join_link:
+        try:
+            project_id = os.getenv("GCP_PROJECT_ID", 'no_project_id')
+            publisher = pubsub_v1.PublisherClient()
+            topic_path = publisher.topic_path(project_id, "send-help-queue-email")
+
+            message_data = {
+                "student_name": student_name,
+                "student_email": student_email,
+                "teacher_email": teacher_email,
+                "teacher_name": teacher_name,
+                "subject": subject,
+                "description": description or "",
+                "position": next_position,
+                "zoom_link": zoom_join_link
+            }
+
+            message_json = json.dumps(message_data)
+            message_bytes = message_json.encode("utf-8")
+
+            future = publisher.publish(topic_path, message_bytes)
+            logging.info(f"Published help queue email message: {future.result()}")
+        except Exception as e:
+            logging.error(f"Failed to publish help queue email to Pub/Sub: {e}")
+            # Don't fail the queue insertion if email fails
+
     return queue_id, zoom_join_link
 
 

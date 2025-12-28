@@ -327,8 +327,7 @@ export type Task = {
 
 export type TeacherHelpConfig = {
     teacher_user_id: string;
-    zoom_host_link: string | null;
-    zoom_join_link: string | null;
+    zoom_link: string | null;
     available_for_help: boolean;
     created_at: string;
     updated_at: string;

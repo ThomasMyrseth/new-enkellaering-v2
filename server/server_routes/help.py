@@ -61,6 +61,7 @@ def join_help_queue():
             "zoom_join_link": zoom_join_link
         }), 201
     except ValueError as e:
+        print("error joining help queue:", e)
         return jsonify({"error": str(e)}), 400
     except Exception as e:
         logging.exception("Failed to join help queue")
@@ -104,8 +105,7 @@ def update_teacher_config(user_id):
     try:
         update_teacher_help_config(
             teacher_user_id=user_id,
-            zoom_host_link=data.get('zoom_host_link'),
-            zoom_join_link=data.get('zoom_join_link'),
+            zoom_link=data.get('zoom_link'),
             available_for_help=data.get('available_for_help')
         )
         return jsonify({"message": "Konfigurasjonen er oppdatert"}), 200
@@ -221,7 +221,7 @@ def admit_student(user_id, queue_id):
     """Teacher: Admit student from queue"""
     try:
         update_queue_status(queue_id, 'admitted')
-        return jsonify({"message": "Student innrømmet"}), 200
+        return jsonify({"message": "Student sluppet inn"}), 200
     except Exception as e:
         logging.exception(f"Failed to admit student {queue_id}")
         return jsonify({"error": str(e)}), 500

@@ -207,8 +207,7 @@ CREATE TABLE public.teachers (
 -- Table 1: Teacher Help Configuration
 CREATE TABLE IF NOT EXISTS public.teacher_help_config (
   teacher_user_id text NOT NULL,
-  zoom_host_link text,
-  zoom_join_link text,
+  zoom_link text,
   available_for_help boolean NOT NULL DEFAULT false,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   updated_at timestamp with time zone NOT NULL DEFAULT now(),
@@ -219,8 +218,7 @@ CREATE TABLE IF NOT EXISTS public.teacher_help_config (
 );
 
 COMMENT ON TABLE public.teacher_help_config IS 'Configuration for teachers providing free homework help';
-COMMENT ON COLUMN public.teacher_help_config.zoom_host_link IS 'Zoom host link for the teacher';
-COMMENT ON COLUMN public.teacher_help_config.zoom_join_link IS 'Zoom join link for students';
+COMMENT ON COLUMN public.teacher_help_config.zoom_link IS 'Zoom link for the teacher and student';
 COMMENT ON COLUMN public.teacher_help_config.available_for_help IS 'Whether teacher is currently available for help sessions';
 
 -- Table 2: Help Sessions (supports both recurring and one-time sessions)

@@ -138,16 +138,16 @@ export default function LaererPage() {
     return (<div className="flex flex-col items-center justify-center w-full min-h-screen bg-slate-200 dark:bg-slate-900">
             <TeacherName teacher={teacher}/>
             <div className="w-full md:w-4/5 flex flex-col space-y-4 mt-4">
-                <DailyRevenueChart teacher={teacher}/>
+                {/* <DailyRevenueChart teacher={teacher}/>
                 <WantMoreStudents teacher={teacher}/>
                 <AddNewClass teacher={teacher} students={students}/>
                 <YourStudent teacher={teacher} classes={classes} students={students} teacherStudents={teacherStudents}/>
                 <TeacherReferalForm token={token}/>
                 <NewStudentsWithPreferredTeacherWorkflowActions/>
                 <ProfileForm teacher={teacher}/>
-                <QuizStatusPage token={token} baseUrl={BASEURL}/>
+                <QuizStatusPage token={token} baseUrl={BASEURL}/> */}
                 <TeacherHelpDashboard token={token}/>
-                <FileUploadForm firstname={teacher.firstname} lastname={teacher.lastname} title={"Last opp et bilde av deg"}/>
+                {/* <FileUploadForm firstname={teacher.firstname} lastname={teacher.lastname} title={"Last opp et bilde av deg"}/> */}
             </div>
 
     </div>)

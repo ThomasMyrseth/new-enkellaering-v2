@@ -3,10 +3,12 @@
 import { useState, useEffect } from "react"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
+import { Input } from "@/components/ui/input"
 import { TeacherHelpConfig, HelpSession, HelpQueueEntry } from "../admin/types"
+import Link from "next/link"
+import { toast } from "sonner"
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080"
 const DAYS_NO = ["Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag", "Lørdag", "Søndag"]
@@ -23,8 +25,7 @@ export function TeacherHelpDashboard({ token }: { token: string }) {
   const [config, setConfig] = useState<TeacherHelpConfig | null>(null)
   const [sessions, setSessions] = useState<HelpSession[]>([])
   const [queue, setQueue] = useState<HelpQueueEntry[]>([])
-  const [zoomHostLink, setZoomHostLink] = useState<string>("")
-  const [zoomJoinLink, setZoomJoinLink] = useState<string>("")
+  const [zoomLink, setZoomLink] = useState<string>("")
   const [availableForHelp, setAvailableForHelp] = useState<boolean>(false)
 
   // New session form
@@ -48,8 +49,7 @@ export function TeacherHelpDashboard({ token }: { token: string }) {
 
   useEffect(() => {
     if (config) {
-      setZoomHostLink(config.zoom_host_link || "")
-      setZoomJoinLink(config.zoom_join_link || "")
+      setZoomLink(config.zoom_link || "")
       setAvailableForHelp(config.available_for_help)
     }
   }, [config])
@@ -111,33 +111,32 @@ export function TeacherHelpDashboard({ token }: { token: string }) {
           Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
-          zoom_host_link: zoomHostLink,
-          zoom_join_link: zoomJoinLink,
+          zoom_link: zoomLink,
           available_for_help: availableForHelp
         })
       })
 
       if (!response.ok) {
-        alert("Kunne ikke oppdatere konfigurasjonen")
+        toast.error("Kunne ikke oppdatere konfigurasjonen")
         return
       }
 
-      alert("Konfigurasjonen er oppdatert!")
+      toast.success("Konfigurasjonen er oppdatert!")
       fetchConfig()
     } catch (error) {
       console.error("Failed to update config:", error)
-      alert("Kunne ikke oppdatere konfigurasjonen")
+      toast.error("Kunne ikke oppdatere konfigurasjonen")
     }
   }
 
   async function createSession() {
     // Validate based on session type
     if (recurring && newSession.day_of_week === undefined) {
-      alert("Velg en dag for tilbakevendende økt")
+      toast.error("Velg en dag for tilbakevendende økt")
       return
     }
     if (!recurring && !newSession.session_date) {
-      alert("Velg en dato for engangsokt")
+      toast.error("Velg en dato for engangsøkt")
       return
     }
 
@@ -165,15 +164,15 @@ export function TeacherHelpDashboard({ token }: { token: string }) {
 
       if (!response.ok) {
         const error = await response.json()
-        alert(`Kunne ikke opprette økten: ${error.error || 'Ukjent feil'}`)
+        toast.error(`Kunne ikke opprette økten: ${error.error || 'Ukjent feil'}`)
         return
       }
 
-      alert("Økten er opprettet!")
+      toast.success("Økten er opprettet!")
       fetchSessions()
     } catch (error) {
       console.error("Failed to create session:", error)
-      alert("Kunne ikke opprette økten")
+      toast.error("Kunne ikke opprette økten")
     }
   }
 
@@ -187,15 +186,15 @@ export function TeacherHelpDashboard({ token }: { token: string }) {
       })
 
       if (!response.ok) {
-        alert("Kunne ikke slette økten")
+        toast.error("Kunne ikke slette økten")
         return
       }
 
-      alert("Økten er slettet")
+      toast.success("Økten er slettet")
       fetchSessions()
     } catch (error) {
       console.error("Failed to delete session:", error)
-      alert("Kunne ikke slette økten")
+      toast.error("Kunne ikke slette økten")
     }
   }
 
@@ -207,7 +206,7 @@ export function TeacherHelpDashboard({ token }: { token: string }) {
       })
 
       if (!response.ok) {
-        alert(`Kunne ikke ${action} student`)
+        toast.error(`Kunne ikke ${action} student`)
         return
       }
 
@@ -228,23 +227,16 @@ export function TeacherHelpDashboard({ token }: { token: string }) {
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="zoom_host_link">Zoom lenke til møte</Label>
+            <Label htmlFor="zoom_link">Zoom lenke til møte</Label>
             <Input
-              id="zoom_host_link"
+              id="zoom_link"
               placeholder="https://zoom.us/j/..."
-              value={zoomHostLink}
-              onChange={(e) => setZoomHostLink(e.target.value)}
+              type="text"
+              value={zoomLink}
+              onChange={(e) => setZoomLink(e.target.value)}
             />
           </div>
-
-          <div className="flex items-center justify-between">
-            <Label htmlFor="available">Jeg er tilgjengelig for gratis hjelp</Label>
-            <Switch
-              id="available"
-              checked={availableForHelp}
-              onCheckedChange={setAvailableForHelp}
-            />
-          </div>
+          
         </CardContent>
         <CardFooter>
           <Button variant="secondary" onClick={updateConfig}>Lagre konfigurasjon</Button>
@@ -254,7 +246,7 @@ export function TeacherHelpDashboard({ token }: { token: string }) {
       <Card>
         <CardHeader>
           <CardTitle>Mine økter</CardTitle>
-          <CardDescription>Opprett og administrer dine hjelpeøkter</CardDescription>
+          <CardDescription>Opprett og administrer dine hjelpeøkter. Alle tider er i Oslo-tidssone (Europe/Oslo).</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center space-x-2">
@@ -331,7 +323,7 @@ export function TeacherHelpDashboard({ token }: { token: string }) {
               </div>
             </div>
           )}
-          <Button onClick={createSession}>Opprett økt</Button>
+          <Button onClick={createSession} variant="secondary">Opprett økt</Button>
 
           <div className="space-y-2 mt-4">
             <h3 className="font-semibold">Eksisterende økter:</h3>
@@ -404,17 +396,11 @@ export function TeacherHelpDashboard({ token }: { token: string }) {
                       <Button
                         size="sm"
                         variant="default"
-                        onClick={() => handleQueueAction(entry.queue_id, 'admit')}
-                      >
-                        Innrøm
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="secondary"
                         onClick={() => handleQueueAction(entry.queue_id, 'complete')}
                       >
-                        Fullfør
+                        Inviter elev inn i møte
                       </Button>
+        
                       <Button
                         size="sm"
                         variant="destructive"
@@ -431,12 +417,10 @@ export function TeacherHelpDashboard({ token }: { token: string }) {
         </CardContent>
       </Card>
 
-      {zoomHostLink && (
-        <Button className="w-full" asChild>
-          <a href={zoomHostLink} target="_blank" rel="noopener noreferrer">
+      {zoomLink && (
+          <Link href={zoomLink} target="_blank" rel="noopener noreferrer">
             Åpne Zoom (Host Link)
-          </a>
-        </Button>
+          </Link>
       )}
     </div>
   )
