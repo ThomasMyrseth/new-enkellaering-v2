@@ -172,9 +172,13 @@ export default function FreeHelpPage() {
         <div className="w-full md:w-4/5 max-w-2xl">
           <Card className="bg-white dark:bg-black rounded-lg">
             <CardHeader>
-              <CardTitle className="text-2xl text-neutral-800 dark:text-neutral-200">Du er i køen!</CardTitle>
+              <CardTitle className="text-2xl text-neutral-800 dark:text-neutral-200">
+                {position?.admitted_at ? "🎉 DET ER DIN TUR!" : "Du er i køen!"}
+              </CardTitle>
               <CardDescription>
-                {zoomJoinLink ? (
+                {position?.admitted_at ? (
+                  <>Du har blitt sluppet inn! Bli med i Zoom-møtet NÅ ved å klikke på lenken under.</>
+                ) : zoomJoinLink ? (
                   <>Du kan bli med i Zoom-møtet nå ved å klikke på knappen under. Du vil bli sluppet inn når det er din tur. Vent i venterommet!</>
                 ) : (
                   <>Du har fått en epost av oss med lenke til videomøte. Bli med i møtet nå, så slippes du inn så fort det er din tur. Husk å sjekke søppelposten!</>
@@ -183,12 +187,25 @@ export default function FreeHelpPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="text-center">
-                <div className="text-6xl font-bold text-blue-600 dark:text-blue-400">
-                  {position?.position || "..."}
-                </div>
-                <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2">
-                  {position?.position === 1 ? "Du er neste!" : "Plass i køen"}
-                </p>
+                {position?.admitted_at ? (
+                  <>
+                    <div className="text-6xl font-bold text-green-600 dark:text-green-400 animate-pulse">
+                      ✓
+                    </div>
+                    <p className="text-lg font-semibold text-green-600 dark:text-green-400 mt-2">
+                      Du er innrømmet!
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-6xl font-bold text-blue-600 dark:text-blue-400">
+                      {position?.position || "..."}
+                    </div>
+                    <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2">
+                      {position?.position === 1 ? "Du er neste!" : "Plass i køen"}
+                    </p>
+                  </>
+                )}
                 {lastUpdated && (
                   <p className="text-xs text-neutral-500 dark:text-neutral-500 mt-1">
                     Sist oppdatert: {lastUpdated.toLocaleTimeString('no-NO')}
@@ -223,12 +240,19 @@ export default function FreeHelpPage() {
                 )}
               </div>
 
-              {zoomJoinLink && (<div className="space-y-2 bg-slate-100 dark:bg-slate-800 rounded-lg p-4">
-                  <Link href={zoomJoinLink} target="_blank" rel="noopener noreferrer">
-                    Åpne Zoom-møtet nå
-                  </Link>
-                  <p>eller kopier: {zoomJoinLink}</p>
-                </div>
+              {zoomJoinLink && (
+                <a
+                  href={zoomJoinLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`block w-full text-center text-lg py-6 px-4 rounded-md font-semibold transition-colors ${
+                    position?.admitted_at
+                      ? 'bg-green-600 hover:bg-green-700 text-white animate-pulse'
+                      : 'bg-blue-600 hover:bg-blue-700 text-white'
+                  }`}
+                >
+                  {position?.admitted_at ? '🚀 BLI MED I ZOOM-MØTET NÅ!' : 'Åpne Zoom-møtet'}
+                </a>
               )}
 
               <Button
