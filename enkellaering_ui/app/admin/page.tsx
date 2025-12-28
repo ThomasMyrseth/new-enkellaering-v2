@@ -16,6 +16,7 @@ import { Teacher } from "./types";
 import { InactiveStudents } from "./inactiveStudents";
 import { ResignedTeachers } from "./resignedTeachers";
 import { TasksWorkflow } from "./tasksWorkflow";
+import { HelpAdminPanel } from "./helpAdmin";
 
 
 
@@ -86,6 +87,7 @@ export default function AdminPage() {
           <InactiveStudents />
           <ResignedTeachers />
           <Quiz/>
+          <HelpAdminPanel token={token} />
 
         </div>
         <div className="h-10"> </div>

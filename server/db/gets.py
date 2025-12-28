@@ -640,3 +640,43 @@ def get_analytics_dashboard(admin_user_id: str):
         'revenueByTeacher': revenue_by_teacher,
         'revenueByLocation': revenue_by_location
     }
+
+
+# ============================================================================
+# GRATIS LEKSEHJELP (FREE HOMEWORK HELP) QUERY FUNCTIONS
+# ============================================================================
+
+def get_teacher_help_config(teacher_user_id: str):
+    """Get help config for a specific teacher"""
+    response = supabase.table('teacher_help_config').select('*').eq('teacher_user_id', teacher_user_id).execute()
+    return response.data[0] if response.data else None
+
+
+def get_all_available_teachers():
+    """Get all teachers available for help with their config"""
+    response = supabase.table('teacher_help_config').select('*, teachers(*)').eq('available_for_help', True).execute()
+    return response.data
+
+
+def get_active_help_sessions():
+    """Get currently active help sessions (based on day/time)"""
+    response = supabase.rpc('get_currently_active_help_sessions').execute()
+    return response.data
+
+
+def get_help_sessions_for_teacher(teacher_user_id: str):
+    """Get all help sessions for a teacher"""
+    response = supabase.table('help_sessions').select('*').eq('teacher_user_id', teacher_user_id).eq('is_active', True).execute()
+    return response.data
+
+
+def get_help_queue_for_session(session_id: str):
+    """Get queue for a specific session, ordered by position"""
+    response = supabase.table('help_queue').select('*').eq('assigned_session_id', session_id).eq('status', 'waiting').order('position').execute()
+    return response.data
+
+
+def get_queue_position(queue_id: str):
+    """Get position and info for a queue entry"""
+    response = supabase.table('help_queue').select('*, help_sessions(teacher_user_id)').eq('queue_id', queue_id).execute()
+    return response.data[0] if response.data else None

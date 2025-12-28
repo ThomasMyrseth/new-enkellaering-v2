@@ -364,3 +364,72 @@ def insertNewTeacherReferal(teacherUserId: str, referalPhone: str, referalName: 
         'created_at': datetime.now(timezone.utc).isoformat()
     }
     supabase.table('teacher_referrals').insert(data).execute()
+
+
+# ============================================================================
+# GRATIS LEKSEHJELP (FREE HOMEWORK HELP) INSERT FUNCTIONS
+# ============================================================================
+
+def insert_help_queue_entry(student_name: str, student_email: Optional[str], student_phone: Optional[str],
+                            subject: str, description: Optional[str], preferred_teacher_id: Optional[str] = None):
+    """
+    Insert student into help queue and assign to session
+    Uses "snarest" logic if preferred_teacher_id is None
+    """
+    # Find appropriate session
+    if preferred_teacher_id:
+        # Find active session for this specific teacher
+        session = supabase.rpc('find_active_session_for_teacher', {
+            'teacher_id': preferred_teacher_id
+        }).execute()
+    else:
+        # "Snarest" - find session with shortest queue
+        session = supabase.rpc('find_shortest_queue_session').execute()
+
+    if not session.data or len(session.data) == 0:
+        raise ValueError("Ingen aktive økter tilgjengelig")
+
+    session_id = session.data[0]['session_id']
+    zoom_join_link = session.data[0].get('zoom_join_link')
+
+    # Get next position in queue
+    queue_count = supabase.table('help_queue').select('queue_id', count='exact').eq('assigned_session_id', session_id).eq('status', 'waiting').execute()
+    next_position = (queue_count.count or 0) + 1
+
+    # Insert into queue
+    queue_id = str(uuid.uuid4())
+    data = {
+        'queue_id': queue_id,
+        'student_name': student_name,
+        'student_email': student_email,
+        'student_phone': student_phone,
+        'subject': subject,
+        'description': description,
+        'preferred_teacher_id': preferred_teacher_id,
+        'assigned_session_id': session_id,
+        'status': 'waiting',
+        'position': next_position,
+        'created_at': datetime.now(timezone.utc).isoformat()
+    }
+
+    supabase.table('help_queue').insert(data).execute()
+    return queue_id, zoom_join_link
+
+
+def insert_help_session(teacher_user_id: str, day_of_week: int, start_time: str,
+                       end_time: str, created_by_user_id: str):
+    """Insert a new help session"""
+    session_id = str(uuid.uuid4())
+    data = {
+        'session_id': session_id,
+        'teacher_user_id': teacher_user_id,
+        'day_of_week': day_of_week,
+        'start_time': start_time,
+        'end_time': end_time,
+        'is_active': True,
+        'created_by_user_id': created_by_user_id,
+        'created_at': datetime.now(timezone.utc).isoformat()
+    }
+
+    supabase.table('help_sessions').insert(data).execute()
+    return session_id
