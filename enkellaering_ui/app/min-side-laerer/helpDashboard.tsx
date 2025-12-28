@@ -11,17 +11,27 @@ import { TeacherHelpConfig, HelpSession, HelpQueueEntry } from "../admin/types"
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080"
 const DAYS_NO = ["Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag", "Lørdag", "Søndag"]
 
+interface Payload {
+  recurring: boolean
+  day_of_week?: number
+  session_date?: string
+  start_time: string
+  end_time: string
+}
+
 export function TeacherHelpDashboard({ token }: { token: string }) {
   const [config, setConfig] = useState<TeacherHelpConfig | null>(null)
   const [sessions, setSessions] = useState<HelpSession[]>([])
   const [queue, setQueue] = useState<HelpQueueEntry[]>([])
-  const [zoomHostLink, setZoomHostLink] = useState("")
-  const [zoomJoinLink, setZoomJoinLink] = useState("")
-  const [availableForHelp, setAvailableForHelp] = useState(false)
+  const [zoomHostLink, setZoomHostLink] = useState<string>("")
+  const [zoomJoinLink, setZoomJoinLink] = useState<string>("")
+  const [availableForHelp, setAvailableForHelp] = useState<boolean>(false)
 
   // New session form
+  const [recurring, setRecurring] = useState<boolean>(false)
   const [newSession, setNewSession] = useState({
     day_of_week: 0,
+    session_date: "",
     start_time: "16:00",
     end_time: "20:00"
   })
@@ -121,18 +131,41 @@ export function TeacherHelpDashboard({ token }: { token: string }) {
   }
 
   async function createSession() {
+    // Validate based on session type
+    if (recurring && newSession.day_of_week === undefined) {
+      alert("Velg en dag for tilbakevendende økt")
+      return
+    }
+    if (!recurring && !newSession.session_date) {
+      alert("Velg en dato for engangsokt")
+      return
+    }
+
     try {
+      const payload: Payload = {
+        recurring: recurring,
+        start_time: newSession.start_time,
+        end_time: newSession.end_time
+      }
+
+      if (recurring) {
+        payload.day_of_week = newSession.day_of_week
+      } else {
+        payload.session_date = newSession.session_date
+      }
+
       const response = await fetch(`${BASEURL}/teacher/my-sessions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify(newSession)
+        body: JSON.stringify(payload)
       })
 
       if (!response.ok) {
-        alert("Kunne ikke opprette økten")
+        const error = await response.json()
+        alert(`Kunne ikke opprette økten: ${error.error || 'Ukjent feil'}`)
         return
       }
 
@@ -195,7 +228,7 @@ export function TeacherHelpDashboard({ token }: { token: string }) {
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="zoom_host_link">Zoom Host Link (for deg)</Label>
+            <Label htmlFor="zoom_host_link">Zoom lenke til møte</Label>
             <Input
               id="zoom_host_link"
               placeholder="https://zoom.us/j/..."
@@ -204,18 +237,8 @@ export function TeacherHelpDashboard({ token }: { token: string }) {
             />
           </div>
 
-          <div>
-            <Label htmlFor="zoom_join_link">Zoom Join Link (for studenter)</Label>
-            <Input
-              id="zoom_join_link"
-              placeholder="https://zoom.us/j/..."
-              value={zoomJoinLink}
-              onChange={(e) => setZoomJoinLink(e.target.value)}
-            />
-          </div>
-
           <div className="flex items-center justify-between">
-            <Label htmlFor="available">Tilgjengelig for gratis hjelp</Label>
+            <Label htmlFor="available">Jeg er tilgjengelig for gratis hjelp</Label>
             <Switch
               id="available"
               checked={availableForHelp}
@@ -224,7 +247,7 @@ export function TeacherHelpDashboard({ token }: { token: string }) {
           </div>
         </CardContent>
         <CardFooter>
-          <Button onClick={updateConfig}>Lagre konfigurasjon</Button>
+          <Button variant="secondary" onClick={updateConfig}>Lagre konfigurasjon</Button>
         </CardFooter>
       </Card>
 
@@ -234,39 +257,80 @@ export function TeacherHelpDashboard({ token }: { token: string }) {
           <CardDescription>Opprett og administrer dine hjelpeøkter</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="day">Dag</Label>
-              <select
-                id="day"
-                className="w-full border rounded-md p-2"
-                value={newSession.day_of_week}
-                onChange={(e) => setNewSession({ ...newSession, day_of_week: parseInt(e.target.value) })}
-              >
-                {DAYS_NO.map((day, idx) => (
-                  <option key={idx} value={idx}>{day}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <Label htmlFor="start">Start</Label>
-              <Input
-                id="start"
-                type="time"
-                value={newSession.start_time}
-                onChange={(e) => setNewSession({ ...newSession, start_time: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label htmlFor="end">Slutt</Label>
-              <Input
-                id="end"
-                type="time"
-                value={newSession.end_time}
-                onChange={(e) => setNewSession({ ...newSession, end_time: e.target.value })}
-              />
-            </div>
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="recurring-teacher"
+              checked={recurring}
+              onCheckedChange={setRecurring}
+            />
+            <Label htmlFor="recurring-teacher">Tilbakevendende økt (gjentas hver uke)</Label>
           </div>
+
+          {recurring ? (
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="day">Dag</Label>
+                <select
+                  id="day"
+                  className="w-full border rounded-md p-2"
+                  value={newSession.day_of_week}
+                  onChange={(e) => setNewSession({ ...newSession, day_of_week: parseInt(e.target.value) })}
+                >
+                  {DAYS_NO.map((day, idx) => (
+                    <option key={idx} value={idx}>{day}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <Label htmlFor="start">Start</Label>
+                <Input
+                  id="start"
+                  type="time"
+                  value={newSession.start_time}
+                  onChange={(e) => setNewSession({ ...newSession, start_time: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="end">Slutt</Label>
+                <Input
+                  id="end"
+                  type="time"
+                  value={newSession.end_time}
+                  onChange={(e) => setNewSession({ ...newSession, end_time: e.target.value })}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="date">Dato</Label>
+                <Input
+                  id="date"
+                  type="date"
+                  value={newSession.session_date}
+                  onChange={(e) => setNewSession({ ...newSession, session_date: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="start">Start</Label>
+                <Input
+                  id="start"
+                  type="time"
+                  value={newSession.start_time}
+                  onChange={(e) => setNewSession({ ...newSession, start_time: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="end">Slutt</Label>
+                <Input
+                  id="end"
+                  type="time"
+                  value={newSession.end_time}
+                  onChange={(e) => setNewSession({ ...newSession, end_time: e.target.value })}
+                />
+              </div>
+            </div>
+          )}
           <Button onClick={createSession}>Opprett økt</Button>
 
           <div className="space-y-2 mt-4">
@@ -278,7 +342,16 @@ export function TeacherHelpDashboard({ token }: { token: string }) {
                 <div key={session.session_id} className="p-3 border rounded-lg flex justify-between items-center">
                   <div>
                     <p>
-                      <strong>{DAYS_NO[session.day_of_week]}</strong>{" "}
+                      {session.recurring ? (
+                        <>
+                          <strong>{session.day_of_week !== null && DAYS_NO[session.day_of_week]}</strong> (Tilbakevendende)
+                        </>
+                      ) : (
+                        <>
+                          <strong>{session.session_date}</strong> (Engangsøkt)
+                        </>
+                      )}
+                      {" "}
                       {session.start_time.slice(0, 5)} - {session.end_time.slice(0, 5)}
                     </p>
                   </div>

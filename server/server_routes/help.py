@@ -129,20 +129,30 @@ def get_my_sessions(user_id):
 @help_bp.route('/teacher/my-sessions', methods=['POST'])
 @token_required
 def create_my_session(user_id):
-    """Teacher: Create new help session (self-assign)"""
+    """Teacher: Create new help session (self-assign) - recurring or one-time"""
     data = request.get_json() or {}
 
-    required = ['day_of_week', 'start_time', 'end_time']
-    if not all(data.get(f) for f in required):
-        return jsonify({"error": "Mangler påkrevde felt"}), 400
+    required = ['start_time', 'end_time', 'recurring']
+    if not all(field in data for field in required):
+        return jsonify({"error": "Mangler påkrevde felt (start_time, end_time, recurring)"}), 400
+
+    recurring = data['recurring']
+
+    # Validate based on session type
+    if recurring and 'day_of_week' not in data:
+        return jsonify({"error": "day_of_week er påkrevd for tilbakevendende økter"}), 400
+    if not recurring and 'session_date' not in data:
+        return jsonify({"error": "session_date er påkrevd for engangsøkter"}), 400
 
     try:
         session_id = insert_help_session(
             teacher_user_id=user_id,
-            day_of_week=data['day_of_week'],
             start_time=data['start_time'],
             end_time=data['end_time'],
-            created_by_user_id=user_id
+            created_by_user_id=user_id,
+            recurring=recurring,
+            day_of_week=data.get('day_of_week'),
+            session_date=data.get('session_date')
         )
         return jsonify({
             "message": "Økten er opprettet",
@@ -156,29 +166,44 @@ def create_my_session(user_id):
 @help_bp.route('/teacher/queue', methods=['GET'])
 @token_required
 def get_teacher_queue(user_id):
-    """Teacher: Get queue for their active session"""
+    """Teacher: Get queue for their active session (recurring or one-time)"""
     try:
         # Find teacher's active session
-        from datetime import datetime
+        from datetime import datetime, time as dt_time, date as dt_date
         sessions = get_help_sessions_for_teacher(user_id)
 
-        # Get current active session (matching day/time)
+        # Get current active session (matching day/time or date/time)
         current_day = datetime.now().weekday()
         current_time = datetime.now().time()
+        current_date = datetime.now().date()
 
         active_session = None
         for session in sessions:
             # Parse time strings to compare
-            from datetime import time as dt_time
             start_parts = session['start_time'].split(':')
             end_parts = session['end_time'].split(':')
             start_time = dt_time(int(start_parts[0]), int(start_parts[1]))
             end_time = dt_time(int(end_parts[0]), int(end_parts[1]))
 
-            if (session['day_of_week'] == current_day and
-                start_time <= current_time < end_time):
-                active_session = session
-                break
+            # Check time range
+            if not (start_time <= current_time < end_time):
+                continue
+
+            # Check if session is active today
+            if session['recurring']:
+                # Recurring session: check day of week
+                if session['day_of_week'] == current_day:
+                    active_session = session
+                    break
+            else:
+                # One-time session: check date
+                session_date_str = session.get('session_date')
+                if session_date_str:
+                    # Parse date string (YYYY-MM-DD)
+                    session_date = dt_date.fromisoformat(session_date_str)
+                    if session_date == current_date:
+                        active_session = session
+                        break
 
         if not active_session:
             return jsonify({"queue": []}), 200
@@ -245,22 +270,32 @@ def delete_my_session(user_id, session_id):
 @help_bp.route('/admin/help-sessions', methods=['POST'])
 @token_required
 def admin_create_session(user_id):
-    """Admin: Create session for any teacher"""
+    """Admin: Create session for any teacher - recurring or one-time"""
     if not is_admin(user_id):
         return jsonify({"error": "Ikke autorisert"}), 403
 
     data = request.get_json() or {}
-    required = ['teacher_user_id', 'day_of_week', 'start_time', 'end_time']
-    if not all(data.get(f) for f in required):
-        return jsonify({"error": "Mangler påkrevde felt"}), 400
+    required = ['teacher_user_id', 'start_time', 'end_time', 'recurring']
+    if not all(field in data for field in required):
+        return jsonify({"error": "Mangler påkrevde felt (teacher_user_id, start_time, end_time, recurring)"}), 400
+
+    recurring = data['recurring']
+
+    # Validate based on session type
+    if recurring and 'day_of_week' not in data:
+        return jsonify({"error": "day_of_week er påkrevd for tilbakevendende økter"}), 400
+    if not recurring and 'session_date' not in data:
+        return jsonify({"error": "session_date er påkrevd for engangsøkter"}), 400
 
     try:
         session_id = insert_help_session(
             teacher_user_id=data['teacher_user_id'],
-            day_of_week=data['day_of_week'],
             start_time=data['start_time'],
             end_time=data['end_time'],
-            created_by_user_id=user_id  # Admin's user_id
+            created_by_user_id=user_id,  # Admin's user_id
+            recurring=recurring,
+            day_of_week=data.get('day_of_week'),
+            session_date=data.get('session_date')
         )
         return jsonify({
             "message": "Økten er opprettet",

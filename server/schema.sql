@@ -199,10 +199,13 @@ CREATE TABLE public.teachers (
 
 -- Gratis Leksehjelp (Free Homework Help) Database Schema
 -- Execute this in Supabase SQL Editor
+-- ============================================================================
+-- GRATIS LEKSEHJELP (FREE HOMEWORK HELP) SCHEMA V2
+-- Supports both recurring weekly sessions and one-time date-specific sessions
+-- ============================================================================
 
--- Table 1: teacher_help_config
--- Stores teacher Zoom configuration and availability status
-CREATE TABLE public.teacher_help_config (
+-- Table 1: Teacher Help Configuration
+CREATE TABLE IF NOT EXISTS public.teacher_help_config (
   teacher_user_id text NOT NULL,
   zoom_host_link text,
   zoom_join_link text,
@@ -215,40 +218,54 @@ CREATE TABLE public.teacher_help_config (
     REFERENCES public.teachers(user_id) ON DELETE CASCADE
 );
 
--- Table 2: help_sessions
--- Defines recurring weekly time blocks when teachers offer help
-CREATE TABLE public.help_sessions (
+COMMENT ON TABLE public.teacher_help_config IS 'Configuration for teachers providing free homework help';
+COMMENT ON COLUMN public.teacher_help_config.zoom_host_link IS 'Zoom host link for the teacher';
+COMMENT ON COLUMN public.teacher_help_config.zoom_join_link IS 'Zoom join link for students';
+COMMENT ON COLUMN public.teacher_help_config.available_for_help IS 'Whether teacher is currently available for help sessions';
+
+-- Table 2: Help Sessions (supports both recurring and one-time sessions)
+CREATE TABLE IF NOT EXISTS public.help_sessions (
   session_id uuid NOT NULL DEFAULT gen_random_uuid(),
   teacher_user_id text NOT NULL,
-  day_of_week integer NOT NULL, -- 0=Monday, 6=Sunday (ISO standard)
+  recurring boolean NOT NULL DEFAULT false,
+  day_of_week integer, -- 0=Monday, 6=Sunday (for recurring sessions)
+  session_date date, -- Specific date (for one-time sessions)
   start_time time NOT NULL,
   end_time time NOT NULL,
   is_active boolean NOT NULL DEFAULT true,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
-  created_by_user_id text NOT NULL, -- Who created it (teacher or admin)
+  created_by_user_id text NOT NULL,
 
   CONSTRAINT help_sessions_pkey PRIMARY KEY (session_id),
   CONSTRAINT fk_help_session_teacher FOREIGN KEY (teacher_user_id)
     REFERENCES public.teachers(user_id) ON DELETE CASCADE,
   CONSTRAINT fk_help_session_creator FOREIGN KEY (created_by_user_id)
     REFERENCES public.teachers(user_id),
-  CONSTRAINT check_day_of_week CHECK (day_of_week >= 0 AND day_of_week <= 6),
-  CONSTRAINT check_time_order CHECK (end_time > start_time)
+  CONSTRAINT check_day_of_week CHECK (day_of_week IS NULL OR (day_of_week >= 0 AND day_of_week <= 6)),
+  CONSTRAINT check_time_order CHECK (end_time > start_time),
+  CONSTRAINT check_session_type CHECK (
+    (recurring = true AND day_of_week IS NOT NULL AND session_date IS NULL) OR
+    (recurring = false AND session_date IS NOT NULL)
+  )
 );
 
--- Table 3: help_queue
--- Tracks students waiting for help
-CREATE TABLE public.help_queue (
+COMMENT ON TABLE public.help_sessions IS 'Help sessions - supports both recurring weekly and one-time date-specific sessions';
+COMMENT ON COLUMN public.help_sessions.recurring IS 'If true, session repeats weekly on day_of_week. If false, session is one-time on session_date.';
+COMMENT ON COLUMN public.help_sessions.day_of_week IS 'Day of week for recurring sessions (0=Monday, 6=Sunday). NULL for one-time sessions.';
+COMMENT ON COLUMN public.help_sessions.session_date IS 'Specific date for one-time sessions (YYYY-MM-DD). NULL for recurring sessions.';
+
+-- Table 3: Help Queue
+CREATE TABLE IF NOT EXISTS public.help_queue (
   queue_id uuid NOT NULL DEFAULT gen_random_uuid(),
   student_name text NOT NULL,
   student_email text,
   student_phone text,
   subject text NOT NULL,
   description text,
-  preferred_teacher_id text, -- NULL means "snarest" (any available)
-  assigned_session_id uuid, -- Which session they're assigned to
-  status text NOT NULL DEFAULT 'waiting', -- waiting, admitted, completed, no_show
-  position integer, -- Position in queue (null = not yet assigned)
+  preferred_teacher_id text,
+  assigned_session_id uuid,
+  status text NOT NULL DEFAULT 'waiting',
+  position integer,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   admitted_at timestamp with time zone,
   completed_at timestamp with time zone,
@@ -261,7 +278,9 @@ CREATE TABLE public.help_queue (
   CONSTRAINT check_status CHECK (status IN ('waiting', 'admitted', 'completed', 'no_show'))
 );
 
-
+COMMENT ON TABLE public.help_queue IS 'Queue for students waiting for help';
+COMMENT ON COLUMN public.help_queue.status IS 'Status: waiting, admitted, completed, no_show';
+COMMENT ON COLUMN public.help_queue.position IS 'Position in queue (1 = first)';
 
 
 -- indexes for performance optimization
@@ -363,10 +382,16 @@ CREATE INDEX idx_new_students_referal ON public.new_students(from_referal);
 DROP INDEX IF EXISTS idx_new_students_created_at;
 CREATE INDEX idx_new_students_created_at ON public.new_students(created_at);
 
--- help_sessions
-DROP INDEX IF EXISTS idx_help_sessions_teacher_day;
-CREATE INDEX idx_help_sessions_teacher_day ON public.help_sessions(teacher_user_id, day_of_week);
-
 -- help_queue
-DROP INDEX IF EXISTS idx_help_queue_teacher_status;
-CREATE INDEX idx_help_queue_teacher_status ON public.help_queue(preferred_teacher_id, status);
+CREATE INDEX IF NOT EXISTS idx_help_queue_status ON public.help_queue(status);
+CREATE INDEX IF NOT EXISTS idx_help_queue_session ON public.help_queue(assigned_session_id);
+CREATE INDEX IF NOT EXISTS idx_help_queue_created ON public.help_queue(created_at);
+
+
+CREATE INDEX IF NOT EXISTS idx_help_sessions_teacher ON public.help_sessions(teacher_user_id);
+CREATE INDEX IF NOT EXISTS idx_help_sessions_active ON public.help_sessions(is_active);
+CREATE INDEX IF NOT EXISTS idx_help_sessions_day ON public.help_sessions(day_of_week) WHERE recurring = true;
+CREATE INDEX IF NOT EXISTS idx_help_sessions_date ON public.help_sessions(session_date) WHERE recurring = false;
+CREATE INDEX IF NOT EXISTS idx_help_sessions_recurring ON public.help_sessions(recurring);
+
+CREATE INDEX IF NOT EXISTS idx_help_config_available ON public.teacher_help_config(available_for_help);

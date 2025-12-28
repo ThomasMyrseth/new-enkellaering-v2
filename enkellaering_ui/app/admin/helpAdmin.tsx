@@ -5,17 +5,30 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
 import { Teacher, HelpSession } from "./types"
+import { toast } from "sonner"
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080"
 const DAYS_NO = ["Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag", "Lørdag", "Søndag"]
+
+interface Payload {
+  teacher_user_id: string
+  recurring: boolean
+  day_of_week?: number
+  session_date?: string
+  start_time: string
+  end_time: string
+}
 
 export function HelpAdminPanel({ token }: { token: string }) {
   const [teachers, setTeachers] = useState<Teacher[]>([])
   const [sessions, setSessions] = useState<HelpSession[]>([])
   const [selectedTeacher, setSelectedTeacher] = useState<string>("")
+  const [recurring, setRecurring] = useState<boolean>(false)
   const [newSession, setNewSession] = useState({
     day_of_week: 0,
+    session_date: "",
     start_time: "16:00",
     end_time: "20:00"
   })
@@ -67,15 +80,15 @@ export function HelpAdminPanel({ token }: { token: string }) {
       })
 
       if (!response.ok) {
-        alert("Kunne ikke oppdatere tilgjengelighet")
+        toast.error("Kunne ikke oppdatere tilgjengelighet")
         return
       }
 
-      alert("Tilgjengelighet oppdatert")
+      toast.success("Tilgjengelighet oppdatert")
       fetchTeachers()
     } catch (error) {
       console.error("Failed to toggle availability:", error)
-      alert("Kunne ikke oppdatere tilgjengelighet")
+      toast.error("Kunne ikke oppdatere tilgjengelighet")
     }
   }
 
@@ -85,21 +98,42 @@ export function HelpAdminPanel({ token }: { token: string }) {
       return
     }
 
+    // Validate based on session type
+    if (recurring && newSession.day_of_week === undefined) {
+      alert("Velg en dag for tilbakevendende økt")
+      return
+    }
+    if (!recurring && !newSession.session_date) {
+      alert("Velg en dato for engangsokt")
+      return
+    }
+
     try {
+      const payload : Payload = {
+        teacher_user_id: selectedTeacher,
+        recurring: recurring,
+        start_time: newSession.start_time,
+        end_time: newSession.end_time
+      }
+
+      if (recurring) {
+        payload.day_of_week = newSession.day_of_week
+      } else {
+        payload.session_date = newSession.session_date
+      }
+
       const response = await fetch(`${BASEURL}/admin/help-sessions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({
-          teacher_user_id: selectedTeacher,
-          ...newSession
-        })
+        body: JSON.stringify(payload)
       })
 
       if (!response.ok) {
-        alert("Kunne ikke opprette økten")
+        const error = await response.json()
+        alert(`Kunne ikke opprette økten: ${error.error || 'Ukjent feil'}`)
         return
       }
 
@@ -180,39 +214,80 @@ export function HelpAdminPanel({ token }: { token: string }) {
               </select>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="admin-day">Dag</Label>
-                <select
-                  id="admin-day"
-                  className="w-full border rounded-md p-2"
-                  value={newSession.day_of_week}
-                  onChange={(e) => setNewSession({ ...newSession, day_of_week: parseInt(e.target.value) })}
-                >
-                  {DAYS_NO.map((day, idx) => (
-                    <option key={idx} value={idx}>{day}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <Label htmlFor="admin-start">Start</Label>
-                <Input
-                  id="admin-start"
-                  type="time"
-                  value={newSession.start_time}
-                  onChange={(e) => setNewSession({ ...newSession, start_time: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="admin-end">Slutt</Label>
-                <Input
-                  id="admin-end"
-                  type="time"
-                  value={newSession.end_time}
-                  onChange={(e) => setNewSession({ ...newSession, end_time: e.target.value })}
-                />
-              </div>
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="recurring-switch"
+                checked={recurring}
+                onCheckedChange={setRecurring}
+              />
+              <Label htmlFor="recurring-switch">Tilbakevendende økt (gjentas hver uke)</Label>
             </div>
+
+            {recurring ? (
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="admin-day">Dag</Label>
+                  <select
+                    id="admin-day"
+                    className="w-full border rounded-md p-2"
+                    value={newSession.day_of_week}
+                    onChange={(e) => setNewSession({ ...newSession, day_of_week: parseInt(e.target.value) })}
+                  >
+                    {DAYS_NO.map((day, idx) => (
+                      <option key={idx} value={idx}>{day}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <Label htmlFor="admin-start">Start</Label>
+                  <Input
+                    id="admin-start"
+                    type="time"
+                    value={newSession.start_time}
+                    onChange={(e) => setNewSession({ ...newSession, start_time: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="admin-end">Slutt</Label>
+                  <Input
+                    id="admin-end"
+                    type="time"
+                    value={newSession.end_time}
+                    onChange={(e) => setNewSession({ ...newSession, end_time: e.target.value })}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="admin-date">Dato</Label>
+                  <Input
+                    id="admin-date"
+                    type="date"
+                    value={newSession.session_date}
+                    onChange={(e) => setNewSession({ ...newSession, session_date: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="admin-start">Start</Label>
+                  <Input
+                    id="admin-start"
+                    type="time"
+                    value={newSession.start_time}
+                    onChange={(e) => setNewSession({ ...newSession, start_time: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="admin-end">Slutt</Label>
+                  <Input
+                    id="admin-end"
+                    type="time"
+                    value={newSession.end_time}
+                    onChange={(e) => setNewSession({ ...newSession, end_time: e.target.value })}
+                  />
+                </div>
+              </div>
+            )}
             <Button onClick={createSession}>Opprett økt</Button>
           </div>
         </div>
@@ -230,7 +305,17 @@ export function HelpAdminPanel({ token }: { token: string }) {
                       {session.teachers?.firstname} {session.teachers?.lastname}
                     </p>
                     <p className="text-sm text-gray-600">
-                      {DAYS_NO[session.day_of_week]} {session.start_time.slice(0, 5)} - {session.end_time.slice(0, 5)}
+                      {session.recurring ? (
+                        <>
+                          {session.day_of_week !== null && DAYS_NO[session.day_of_week]} (Tilbakevendende)
+                        </>
+                      ) : (
+                        <>
+                          {session.session_date} (Engangsøkt)
+                        </>
+                      )}
+                      {" "}
+                      {session.start_time.slice(0, 5)} - {session.end_time.slice(0, 5)}
                     </p>
                   </div>
                   <Button

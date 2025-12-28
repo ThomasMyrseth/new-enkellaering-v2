@@ -416,14 +416,34 @@ def insert_help_queue_entry(student_name: str, student_email: Optional[str], stu
     return queue_id, zoom_join_link
 
 
-def insert_help_session(teacher_user_id: str, day_of_week: int, start_time: str,
-                       end_time: str, created_by_user_id: str):
-    """Insert a new help session"""
+def insert_help_session(teacher_user_id: str, start_time: str, end_time: str,
+                       created_by_user_id: str, recurring: bool = False,
+                       day_of_week: Optional[int] = None, session_date: Optional[str] = None):
+    """
+    Insert a new help session (recurring or one-time)
+
+    Args:
+        teacher_user_id: Teacher ID
+        start_time: Start time (HH:MM format)
+        end_time: End time (HH:MM format)
+        created_by_user_id: User creating the session
+        recurring: If True, session repeats weekly. If False, one-time session.
+        day_of_week: Day of week (0=Monday, 6=Sunday) - required if recurring=True
+        session_date: Specific date (YYYY-MM-DD) - required if recurring=False
+    """
+    # Validate inputs
+    if recurring and day_of_week is None:
+        raise ValueError("day_of_week is required for recurring sessions")
+    if not recurring and session_date is None:
+        raise ValueError("session_date is required for one-time sessions")
+
     session_id = str(uuid.uuid4())
     data = {
         'session_id': session_id,
         'teacher_user_id': teacher_user_id,
+        'recurring': recurring,
         'day_of_week': day_of_week,
+        'session_date': session_date,
         'start_time': start_time,
         'end_time': end_time,
         'is_active': True,

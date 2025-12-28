@@ -112,70 +112,72 @@ export default function FreeHelpPage() {
 
   if (queueId && position) {
     return (
-      <div className="min-h-screen w-full bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
-        <Card className="max-w-md w-full">
-          <CardHeader>
-            <CardTitle className="text-2xl">Du er i køen!</CardTitle>
-            <CardDescription>Din posisjon oppdateres automatisk</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="text-center">
-              <div className="text-6xl font-bold text-blue-600 dark:text-blue-400">
-                {position.position || "..."}
-              </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                {position.position === 1 ? "Du er neste!" : "Plass i køen"}
-              </p>
-            </div>
-
-            <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 space-y-2">
-              <p><strong>Emne:</strong> {formData.subject}</p>
-              <p><strong>Status:</strong> {position.status === 'waiting' ? 'Venter' : position.status === 'admitted' ? 'Innrømmet' : position.status}</p>
-              {position.admitted_at && (
-                <p className="text-green-600 dark:text-green-400">
-                  <strong>Du er innrømmet!</strong> Sjekk Zoom-linken.
+      <div className="flex flex-col items-center justify-center w-full min-h-screen bg-slate-200 dark:bg-slate-900 p-4">
+        <div className="w-full md:w-4/5 max-w-2xl">
+          <Card className="bg-white dark:bg-black rounded-lg">
+            <CardHeader>
+              <CardTitle className="text-2xl text-neutral-800 dark:text-neutral-200">Du er i køen!</CardTitle>
+              <CardDescription>Din posisjon oppdateres automatisk</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="text-center">
+                <div className="text-6xl font-bold text-blue-600 dark:text-blue-400">
+                  {position.position || "..."}
+                </div>
+                <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2">
+                  {position.position === 1 ? "Du er neste!" : "Plass i køen"}
                 </p>
-              )}
-            </div>
+              </div>
 
-            {zoomJoinLink && (
-              <Button className="w-full" asChild>
-                <a href={zoomJoinLink} target="_blank" rel="noopener noreferrer">
-                  Åpne Zoom
-                </a>
-              </Button>
-            )}
-          </CardContent>
-        </Card>
+              <div className="bg-slate-100 dark:bg-slate-800 rounded-lg p-4 space-y-2">
+                <p className="text-neutral-800 dark:text-neutral-200"><strong>Emne:</strong> {formData.subject}</p>
+                <p className="text-neutral-800 dark:text-neutral-200"><strong>Status:</strong> {position.status === 'waiting' ? 'Venter' : position.status === 'admitted' ? 'Innrømmet' : position.status}</p>
+                {position.admitted_at && (
+                  <p className="text-green-600 dark:text-green-400">
+                    <strong>Du er innrømmet!</strong> Sjekk Zoom-linken.
+                  </p>
+                )}
+              </div>
+
+              {zoomJoinLink && (
+                <Button className="w-full" asChild>
+                  <a href={zoomJoinLink} target="_blank" rel="noopener noreferrer">
+                    Åpne Zoom
+                  </a>
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
-      <div className="max-w-4xl mx-auto space-y-6 py-8">
+    <div className="flex flex-col items-center justify-center w-full min-h-screen bg-slate-200 dark:bg-slate-900 p-4">
+      <div className="w-full md:w-4/5 space-y-4 mt-4">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+          <h1 className="text-4xl font-bold text-neutral-800 dark:text-neutral-200 mb-2">
             Gratis Leksehjelp
           </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-400">
+          <p className="text-lg text-neutral-600 dark:text-neutral-400">
             Få hjelp fra våre lærere - helt gratis!
           </p>
         </div>
 
         {activeSessions.length === 0 ? (
-          <Card>
+          <Card className="bg-white dark:bg-black rounded-lg">
             <CardContent className="text-center py-12">
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-neutral-600 dark:text-neutral-400">
                 Ingen aktive økter akkurat nå. Prøv igjen senere!
               </p>
             </CardContent>
           </Card>
         ) : (
           <>
-            <Card>
+            <Card className="bg-white dark:bg-black rounded-lg">
               <CardHeader>
-                <CardTitle>Velg lærer eller snarest ledig</CardTitle>
+                <CardTitle className="text-neutral-800 dark:text-neutral-200">Velg lærer eller snarest ledig</CardTitle>
                 <CardDescription>
                   Velg en spesifikk lærer eller "Snarest" for å få hjelp raskest mulig
                 </CardDescription>
@@ -185,11 +187,11 @@ export default function FreeHelpPage() {
                   onClick={() => setSelectedSession("snarest")}
                   className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${selectedSession === "snarest"
                       ? "border-blue-500 bg-blue-50 dark:bg-blue-900"
-                      : "border-gray-200 dark:border-gray-700 hover:border-blue-300"
+                      : "border-neutral-200 dark:border-neutral-700 hover:border-blue-300"
                     }`}
                 >
-                  <p className="font-semibold text-lg">Snarest ledig</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="font-semibold text-lg text-neutral-800 dark:text-neutral-200">Snarest ledig</p>
+                  <p className="text-sm text-neutral-600 dark:text-neutral-400">
                     Bli automatisk tildelt til læreren med kortest kø
                   </p>
                 </div>
@@ -200,16 +202,31 @@ export default function FreeHelpPage() {
                     onClick={() => setSelectedSession(session.session_id)}
                     className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${selectedSession === session.session_id
                         ? "border-blue-500 bg-blue-50 dark:bg-blue-900"
-                        : "border-gray-200 dark:border-gray-700 hover:border-blue-300"
+                        : "border-neutral-200 dark:border-neutral-700 hover:border-blue-300"
                       }`}
                   >
-                    <p className="font-semibold text-lg">
+                    <p className="font-semibold text-lg text-neutral-800 dark:text-neutral-200">
                       {session.teacher_firstname} {session.teacher_lastname}
                     </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {DAYS_NO[session.day_of_week]} {session.start_time.slice(0, 5)} - {session.end_time.slice(0, 5)}
+                    <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                      {session.recurring ? (
+                        <>
+                          {session.day_of_week !== null && DAYS_NO[session.day_of_week]} (Hver uke)
+                        </>
+                      ) : (
+                        <>
+                          {session.session_date && new Date(session.session_date).toLocaleDateString('no-NO', {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })} (I dag)
+                        </>
+                      )}
+                      {" "}
+                      {session.start_time.slice(0, 5)} - {session.end_time.slice(0, 5)}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-500">
+                    <p className="text-xs text-neutral-500 dark:text-neutral-500">
                       {session.queue_count || 0} i kø
                     </p>
                   </div>
@@ -218,10 +235,10 @@ export default function FreeHelpPage() {
             </Card>
 
             {selectedSession && (
-              <Card>
+              <Card className="bg-white dark:bg-black rounded-lg">
                 <form onSubmit={handleSubmit}>
                   <CardHeader>
-                    <CardTitle>Fyll inn dine detaljer</CardTitle>
+                    <CardTitle className="text-neutral-800 dark:text-neutral-200">Fyll inn dine detaljer</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div>
