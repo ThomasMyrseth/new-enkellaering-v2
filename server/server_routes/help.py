@@ -4,7 +4,6 @@ import logging
 from .config import token_required
 from db.gets import (
     get_teacher_help_config,
-    get_all_available_teachers,
     get_active_help_sessions,
     get_help_sessions_for_teacher,
     get_help_queue_for_session,

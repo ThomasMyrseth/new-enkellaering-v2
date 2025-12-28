@@ -229,7 +229,7 @@ def reactivateTeacher(teacherUserId: str, adminUserId: str):
 
 def update_teacher_help_config(teacher_user_id: str, zoom_host_link: Optional[str] = None,
                                zoom_join_link: Optional[str] = None,
-                               available_for_help: Optional[bool] = None):
+                               available_for_help: bool = False):
     """Upsert teacher help config"""
     data = {
         'teacher_user_id': teacher_user_id,
