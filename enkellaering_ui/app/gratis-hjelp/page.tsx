@@ -179,7 +179,7 @@ export default function FreeHelpPage() {
               <CardHeader>
                 <CardTitle className="text-neutral-800 dark:text-neutral-200">Velg lærer eller snarest ledig</CardTitle>
                 <CardDescription>
-                  Velg en spesifikk lærer eller "Snarest" for å få hjelp raskest mulig
+                  Velg en spesifikk lærer eller Snarest for å få hjelp raskest mulig
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
