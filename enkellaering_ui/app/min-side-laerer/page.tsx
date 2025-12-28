@@ -17,7 +17,6 @@ import { WantMoreStudents } from "./wantsMoreStudents";
 import { DailyRevenueChart } from "./revenueChart";
 import { ProfileForm } from "./changeProfileInfo";
 import TeacherReferalForm from "@/components/teacherReferalForm";
-import { TeacherHelpDashboard } from "./helpDashboard";
 
 export default function LaererPage() {
     const [teacher, setTeacher] = useState<Teacher>()
@@ -146,7 +145,6 @@ export default function LaererPage() {
                 <NewStudentsWithPreferredTeacherWorkflowActions/>
                 <ProfileForm teacher={teacher}/>
                 <QuizStatusPage token={token} baseUrl={BASEURL}/>
-                <TeacherHelpDashboard token={token}/>
                 <FileUploadForm firstname={teacher.firstname} lastname={teacher.lastname} title={"Last opp et bilde av deg"}/>
             </div>
 
