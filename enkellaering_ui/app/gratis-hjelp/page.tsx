@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { HelpSession, HelpQueueEntry } from "../admin/types"
 import { event } from '@/components/facebookPixel/fpixel'
 import Link from "next/link"
+import { toast } from "sonner"
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080"
 
@@ -136,6 +137,16 @@ export default function FreeHelpPage() {
     localStorage.removeItem("help_queue_id")
     localStorage.removeItem("help_zoom_link")
     localStorage.removeItem("help_form_data")
+
+    //update the server that the user has left the queue
+    if (queueId) {
+      fetch(`${BASEURL}/teacher/queue/${queueId}`, {
+        method: "DELETE"
+      }).catch((error) => {
+        console.error("Failed to notify server about leaving the queue:", error)
+        toast.error('Kunne ikke forlate køen. prøv igjen senere.')
+      })
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -199,7 +210,7 @@ export default function FreeHelpPage() {
                 {position?.admitted_at ? (
                   <>Du har blitt sluppet inn! Bli med i Zoom-møtet NÅ ved å klikke på lenken under.</>
                 ) : zoomJoinLink ? (
-                  <>Du kan bli med i Zoom-møtet nå ved å klikke på knappen under. Du vil bli sluppet inn når det er din tur. Vent i venterommet!</>
+                  <>Du kan bli med i Zoom-møtet nå ved å klikke på knappen under. Du vil bli sluppet inn når det er din tur.</>
                 ) : (
                   <>Du har fått en epost av oss med lenke til videomøte. Bli med i møtet nå, så slippes du inn så fort det er din tur. Husk å sjekke søppelposten!</>
                 )}
@@ -222,7 +233,7 @@ export default function FreeHelpPage() {
                       {position?.position || "..."}
                     </div>
                     <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2">
-                      {position?.position === 1 ? "Du er neste!" : "Plass i køen"}
+                      {position?.position === 1 ? "Du er neste! Gå inn i zoom-møte nå." : "Plass i køen"}
                     </p>
                   </>
                 )}
@@ -237,7 +248,7 @@ export default function FreeHelpPage() {
                 <p className="text-neutral-800 dark:text-neutral-200"><strong>Emne:</strong> {formData.subject}</p>
                 {position && (
                   <>
-                    <p className="text-neutral-800 dark:text-neutral-200"><strong>Status:</strong> {position.status === 'waiting' ? 'Venter' : position.status === 'admitted' ? 'Innrømmet' : position.status}</p>
+                    <p className="text-neutral-800 dark:text-neutral-200"><strong>Min status:</strong> {position.status === 'waiting' ? 'Venter' : position.status === 'admitted' ? 'Innrømmet' : position.status}</p>
                     {position.admitted_at && (
                       <p className="text-green-600 dark:text-green-400">
                         <strong>Du er sluppet inn i møtet!</strong> Sjekk Zoom-linken.
@@ -273,17 +284,6 @@ export default function FreeHelpPage() {
                 >
                   {position?.admitted_at ? '🚀 BLI MED I ZOOM-MØTET NÅ!' : 'Åpne Zoom-møtet'}
                 </a>
-                <p className="text-light">
-                  Eller kopier lenken her:{" "}
-                  <a
-                    href={zoomJoinLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-bold underline"
-                  >
-                    {zoomJoinLink}
-                  </a>
-                </p>
                 </div>
               )}
 
@@ -441,6 +441,7 @@ export default function FreeHelpPage() {
                       ) : (
                         <>
                           {session.start_time && new Date(session.start_time).toLocaleDateString('no-NO', {
+                            timeZone: 'Europe/Oslo',
                             weekday: 'long',
                             year: 'numeric',
                             month: 'long',
@@ -449,7 +450,7 @@ export default function FreeHelpPage() {
                         </>
                       )}
                       {" "}
-                      {session.start_time && new Date(session.start_time).toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' })} - {session.end_time && new Date(session.end_time).toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' })}
+                      {session.start_time && new Date(session.start_time).toLocaleTimeString('no-NO', { timeZone: 'Europe/Oslo', hour: '2-digit', minute: '2-digit' })} - {session.end_time && new Date(session.end_time).toLocaleTimeString('no-NO', { timeZone: 'Europe/Oslo', hour: '2-digit', minute: '2-digit' })}
                     </p>
                     <p className="text-xs text-neutral-500 dark:text-neutral-500">
                       {session.queue_count || 0} i kø

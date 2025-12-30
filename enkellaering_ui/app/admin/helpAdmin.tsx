@@ -307,15 +307,43 @@ export function HelpAdminPanel({ token }: { token: string }) {
                     <p className="text-sm text-gray-600">
                       {session.recurring ? (
                         <>
-                          {session.day_of_week !== null && DAYS_NO[session.day_of_week]} (Tilbakevendende)
+                          {session.day_of_week !== null && DAYS_NO[session.day_of_week]}{" "}
+                          {(() => {
+                            const timeFormatter = new Intl.DateTimeFormat("nb-NO", {
+                              timeZone: "Europe/Oslo",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
+                            const start = timeFormatter.format(new Date(session.start_time))
+                            const end = timeFormatter.format(new Date(session.end_time))
+                            return `${start}-${end}`
+                          })()}{" "}
+                          (Tilbakevendende)
                         </>
                       ) : (
                         <>
-                          {session.session_date} (Engangsøkt)
+                          {(() => {
+                            const dateFormatter = new Intl.DateTimeFormat("nb-NO", {
+                              timeZone: "Europe/Oslo",
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })
+                            const timeFormatter = new Intl.DateTimeFormat("nb-NO", {
+                              timeZone: "Europe/Oslo",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
+                            const startDate = new Date(session.start_time)
+                            const endDate = new Date(session.end_time)
+                            const datePart = dateFormatter.format(startDate).replace(/\./g, "")
+                            const startTime = timeFormatter.format(startDate)
+                            const endTime = timeFormatter.format(endDate)
+                            return `${datePart} ${startTime}-${endTime}`
+                          })()}{" "}
+                          (Engangsøkt)
                         </>
                       )}
-                      {" "}
-                      {session.start_time.slice(0, 5)} - {session.end_time.slice(0, 5)}
                     </p>
                   </div>
                   <Button

@@ -179,8 +179,11 @@ def create_my_session(user_id):
 def get_teacher_queue(user_id):
     """Teacher: Get queue for their active session (recurring and one-time)"""
 
+    OSLO_TZ = ZoneInfo("Europe/Oslo")
+
     active_sessions = []
-    now = datetime.now(timezone.utc)
+    now_oslo = datetime.now(OSLO_TZ)  # Current time in Oslo
+    now_utc = datetime.now(timezone.utc)  # For non-recurring comparison
     try:
         sessions = get_help_sessions_for_teacher(user_id)
         print("sessions:", sessions)
@@ -189,21 +192,24 @@ def get_teacher_queue(user_id):
             end_dt = datetime.fromisoformat(session["end_time"])
 
 
-            if start_dt <= now <= end_dt and not session["recurring"]:
+            if start_dt <= now_utc <= end_dt and not session["recurring"]:
+                # One-time session: compare in UTC (correct)
                 active_sessions.append(session)
-            
+
             elif session["recurring"]:
+                # Recurring session: compare in Oslo time
                 day_of_week = session["day_of_week"]  # 0,1,2,3,4,5,6
                 #get the hour/minute from start_time/end_time
                 start_time_only = start_dt.time()
                 end_time_only = end_dt.time()
 
-                # Check if today is the correct day of the week and current time is within the session time
-                if now.weekday() == day_of_week:
-                    start_dt_recurring = datetime.combine(now.date(), start_time_only, tzinfo=timezone.utc)
-                    end_dt_recurring = datetime.combine(now.date(), end_time_only, tzinfo=timezone.utc)
+                # Check if today (in Oslo) is the correct day of the week
+                if now_oslo.weekday() == day_of_week:
+                    # Create datetime for today in Oslo timezone with session times
+                    start_dt_recurring = datetime.combine(now_oslo.date(), start_time_only, tzinfo=OSLO_TZ)
+                    end_dt_recurring = datetime.combine(now_oslo.date(), end_time_only, tzinfo=OSLO_TZ)
 
-                    if start_dt_recurring <= now <= end_dt_recurring:
+                    if start_dt_recurring <= now_oslo <= end_dt_recurring:
                         active_sessions.append(session)
 
 
@@ -237,6 +243,16 @@ def admit_student(user_id, queue_id):
         return jsonify({"message": "Student sluppet inn"}), 200
     except Exception as e:
         logging.exception(f"Failed to admit student {queue_id}")
+        return jsonify({"error": str(e)}), 500
+    
+@help_bp.route('/teacher/queue/<queue_id>', methods=['DELETE'])
+def student_leaves_queue(queue_id):
+    """Student: Leave the help queue"""
+    try:
+        update_queue_status(queue_id, 'no_show')
+        return jsonify({"message": "Du har forlatt køen"}), 200
+    except Exception as e:
+        logging.exception(f"Failed to leave queue {queue_id}")
         return jsonify({"error": str(e)}), 500
 
 
