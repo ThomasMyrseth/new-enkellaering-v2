@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Input } from "@/components/ui/input"
 import { TeacherHelpConfig, HelpSession, HelpQueueEntry } from "../admin/types"
-import Link from "next/link"
 import { toast } from "sonner"
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080"
@@ -65,6 +64,8 @@ export function TeacherHelpDashboard({ token }: { token: string }) {
       }
       const data = await response.json()
       setConfig(data.config)
+      setAvailableForHelp(data.config.available_for_help)
+      setZoomLink(data.config.zoom_link || "")
     } catch (error) {
       console.error("Failed to fetch config:", error)
     }
@@ -231,6 +232,11 @@ export function TeacherHelpDashboard({ token }: { token: string }) {
     } catch (error) {
       console.error(`Failed to ${action} student:`, error)
     }
+  }
+
+  //dont display is teacher is not set to available for help
+  if (!availableForHelp) {
+    return null
   }
 
   return (
@@ -465,10 +471,10 @@ export function TeacherHelpDashboard({ token }: { token: string }) {
                     <div className="flex gap-2">
                       <Button
                         size="sm"
-                        variant="default"
+                        variant="secondary"
                         onClick={() => handleQueueAction(entry.queue_id, 'complete')}
                       >
-                        Inviter elev inn i møte
+                        Fullført
                       </Button>
         
                       <Button
@@ -486,13 +492,6 @@ export function TeacherHelpDashboard({ token }: { token: string }) {
           )}
         </CardContent>
       </Card>
-
-      {zoomLink && (<div>
-          <Link href={zoomLink} target="_blank" rel="noopener noreferrer">
-            Åpne Zoom
-          </Link>
-          <p>eller kopier lenken her: {zoomLink}</p>
-      </div>)}
     </div>
   )
 }

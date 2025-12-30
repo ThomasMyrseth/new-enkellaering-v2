@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { Teacher, HelpSession } from "./types"
+import { HelpSession, TeacherWithHelpConfig } from "./types"
 import { toast } from "sonner"
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080"
@@ -22,7 +22,7 @@ interface Payload {
 }
 
 export function HelpAdminPanel({ token }: { token: string }) {
-  const [teachers, setTeachers] = useState<Teacher[]>([])
+  const [teachers, setTeachers] = useState<TeacherWithHelpConfig[]>([])
   const [sessions, setSessions] = useState<HelpSession[]>([])
   const [selectedTeacher, setSelectedTeacher] = useState<string>("")
   const [recurring, setRecurring] = useState<boolean>(false)
@@ -40,13 +40,20 @@ export function HelpAdminPanel({ token }: { token: string }) {
 
   async function fetchTeachers() {
     try {
-      const response = await fetch(`${BASEURL}/get-all-teachers`)
+      const response = await fetch(`${BASEURL}/admin/teachers/availability`, {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}` }
+      })
       if (!response.ok) {
         console.error("Failed to fetch teachers")
         return
       }
       const data = await response.json()
-      setTeachers(data.teachers || [])
+      const t = data.teachers_availability
+      //order alphabetically by firstname
+      t.sort((a: TeacherWithHelpConfig, b: TeacherWithHelpConfig) => a.firstname.localeCompare(b.firstname))
+
+      setTeachers(t || [])
     } catch (error) {
       console.error("Failed to fetch teachers:", error)
     }
@@ -184,10 +191,10 @@ export function HelpAdminPanel({ token }: { token: string }) {
                 <span>{teacher.firstname} {teacher.lastname}</span>
                 <Button
                   size="sm"
-                  variant={teacher.available_for_help ? "default" : "outline"}
-                  onClick={() => toggleAvailability(teacher.user_id, teacher.available_for_help || false)}
+                  variant={teacher.teacher_help_config?.available_for_help ? "destructive" : "secondary"}
+                  onClick={() => toggleAvailability(teacher.user_id, teacher.teacher_help_config?.available_for_help || false)}
                 >
-                  {teacher.available_for_help ? "Tilgjengelig" : "Ikke tilgjengelig"}
+                  {teacher.teacher_help_config?.available_for_help ? "Tilgjengelig" : "Ikke tilgjengelig"}
                 </Button>
               </div>
             ))}

@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Optional, Dict
 from decimal import Decimal
 from datetime import datetime, timezone
 from db.gets import is_admin
@@ -230,7 +230,7 @@ def reactivateTeacher(teacherUserId: str, adminUserId: str):
 def update_teacher_help_config(teacher_user_id: str, zoom_link: Optional[str] = None,
                                available_for_help: Optional[bool] = None):
     """Upsert teacher help config"""
-    data = {
+    data :Dict[str, Any]= {
         'teacher_user_id': teacher_user_id,
         'updated_at': datetime.now(timezone.utc).isoformat()
     }

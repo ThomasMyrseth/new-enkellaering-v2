@@ -74,10 +74,10 @@ export default function AdminPage() {
         return <p>Loading...</p>
     }
 
-    return (<div className="w-full min-h-screen max-w-full bg-stone-100 dark:bg-slate-950 px-4">
+    return (<div className="w-full min-h-screen max-w-full bg-stone-100 dark:bg-slate-950 ">
         <TeacherName teacher={teacher}/>
         <div className="w-full max-w-full p-4 space-y-10">
-          <AnalyticsOverview />
+          {/* <AnalyticsOverview />
           <TasksWorkflow />
           <StudentsWithoutAnyTeachers token={token} BASEURL={BASEURL} />
           <DailyRevenueChart />
@@ -86,7 +86,7 @@ export default function AdminPage() {
           <NewStudentsWorkflow />
           <InactiveStudents />
           <ResignedTeachers />
-          <Quiz/>
+          <Quiz/> */}
           <HelpAdminPanel token={token} />
 
         </div>

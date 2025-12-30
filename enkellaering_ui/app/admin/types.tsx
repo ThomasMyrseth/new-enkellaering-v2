@@ -326,12 +326,17 @@ export type Task = {
 // ============================================================================
 
 export type TeacherHelpConfig = {
-    teacher_user_id: string;
-    zoom_link: string | null;
-    available_for_help: boolean;
-    created_at: string;
-    updated_at: string;
-};
+  available_for_help: boolean
+  zoom_link: string | null
+  updated_at: string // ISO timestamp
+}
+
+export type TeacherWithHelpConfig = {
+  user_id: string
+  firstname: string
+  lastname: string
+  teacher_help_config: TeacherHelpConfig | null
+}
 
 export type HelpSession = {
     session_id: string;

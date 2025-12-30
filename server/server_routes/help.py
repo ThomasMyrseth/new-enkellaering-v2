@@ -386,3 +386,33 @@ def admin_toggle_availability(user_id, teacher_user_id):
     except Exception as e:
         logging.exception(f"Admin failed to toggle availability for {teacher_user_id}")
         return jsonify({"error": str(e)}), 500
+    
+
+@help_bp.route('/admin/teachers/availability', methods=['GET'])
+@token_required
+def admin_get_teachers_availability(user_id):
+    """Admin: Get all teachers' help availability"""
+    if not is_admin(user_id):
+        return jsonify({"error": "Ikke autorisert"}), 403
+
+    try:
+        response = (
+            supabase
+            .table('teachers')
+            .select("""
+                user_id,
+                firstname,
+                lastname,
+                teacher_help_config (
+                    available_for_help,
+                    zoom_link,
+                    updated_at
+                )
+            """)
+            .execute()
+        )
+        print("response:", response)
+        return jsonify({"teachers_availability": response.data}), 200
+    except Exception as e:
+        logging.exception("Admin failed to fetch teachers' availability")
+        return jsonify({"error": str(e)}), 500
