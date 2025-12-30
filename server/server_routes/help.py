@@ -296,44 +296,6 @@ def delete_my_session(user_id, session_id):
 
 # ========== ADMIN ENDPOINTS ==========
 
-@help_bp.route('/admin/help-sessions', methods=['POST'])
-@token_required
-def admin_create_session(user_id):
-    """Admin: Create session for any teacher - recurring or one-time"""
-    if not is_admin(user_id):
-        return jsonify({"error": "Ikke autorisert"}), 403
-
-    data = request.get_json() or {}
-    required = ['teacher_user_id', 'start_time', 'end_time', 'recurring']
-    if not all(field in data for field in required):
-        return jsonify({"error": "Mangler påkrevde felt (teacher_user_id, start_time, end_time, recurring)"}), 400
-
-    recurring = data['recurring']
-
-    # Validate based on session type
-    if recurring and 'day_of_week' not in data:
-        return jsonify({"error": "day_of_week er påkrevd for tilbakevendende økter"}), 400
-    if not recurring and 'session_date' not in data:
-        return jsonify({"error": "session_date er påkrevd for engangsøkter"}), 400
-
-    try:
-        session_id = insert_help_session(
-            teacher_user_id=data['teacher_user_id'],
-            start_time=data['start_time'],
-            end_time=data['end_time'],
-            created_by_user_id=user_id,  # Admin's user_id
-            recurring=recurring,
-            day_of_week=data.get('day_of_week'),
-            session_date=data.get('session_date')
-        )
-        return jsonify({
-            "message": "Økten er opprettet",
-            "session_id": session_id
-        }), 201
-    except Exception as e:
-        logging.exception("Admin failed to create session")
-        return jsonify({"error": str(e)}), 500
-
 
 @help_bp.route('/admin/help-sessions', methods=['GET'])
 @token_required
@@ -341,10 +303,20 @@ def admin_get_all_sessions(user_id):
     """Admin: Get all help sessions"""
     if not is_admin(user_id):
         return jsonify({"error": "Ikke autorisert"}), 403
+    
+
+    now_utc = datetime.now(timezone.utc)
 
     try:
         # Get all sessions across all teachers
-        response = supabase.table('help_sessions').select('*, teachers(firstname, lastname)').gte('end_time', datetime.utcnow()).execute()
+        response = (
+            supabase
+            .table('help_sessions')
+            .select('*, teachers!fk_help_session_teacher(firstname, lastname)')
+            .eq('is_active', True)
+            .gte('end_time', now_utc.isoformat())
+            .execute()
+        )
         return jsonify({"sessions": response.data}), 200
     except Exception as e:
         logging.exception("Admin failed to fetch all sessions")

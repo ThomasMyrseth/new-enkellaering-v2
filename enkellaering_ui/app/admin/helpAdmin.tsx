@@ -69,7 +69,23 @@ export function HelpAdminPanel({ token }: { token: string }) {
         return
       }
       const data = await response.json()
-      setSessions(data.sessions || [])
+      const s = data.sessions
+      //order by day_of_week and start_time
+      s.sort((a: HelpSession, b: HelpSession) => {
+        if (a.recurring && b.recurring) {
+          if (a.day_of_week === b.day_of_week) {
+            return a.start_time.localeCompare(b.start_time)
+          }
+          return (a.day_of_week || 0) - (b.day_of_week || 0)
+        } else if (a.recurring) {
+          return -1
+        } else if (b.recurring) {
+          return 1
+        } else {
+          return a.start_time.localeCompare(b.start_time)
+        }
+      })
+      setSessions(s || [])
     } catch (error) {
       console.error("Failed to fetch sessions:", error)
     }
@@ -144,11 +160,11 @@ export function HelpAdminPanel({ token }: { token: string }) {
         return
       }
 
-      alert("Økten er opprettet!")
+      toast.success("Økten er opprettet!")
       fetchAllSessions()
     } catch (error) {
       console.error("Failed to create session:", error)
-      alert("Kunne ikke opprette økten")
+      toast.error("Kunne ikke opprette økten")
     }
   }
 
@@ -198,104 +214,6 @@ export function HelpAdminPanel({ token }: { token: string }) {
                 </Button>
               </div>
             ))}
-          </div>
-        </div>
-
-        <div>
-          <h3 className="font-semibold mb-3">Opprett økt for lærer</h3>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="teacher-select">Velg lærer</Label>
-              <select
-                id="teacher-select"
-                className="w-full border rounded-md p-2"
-                value={selectedTeacher}
-                onChange={(e) => setSelectedTeacher(e.target.value)}
-              >
-                <option value="">-- Velg lærer --</option>
-                {teachers.map((teacher) => (
-                  <option key={teacher.user_id} value={teacher.user_id}>
-                    {teacher.firstname} {teacher.lastname}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="recurring-switch"
-                checked={recurring}
-                onCheckedChange={setRecurring}
-              />
-              <Label htmlFor="recurring-switch">Tilbakevendende økt (gjentas hver uke)</Label>
-            </div>
-
-            {recurring ? (
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <Label htmlFor="admin-day">Dag</Label>
-                  <select
-                    id="admin-day"
-                    className="w-full border rounded-md p-2"
-                    value={newSession.day_of_week}
-                    onChange={(e) => setNewSession({ ...newSession, day_of_week: parseInt(e.target.value) })}
-                  >
-                    {DAYS_NO.map((day, idx) => (
-                      <option key={idx} value={idx}>{day}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <Label htmlFor="admin-start">Start</Label>
-                  <Input
-                    id="admin-start"
-                    type="time"
-                    value={newSession.start_time}
-                    onChange={(e) => setNewSession({ ...newSession, start_time: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="admin-end">Slutt</Label>
-                  <Input
-                    id="admin-end"
-                    type="time"
-                    value={newSession.end_time}
-                    onChange={(e) => setNewSession({ ...newSession, end_time: e.target.value })}
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <Label htmlFor="admin-date">Dato</Label>
-                  <Input
-                    id="admin-date"
-                    type="date"
-                    value={newSession.session_date}
-                    onChange={(e) => setNewSession({ ...newSession, session_date: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="admin-start">Start</Label>
-                  <Input
-                    id="admin-start"
-                    type="time"
-                    value={newSession.start_time}
-                    onChange={(e) => setNewSession({ ...newSession, start_time: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="admin-end">Slutt</Label>
-                  <Input
-                    id="admin-end"
-                    type="time"
-                    value={newSession.end_time}
-                    onChange={(e) => setNewSession({ ...newSession, end_time: e.target.value })}
-                  />
-                </div>
-              </div>
-            )}
-            <Button onClick={createSession}>Opprett økt</Button>
           </div>
         </div>
 

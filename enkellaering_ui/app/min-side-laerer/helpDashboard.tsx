@@ -158,6 +158,12 @@ export function TeacherHelpDashboard({ token }: { token: string }) {
       return
     }
 
+    //make sure we have a zoom link!
+    if (!zoomLink) {
+      toast.error("Vennligst oppgi en Zoom-lenke før du oppretter en økt")
+      return
+    }
+
     try {
       const payload: Payload = {
         recurring: recurring,
