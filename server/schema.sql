@@ -30,6 +30,38 @@ CREATE TABLE public.classes (
   CONSTRAINT fk_class_teacher FOREIGN KEY (teacher_user_id) REFERENCES public.teachers(user_id),
   CONSTRAINT fk_class_student FOREIGN KEY (student_user_id) REFERENCES public.students(user_id)
 );
+CREATE TABLE public.help_queue (
+  queue_id uuid NOT NULL DEFAULT gen_random_uuid(),
+  student_name text NOT NULL,
+  student_email text,
+  student_phone text,
+  subject text NOT NULL,
+  description text,
+  preferred_teacher_id text,
+  assigned_session_id uuid,
+  status text NOT NULL DEFAULT 'waiting'::text CHECK (status = ANY (ARRAY['waiting'::text, 'admitted'::text, 'completed'::text, 'no_show'::text])),
+  position integer,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  admitted_at timestamp with time zone,
+  completed_at timestamp with time zone,
+  CONSTRAINT help_queue_pkey PRIMARY KEY (queue_id),
+  CONSTRAINT fk_queue_teacher FOREIGN KEY (preferred_teacher_id) REFERENCES public.teachers(user_id),
+  CONSTRAINT fk_queue_session FOREIGN KEY (assigned_session_id) REFERENCES public.help_sessions(session_id)
+);
+CREATE TABLE public.help_sessions (
+  session_id uuid NOT NULL DEFAULT gen_random_uuid(),
+  teacher_user_id text NOT NULL,
+  recurring boolean NOT NULL DEFAULT false,
+  day_of_week integer CHECK (day_of_week IS NULL OR day_of_week >= 0 AND day_of_week <= 6),
+  is_active boolean NOT NULL DEFAULT true,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  created_by_user_id text NOT NULL,
+  end_time timestamp with time zone,
+  start_time timestamp with time zone,
+  CONSTRAINT help_sessions_pkey PRIMARY KEY (session_id),
+  CONSTRAINT fk_help_session_teacher FOREIGN KEY (teacher_user_id) REFERENCES public.teachers(user_id),
+  CONSTRAINT fk_help_session_creator FOREIGN KEY (created_by_user_id) REFERENCES public.teachers(user_id)
+);
 CREATE TABLE public.job_applications (
   uuid uuid NOT NULL,
   firstname text,
@@ -138,12 +170,21 @@ CREATE TABLE public.tasks (
   description text NOT NULL,
   status text,
   type text,
-  teacher_ids text[],
+  teacher_ids ARRAY,
   student text DEFAULT 'NULL'::text,
   completed boolean NOT NULL DEFAULT false,
   completed_at timestamp with time zone,
   CONSTRAINT tasks_pkey PRIMARY KEY (id),
   CONSTRAINT tasks_student_fkey FOREIGN KEY (student) REFERENCES public.students(user_id)
+);
+CREATE TABLE public.teacher_help_config (
+  teacher_user_id text NOT NULL,
+  zoom_link text,
+  available_for_help boolean NOT NULL DEFAULT false,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT teacher_help_config_pkey PRIMARY KEY (teacher_user_id),
+  CONSTRAINT fk_help_config_teacher FOREIGN KEY (teacher_user_id) REFERENCES public.teachers(user_id)
 );
 CREATE TABLE public.teacher_referrals (
   uid uuid NOT NULL,
@@ -192,204 +233,3 @@ CREATE TABLE public.teachers (
   available_for_help boolean NOT NULL DEFAULT false,
   CONSTRAINT teachers_pkey PRIMARY KEY (user_id)
 );
-
-
-
-
-
--- Gratis Leksehjelp (Free Homework Help) Database Schema
--- Execute this in Supabase SQL Editor
--- ============================================================================
--- GRATIS LEKSEHJELP (FREE HOMEWORK HELP) SCHEMA V2
--- Supports both recurring weekly sessions and one-time date-specific sessions
--- ============================================================================
-
--- Table 1: Teacher Help Configuration
-CREATE TABLE IF NOT EXISTS public.teacher_help_config (
-  teacher_user_id text NOT NULL,
-  zoom_link text,
-  available_for_help boolean NOT NULL DEFAULT false,
-  created_at timestamp with time zone NOT NULL DEFAULT now(),
-  updated_at timestamp with time zone NOT NULL DEFAULT now(),
-
-  CONSTRAINT teacher_help_config_pkey PRIMARY KEY (teacher_user_id),
-  CONSTRAINT fk_help_config_teacher FOREIGN KEY (teacher_user_id)
-    REFERENCES public.teachers(user_id) ON DELETE CASCADE
-);
-
-COMMENT ON TABLE public.teacher_help_config IS 'Configuration for teachers providing free homework help';
-COMMENT ON COLUMN public.teacher_help_config.zoom_link IS 'Zoom link for the teacher and student';
-COMMENT ON COLUMN public.teacher_help_config.available_for_help IS 'Whether teacher is currently available for help sessions';
-
--- Table 2: Help Sessions (supports both recurring and one-time sessions)
-CREATE TABLE IF NOT EXISTS public.help_sessions (
-  session_id uuid NOT NULL DEFAULT gen_random_uuid(),
-  teacher_user_id text NOT NULL,
-  recurring boolean NOT NULL DEFAULT false,
-  day_of_week integer, -- 0=Monday, 6=Sunday (for recurring sessions)
-  session_date date, -- Specific date (for one-time sessions)
-  start_time time NOT NULL,
-  end_time time NOT NULL,
-  is_active boolean NOT NULL DEFAULT true,
-  created_at timestamp with time zone NOT NULL DEFAULT now(),
-  created_by_user_id text NOT NULL,
-
-  CONSTRAINT help_sessions_pkey PRIMARY KEY (session_id),
-  CONSTRAINT fk_help_session_teacher FOREIGN KEY (teacher_user_id)
-    REFERENCES public.teachers(user_id) ON DELETE CASCADE,
-  CONSTRAINT fk_help_session_creator FOREIGN KEY (created_by_user_id)
-    REFERENCES public.teachers(user_id),
-  CONSTRAINT check_day_of_week CHECK (day_of_week IS NULL OR (day_of_week >= 0 AND day_of_week <= 6)),
-  CONSTRAINT check_time_order CHECK (end_time > start_time),
-  CONSTRAINT check_session_type CHECK (
-    (recurring = true AND day_of_week IS NOT NULL AND session_date IS NULL) OR
-    (recurring = false AND session_date IS NOT NULL)
-  )
-);
-
-COMMENT ON TABLE public.help_sessions IS 'Help sessions - supports both recurring weekly and one-time date-specific sessions';
-COMMENT ON COLUMN public.help_sessions.recurring IS 'If true, session repeats weekly on day_of_week. If false, session is one-time on session_date.';
-COMMENT ON COLUMN public.help_sessions.day_of_week IS 'Day of week for recurring sessions (0=Monday, 6=Sunday). NULL for one-time sessions.';
-COMMENT ON COLUMN public.help_sessions.session_date IS 'Specific date for one-time sessions (YYYY-MM-DD). NULL for recurring sessions.';
-
--- Table 3: Help Queue
-CREATE TABLE IF NOT EXISTS public.help_queue (
-  queue_id uuid NOT NULL DEFAULT gen_random_uuid(),
-  student_name text NOT NULL,
-  student_email text,
-  student_phone text,
-  subject text NOT NULL,
-  description text,
-  preferred_teacher_id text,
-  assigned_session_id uuid,
-  status text NOT NULL DEFAULT 'waiting',
-  position integer,
-  created_at timestamp with time zone NOT NULL DEFAULT now(),
-  admitted_at timestamp with time zone,
-  completed_at timestamp with time zone,
-
-  CONSTRAINT help_queue_pkey PRIMARY KEY (queue_id),
-  CONSTRAINT fk_queue_teacher FOREIGN KEY (preferred_teacher_id)
-    REFERENCES public.teachers(user_id) ON DELETE SET NULL,
-  CONSTRAINT fk_queue_session FOREIGN KEY (assigned_session_id)
-    REFERENCES public.help_sessions(session_id) ON DELETE SET NULL,
-  CONSTRAINT check_status CHECK (status IN ('waiting', 'admitted', 'completed', 'no_show'))
-);
-
-COMMENT ON TABLE public.help_queue IS 'Queue for students waiting for help';
-COMMENT ON COLUMN public.help_queue.status IS 'Status: waiting, admitted, completed, no_show';
-COMMENT ON COLUMN public.help_queue.position IS 'Position in queue (1 = first)';
-
-
--- indexes for performance optimization
--- students table
-DROP INDEX IF EXISTS idx_students_email;
-CREATE INDEX idx_students_email ON public.students(email_parent);
-
-DROP INDEX IF EXISTS idx_students_name;
-CREATE INDEX idx_students_name ON public.students(firstname_student, lastname_student);
-
--- teachers table
-DROP INDEX IF EXISTS idx_teachers_available;
-CREATE INDEX idx_teachers_available ON public.teachers(available_for_help);
-
-DROP INDEX IF EXISTS idx_teachers_name;
-CREATE INDEX idx_teachers_name ON public.teachers(firstname, lastname);
-
--- classes table
-DROP INDEX IF EXISTS idx_classes_teacher;
-CREATE INDEX idx_classes_teacher ON public.classes(teacher_user_id);
-
-DROP INDEX IF EXISTS idx_classes_student;
-CREATE INDEX idx_classes_student ON public.classes(student_user_id);
-
-DROP INDEX IF EXISTS idx_classes_started_at;
-CREATE INDEX idx_classes_started_at ON public.classes(started_at);
-
-DROP INDEX IF EXISTS idx_classes_ended_at;
-CREATE INDEX idx_classes_ended_at ON public.classes(ended_at);
-
--- quiz_results
-DROP INDEX IF EXISTS idx_quiz_results_user;
-CREATE INDEX idx_quiz_results_user ON public.quiz_results(user_id);
-
-DROP INDEX IF EXISTS idx_quiz_results_quiz;
-CREATE INDEX idx_quiz_results_quiz ON public.quiz_results(quiz_id);
-
-DROP INDEX IF EXISTS idx_quiz_results_created;
-CREATE INDEX idx_quiz_results_created ON public.quiz_results(created_at);
-
--- questions
-DROP INDEX IF EXISTS idx_questions_quiz;
-CREATE INDEX idx_questions_quiz ON public.questions(quiz_id);
-
--- reviews
-DROP INDEX IF EXISTS idx_reviews_teacher;
-CREATE INDEX idx_reviews_teacher ON public.reviews(teacher_user_id);
-
-DROP INDEX IF EXISTS idx_reviews_student;
-CREATE INDEX idx_reviews_student ON public.reviews(student_user_id);
-
-DROP INDEX IF EXISTS idx_reviews_created;
-CREATE INDEX idx_reviews_created ON public.reviews(created_at);
-
--- tasks
-DROP INDEX IF EXISTS idx_tasks_student;
-CREATE INDEX idx_tasks_student ON public.tasks(student);
-
-DROP INDEX IF EXISTS idx_tasks_teacher_ids;
-CREATE INDEX idx_tasks_teacher_ids ON public.tasks USING GIN (teacher_ids);
-
-DROP INDEX IF EXISTS idx_tasks_status;
-CREATE INDEX idx_tasks_status ON public.tasks(status);
-
-DROP INDEX IF EXISTS idx_tasks_completed;
-CREATE INDEX idx_tasks_completed ON public.tasks(completed);
-
--- teacher_student
-DROP INDEX IF EXISTS idx_teacher_student_teacher;
-CREATE INDEX idx_teacher_student_teacher ON public.teacher_student(teacher_user_id);
-
-DROP INDEX IF EXISTS idx_teacher_student_student;
-CREATE INDEX idx_teacher_student_student ON public.teacher_student(student_user_id);
-
-DROP INDEX IF EXISTS idx_teacher_student_created;
-CREATE INDEX idx_teacher_student_created ON public.teacher_student(created_at);
-
--- teacher_referrals
-DROP INDEX IF EXISTS idx_teacher_referrals_referee;
-CREATE INDEX idx_teacher_referrals_referee ON public.teacher_referrals(referee_teacher_user_id);
-
-DROP INDEX IF EXISTS idx_teacher_referrals_created;
-CREATE INDEX idx_teacher_referrals_created ON public.teacher_referrals(created_at);
-
--- about_me_texts
-DROP INDEX IF EXISTS idx_about_me_name;
-CREATE INDEX idx_about_me_name ON public.about_me_texts(firstname, lastname);
-
--- new_students
-DROP INDEX IF EXISTS idx_new_students_phone;
-CREATE INDEX idx_new_students_phone ON public.new_students(phone);
-
-DROP INDEX IF EXISTS idx_new_students_signed_up;
-CREATE INDEX idx_new_students_signed_up ON public.new_students(has_signed_up);
-
-DROP INDEX IF EXISTS idx_new_students_referal;
-CREATE INDEX idx_new_students_referal ON public.new_students(from_referal);
-
-DROP INDEX IF EXISTS idx_new_students_created_at;
-CREATE INDEX idx_new_students_created_at ON public.new_students(created_at);
-
--- help_queue
-CREATE INDEX IF NOT EXISTS idx_help_queue_status ON public.help_queue(status);
-CREATE INDEX IF NOT EXISTS idx_help_queue_session ON public.help_queue(assigned_session_id);
-CREATE INDEX IF NOT EXISTS idx_help_queue_created ON public.help_queue(created_at);
-
-
-CREATE INDEX IF NOT EXISTS idx_help_sessions_teacher ON public.help_sessions(teacher_user_id);
-CREATE INDEX IF NOT EXISTS idx_help_sessions_active ON public.help_sessions(is_active);
-CREATE INDEX IF NOT EXISTS idx_help_sessions_day ON public.help_sessions(day_of_week) WHERE recurring = true;
-CREATE INDEX IF NOT EXISTS idx_help_sessions_date ON public.help_sessions(session_date) WHERE recurring = false;
-CREATE INDEX IF NOT EXISTS idx_help_sessions_recurring ON public.help_sessions(recurring);
-
-CREATE INDEX IF NOT EXISTS idx_help_config_available ON public.teacher_help_config(available_for_help);

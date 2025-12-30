@@ -548,8 +548,8 @@ RETURNS TABLE (
   session_id uuid,
   teacher_user_id text,
   day_of_week integer,
-  start_time time,
-  end_time time,
+  start_time TIMESTAMPTZ,
+  end_time TIMESTAMPTZ,
   queue_count bigint,
   teacher_firstname text,
   teacher_lastname text,
@@ -681,9 +681,8 @@ RETURNS TABLE (
   teacher_user_id text,
   recurring boolean,
   day_of_week integer,
-  session_date date,
-  start_time time,
-  end_time time,
+  start_time timestamptz,
+  end_time timestamptz,
   queue_count bigint,
   teacher_firstname text,
   teacher_lastname text,
@@ -698,7 +697,6 @@ BEGIN
     hs.teacher_user_id,
     hs.recurring,
     hs.day_of_week,
-    hs.session_date,
     hs.start_time,
     hs.end_time,
     COUNT(hq.queue_id) as queue_count,
@@ -712,16 +710,19 @@ BEGIN
     AND hq.status = 'waiting'
   WHERE hs.is_active = TRUE
     AND thc.available_for_help = TRUE
-    AND (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Oslo')::time >= hs.start_time
-    AND (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Oslo')::time < hs.end_time
     AND (
-      -- Recurring session: check day of week matches
-      (hs.recurring = TRUE AND hs.day_of_week = EXTRACT(ISODOW FROM (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Oslo'))::integer - 1)
+      -- Recurring session: check day of week and time matches
+      (hs.recurring = TRUE
+        AND hs.day_of_week = EXTRACT(ISODOW FROM (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Oslo'))::integer - 1
+        AND (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Oslo')::time >= hs.start_time::time
+        AND (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Oslo')::time < hs.end_time::time)
       OR
-      -- One-time session: check date matches today
-      (hs.recurring = FALSE AND hs.session_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Oslo')::date)
+      -- One-time session: check full datetime range
+      (hs.recurring = FALSE
+        AND CURRENT_TIMESTAMP >= hs.start_time
+        AND CURRENT_TIMESTAMP < hs.end_time)
     )
-  GROUP BY hs.session_id, hs.recurring, hs.day_of_week, hs.session_date, t.firstname, t.lastname, thc.zoom_link
+  GROUP BY hs.session_id, hs.recurring, hs.day_of_week, hs.start_time, hs.end_time, t.firstname, t.lastname, thc.zoom_link
   ORDER BY COUNT(hq.queue_id) ASC;
 END;
 $$;
@@ -741,14 +742,17 @@ BEGIN
   LEFT JOIN teacher_help_config thc ON hs.teacher_user_id = thc.teacher_user_id
   WHERE hs.teacher_user_id = teacher_id
     AND hs.is_active = TRUE
-    AND (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Oslo')::time >= hs.start_time
-    AND (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Oslo')::time < hs.end_time
     AND (
-      -- Recurring session: check day of week matches
-      (hs.recurring = TRUE AND hs.day_of_week = EXTRACT(ISODOW FROM (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Oslo'))::integer - 1)
+      -- Recurring session: check day of week and time matches
+      (hs.recurring = TRUE
+        AND hs.day_of_week = EXTRACT(ISODOW FROM (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Oslo'))::integer - 1
+        AND (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Oslo')::time >= hs.start_time::time
+        AND (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Oslo')::time < hs.end_time::time)
       OR
-      -- One-time session: check date matches today
-      (hs.recurring = FALSE AND hs.session_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Oslo')::date)
+      -- One-time session: check full datetime range
+      (hs.recurring = FALSE
+        AND CURRENT_TIMESTAMP >= hs.start_time
+        AND CURRENT_TIMESTAMP < hs.end_time)
     )
   LIMIT 1;
 END;
@@ -771,14 +775,17 @@ BEGIN
     AND hq.status = 'waiting'
   WHERE hs.is_active = TRUE
     AND thc.available_for_help = TRUE
-    AND (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Oslo')::time >= hs.start_time
-    AND (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Oslo')::time < hs.end_time
     AND (
-      -- Recurring session: check day of week matches
-      (hs.recurring = TRUE AND hs.day_of_week = EXTRACT(ISODOW FROM (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Oslo'))::integer - 1)
+      -- Recurring session: check day of week and time matches
+      (hs.recurring = TRUE
+        AND hs.day_of_week = EXTRACT(ISODOW FROM (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Oslo'))::integer - 1
+        AND (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Oslo')::time >= hs.start_time::time
+        AND (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Oslo')::time < hs.end_time::time)
       OR
-      -- One-time session: check date matches today
-      (hs.recurring = FALSE AND hs.session_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Oslo')::date)
+      -- One-time session: check full datetime range
+      (hs.recurring = FALSE
+        AND CURRENT_TIMESTAMP >= hs.start_time
+        AND CURRENT_TIMESTAMP < hs.end_time)
     )
   GROUP BY hs.session_id, thc.zoom_link, hs.teacher_user_id
   ORDER BY COUNT(hq.queue_id) ASC

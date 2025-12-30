@@ -80,7 +80,8 @@ export function TeacherHelpDashboard({ token }: { token: string }) {
         return
       }
       const data = await response.json()
-      setSessions(data.sessions || [])
+      setSessions(data.sessions || []) //list of dicts
+      console.log("Fetched sessions:", data.sessions)
     } catch (error) {
       console.error("Failed to fetch sessions:", error)
     }
@@ -96,7 +97,23 @@ export function TeacherHelpDashboard({ token }: { token: string }) {
         return
       }
       const data = await response.json()
-      setQueue(data.queue || [])
+      const queues = data.queues || [] //list of dicts
+
+      console.log("Fetched queues:", queues)
+
+      if (queues.length > 1) {
+        console.warn("Multiple queues found for teacher, using the first one.")
+        toast.warning('Du har flere aktive økter nå. Vennligst slett alle untatt én for å unngå forvirring.')
+      }
+
+      if (queues.length === 0) {
+        setQueue([])
+        return
+      }
+
+      const firstQueue = queues[0].queue
+      setQueue(firstQueue || [])
+
     } catch (error) {
       console.error("Failed to fetch queue:", error)
     }
@@ -239,14 +256,14 @@ export function TeacherHelpDashboard({ token }: { token: string }) {
           
         </CardContent>
         <CardFooter>
-          <Button variant="secondary" onClick={updateConfig}>Lagre konfigurasjon</Button>
+          <Button variant="secondary" onClick={updateConfig}>Lagre lenke</Button>
         </CardFooter>
       </Card>
 
       <Card>
         <CardHeader>
           <CardTitle>Mine økter</CardTitle>
-          <CardDescription>Opprett og administrer dine hjelpeøkter. Alle tider er i Oslo-tidssone (Europe/Oslo).</CardDescription>
+          <CardDescription>Opprett og administrer dine hjelpeøkter. <br/>Alle tider er i Oslo-tid, kun relevant om du er i utlandet.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center space-x-2">
@@ -323,28 +340,81 @@ export function TeacherHelpDashboard({ token }: { token: string }) {
               </div>
             </div>
           )}
-          <Button onClick={createSession} variant="secondary">Opprett økt</Button>
+          <Button className="h-8 w-36" onClick={createSession} variant="secondary">Opprett økt</Button>
 
           <div className="space-y-2 mt-4">
-            <h3 className="font-semibold">Eksisterende økter:</h3>
+            <h3 className="font-semibold">Planlagde og pågående økter:</h3>
+            <p>Dette er alle økter som allerede har startet, samt økter som er planlagt i fremtiden.</p>
             {sessions.length === 0 ? (
               <p className="text-gray-500">Ingen økter opprettet ennå</p>
             ) : (
-              sessions.map((session) => (
+              sessions.map((session) => {
+                
+                const end = new Date(session.end_time).getTime()
+                const now = Date.now()
+                //do not display completed, non-recurring sessions
+                if (end < now && !session.recurring) {
+                  return null
+                }
+
+                return(
                 <div key={session.session_id} className="p-3 border rounded-lg flex justify-between items-center">
                   <div>
                     <p>
                       {session.recurring ? (
                         <>
-                          <strong>{session.day_of_week !== null && DAYS_NO[session.day_of_week]}</strong> (Tilbakevendende)
+                          <strong>
+                            {session.day_of_week !== null && DAYS_NO[session.day_of_week]}{" "}
+                            {(() => {
+                              const timeFormatter = new Intl.DateTimeFormat("nb-NO", {
+                                timeZone: "Europe/Oslo",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })
+
+                              const start = timeFormatter.format(new Date(session.start_time))
+                              const end = timeFormatter.format(new Date(session.end_time))
+
+                              return `${start}-${end}`
+                            })()}
+                          </strong>{" "}
+                          (Tilbakevendende)
                         </>
                       ) : (
                         <>
-                          <strong>{session.session_date}</strong> (Engangsøkt)
+                        {(() => {
+                          const dateFormatter = new Intl.DateTimeFormat("nb-NO", {
+                            timeZone: "Europe/Oslo",
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })
+
+                          const timeFormatter = new Intl.DateTimeFormat("nb-NO", {
+                            timeZone: "Europe/Oslo",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+
+                          const startDate = new Date(session.start_time)
+                          const endDate = new Date(session.end_time)
+
+                          const datePart = dateFormatter
+                            .format(startDate)
+                            .replace(/\./g, "")
+
+                          const startTime = timeFormatter.format(startDate)
+                          const endTime = timeFormatter.format(endDate)
+
+                          return (
+                            <strong>
+                              {datePart} {startTime}-{endTime}
+                            </strong>
+                          )
+                        })()}
+                        {" "} (Engangsøkt)
                         </>
                       )}
-                      {" "}
-                      {session.start_time.slice(0, 5)} - {session.end_time.slice(0, 5)}
                     </p>
                   </div>
                   <Button
@@ -355,7 +425,7 @@ export function TeacherHelpDashboard({ token }: { token: string }) {
                     Slett
                   </Button>
                 </div>
-              ))
+              )})
             )}
           </div>
         </CardContent>
@@ -417,11 +487,12 @@ export function TeacherHelpDashboard({ token }: { token: string }) {
         </CardContent>
       </Card>
 
-      {zoomLink && (
+      {zoomLink && (<div>
           <Link href={zoomLink} target="_blank" rel="noopener noreferrer">
-            Åpne Zoom (Host Link)
+            Åpne Zoom
           </Link>
-      )}
+          <p>eller kopier lenken her: {zoomLink}</p>
+      </div>)}
     </div>
   )
 }

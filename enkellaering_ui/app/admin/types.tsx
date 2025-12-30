@@ -338,9 +338,8 @@ export type HelpSession = {
     teacher_user_id: string;
     recurring: boolean; // If true, repeats weekly. If false, one-time session.
     day_of_week: number | null; // 0=Monday, 6=Sunday (for recurring sessions only)
-    session_date: string | null; // YYYY-MM-DD (for one-time sessions only)
-    start_time: string; // HH:MM:SS
-    end_time: string;
+    start_time: string; //timestampZ
+    end_time: string; //timestampZ
     is_active: boolean;
     created_at: string;
     created_by_user_id: string;

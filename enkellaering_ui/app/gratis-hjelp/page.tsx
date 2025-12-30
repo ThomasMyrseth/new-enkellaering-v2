@@ -16,6 +16,7 @@ const DAYS_NO = ["Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag", "Lørdag", 
 
 export default function FreeHelpPage() {
   const [activeSessions, setActiveSessions] = useState<HelpSession[]>([])
+  const [futureSessions, setFutureSessions] = useState<HelpSession[]>([])
   const [selectedSession, setSelectedSession] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     student_name: "",
@@ -68,13 +69,32 @@ export default function FreeHelpPage() {
     try {
       const response = await fetch(`${BASEURL}/help-sessions/active`)
       if (!response.ok) {
-        console.error("Failed to fetch sessions")
+        console.error("Failed to fetch active sessions")
         return
       }
       const data = await response.json()
       setActiveSessions(data.sessions || [])
+
+      // If no active sessions, fetch future sessions
+      if (!data.sessions || data.sessions.length === 0) {
+        fetchFutureSessions()
+      }
     } catch (error) {
       console.error("Failed to fetch active sessions:", error)
+    }
+  }
+
+  async function fetchFutureSessions() {
+    try {
+      const response = await fetch(`${BASEURL}/help-sessions`)
+      if (!response.ok) {
+        console.error("Failed to fetch future sessions")
+        return
+      }
+      const data = await response.json()
+      setFutureSessions(data.sessions || [])
+    } catch (error) {
+      console.error("Failed to fetch future sessions:", error)
     }
   }
 
@@ -240,7 +260,7 @@ export default function FreeHelpPage() {
                 )}
               </div>
 
-              {zoomJoinLink && (
+              {zoomJoinLink && (<div className="flex flex-col items-center space-y-2">
                 <a
                   href={zoomJoinLink}
                   target="_blank"
@@ -253,6 +273,18 @@ export default function FreeHelpPage() {
                 >
                   {position?.admitted_at ? '🚀 BLI MED I ZOOM-MØTET NÅ!' : 'Åpne Zoom-møtet'}
                 </a>
+                <p className="text-light">
+                  Eller kopier lenken her:{" "}
+                  <a
+                    href={zoomJoinLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-bold underline"
+                  >
+                    {zoomJoinLink}
+                  </a>
+                </p>
+                </div>
               )}
 
               <Button
@@ -276,17 +308,94 @@ export default function FreeHelpPage() {
           <h1 className="text-4xl font-bold text-neutral-800 dark:text-neutral-200 mb-2">
             Gratis Leksehjelp
           </h1>
-          <p className="text-lg text-neutral-600 dark:text-neutral-400">
+          <p className="text-xl text-neutral-600 dark:text-neutral-400">
             Få hjelp fra våre lærere - helt gratis!
           </p>
+          <div className="bg-white dark:bg-black p-4 rounded-lg">
+            <p>Vi tilbyr gratis 10-minutters økter med våre mentorer for å hjelpe deg med dine oppgaver. <br/>
+              Velg en av lærerne under og still deg i køen. Du vil mota en lenke til videomøtet per epost, du vil også få den opp på siden her.
+              <br/><br/><span> Dersom du ønsker mer omfattende hjelp kan du <Link href="/bestill" className="underline">bestille privatundervisning her</Link></span>
+              <br/><span className="font-light text-neutral-600 dark:text-neutral-400">Tilbudet er begrenset til én økt per student per dag.</span>
+            </p>
+          </div>
         </div>
 
         {activeSessions.length === 0 ? (
           <Card className="bg-white dark:bg-black rounded-lg">
-            <CardContent className="text-center py-12">
-              <p className="text-neutral-600 dark:text-neutral-400">
-                Ingen aktive økter akkurat nå. Prøv igjen senere!
-              </p>
+            <CardHeader>
+              <CardTitle className="text-neutral-800 dark:text-neutral-200">
+                Ingen lærere tilgjengelig akkurat nå
+              </CardTitle>
+              <CardDescription>
+                Vi har ingen lærere tilgjengelig for gratis leksehjelp akkurat nå. Neste tilgjengelige økter er vist under. Stell deg i kø når de åpner.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {futureSessions.length === 0 ? (
+                <p className="text-center text-neutral-500 dark:text-neutral-400 py-8">
+                  Ingen kommende økter planlagt ennå. Kom tilbake senere!
+                </p>
+              ) : (
+                futureSessions.map((session) => (
+                  <div
+                    key={session.session_id}
+                    className="p-4 border-2 border-neutral-200 dark:border-neutral-700 rounded-lg"
+                  >
+                    <p className="font-semibold text-lg text-neutral-800 dark:text-neutral-200">
+                      {session.teachers?.firstname} {session.teachers?.lastname}
+                    </p>
+                    <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                      {session.recurring ? (
+                        <>
+                          <strong>Hver {session.day_of_week !== null && DAYS_NO[session.day_of_week]}</strong>
+                          {session.start_time && session.end_time && (
+                            <>
+                              {" "}
+                              {(() => {
+                                const timeFormatter = new Intl.DateTimeFormat("nb-NO", {
+                                  timeZone: "Europe/Oslo",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })
+                                const start = timeFormatter.format(new Date(session.start_time))
+                                const end = timeFormatter.format(new Date(session.end_time))
+                                return `${start} - ${end}`
+                              })()}
+                            </>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          {(() => {
+                            const dateFormatter = new Intl.DateTimeFormat("nb-NO", {
+                              timeZone: "Europe/Oslo",
+                              weekday: "long",
+                              day: "numeric",
+                              month: "long",
+                              year: "numeric",
+                            })
+                            const timeFormatter = new Intl.DateTimeFormat("nb-NO", {
+                              timeZone: "Europe/Oslo",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
+                            const startDate = new Date(session.start_time)
+                            const endDate = new Date(session.end_time)
+                            const datePart = dateFormatter.format(startDate)
+                            const startTime = timeFormatter.format(startDate)
+                            const endTime = timeFormatter.format(endDate)
+                            return (
+                              <>
+                                <strong>{datePart}</strong> {startTime} - {endTime}
+                              </>
+                            )
+                          })()}
+                        </>
+                      )}
+                    </p>
+                  </div>
+                ))
+              )}
             </CardContent>
           </Card>
         ) : (
@@ -331,7 +440,7 @@ export default function FreeHelpPage() {
                         </>
                       ) : (
                         <>
-                          {session.session_date && new Date(session.session_date).toLocaleDateString('no-NO', {
+                          {session.start_time && new Date(session.start_time).toLocaleDateString('no-NO', {
                             weekday: 'long',
                             year: 'numeric',
                             month: 'long',
@@ -340,7 +449,7 @@ export default function FreeHelpPage() {
                         </>
                       )}
                       {" "}
-                      {session.start_time.slice(0, 5)} - {session.end_time.slice(0, 5)}
+                      {session.start_time && new Date(session.start_time).toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' })} - {session.end_time && new Date(session.end_time).toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' })}
                     </p>
                     <p className="text-xs text-neutral-500 dark:text-neutral-500">
                       {session.queue_count || 0} i kø

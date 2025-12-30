@@ -5,9 +5,12 @@ import logging
 import json
 import os
 from google.cloud import pubsub_v1
+from zoneinfo import ZoneInfo
+from typing import Optional
+import uuid
 
 from db.gets import is_admin
-from .sql_types import Classes, Teacher, Students, NewStudents, NewStudentWithPreferredTeacher
+from .sql_types import Classes, Teacher, Students, NewStudentWithPreferredTeacher
 from supabase_client import supabase
 
 def insert_teacher(teacher: Teacher):
@@ -463,40 +466,71 @@ def insert_help_queue_entry(student_name: str, student_email: Optional[str], stu
     return queue_id, zoom_join_link
 
 
-def insert_help_session(teacher_user_id: str, start_time: str, end_time: str,
-                       created_by_user_id: str, recurring: bool = False,
-                       day_of_week: Optional[int] = None, session_date: Optional[str] = None):
+
+
+def insert_help_session(
+    teacher_user_id: str,
+    start_time: str,  # HH:MM
+    end_time: str,    # HH:MM
+    created_by_user_id: str,
+    recurring: bool = False,
+    day_of_week: Optional[int] = None,
+    session_date: Optional[str] = None  # YYYY-MM-DD
+):
     """
     Insert a new help session (recurring or one-time)
-
-    Args:
-        teacher_user_id: Teacher ID
-        start_time: Start time (HH:MM format)
-        end_time: End time (HH:MM format)
-        created_by_user_id: User creating the session
-        recurring: If True, session repeats weekly. If False, one-time session.
-        day_of_week: Day of week (0=Monday, 6=Sunday) - required if recurring=True
-        session_date: Specific date (YYYY-MM-DD) - required if recurring=False
     """
-    # Validate inputs
+    OSLO_TZ = ZoneInfo("Europe/Oslo")
+
     if recurring and day_of_week is None:
         raise ValueError("day_of_week is required for recurring sessions")
+
     if not recurring and session_date is None:
         raise ValueError("session_date is required for one-time sessions")
 
     session_id = str(uuid.uuid4())
+
+    start_utc = None
+    end_utc = None
+
+    if not recurring:
+        start_local = datetime.fromisoformat(
+            f"{session_date}T{start_time}"
+        ).replace(tzinfo=OSLO_TZ)
+
+        end_local = datetime.fromisoformat(
+            f"{session_date}T{end_time}"
+        ).replace(tzinfo=OSLO_TZ)
+
+        # 🔹 Convert to UTC for TIMESTAMPTZ
+        start_utc = start_local.astimezone(timezone.utc)
+        end_utc = end_local.astimezone(timezone.utc)
+    else:
+        # Recurring session - use today as date, but keep the hour-minute
+        today_str = datetime.now(OSLO_TZ).date().isoformat()
+        start_local = datetime.fromisoformat(
+            f"{today_str}T{start_time}"
+        ).replace(tzinfo=OSLO_TZ)
+
+        end_local = datetime.fromisoformat(
+            f"{today_str}T{end_time}"
+        ).replace(tzinfo=OSLO_TZ)
+
+        # 🔹 Convert to UTC for TIMESTAMPTZ
+        start_utc = start_local.astimezone(timezone.utc)
+        end_utc = end_local.astimezone(timezone.utc)
+
     data = {
-        'session_id': session_id,
-        'teacher_user_id': teacher_user_id,
-        'recurring': recurring,
-        'day_of_week': day_of_week,
-        'session_date': session_date,
-        'start_time': start_time,
-        'end_time': end_time,
-        'is_active': True,
-        'created_by_user_id': created_by_user_id,
-        'created_at': datetime.now(timezone.utc).isoformat()
+        "session_id": session_id,
+        "teacher_user_id": teacher_user_id,
+        "recurring": recurring,
+        "day_of_week": day_of_week,
+        "start_time": start_utc.isoformat() if start_utc else None,
+        "end_time": end_utc.isoformat() if end_utc else None,
+        "is_active": True,
+        "created_by_user_id": created_by_user_id,
+        "created_at": datetime.now(timezone.utc).isoformat(),
     }
 
-    supabase.table('help_sessions').insert(data).execute()
+    supabase.table("help_sessions").insert(data).execute()
     return session_id

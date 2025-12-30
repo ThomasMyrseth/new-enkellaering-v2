@@ -1,10 +1,11 @@
 from flask import Blueprint, request, jsonify
 import logging
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 from .config import token_required
 from db.gets import (
     get_teacher_help_config,
-    get_all_available_teachers,
     get_active_help_sessions,
     get_help_sessions_for_teacher,
     get_help_queue_for_session,
@@ -36,6 +37,16 @@ def get_active_sessions():
         logging.exception("Failed to fetch active help sessions")
         return jsonify({"error": str(e)}), 500
 
+@help_bp.route('/help-sessions', methods=['GET'])
+def get_all_sessions():
+    """Public: Get all upcoming help sessions (recurring + future one-time)"""
+    try:
+        from db.gets import get_all_uncompleted_help_sessions
+        sessions = get_all_uncompleted_help_sessions()
+        return jsonify({"sessions": sessions}), 200
+    except Exception as e:
+        logging.exception("Failed to fetch all help sessions")
+        return jsonify({"error": str(e)}), 500
 
 @help_bp.route('/help-queue/join', methods=['POST'])
 def join_help_queue():
@@ -137,7 +148,7 @@ def create_my_session(user_id):
         return jsonify({"error": "Mangler påkrevde felt (start_time, end_time, recurring)"}), 400
 
     recurring = data['recurring']
-
+    print("data:", data)
     # Validate based on session type
     if recurring and 'day_of_week' not in data:
         return jsonify({"error": "day_of_week er påkrevd for tilbakevendende økter"}), 400
@@ -166,50 +177,52 @@ def create_my_session(user_id):
 @help_bp.route('/teacher/queue', methods=['GET'])
 @token_required
 def get_teacher_queue(user_id):
-    """Teacher: Get queue for their active session (recurring or one-time)"""
+    """Teacher: Get queue for their active session (recurring and one-time)"""
+
+    active_sessions = []
+    now = datetime.now(timezone.utc)
     try:
-        # Find teacher's active session
-        from datetime import datetime, time as dt_time, date as dt_date
         sessions = get_help_sessions_for_teacher(user_id)
-
-        # Get current active session (matching day/time or date/time)
-        current_day = datetime.now().weekday()
-        current_time = datetime.now().time()
-        current_date = datetime.now().date()
-
-        active_session = None
+        print("sessions:", sessions)
         for session in sessions:
-            # Parse time strings to compare
-            start_parts = session['start_time'].split(':')
-            end_parts = session['end_time'].split(':')
-            start_time = dt_time(int(start_parts[0]), int(start_parts[1]))
-            end_time = dt_time(int(end_parts[0]), int(end_parts[1]))
+            start_dt = datetime.fromisoformat(session["start_time"])
+            end_dt = datetime.fromisoformat(session["end_time"])
 
-            # Check time range
-            if not (start_time <= current_time < end_time):
-                continue
 
-            # Check if session is active today
-            if session['recurring']:
-                # Recurring session: check day of week
-                if session['day_of_week'] == current_day:
-                    active_session = session
-                    break
-            else:
-                # One-time session: check date
-                session_date_str = session.get('session_date')
-                if session_date_str:
-                    # Parse date string (YYYY-MM-DD)
-                    session_date = dt_date.fromisoformat(session_date_str)
-                    if session_date == current_date:
-                        active_session = session
-                        break
+            if start_dt <= now <= end_dt and not session["recurring"]:
+                active_sessions.append(session)
+            
+            elif session["recurring"]:
+                day_of_week = session["day_of_week"]  # 0,1,2,3,4,5,6
+                #get the hour/minute from start_time/end_time
+                start_time_only = start_dt.time()
+                end_time_only = end_dt.time()
 
-        if not active_session:
-            return jsonify({"queue": []}), 200
+                # Check if today is the correct day of the week and current time is within the session time
+                if now.weekday() == day_of_week:
+                    start_dt_recurring = datetime.combine(now.date(), start_time_only, tzinfo=timezone.utc)
+                    end_dt_recurring = datetime.combine(now.date(), end_time_only, tzinfo=timezone.utc)
 
-        queue = get_help_queue_for_session(active_session['session_id'])
-        return jsonify({"queue": queue}), 200
+                    if start_dt_recurring <= now <= end_dt_recurring:
+                        active_sessions.append(session)
+
+
+        if len(active_sessions) == 0:
+            return jsonify({"queues": []}), 200
+        
+        #order them by start time
+        active_sessions.sort(
+            key=lambda x: datetime.fromisoformat(x["start_time"])
+        )       
+        queues = [] #will always have only one element, but keeping as list for future proofing
+
+        for active_session in active_sessions:
+            queue = get_help_queue_for_session(active_session['session_id'])
+            queues.append({
+                "session_id": active_session['session_id'],
+                "queue": queue
+            })
+        return jsonify({"queues": queues}), 200
     except Exception as e:
         logging.exception(f"Failed to fetch queue for {user_id}")
         return jsonify({"error": str(e)}), 500
@@ -315,7 +328,7 @@ def admin_get_all_sessions(user_id):
 
     try:
         # Get all sessions across all teachers
-        response = supabase.table('help_sessions').select('*, teachers(firstname, lastname)').eq('is_active', True).execute()
+        response = supabase.table('help_sessions').select('*, teachers(firstname, lastname)').gte('end_time', datetime.utcnow()).execute()
         return jsonify({"sessions": response.data}), 200
     except Exception as e:
         logging.exception("Admin failed to fetch all sessions")
