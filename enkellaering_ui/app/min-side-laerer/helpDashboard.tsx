@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
@@ -18,13 +18,13 @@ interface Payload {
   session_date?: string
   start_time: string
   end_time: string
+  zoom_link: string
 }
 
 export function TeacherHelpDashboard({ token }: { token: string }) {
   const [config, setConfig] = useState<TeacherHelpConfig | null>(null)
   const [sessions, setSessions] = useState<HelpSession[]>([])
   const [queue, setQueue] = useState<HelpQueueEntry[]>([])
-  const [zoomLink, setZoomLink] = useState<string>("")
   const [availableForHelp, setAvailableForHelp] = useState<boolean>(false)
 
   // New session form
@@ -33,7 +33,8 @@ export function TeacherHelpDashboard({ token }: { token: string }) {
     day_of_week: 0,
     session_date: "",
     start_time: "16:00",
-    end_time: "20:00"
+    end_time: "20:00",
+    zoom_link: ""
   })
 
   useEffect(() => {
@@ -48,7 +49,6 @@ export function TeacherHelpDashboard({ token }: { token: string }) {
 
   useEffect(() => {
     if (config) {
-      setZoomLink(config.zoom_link || "")
       setAvailableForHelp(config.available_for_help)
     }
   }, [config])
@@ -65,7 +65,6 @@ export function TeacherHelpDashboard({ token }: { token: string }) {
       const data = await response.json()
       setConfig(data.config)
       setAvailableForHelp(data.config.available_for_help)
-      setZoomLink(data.config.zoom_link || "")
     } catch (error) {
       console.error("Failed to fetch config:", error)
     }
@@ -120,33 +119,6 @@ export function TeacherHelpDashboard({ token }: { token: string }) {
     }
   }
 
-  async function updateConfig() {
-    try {
-      const response = await fetch(`${BASEURL}/teacher/help-config`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          zoom_link: zoomLink,
-          available_for_help: availableForHelp
-        })
-      })
-
-      if (!response.ok) {
-        toast.error("Kunne ikke oppdatere konfigurasjonen")
-        return
-      }
-
-      toast.success("Konfigurasjonen er oppdatert!")
-      fetchConfig()
-    } catch (error) {
-      console.error("Failed to update config:", error)
-      toast.error("Kunne ikke oppdatere konfigurasjonen")
-    }
-  }
-
   async function createSession() {
     // Validate based on session type
     if (recurring && newSession.day_of_week === undefined) {
@@ -159,8 +131,14 @@ export function TeacherHelpDashboard({ token }: { token: string }) {
     }
 
     //make sure we have a zoom link!
-    if (!zoomLink) {
-      toast.error("Vennligst oppgi en Zoom-lenke før du oppretter en økt")
+    if (!newSession.zoom_link || !newSession.zoom_link.trim()) {
+      toast.error("Vennligst oppgi en Zoom-lenke")
+      return
+    }
+
+    //make sure it has https
+    if (!newSession.zoom_link.startsWith("https://")) {
+      toast.error("Zoom-lenken må starte med https://")
       return
     }
 
@@ -168,7 +146,8 @@ export function TeacherHelpDashboard({ token }: { token: string }) {
       const payload: Payload = {
         recurring: recurring,
         start_time: newSession.start_time,
-        end_time: newSession.end_time
+        end_time: newSession.end_time,
+        zoom_link: newSession.zoom_link
       }
 
       if (recurring) {
@@ -193,6 +172,13 @@ export function TeacherHelpDashboard({ token }: { token: string }) {
       }
 
       toast.success("Økten er opprettet!")
+      setNewSession({
+        day_of_week: 0,
+        session_date: "",
+        start_time: "16:00",
+        end_time: "20:00",
+        zoom_link: ""
+      })
       fetchSessions()
     } catch (error) {
       console.error("Failed to create session:", error)
@@ -247,31 +233,6 @@ export function TeacherHelpDashboard({ token }: { token: string }) {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Gratis Leksehjelp - Konfigurasjon</CardTitle>
-          <CardDescription>
-            Sett opp dine Zoom-linker og tilgjengelighet for gratis leksehjelp
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="zoom_link">Zoom lenke til møte</Label>
-            <Input
-              id="zoom_link"
-              placeholder="https://zoom.us/j/..."
-              type="text"
-              value={zoomLink}
-              onChange={(e) => setZoomLink(e.target.value)}
-            />
-          </div>
-          
-        </CardContent>
-        <CardFooter>
-          <Button variant="secondary" onClick={updateConfig}>Lagre lenke</Button>
-        </CardFooter>
-      </Card>
-
       <Card>
         <CardHeader>
           <CardTitle>Mine økter</CardTitle>
@@ -352,6 +313,22 @@ export function TeacherHelpDashboard({ token }: { token: string }) {
               </div>
             </div>
           )}
+
+          <div>
+            <Label htmlFor="zoom_link_session">Zoom-lenke for denne økten *</Label>
+            <Input
+              id="zoom_link_session"
+              type="url"
+              placeholder="https://zoom.us/j/..."
+              value={newSession.zoom_link}
+              onChange={(e) => setNewSession({ ...newSession, zoom_link: e.target.value })}
+              required
+            />
+            <p className="text-xs text-neutral-500 mt-1">
+              Denne lenken vil brukes for denne spesifikke økten
+            </p>
+          </div>
+
           <Button className="h-8 w-36" onClick={createSession} variant="secondary">Opprett økt</Button>
 
           <div className="space-y-2 mt-4">

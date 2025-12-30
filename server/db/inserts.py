@@ -473,6 +473,7 @@ def insert_help_session(
     start_time: str,  # HH:MM
     end_time: str,    # HH:MM
     created_by_user_id: str,
+    zoom_link: str,
     recurring: bool = False,
     day_of_week: Optional[int] = None,
     session_date: Optional[str] = None  # YYYY-MM-DD
@@ -481,6 +482,9 @@ def insert_help_session(
     Insert a new help session (recurring or one-time)
     """
     OSLO_TZ = ZoneInfo("Europe/Oslo")
+
+    if not zoom_link or not zoom_link.strip():
+        raise ValueError("zoom_link is required for all sessions")
 
     if recurring and day_of_week is None:
         raise ValueError("day_of_week is required for recurring sessions")
@@ -530,6 +534,7 @@ def insert_help_session(
         "is_active": True,
         "created_by_user_id": created_by_user_id,
         "created_at": datetime.now(timezone.utc).isoformat(),
+        "zoom_link": zoom_link,
     }
 
     supabase.table("help_sessions").insert(data).execute()

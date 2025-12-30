@@ -477,18 +477,20 @@ export default function FreeHelpPage() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="student_email">E-post</Label>
+                      <Label htmlFor="student_email">E-post *</Label>
                       <Input
                         id="student_email"
+                        required
                         type="email"
                         value={formData.student_email}
                         onChange={(e) => setFormData({ ...formData, student_email: e.target.value })}
                       />
                     </div>
                     <div>
-                      <Label htmlFor="student_phone">Telefon</Label>
+                      <Label htmlFor="student_phone">Telefon *</Label>
                       <Input
                         id="student_phone"
+                        required
                         value={formData.student_phone}
                         onChange={(e) => setFormData({ ...formData, student_phone: e.target.value })}
                       />

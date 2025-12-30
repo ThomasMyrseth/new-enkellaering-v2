@@ -110,13 +110,12 @@ def get_teacher_config(user_id):
 @help_bp.route('/teacher/help-config', methods=['PUT'])
 @token_required
 def update_teacher_config(user_id):
-    """Teacher: Update Zoom link and availability"""
+    """Teacher: Update availability"""
     data = request.get_json() or {}
 
     try:
         update_teacher_help_config(
             teacher_user_id=user_id,
-            zoom_link=data.get('zoom_link'),
             available_for_help=data.get('available_for_help')
         )
         return jsonify({"message": "Konfigurasjonen er oppdatert"}), 200
@@ -143,9 +142,9 @@ def create_my_session(user_id):
     """Teacher: Create new help session (self-assign) - recurring or one-time"""
     data = request.get_json() or {}
 
-    required = ['start_time', 'end_time', 'recurring']
+    required = ['start_time', 'end_time', 'recurring', 'zoom_link']
     if not all(field in data for field in required):
-        return jsonify({"error": "Mangler påkrevde felt (start_time, end_time, recurring)"}), 400
+        return jsonify({"error": "Mangler påkrevde felt (start_time, end_time, recurring, zoom_link)"}), 400
 
     recurring = data['recurring']
     print("data:", data)
@@ -161,6 +160,7 @@ def create_my_session(user_id):
             start_time=data['start_time'],
             end_time=data['end_time'],
             created_by_user_id=user_id,
+            zoom_link=data['zoom_link'],
             recurring=recurring,
             day_of_week=data.get('day_of_week'),
             session_date=data.get('session_date')
@@ -186,7 +186,6 @@ def get_teacher_queue(user_id):
     now_utc = datetime.now(timezone.utc)  # For non-recurring comparison
     try:
         sessions = get_help_sessions_for_teacher(user_id)
-        print("sessions:", sessions)
         for session in sessions:
             start_dt = datetime.fromisoformat(session["start_time"])
             end_dt = datetime.fromisoformat(session["end_time"])
@@ -377,7 +376,6 @@ def admin_get_teachers_availability(user_id):
                 lastname,
                 teacher_help_config (
                     available_for_help,
-                    zoom_link,
                     updated_at
                 )
             """)

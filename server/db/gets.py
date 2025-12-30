@@ -673,6 +673,7 @@ def get_help_sessions_for_teacher(teacher_user_id: str):
         .select("*")
         .eq("teacher_user_id", teacher_user_id)
         .or_(f"end_time.gte.{now_utc.isoformat()},recurring.eq.true")
+        .eq("is_active", True)
         .execute()
     )
     return response.data

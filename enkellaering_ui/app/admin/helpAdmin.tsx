@@ -3,35 +3,15 @@
 import { useState, useEffect } from "react"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
 import { HelpSession, TeacherWithHelpConfig } from "./types"
 import { toast } from "sonner"
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080"
 const DAYS_NO = ["Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag", "Lørdag", "Søndag"]
 
-interface Payload {
-  teacher_user_id: string
-  recurring: boolean
-  day_of_week?: number
-  session_date?: string
-  start_time: string
-  end_time: string
-}
-
 export function HelpAdminPanel({ token }: { token: string }) {
   const [teachers, setTeachers] = useState<TeacherWithHelpConfig[]>([])
   const [sessions, setSessions] = useState<HelpSession[]>([])
-  const [selectedTeacher, setSelectedTeacher] = useState<string>("")
-  const [recurring, setRecurring] = useState<boolean>(false)
-  const [newSession, setNewSession] = useState({
-    day_of_week: 0,
-    session_date: "",
-    start_time: "16:00",
-    end_time: "20:00"
-  })
 
   useEffect(() => {
     fetchTeachers()
@@ -112,59 +92,6 @@ export function HelpAdminPanel({ token }: { token: string }) {
     } catch (error) {
       console.error("Failed to toggle availability:", error)
       toast.error("Kunne ikke oppdatere tilgjengelighet")
-    }
-  }
-
-  async function createSession() {
-    if (!selectedTeacher) {
-      alert("Velg en lærer")
-      return
-    }
-
-    // Validate based on session type
-    if (recurring && newSession.day_of_week === undefined) {
-      alert("Velg en dag for tilbakevendende økt")
-      return
-    }
-    if (!recurring && !newSession.session_date) {
-      alert("Velg en dato for engangsokt")
-      return
-    }
-
-    try {
-      const payload : Payload = {
-        teacher_user_id: selectedTeacher,
-        recurring: recurring,
-        start_time: newSession.start_time,
-        end_time: newSession.end_time
-      }
-
-      if (recurring) {
-        payload.day_of_week = newSession.day_of_week
-      } else {
-        payload.session_date = newSession.session_date
-      }
-
-      const response = await fetch(`${BASEURL}/admin/help-sessions`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify(payload)
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        alert(`Kunne ikke opprette økten: ${error.error || 'Ukjent feil'}`)
-        return
-      }
-
-      toast.success("Økten er opprettet!")
-      fetchAllSessions()
-    } catch (error) {
-      console.error("Failed to create session:", error)
-      toast.error("Kunne ikke opprette økten")
     }
   }
 

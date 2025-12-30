@@ -327,7 +327,6 @@ export type Task = {
 
 export type TeacherHelpConfig = {
   available_for_help: boolean
-  zoom_link: string | null
   updated_at: string // ISO timestamp
 }
 
@@ -348,6 +347,7 @@ export type HelpSession = {
     is_active: boolean;
     created_at: string;
     created_by_user_id: string;
+    zoom_link: string; // Zoom link for this specific session
     teachers?: {
         firstname: string;
         lastname: string;

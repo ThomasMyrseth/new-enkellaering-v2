@@ -702,7 +702,7 @@ BEGIN
     COUNT(hq.queue_id) as queue_count,
     t.firstname as teacher_firstname,
     t.lastname as teacher_lastname,
-    thc.zoom_link as zoom_join_link
+    hs.zoom_link as zoom_join_link
   FROM help_sessions hs
   INNER JOIN teachers t ON hs.teacher_user_id = t.user_id
   LEFT JOIN teacher_help_config thc ON hs.teacher_user_id = thc.teacher_user_id
@@ -722,7 +722,7 @@ BEGIN
         AND CURRENT_TIMESTAMP >= hs.start_time
         AND CURRENT_TIMESTAMP < hs.end_time)
     )
-  GROUP BY hs.session_id, hs.recurring, hs.day_of_week, hs.start_time, hs.end_time, t.firstname, t.lastname, thc.zoom_link
+  GROUP BY hs.session_id, hs.recurring, hs.day_of_week, hs.start_time, hs.end_time, t.firstname, t.lastname, hs.zoom_link
   ORDER BY COUNT(hq.queue_id) ASC;
 END;
 $$;
@@ -737,7 +737,7 @@ LANGUAGE plpgsql
 AS $$
 BEGIN
   RETURN QUERY
-  SELECT hs.session_id, thc.zoom_link as zoom_join_link, hs.teacher_user_id
+  SELECT hs.session_id, hs.zoom_link as zoom_join_link, hs.teacher_user_id
   FROM help_sessions hs
   LEFT JOIN teacher_help_config thc ON hs.teacher_user_id = thc.teacher_user_id
   WHERE hs.teacher_user_id = teacher_id
@@ -768,7 +768,7 @@ LANGUAGE plpgsql
 AS $$
 BEGIN
   RETURN QUERY
-  SELECT hs.session_id, thc.zoom_link as zoom_join_link, hs.teacher_user_id
+  SELECT hs.session_id, hs.zoom_link as zoom_join_link, hs.teacher_user_id
   FROM help_sessions hs
   LEFT JOIN teacher_help_config thc ON hs.teacher_user_id = thc.teacher_user_id
   LEFT JOIN help_queue hq ON hs.session_id = hq.assigned_session_id
@@ -787,7 +787,7 @@ BEGIN
         AND CURRENT_TIMESTAMP >= hs.start_time
         AND CURRENT_TIMESTAMP < hs.end_time)
     )
-  GROUP BY hs.session_id, thc.zoom_link, hs.teacher_user_id
+  GROUP BY hs.session_id, hs.zoom_link, hs.teacher_user_id
   ORDER BY COUNT(hq.queue_id) ASC
   LIMIT 1;
 END;

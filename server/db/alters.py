@@ -227,7 +227,7 @@ def reactivateTeacher(teacherUserId: str, adminUserId: str):
 # GRATIS LEKSEHJELP (FREE HOMEWORK HELP) UPDATE FUNCTIONS
 # ============================================================================
 
-def update_teacher_help_config(teacher_user_id: str, zoom_link: Optional[str] = None,
+def update_teacher_help_config(teacher_user_id: str,
                                available_for_help: Optional[bool] = None):
     """Upsert teacher help config"""
     data :Dict[str, Any]= {
@@ -235,8 +235,6 @@ def update_teacher_help_config(teacher_user_id: str, zoom_link: Optional[str] = 
         'updated_at': datetime.now(timezone.utc).isoformat()
     }
 
-    if zoom_link is not None:
-        data['zoom_link'] = zoom_link
     if available_for_help is not None:
         data['available_for_help'] = available_for_help
 

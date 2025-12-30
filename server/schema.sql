@@ -58,6 +58,7 @@ CREATE TABLE public.help_sessions (
   created_by_user_id text NOT NULL,
   end_time timestamp with time zone,
   start_time timestamp with time zone,
+  zoom_link text,
   CONSTRAINT help_sessions_pkey PRIMARY KEY (session_id),
   CONSTRAINT fk_help_session_teacher FOREIGN KEY (teacher_user_id) REFERENCES public.teachers(user_id),
   CONSTRAINT fk_help_session_creator FOREIGN KEY (created_by_user_id) REFERENCES public.teachers(user_id)
@@ -179,7 +180,6 @@ CREATE TABLE public.tasks (
 );
 CREATE TABLE public.teacher_help_config (
   teacher_user_id text NOT NULL,
-  zoom_link text,
   available_for_help boolean NOT NULL DEFAULT false,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   updated_at timestamp with time zone NOT NULL DEFAULT now(),
