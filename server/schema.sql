@@ -230,6 +230,5 @@ CREATE TABLE public.teachers (
   digital_tutouring boolean,
   physical_tutouring boolean,
   notes text,
-  available_for_help boolean NOT NULL DEFAULT false,
   CONSTRAINT teachers_pkey PRIMARY KEY (user_id)
 );
