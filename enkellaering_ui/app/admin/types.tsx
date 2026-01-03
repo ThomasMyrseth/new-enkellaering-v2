@@ -57,6 +57,7 @@ export type Teacher = {
     notes :string;
     digital_tutouring :boolean;
     physical_tutouring :boolean;
+    available_for_help?: boolean; // For gratis leksehjelp feature
 }
 
 
@@ -318,4 +319,57 @@ export type Task = {
     completed_at: string | null;
     student_data?: Student;
     teachers_data?: Teacher[];
+};
+
+// ============================================================================
+// GRATIS LEKSEHJELP (FREE HOMEWORK HELP) TYPES
+// ============================================================================
+
+export type TeacherHelpConfig = {
+  available_for_help: boolean
+  updated_at: string // ISO timestamp
+}
+
+export type TeacherWithHelpConfig = {
+  user_id: string
+  firstname: string
+  lastname: string
+  teacher_help_config: TeacherHelpConfig | null
+}
+
+export type HelpSession = {
+    session_id: string;
+    teacher_user_id: string;
+    recurring: boolean; // If true, repeats weekly. If false, one-time session.
+    day_of_week: number | null; // 0=Monday, 6=Sunday (for recurring sessions only)
+    start_time: string; //timestampZ
+    end_time: string; //timestampZ
+    is_active: boolean;
+    created_at: string;
+    created_by_user_id: string;
+    zoom_link: string; // Zoom link for this specific session
+    teachers?: {
+        firstname: string;
+        lastname: string;
+    };
+    queue_count?: number;
+    teacher_firstname?: string;
+    teacher_lastname?: string;
+    zoom_join_link?: string;
+};
+
+export type HelpQueueEntry = {
+    queue_id: string;
+    student_name: string;
+    student_email: string | null;
+    student_phone: string | null;
+    subject: string;
+    description: string | null;
+    preferred_teacher_id: string | null;
+    assigned_session_id: string | null;
+    status: 'waiting' | 'admitted' | 'completed' | 'no_show';
+    position: number | null;
+    created_at: string;
+    admitted_at: string | null;
+    completed_at: string | null;
 };

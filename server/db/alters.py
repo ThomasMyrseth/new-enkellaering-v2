@@ -1,6 +1,6 @@
-from typing import Optional
+from typing import Any, Optional, Dict
 from decimal import Decimal
-from uuid import uuid4
+from datetime import datetime, timezone
 from db.gets import is_admin
 from supabase_client import supabase
 
@@ -221,3 +221,44 @@ def reactivateTeacher(teacherUserId: str, adminUserId: str):
     supabase.table('teachers').update({
         'resigned': 'FALSE'
     }).eq('user_id', teacherUserId).execute()
+
+
+# ============================================================================
+# GRATIS LEKSEHJELP (FREE HOMEWORK HELP) UPDATE FUNCTIONS
+# ============================================================================
+
+def update_teacher_help_config(teacher_user_id: str,
+                               available_for_help: Optional[bool] = None):
+    """Upsert teacher help config"""
+    data :Dict[str, Any]= {
+        'teacher_user_id': teacher_user_id,
+        'updated_at': datetime.now(timezone.utc).isoformat()
+    }
+
+    if available_for_help is not None:
+        data['available_for_help'] = available_for_help
+
+    supabase.table('teacher_help_config').upsert(data).execute()
+
+
+def update_queue_status(queue_id: str, status: str):
+    """Update queue entry status (admit, complete, no-show)"""
+    valid_statuses = ['admitted', 'completed', 'no_show']
+    if status not in valid_statuses:
+        raise ValueError(f"Invalid status: {status}")
+
+    data = {'status': status}
+
+    if status == 'admitted':
+        data['admitted_at'] = datetime.now(timezone.utc).isoformat()
+    elif status == 'completed':
+        data['completed_at'] = datetime.now(timezone.utc).isoformat()
+
+    supabase.table('help_queue').update(data).eq('queue_id', queue_id).execute()
+
+    # Reorder remaining queue positions
+    queue_entry = supabase.table('help_queue').select('assigned_session_id').eq('queue_id', queue_id).execute()
+    if queue_entry.data:
+        session_id = queue_entry.data[0]['assigned_session_id']
+        # Use RPC to reorder positions
+        supabase.rpc('reorder_queue_positions', {'session_id_param': session_id}).execute()

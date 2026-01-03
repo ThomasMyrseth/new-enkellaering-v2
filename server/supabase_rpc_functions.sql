@@ -536,6 +536,125 @@ END;
 $$;
 
 -- ============================================================================
+-- GRATIS LEKSEHJELP (FREE HOMEWORK HELP) RPC FUNCTIONS
+-- ============================================================================
+
+-- ----------------------------------------------------------------------------
+-- FUNCTION: get_currently_active_help_sessions
+-- Description: Returns currently active help sessions based on day/time with queue counts
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.get_currently_active_help_sessions()
+RETURNS TABLE (
+  session_id uuid,
+  teacher_user_id text,
+  day_of_week integer,
+  start_time TIMESTAMPTZ,
+  end_time TIMESTAMPTZ,
+  queue_count bigint,
+  teacher_firstname text,
+  teacher_lastname text,
+  zoom_join_link text
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    hs.session_id,
+    hs.teacher_user_id,
+    hs.day_of_week,
+    hs.start_time,
+    hs.end_time,
+    COUNT(hq.queue_id) as queue_count,
+    t.firstname as teacher_firstname,
+    t.lastname as teacher_lastname,
+    thc.zoom_join_link
+  FROM help_sessions hs
+  INNER JOIN teachers t ON hs.teacher_user_id = t.user_id
+  LEFT JOIN teacher_help_config thc ON hs.teacher_user_id = thc.teacher_user_id
+  LEFT JOIN help_queue hq ON hs.session_id = hq.assigned_session_id
+    AND hq.status = 'waiting'
+  WHERE hs.is_active = TRUE
+    AND thc.available_for_help = TRUE
+    AND hs.day_of_week = EXTRACT(ISODOW FROM CURRENT_TIMESTAMP)::integer - 1
+    AND CURRENT_TIME >= hs.start_time
+    AND CURRENT_TIME < hs.end_time
+  GROUP BY hs.session_id, t.firstname, t.lastname, thc.zoom_join_link
+  ORDER BY COUNT(hq.queue_id) ASC;
+END;
+$$;
+
+-- ----------------------------------------------------------------------------
+-- FUNCTION: find_active_session_for_teacher
+-- Description: Find active session for a specific teacher (right now)
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.find_active_session_for_teacher(teacher_id text)
+RETURNS TABLE (session_id uuid, zoom_join_link text)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT hs.session_id, thc.zoom_join_link
+  FROM help_sessions hs
+  LEFT JOIN teacher_help_config thc ON hs.teacher_user_id = thc.teacher_user_id
+  WHERE hs.teacher_user_id = teacher_id
+    AND hs.is_active = TRUE
+    AND hs.day_of_week = EXTRACT(ISODOW FROM CURRENT_TIMESTAMP)::integer - 1
+    AND CURRENT_TIME >= hs.start_time
+    AND CURRENT_TIME < hs.end_time
+  LIMIT 1;
+END;
+$$;
+
+-- ----------------------------------------------------------------------------
+-- FUNCTION: find_shortest_queue_session
+-- Description: "Snarest" logic - find currently active session with shortest queue
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.find_shortest_queue_session()
+RETURNS TABLE (session_id uuid, zoom_join_link text)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT hs.session_id, thc.zoom_join_link
+  FROM help_sessions hs
+  LEFT JOIN teacher_help_config thc ON hs.teacher_user_id = thc.teacher_user_id
+  LEFT JOIN help_queue hq ON hs.session_id = hq.assigned_session_id
+    AND hq.status = 'waiting'
+  WHERE hs.is_active = TRUE
+    AND thc.available_for_help = TRUE
+    AND hs.day_of_week = EXTRACT(ISODOW FROM CURRENT_TIMESTAMP)::integer - 1
+    AND CURRENT_TIME >= hs.start_time
+    AND CURRENT_TIME < hs.end_time
+  GROUP BY hs.session_id, thc.zoom_join_link
+  ORDER BY COUNT(hq.queue_id) ASC
+  LIMIT 1;
+END;
+$$;
+
+-- ----------------------------------------------------------------------------
+-- FUNCTION: reorder_queue_positions
+-- Description: Reorder queue positions after a student is removed/completed
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.reorder_queue_positions(session_id_param uuid)
+RETURNS void
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  WITH ordered_queue AS (
+    SELECT queue_id, ROW_NUMBER() OVER (ORDER BY created_at) as new_position
+    FROM help_queue
+    WHERE assigned_session_id = session_id_param
+      AND status = 'waiting'
+  )
+  UPDATE help_queue
+  SET position = ordered_queue.new_position
+  FROM ordered_queue
+  WHERE help_queue.queue_id = ordered_queue.queue_id;
+END;
+$$;
+
+-- ============================================================================
 -- END OF SCRIPT
 -- ============================================================================
 -- All RPC functions and schema changes have been created successfully!
@@ -543,4 +662,159 @@ $$;
 -- - Changed all TEXT comparisons ('TRUE'/'FALSE') to BOOLEAN (TRUE/FALSE)
 -- - Changed TIMESTAMP WITH TIME ZONE to TIMESTAMPTZ for consistency
 -- - Ensured all types match the schema exactly
+-- ============================================================================
+
+
+
+-- ============================================================================
+-- GRATIS LEKSEHJELP (FREE HOMEWORK HELP) RPC FUNCTIONS V2
+-- Supports both recurring weekly sessions and one-time date-specific sessions
+-- ============================================================================
+
+-- ----------------------------------------------------------------------------
+-- FUNCTION: get_currently_active_help_sessions
+-- Description: Returns currently active help sessions (both recurring and one-time) with queue counts
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.get_currently_active_help_sessions()
+RETURNS TABLE (
+  session_id uuid,
+  teacher_user_id text,
+  recurring boolean,
+  day_of_week integer,
+  start_time timestamptz,
+  end_time timestamptz,
+  queue_count bigint,
+  teacher_firstname text,
+  teacher_lastname text,
+  zoom_join_link text
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    hs.session_id,
+    hs.teacher_user_id,
+    hs.recurring,
+    hs.day_of_week,
+    hs.start_time,
+    hs.end_time,
+    COUNT(hq.queue_id) as queue_count,
+    t.firstname as teacher_firstname,
+    t.lastname as teacher_lastname,
+    hs.zoom_link as zoom_join_link
+  FROM help_sessions hs
+  INNER JOIN teachers t ON hs.teacher_user_id = t.user_id
+  LEFT JOIN teacher_help_config thc ON hs.teacher_user_id = thc.teacher_user_id
+  LEFT JOIN help_queue hq ON hs.session_id = hq.assigned_session_id
+    AND hq.status = 'waiting'
+  WHERE hs.is_active = TRUE
+    AND thc.available_for_help = TRUE
+    AND (
+      -- Recurring session: check day of week and time matches
+      (hs.recurring = TRUE
+        AND hs.day_of_week = EXTRACT(ISODOW FROM (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Oslo'))::integer - 1
+        AND (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Oslo')::time >= hs.start_time::time
+        AND (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Oslo')::time < hs.end_time::time)
+      OR
+      -- One-time session: check full datetime range
+      (hs.recurring = FALSE
+        AND CURRENT_TIMESTAMP >= hs.start_time
+        AND CURRENT_TIMESTAMP < hs.end_time)
+    )
+  GROUP BY hs.session_id, hs.recurring, hs.day_of_week, hs.start_time, hs.end_time, t.firstname, t.lastname, hs.zoom_link
+  ORDER BY COUNT(hq.queue_id) ASC;
+END;
+$$;
+
+-- ----------------------------------------------------------------------------
+-- FUNCTION: find_active_session_for_teacher
+-- Description: Find active session for a specific teacher (right now)
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.find_active_session_for_teacher(teacher_id text)
+RETURNS TABLE (session_id uuid, zoom_join_link text, teacher_user_id text)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT hs.session_id, hs.zoom_link as zoom_join_link, hs.teacher_user_id
+  FROM help_sessions hs
+  LEFT JOIN teacher_help_config thc ON hs.teacher_user_id = thc.teacher_user_id
+  WHERE hs.teacher_user_id = teacher_id
+    AND hs.is_active = TRUE
+    AND (
+      -- Recurring session: check day of week and time matches
+      (hs.recurring = TRUE
+        AND hs.day_of_week = EXTRACT(ISODOW FROM (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Oslo'))::integer - 1
+        AND (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Oslo')::time >= hs.start_time::time
+        AND (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Oslo')::time < hs.end_time::time)
+      OR
+      -- One-time session: check full datetime range
+      (hs.recurring = FALSE
+        AND CURRENT_TIMESTAMP >= hs.start_time
+        AND CURRENT_TIMESTAMP < hs.end_time)
+    )
+  LIMIT 1;
+END;
+$$;
+
+-- ----------------------------------------------------------------------------
+-- FUNCTION: find_shortest_queue_session
+-- Description: "Snarest" logic - find currently active session with shortest queue
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.find_shortest_queue_session()
+RETURNS TABLE (session_id uuid, zoom_join_link text, teacher_user_id text)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT hs.session_id, hs.zoom_link as zoom_join_link, hs.teacher_user_id
+  FROM help_sessions hs
+  LEFT JOIN teacher_help_config thc ON hs.teacher_user_id = thc.teacher_user_id
+  LEFT JOIN help_queue hq ON hs.session_id = hq.assigned_session_id
+    AND hq.status = 'waiting'
+  WHERE hs.is_active = TRUE
+    AND thc.available_for_help = TRUE
+    AND (
+      -- Recurring session: check day of week and time matches
+      (hs.recurring = TRUE
+        AND hs.day_of_week = EXTRACT(ISODOW FROM (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Oslo'))::integer - 1
+        AND (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Oslo')::time >= hs.start_time::time
+        AND (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Oslo')::time < hs.end_time::time)
+      OR
+      -- One-time session: check full datetime range
+      (hs.recurring = FALSE
+        AND CURRENT_TIMESTAMP >= hs.start_time
+        AND CURRENT_TIMESTAMP < hs.end_time)
+    )
+  GROUP BY hs.session_id, hs.zoom_link, hs.teacher_user_id
+  ORDER BY COUNT(hq.queue_id) ASC
+  LIMIT 1;
+END;
+$$;
+
+-- ----------------------------------------------------------------------------
+-- FUNCTION: reorder_queue_positions
+-- Description: Reorder queue positions after a student is removed/completed
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.reorder_queue_positions(session_id_param uuid)
+RETURNS void
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  WITH ordered_queue AS (
+    SELECT queue_id, ROW_NUMBER() OVER (ORDER BY created_at) as new_position
+    FROM help_queue
+    WHERE assigned_session_id = session_id_param
+      AND status = 'waiting'
+  )
+  UPDATE help_queue
+  SET position = ordered_queue.new_position
+  FROM ordered_queue
+  WHERE help_queue.queue_id = ordered_queue.queue_id;
+END;
+$$;
+
+-- ============================================================================
+-- END OF HELP RPC FUNCTIONS V2
 -- ============================================================================

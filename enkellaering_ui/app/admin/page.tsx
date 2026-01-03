@@ -16,6 +16,7 @@ import { Teacher } from "./types";
 import { InactiveStudents } from "./inactiveStudents";
 import { ResignedTeachers } from "./resignedTeachers";
 import { TasksWorkflow } from "./tasksWorkflow";
+import { HelpAdminPanel } from "./helpAdmin";
 
 
 
@@ -73,7 +74,7 @@ export default function AdminPage() {
         return <p>Loading...</p>
     }
 
-    return (<div className="w-full min-h-screen max-w-full bg-stone-100 dark:bg-slate-950 px-4">
+    return (<div className="w-full min-h-screen max-w-full bg-stone-100 dark:bg-slate-950 ">
         <TeacherName teacher={teacher}/>
         <div className="w-full max-w-full p-4 space-y-10">
           <AnalyticsOverview />
@@ -86,6 +87,7 @@ export default function AdminPage() {
           <InactiveStudents />
           <ResignedTeachers />
           <Quiz/>
+          <HelpAdminPanel token={token} />
 
         </div>
         <div className="h-10"> </div>

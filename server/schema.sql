@@ -30,6 +30,39 @@ CREATE TABLE public.classes (
   CONSTRAINT fk_class_teacher FOREIGN KEY (teacher_user_id) REFERENCES public.teachers(user_id),
   CONSTRAINT fk_class_student FOREIGN KEY (student_user_id) REFERENCES public.students(user_id)
 );
+CREATE TABLE public.help_queue (
+  queue_id uuid NOT NULL DEFAULT gen_random_uuid(),
+  student_name text NOT NULL,
+  student_email text,
+  student_phone text,
+  subject text NOT NULL,
+  description text,
+  preferred_teacher_id text,
+  assigned_session_id uuid,
+  status text NOT NULL DEFAULT 'waiting'::text CHECK (status = ANY (ARRAY['waiting'::text, 'admitted'::text, 'completed'::text, 'no_show'::text])),
+  position integer,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  admitted_at timestamp with time zone,
+  completed_at timestamp with time zone,
+  CONSTRAINT help_queue_pkey PRIMARY KEY (queue_id),
+  CONSTRAINT fk_queue_teacher FOREIGN KEY (preferred_teacher_id) REFERENCES public.teachers(user_id),
+  CONSTRAINT fk_queue_session FOREIGN KEY (assigned_session_id) REFERENCES public.help_sessions(session_id)
+);
+CREATE TABLE public.help_sessions (
+  session_id uuid NOT NULL DEFAULT gen_random_uuid(),
+  teacher_user_id text NOT NULL,
+  recurring boolean NOT NULL DEFAULT false,
+  day_of_week integer CHECK (day_of_week IS NULL OR day_of_week >= 0 AND day_of_week <= 6),
+  is_active boolean NOT NULL DEFAULT true,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  created_by_user_id text NOT NULL,
+  end_time timestamp with time zone,
+  start_time timestamp with time zone,
+  zoom_link text,
+  CONSTRAINT help_sessions_pkey PRIMARY KEY (session_id),
+  CONSTRAINT fk_help_session_teacher FOREIGN KEY (teacher_user_id) REFERENCES public.teachers(user_id),
+  CONSTRAINT fk_help_session_creator FOREIGN KEY (created_by_user_id) REFERENCES public.teachers(user_id)
+);
 CREATE TABLE public.job_applications (
   uuid uuid NOT NULL,
   firstname text,
@@ -138,12 +171,20 @@ CREATE TABLE public.tasks (
   description text NOT NULL,
   status text,
   type text,
-  teacher_ids text[],
+  teacher_ids ARRAY,
   student text DEFAULT 'NULL'::text,
   completed boolean NOT NULL DEFAULT false,
   completed_at timestamp with time zone,
   CONSTRAINT tasks_pkey PRIMARY KEY (id),
   CONSTRAINT tasks_student_fkey FOREIGN KEY (student) REFERENCES public.students(user_id)
+);
+CREATE TABLE public.teacher_help_config (
+  teacher_user_id text NOT NULL,
+  available_for_help boolean NOT NULL DEFAULT false,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT teacher_help_config_pkey PRIMARY KEY (teacher_user_id),
+  CONSTRAINT fk_help_config_teacher FOREIGN KEY (teacher_user_id) REFERENCES public.teachers(user_id)
 );
 CREATE TABLE public.teacher_referrals (
   uid uuid NOT NULL,

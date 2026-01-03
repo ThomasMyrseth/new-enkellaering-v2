@@ -1,9 +1,16 @@
 from typing import Optional
 import uuid
 from datetime import datetime, timezone
+import logging
+import json
+import os
+from google.cloud import pubsub_v1
+from zoneinfo import ZoneInfo
+from typing import Optional
+import uuid
 
 from db.gets import is_admin
-from .sql_types import Classes, Teacher, Students, NewStudents, NewStudentWithPreferredTeacher
+from .sql_types import Classes, Teacher, Students, NewStudentWithPreferredTeacher
 from supabase_client import supabase
 
 def insert_teacher(teacher: Teacher):
@@ -364,3 +371,171 @@ def insertNewTeacherReferal(teacherUserId: str, referalPhone: str, referalName: 
         'created_at': datetime.now(timezone.utc).isoformat()
     }
     supabase.table('teacher_referrals').insert(data).execute()
+
+
+# ============================================================================
+# GRATIS LEKSEHJELP (FREE HOMEWORK HELP) INSERT FUNCTIONS
+# ============================================================================
+
+def insert_help_queue_entry(student_name: str, student_email: Optional[str], student_phone: Optional[str],
+                            subject: str, description: Optional[str], preferred_teacher_id: Optional[str] = None):
+    """
+    Insert student into help queue and assign to session
+    Uses "snarest" logic if preferred_teacher_id is None
+    """
+    # Find appropriate session
+    if preferred_teacher_id:
+        # Find active session for this specific teacher
+        session = supabase.rpc('find_active_session_for_teacher', {
+            'teacher_id': preferred_teacher_id
+        }).execute()
+    else:
+        # "Snarest" - find session with shortest queue
+        session = supabase.rpc('find_shortest_queue_session').execute()
+
+    if not session.data or len(session.data) == 0:
+        raise ValueError("Ingen aktive økter tilgjengelig")
+
+    session_data = session.data[0]
+    session_id = session_data['session_id']
+    zoom_join_link = session_data.get('zoom_join_link')
+    teacher_user_id = session_data.get('teacher_user_id')
+
+    # Get teacher information (use maybeSingle to handle missing teachers gracefully)
+    teacher_email = None
+    teacher_name = "Lærer"
+
+    if teacher_user_id:
+        try:
+            teacher_info = supabase.table('teachers').select('email, firstname, lastname').eq('user_id', teacher_user_id).maybeSingle().execute()
+            if teacher_info.data:
+                teacher_email = teacher_info.data.get('email')
+                teacher_name = f"{teacher_info.data.get('firstname', '')} {teacher_info.data.get('lastname', '')}".strip() or "Lærer"
+        except Exception as e:
+            logging.error(f"Failed to fetch teacher info for user_id {teacher_user_id}: {e}")
+
+    # Get next position in queue
+    queue_count = supabase.table('help_queue').select('queue_id', count='exact').eq('assigned_session_id', session_id).eq('status', 'waiting').execute()
+    next_position = (queue_count.count or 0) + 1
+
+    # Insert into queue
+    queue_id = str(uuid.uuid4())
+    data = {
+        'queue_id': queue_id,
+        'student_name': student_name,
+        'student_email': student_email,
+        'student_phone': student_phone,
+        'subject': subject,
+        'description': description,
+        'preferred_teacher_id': preferred_teacher_id,
+        'assigned_session_id': session_id,
+        'status': 'waiting',
+        'position': next_position,
+        'created_at': datetime.now(timezone.utc).isoformat()
+    }
+
+    supabase.table('help_queue').insert(data).execute()
+
+    # Publish email notification to Pub/Sub
+    if teacher_email and zoom_join_link:
+        try:
+            project_id = os.getenv("GCP_PROJECT_ID", 'no_project_id')
+            publisher = pubsub_v1.PublisherClient()
+            topic_path = publisher.topic_path(project_id, "send-help-queue-email")
+
+            message_data = {
+                "student_name": student_name,
+                "student_email": student_email,
+                "teacher_email": teacher_email,
+                "teacher_name": teacher_name,
+                "subject": subject,
+                "description": description or "",
+                "position": next_position,
+                "zoom_link": zoom_join_link
+            }
+
+            message_json = json.dumps(message_data)
+            message_bytes = message_json.encode("utf-8")
+
+            future = publisher.publish(topic_path, message_bytes)
+            logging.info(f"Published help queue email message: {future.result()}")
+        except Exception as e:
+            logging.error(f"Failed to publish help queue email to Pub/Sub: {e}")
+            # Don't fail the queue insertion if email fails
+
+    return queue_id, zoom_join_link
+
+
+
+
+def insert_help_session(
+    teacher_user_id: str,
+    start_time: str,  # HH:MM
+    end_time: str,    # HH:MM
+    created_by_user_id: str,
+    zoom_link: str,
+    recurring: bool = False,
+    day_of_week: Optional[int] = None,
+    session_date: Optional[str] = None  # YYYY-MM-DD
+):
+    """
+    Insert a new help session (recurring or one-time)
+    """
+    OSLO_TZ = ZoneInfo("Europe/Oslo")
+
+    if not zoom_link or not zoom_link.strip():
+        raise ValueError("zoom_link is required for all sessions")
+
+    if recurring and day_of_week is None:
+        raise ValueError("day_of_week is required for recurring sessions")
+
+    if not recurring and session_date is None:
+        raise ValueError("session_date is required for one-time sessions")
+
+    session_id = str(uuid.uuid4())
+
+    start_utc = None
+    end_utc = None
+
+    if not recurring:
+        start_local = datetime.fromisoformat(
+            f"{session_date}T{start_time}"
+        ).replace(tzinfo=OSLO_TZ)
+
+        end_local = datetime.fromisoformat(
+            f"{session_date}T{end_time}"
+        ).replace(tzinfo=OSLO_TZ)
+
+        # 🔹 Convert to UTC for TIMESTAMPTZ
+        start_utc = start_local.astimezone(timezone.utc)
+        end_utc = end_local.astimezone(timezone.utc)
+    else:
+        # Recurring session - use today as date, but keep the hour-minute
+        today_str = datetime.now(OSLO_TZ).date().isoformat()
+        start_local = datetime.fromisoformat(
+            f"{today_str}T{start_time}"
+        ).replace(tzinfo=OSLO_TZ)
+
+        end_local = datetime.fromisoformat(
+            f"{today_str}T{end_time}"
+        ).replace(tzinfo=OSLO_TZ)
+
+        # 🔹 Convert to UTC for TIMESTAMPTZ
+        start_utc = start_local.astimezone(timezone.utc)
+        end_utc = end_local.astimezone(timezone.utc)
+
+    data = {
+        "session_id": session_id,
+        "teacher_user_id": teacher_user_id,
+        "recurring": recurring,
+        "day_of_week": day_of_week,
+        "start_time": start_utc.isoformat() if start_utc else None,
+        "end_time": end_utc.isoformat() if end_utc else None,
+        "is_active": True,
+        "created_by_user_id": created_by_user_id,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "zoom_link": zoom_link,
+    }
+
+    supabase.table("help_sessions").insert(data).execute()
+    return session_id

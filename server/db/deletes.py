@@ -131,3 +131,20 @@ def hide_old_orders(days_old: int):
     supabase.table('teacher_student').update({
         'hidden': 'TRUE'
     }).lt('created_at', threshold_date).or_('teacher_accepted_student.is.null,teacher_accepted_student.eq.FALSE').execute()
+
+
+# ============================================================================
+# GRATIS LEKSEHJELP (FREE HOMEWORK HELP) DELETE FUNCTIONS
+# ============================================================================
+
+def delete_help_session(session_id: str, user_id: str):
+    """Soft delete help session (set is_active = false)"""
+    # Check if user is admin or the session owner
+    session = supabase.table('help_sessions').select('teacher_user_id').eq('session_id', session_id).execute()
+    if not session.data:
+        raise ValueError("Økten ble ikke funnet")
+
+    if session.data[0]['teacher_user_id'] != user_id and not is_admin(user_id):
+        raise ValueError("Du har ikke tillatelse til å slette denne økten")
+
+    supabase.table('help_sessions').update({'is_active': False}).eq('session_id', session_id).execute()

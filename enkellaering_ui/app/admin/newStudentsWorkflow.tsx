@@ -160,7 +160,7 @@ const NewStudentTable =( {newStudents} : {newStudents : NewStudent[]})  => {
                             <TableHead>Slett ny elev</TableHead>
                         </TableRow>
                     </TableHeader>
-                    <TableBody>
+                    <TableBody className="">
                         {filteredStudents.map( ns => {
                             return <NewStudentRow key={ns.new_student_id} ns={ns}/>
                         })}
@@ -278,8 +278,8 @@ function NewStudentRow({ ns }: { ns: NewStudent }) {
     }
 
     return(
-    <TableRow className={`w-full max-w-full ${ns.has_finished_onboarding ? "text-gray-400" : ""}`}>
-        <TableCell className="font-medium min-w-48">{ns.phone.slice(0, 3)} {ns.phone.slice(3, 5)} {ns.phone.slice(5, 10)} {ns.phone.slice(10, 13)} 
+    <TableRow className={`w-4/5 max-w-full ${ns.has_finished_onboarding ? "text-gray-400" : ""}`}>
+        <TableCell className="font-medium ">{ns.phone.slice(0, 3)} {ns.phone.slice(3, 5)} {ns.phone.slice(5, 10)} {ns.phone.slice(10, 13)} 
                 <br/>
                 {new Intl.DateTimeFormat("nb-NO", {
                     day: "2-digit",
@@ -295,7 +295,7 @@ function NewStudentRow({ ns }: { ns: NewStudent }) {
                 </span>
         </TableCell>
 
-        <TableCell className="min-w-32">
+        <TableCell className="">
             <RadioGroup onValueChange={handleSetCalled} defaultValue={ns.has_called? "Ja" : "Nei"} value={hasCalled? "Ja" : "Nei"}>
                 <RadioGroupItem value="Ja" className="text-green-400"></RadioGroupItem>
                 <RadioGroupItem value="Nei" className="text-red-400 "></RadioGroupItem>
@@ -303,7 +303,7 @@ function NewStudentRow({ ns }: { ns: NewStudent }) {
         </TableCell>
 
 
-        <TableCell className="min-w-32">
+        <TableCell className="">
             <RadioGroup defaultValue={ns.has_answered? "Ja" : "Nei"} value={hasAnswered? "Ja" : "Nei"} onValueChange={handleSetAnswered}>
                 <RadioGroupItem value="Ja" className="text-green-400"></RadioGroupItem>
                 <RadioGroupItem value="Nei" className="text-red-400"></RadioGroupItem>
@@ -311,7 +311,7 @@ function NewStudentRow({ ns }: { ns: NewStudent }) {
         </TableCell>
 
 
-        <TableCell className="min-w-48">
+        <TableCell className="">
             {fromReferal ? (
                 <span className="text-gray-400">Fra {ns.referee_name} <br/> tlf: {refereePhone}
                 <br/> kontoNr: {ns.referee_account_number}
@@ -322,7 +322,7 @@ function NewStudentRow({ ns }: { ns: NewStudent }) {
             )}
         </TableCell>
 
-        <TableCell className="min-w-40">
+        <TableCell className="">
             <RadioGroup defaultValue={ns.paid_referee? "Ja" : "Nei"} value={paidReferee? "Ja" : "Nei"} onValueChange={handleSetPaidReferee}>
                 <RadioGroupItem value="Ja" className="text-green-400"></RadioGroupItem>
                 <RadioGroupItem value="Nei" className="text-red-400"></RadioGroupItem>
@@ -330,14 +330,14 @@ function NewStudentRow({ ns }: { ns: NewStudent }) {
         </TableCell>
 
 
-        <TableCell className="min-w-40">
+        <TableCell className="">
         <RadioGroup defaultValue={ns.has_finished_onboarding? "Ja" : "Nei"} value={hasFinishedOnboarding? "Ja" : "Nei"} onValueChange={handleSetFinishedOnboarding}>
                 <RadioGroupItem value="Ja" className="text-green-400"></RadioGroupItem>
                 <RadioGroupItem value="Nei" className="text-red-400"></RadioGroupItem>
             </RadioGroup>
         </TableCell>
 
-        <TableCell className="min-w-[500px]">
+        <TableCell className="min-w-96">
             <Textarea placeholder="Noter ned viktig info om eleven" value={comments} onChange={(e) => setComments(e.target.value)} rows={6}/>
         </TableCell>
 

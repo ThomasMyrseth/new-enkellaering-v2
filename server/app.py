@@ -65,6 +65,7 @@ from server_routes.quiz import quiz_bp
 from server_routes.email import mail_bp
 from server_routes.job import job_bp
 from server_routes.task import task_bp
+from server_routes.help import help_bp
 
 
 app.register_blueprint(auth_bp, url_prefix="")
@@ -79,6 +80,7 @@ app.register_blueprint(quiz_bp, url_prefix="")
 app.register_blueprint(mail_bp, url_prefix="")
 app.register_blueprint(job_bp, url_prefix="")
 app.register_blueprint(task_bp, url_prefix="/task")
+app.register_blueprint(help_bp, url_prefix="")
 
 
 
