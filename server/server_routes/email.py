@@ -14,7 +14,7 @@ import json
 from db.gets import get_students_with_few_classes, get_all_admins
 
 resend.api_key = os.getenv('RESEND_API_KEY')
-FROM_EMAIL = os.getenv("MAIL_USERNAME") or "kontakt@enkellaering.no"
+FROM_EMAIL = os.getenv("MAIL_USERNAME") or "Enkel Laering <kontakt@enkellaering.no>"
 
 
 mail_bp = Blueprint('mail', __name__)
