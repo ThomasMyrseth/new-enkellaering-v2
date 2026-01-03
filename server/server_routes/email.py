@@ -26,22 +26,22 @@ import os
 project_id = os.getenv("GCP_PROJECT_ID", 'no_project_id')
 publisher = pubsub_v1.PublisherClient()
 
-topics = [
-    "send-class-email",
-    "send-new-order-admin-email",
-    "send-teacher-referal-admin-email",
-    "send-student-teacher-notification-email",
-    "send-help-queue-email"
-]
+# topics = [
+#     "send-class-email",
+#     "send-new-order-admin-email",
+#     "send-teacher-referal-admin-email",
+#     "send-student-teacher-notification-email",
+#     "send-help-queue-email"
+# ]
 
-for topic_name in topics:
-    topic_path = publisher.topic_path(project_id, topic_name)
-    try:
-        publisher.get_topic(request={"topic": topic_path})
-        print(f"Topic exists: {topic_name}")
-    except:
-        publisher.create_topic(request={"name": topic_path})
-        print(f"Created topic: {topic_name}")
+# for topic_name in topics:
+#     topic_path = publisher.topic_path(project_id, topic_name)
+#     try:
+#         publisher.get_topic(request={"topic": topic_path})
+#         print(f"Topic exists: {topic_name}")
+#     except:
+#         publisher.create_topic(request={"name": topic_path})
+#         print(f"Created topic: {topic_name}")
 
 # This route builds and sends the email dynamically on request
 @mail_bp.route('/send-hello-email', methods=['GET'])
