@@ -26,22 +26,22 @@ import os
 project_id = os.getenv("GCP_PROJECT_ID", 'no_project_id')
 publisher = pubsub_v1.PublisherClient()
 
-topics = [
-    "send-class-email",
-    "send-new-order-admin-email",
-    "send-teacher-referal-admin-email",
-    "send-student-teacher-notification-email",
-    "send-help-queue-email"
-]
+# topics = [
+#     "send-class-email",
+#     "send-new-order-admin-email",
+#     "send-teacher-referal-admin-email",
+#     "send-student-teacher-notification-email",
+#     "send-help-queue-email"
+# ]
 
-for topic_name in topics:
-    topic_path = publisher.topic_path(project_id, topic_name)
-    try:
-        publisher.get_topic(request={"topic": topic_path})
-        print(f"Topic exists: {topic_name}")
-    except:
-        publisher.create_topic(request={"name": topic_path})
-        print(f"Created topic: {topic_name}")
+# for topic_name in topics:
+#     topic_path = publisher.topic_path(project_id, topic_name)
+#     try:
+#         publisher.get_topic(request={"topic": topic_path})
+#         print(f"Topic exists: {topic_name}")
+#     except:
+#         publisher.create_topic(request={"name": topic_path})
+#         print(f"Created topic: {topic_name}")
 
 # This route builds and sends the email dynamically on request
 @mail_bp.route('/send-hello-email', methods=['GET'])
@@ -793,6 +793,7 @@ def sendHelpQueueJoinEmailToStudent(studentName: str, studentEmail: str, zoomLin
     """
     Send email to student when they join the help queue
     """
+    logging.info(f"Sending help queue email to student {studentEmail} at position {position}")
     try:
         html_content = f"""
         <div style="font-family: sans-serif; background-color: #f9f9f9; padding: 30px;">
@@ -838,6 +839,7 @@ def sendHelpQueueJoinEmailToTeacher(teacherEmail: str, teacherName: str, student
     """
     Send email to teacher when a student joins their help queue
     """
+    logging.info(f"Sending help queue email to teacher {teacherEmail} about student {studentName} at position {position}")
     try:
         description_html = f"<p style='color: #555;'><strong>Beskrivelse:</strong> {description}</p>" if description else ""
 
@@ -883,6 +885,119 @@ def sendHelpQueueJoinEmailToTeacher(teacherEmail: str, teacherName: str, student
 
     except Exception as e:
         print(f"❌ Failed to send help queue teacher email to {teacherEmail}: {e}")
+        raise e
+
+
+def sendHelpQueueCompletionEmailToStudent(studentName: str, studentEmail: str, teacherName: str, subject: str, sessionDuration: str, sessionDate: str):
+    """
+    Send thank you email to student after completing a free tutoring session
+    """
+    try:
+        html_content = f"""
+        <div style="font-family: sans-serif; background-color: #f9f9f9; padding: 30px;">
+            <h1>Takk for at du brukte gratis leksehjelp!</h1>
+            <div style="background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                <p style="font-size: 16px;"><strong>Hei {studentName}!</strong></p>
+                <br/>
+                <p style="color: #555;">
+                    Takk for at du deltok i vår gratis leksehjelp! Vi håper du fikk den hjelpen du trengte.
+                </p>
+                <br/>
+                <p><strong>Oppsummering av økten:</strong></p>
+                <ul style="color: #555;">
+                    <li><strong>Lærer:</strong> {teacherName}</li>
+                    <li><strong>Emne:</strong> {subject}</li>
+                    <li><strong>Varighet:</strong> {sessionDuration}</li>
+                    <li><strong>Dato:</strong> {sessionDate}</li>
+                </ul>
+                <br/>
+                <div style="background-color: #e0f2fe; border: 2px solid #0284c7; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                    <h3 style="color: #0c4a6e; margin-top: 0;">Trenger du mer hjelp?</h3>
+                    <p style="color: #0c4a6e;">
+                        Dersom du ønsker mer omfattende og personlig tilpasset hjelp, kan du bestille privatundervisning med våre dyktige lærere.
+                    </p>
+                    <a href="https://enkellaering.no/bestill" style="display:inline-block; margin-top: 15px; background-color:#0284c7; color:white; padding:12px 24px; border-radius:5px; text-decoration:none; font-weight: bold;">
+                        Bestill privatundervisning
+                    </a>
+                </div>
+                <br/>
+                <p style="color: #777; font-size: 14px;">
+                    Vi gleder oss til å hjelpe deg igjen!
+                </p>
+            </div>
+        </div>
+        """
+
+        response = resend.Emails.send({
+            "from": FROM_EMAIL,
+            "to": studentEmail,
+            "subject": "Takk for at du brukte gratis leksehjelp!",
+            "html": html_content
+        })
+
+        print(f"✅ Help queue completion email sent to {studentEmail}")
+        return response
+
+    except Exception as e:
+        print(f"❌ Failed to send help queue completion email to {studentEmail}: {e}")
+        raise e
+
+
+def sendHelpQueueNoShowEmailToStudent(studentName: str, studentEmail: str, teacherName: str, subject: str, sessionDate: str):
+    """
+    Send email to student when they didn't show up for free tutoring session
+    """
+    try:
+        html_content = f"""
+        <div style="font-family: sans-serif; background-color: #f9f9f9; padding: 30px;">
+            <h1>Vi savnet deg i gratis leksehjelpen</h1>
+            <div style="background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                <p style="font-size: 16px;"><strong>Hei {studentName}!</strong></p>
+                <br/>
+                <p style="color: #555;">
+                    Vi la merke til at du ikke møtte opp til den gratis leksehjelpen du var registrert for.
+                </p>
+                <br/>
+                <p><strong>Din registrerte økt:</strong></p>
+                <ul style="color: #555;">
+                    <li><strong>Lærer:</strong> {teacherName}</li>
+                    <li><strong>Emne:</strong> {subject}</li>
+                    <li><strong>Dato:</strong> {sessionDate}</li>
+                </ul>
+                <br/>
+                <p style="color: #555;">
+                    Ingen problem! Vi håper du prøver igjen en annen gang. Gratis leksehjelp er tilgjengelig på bestemte tidspunkter.
+                </p>
+                <br/>
+                <div style="background-color: #e0f2fe; border: 2px solid #0284c7; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                    <h3 style="color: #0c4a6e; margin-top: 0;">Få hjelp når DU trenger det</h3>
+                    <p style="color: #0c4a6e;">
+                        Med privatundervisning får du fleksible timer som passer inn i din timeplan, slik at du aldri går glipp av hjelpen du trenger.
+                    </p>
+                    <a href="https://enkellaering.no/bestill" style="display:inline-block; margin-top: 15px; background-color:#0284c7; color:white; padding:12px 24px; border-radius:5px; text-decoration:none; font-weight: bold;">
+                        Bestill privatundervisning
+                    </a>
+                </div>
+                <br/>
+                <p style="color: #777; font-size: 14px;">
+                    Vi håper å se deg snart!
+                </p>
+            </div>
+        </div>
+        """
+
+        response = resend.Emails.send({
+            "from": FROM_EMAIL,
+            "to": studentEmail,
+            "subject": "Vi savnet deg i gratis leksehjelpen",
+            "html": html_content
+        })
+
+        print(f"✅ Help queue no-show email sent to {studentEmail}")
+        return response
+
+    except Exception as e:
+        print(f"❌ Failed to send help queue no-show email to {studentEmail}: {e}")
         raise e
 
 
@@ -1233,5 +1348,83 @@ def send_help_queue_email_pubsub():
 
     except Exception as e:
         logging.exception("Failed to process Pub/Sub message for help queue email")
+        # Return 500 so Pub/Sub will retry
+        return "Error", 500
+
+
+@mail_bp.route('/pubsub/send-help-queue-completion-email', methods=["POST"])
+def send_help_queue_completion_email_pubsub():
+    """
+    Pub/Sub subscriber endpoint to send completion emails for help queue sessions.
+    Handles both 'completed' and 'no_show' completion types.
+    """
+    envelope = request.get_json()
+    if not envelope or "message" not in envelope:
+        logging.error("Bad Request: No message in Pub/Sub envelope")
+        return "Bad Request", 400
+
+    try:
+        # Decode the Pub/Sub message
+        payload = base64.b64decode(envelope["message"]["data"]).decode("utf-8")
+        data = json.loads(payload)
+
+        # Extract data from message
+        completion_type = data.get("completion_type")
+        student_name = data.get("student_name")
+        student_email = data.get("student_email")
+        teacher_name = data.get("teacher_name")
+        subject = data.get("subject")
+        session_duration = data.get("session_duration")
+        session_date = data.get("session_date")
+
+        if not all([completion_type, student_name, teacher_name, subject, session_date]):
+            logging.error("Missing required fields in Pub/Sub message for help queue completion email")
+            return "Bad Request: Missing required fields", 400
+
+        # Only send email if student provided an email address
+        if student_email:
+            try:
+                if completion_type == "completed":
+                    # Send thank you email for completed session
+                    if not session_duration:
+                        logging.warning(f"No session duration provided for completed session, student: {student_email}")
+                        session_duration = "Ukjent varighet"
+
+                    sendHelpQueueCompletionEmailToStudent(
+                        studentName=student_name,
+                        studentEmail=student_email,
+                        teacherName=teacher_name,
+                        subject=subject,
+                        sessionDuration=session_duration,
+                        sessionDate=session_date
+                    )
+                    logging.info(f"Successfully sent help queue completion email to student: {student_email}")
+
+                elif completion_type == "no_show":
+                    # Send sorry email for no-show
+                    sendHelpQueueNoShowEmailToStudent(
+                        studentName=student_name,
+                        studentEmail=student_email,
+                        teacherName=teacher_name,
+                        subject=subject,
+                        sessionDate=session_date
+                    )
+                    logging.info(f"Successfully sent help queue no-show email to student: {student_email}")
+
+                else:
+                    logging.error(f"Unknown completion type: {completion_type}")
+                    return "Bad Request: Unknown completion type", 400
+
+            except Exception as e:
+                logging.error(f"Failed to send completion email to student {student_email}: {e}")
+                # Return error so Pub/Sub will retry
+                return "Error", 500
+        else:
+            logging.info(f"No student email provided for {completion_type} session, skipping email notification")
+
+        return "OK", 200
+
+    except Exception as e:
+        logging.exception("Failed to process Pub/Sub message for help queue completion email")
         # Return 500 so Pub/Sub will retry
         return "Error", 500

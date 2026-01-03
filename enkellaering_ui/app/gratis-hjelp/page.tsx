@@ -58,13 +58,19 @@ export default function FreeHelpPage() {
   useEffect(() => {
     if (queueId) {
       fetchPosition()
+
+      // Stop polling if status is completed or no_show
+      if (position?.status === 'completed' || position?.status === 'no_show') {
+        return
+      }
+
       const interval = setInterval(() => {
         fetchPosition()
       }, 5000) // Poll every 5 seconds
 
       return () => clearInterval(interval)
     }
-  }, [queueId])
+  }, [queueId, position?.status])
 
   async function fetchActiveSessions() {
     try {
@@ -195,6 +201,70 @@ export default function FreeHelpPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Show completion screen for completed or no_show status
+  if (queueId && position && (position.status === 'completed' || position.status === 'no_show')) {
+    const isCompleted = position.status === 'completed'
+
+    return (
+      <div className="flex flex-col items-center justify-center w-full min-h-screen bg-slate-200 dark:bg-slate-900 p-4">
+        <div className="w-full md:w-4/5 max-w-2xl">
+          <Card className="bg-white dark:bg-black rounded-lg">
+            <CardHeader>
+              <CardTitle className="text-2xl text-neutral-800 dark:text-neutral-200">
+                {isCompleted ? '✅ Takk for at du brukte gratis leksehjelp!' : '😔 Vi savnet deg!'}
+              </CardTitle>
+              <CardDescription>
+                {isCompleted
+                  ? 'Vi håper du fikk den hjelpen du trengte!'
+                  : 'Du ble markert som ikke møtt opp til økten.'}
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent className="space-y-4">
+              <div className="bg-slate-100 dark:bg-slate-800 rounded-lg p-4 space-y-2">
+                <p className="text-neutral-800 dark:text-neutral-200">
+                  <strong>Emne:</strong> {formData.subject}
+                </p>
+                {position.completed_at && (
+                  <p className="text-neutral-600 dark:text-neutral-400 text-sm">
+                    Fullført: {new Date(position.completed_at).toLocaleString('no-NO')}
+                  </p>
+                )}
+              </div>
+
+              {/* CTA for private tutoring */}
+              <div className="bg-blue-50 dark:bg-blue-900 border-2 border-blue-300 dark:border-blue-700 rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-neutral-800 dark:text-neutral-200 mb-2">
+                  Trenger du mer hjelp?
+                </h3>
+                <p className="text-neutral-600 dark:text-neutral-400 mb-4">
+                  {isCompleted
+                    ? 'Dersom du ønsker mer omfattende og personlig tilpasset hjelp, kan du bestille privatundervisning med våre dyktige lærere.'
+                    : 'Med privatundervisning får du fleksible timer som passer inn i din timeplan, slik at du aldri går glipp av hjelpen du trenger.'}
+                </p>
+                <Link
+                  href="/bestill"
+                  className="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-md transition-colors"
+                >
+                  Bestill privatundervisning
+                </Link>
+              </div>
+
+              {/* Button to join queue again */}
+              <Button
+                onClick={handleLeaveQueue}
+                className="w-full"
+                variant="outline"
+              >
+                Bli med i køen igjen
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
   }
 
   if (queueId) {

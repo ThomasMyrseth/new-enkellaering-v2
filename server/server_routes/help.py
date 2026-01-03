@@ -2,6 +2,10 @@ from flask import Blueprint, request, jsonify
 import logging
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
+from google.cloud import pubsub_v1
+import os
+import json
+from babel.dates import format_datetime
 
 from .config import token_required
 from db.gets import (
@@ -261,6 +265,72 @@ def complete_student(user_id, queue_id):
     """Teacher: Mark student as completed"""
     try:
         update_queue_status(queue_id, 'completed')
+
+        # Publish completion email to pub/sub
+        try:
+            # Get queue position data which includes teacher info
+            position_data = get_queue_position(queue_id)
+
+            if not position_data:
+                logging.warning(f"Queue entry not found for queue_id: {queue_id}")
+            else:
+                # Calculate session duration
+                session_duration = "Ukjent varighet"
+                if position_data.get('completed_at') and position_data.get('created_at'):
+                    try:
+                        created = datetime.fromisoformat(position_data['created_at'].replace('Z', '+00:00'))
+                        completed = datetime.fromisoformat(position_data['completed_at'].replace('Z', '+00:00'))
+                        duration_minutes = int((completed - created).total_seconds() / 60)
+                        session_duration = f"{duration_minutes} minutter"
+                    except Exception as e:
+                        logging.error(f"Failed to calculate duration: {e}")
+
+                # Format session date
+                session_date_formatted = position_data['created_at']
+                try:
+                    dt = datetime.fromisoformat(position_data['created_at'].replace('Z', '+00:00'))
+                    local_zone = ZoneInfo("Europe/Oslo")
+                    dt = dt.astimezone(local_zone)
+                    session_date_formatted = format_datetime(
+                        dt,
+                        "EEEE dd. MMMM yyyy, 'kl.' HH:mm",
+                        locale="nb"
+                    )
+                except Exception as e:
+                    logging.error(f"Failed to format date: {e}")
+
+                # Get teacher name from position data
+                teacher_name = "Lærer"  # Default
+                if position_data.get('teachers'):
+                    teacher_name = f"{position_data['teachers'].get('firstname', '')} {position_data['teachers'].get('lastname', '')}".strip()
+
+                # Publish to pub/sub
+                project_id = os.getenv("GCP_PROJECT_ID")
+                if project_id:
+                    publisher = pubsub_v1.PublisherClient()
+                    topic_path = publisher.topic_path(project_id, "send-help-queue-completion-email")
+
+                    message_data = {
+                        "completion_type": "completed",
+                        "student_name": position_data['student_name'],
+                        "student_email": position_data.get('student_email'),
+                        "teacher_name": teacher_name,
+                        "subject": position_data['subject'],
+                        "session_duration": session_duration,
+                        "session_date": session_date_formatted
+                    }
+
+                    message_json = json.dumps(message_data)
+                    message_bytes = message_json.encode("utf-8")
+
+                    publisher.publish(topic_path, message_bytes)
+                    logging.info(f"Published completion email for queue_id {queue_id}")
+                else:
+                    logging.warning("GCP_PROJECT_ID not set, skipping pub/sub publish")
+        except Exception as e:
+            logging.error(f"Failed to publish completion email: {e}")
+            # Don't fail the request if email fails
+
         return jsonify({"message": "Student fullført"}), 200
     except Exception as e:
         logging.exception(f"Failed to complete student {queue_id}")
@@ -273,6 +343,61 @@ def mark_no_show(user_id, queue_id):
     """Teacher: Mark student as no-show"""
     try:
         update_queue_status(queue_id, 'no_show')
+
+        # Publish no-show email to pub/sub
+        try:
+            # Get queue position data which includes teacher info
+            position_data = get_queue_position(queue_id)
+
+            if not position_data:
+                logging.warning(f"Queue entry not found for queue_id: {queue_id}")
+            else:
+                # Format session date
+                session_date_formatted = position_data['created_at']
+                try:
+                    dt = datetime.fromisoformat(position_data['created_at'].replace('Z', '+00:00'))
+                    local_zone = ZoneInfo("Europe/Oslo")
+                    dt = dt.astimezone(local_zone)
+                    session_date_formatted = format_datetime(
+                        dt,
+                        "EEEE dd. MMMM yyyy, 'kl.' HH:mm",
+                        locale="nb"
+                    )
+                except Exception as e:
+                    logging.error(f"Failed to format date: {e}")
+
+                # Get teacher name from position data
+                teacher_name = "Lærer"  # Default
+                if position_data.get('teachers'):
+                    teacher_name = f"{position_data['teachers'].get('firstname', '')} {position_data['teachers'].get('lastname', '')}".strip()
+
+                # Publish to pub/sub
+                project_id = os.getenv("GCP_PROJECT_ID")
+                if project_id:
+                    publisher = pubsub_v1.PublisherClient()
+                    topic_path = publisher.topic_path(project_id, "send-help-queue-completion-email")
+
+                    message_data = {
+                        "completion_type": "no_show",
+                        "student_name": position_data['student_name'],
+                        "student_email": position_data.get('student_email'),
+                        "teacher_name": teacher_name,
+                        "subject": position_data['subject'],
+                        "session_duration": None,  # Not applicable for no-show
+                        "session_date": session_date_formatted
+                    }
+
+                    message_json = json.dumps(message_data)
+                    message_bytes = message_json.encode("utf-8")
+
+                    publisher.publish(topic_path, message_bytes)
+                    logging.info(f"Published no-show email for queue_id {queue_id}")
+                else:
+                    logging.warning("GCP_PROJECT_ID not set, skipping pub/sub publish")
+        except Exception as e:
+            logging.error(f"Failed to publish no-show email: {e}")
+            # Don't fail the request if email fails
+
         return jsonify({"message": "Student markert som ikke møtt"}), 200
     except Exception as e:
         logging.exception(f"Failed to mark no-show {queue_id}")
