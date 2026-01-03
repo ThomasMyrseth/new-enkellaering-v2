@@ -905,9 +905,7 @@ def sendHelpQueueCompletionEmailToStudent(studentName: str, studentEmail: str, t
                 <br/>
                 <p><strong>Oppsummering av økten:</strong></p>
                 <ul style="color: #555;">
-                    <li><strong>Lærer:</strong> {teacherName}</li>
                     <li><strong>Emne:</strong> {subject}</li>
-                    <li><strong>Varighet:</strong> {sessionDuration}</li>
                     <li><strong>Dato:</strong> {sessionDate}</li>
                 </ul>
                 <br/>
@@ -960,7 +958,6 @@ def sendHelpQueueNoShowEmailToStudent(studentName: str, studentEmail: str, teach
                 <br/>
                 <p><strong>Din registrerte økt:</strong></p>
                 <ul style="color: #555;">
-                    <li><strong>Lærer:</strong> {teacherName}</li>
                     <li><strong>Emne:</strong> {subject}</li>
                     <li><strong>Dato:</strong> {sessionDate}</li>
                 </ul>
