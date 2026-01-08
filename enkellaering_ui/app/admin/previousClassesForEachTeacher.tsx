@@ -606,6 +606,11 @@ export function PreviousClassesForEachTeacher() {
                                                 return null;
                                             }
 
+                                            //skip inactive students
+                                            if (!student.is_active) {
+                                                return null;
+                                            }
+
                                             return (<>
                                             <AccordionItem value={index.toString()} key={index}>
                                                 <AccordionTrigger>
