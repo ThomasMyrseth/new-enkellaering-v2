@@ -39,6 +39,7 @@ Thumbs.db
 venv/
 
 google_service_account.json
+firebase_service_account.json
 
 
 # Ignore Python cache files
