@@ -2,6 +2,8 @@ import os
 from flask import Blueprint, jsonify, request
 from dotenv import load_dotenv
 import resend
+
+from server.db.gets import get_all_admins
 load_dotenv()
 import logging
 
@@ -74,11 +76,18 @@ def uploadJobApplicationRoute():
         logging.error(f"Error sending email to job applicant: {e}")
         return jsonify({"error": "Failed to send application"}), 500
 
+    #get admin emails
+    try:
+        admins = get_all_admins()
+        admin_emails = [admin['email'] for admin in admins if 'email' in admin]
+    except Exception as e:
+        logging.error(f"Error fetching admin emails: {e}")
+        return jsonify({"error": "Failed to notify admin"}), 500
 
     try:
         params: resend.Emails.SendParams = {
             "from": FROM_EMAIL,
-            "to": ["thomas@enkellaering.no", "karolinenagyaasheim@gmail.com", "karsten@enkellaering.no"],
+            "to": admin_emails,
             "subject": f"Ny jobbsøknad fra {firstname} {lastname}",
             "html": f"""
                 <div style="font-family: sans-serif; background-color: #f9f9f9; padding: 30px;">
