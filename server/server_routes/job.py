@@ -3,7 +3,7 @@ from flask import Blueprint, jsonify, request
 from dotenv import load_dotenv
 import resend
 
-from server.db.gets import get_all_admins
+from db.gets import get_all_admins
 load_dotenv()
 import logging
 
