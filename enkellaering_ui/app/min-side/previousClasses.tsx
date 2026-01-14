@@ -20,6 +20,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Student, ClassesJoinTeacher } from "../admin/types";
+import { toast } from "sonner";
 
 export function PreviousClasses({student} : {student : Student}) {     
     const token = localStorage.getItem('token') 
