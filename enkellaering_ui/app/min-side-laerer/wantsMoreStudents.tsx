@@ -68,5 +68,7 @@ const setWantMoreStudents = async (p :boolean, d: boolean) => {
         console.log(`Error setting want more students: ${response.statusText}`)
     }
 
-    toast("Oppdatert dine undervisningspreferanser");
+    if (response.ok) {
+          toast("Oppdatert dine undervisningspreferanser");
+    }
 };
