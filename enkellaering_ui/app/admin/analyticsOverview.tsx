@@ -6,6 +6,7 @@ import MetricsBentoGrid from "./metricsBentoGrid";
 import LTVDistributionChart from "./ltvDistributionChart";
 import RevenueBreakdowns from "./revenueBreakdowns";
 import { AnalyticsDashboard } from "./types";
+import { toast } from "sonner";
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
 
@@ -34,7 +35,7 @@ export default function AnalyticsOverview() {
 
                 if (!response.ok) {
                     if (response.status === 403) {
-                        alert('You are not authorized to view analytics');
+                        toast.error('You are not authorized to view analytics');
                         router.push('/');
                         return;
                     }

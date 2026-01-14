@@ -445,12 +445,12 @@ const InvoiceStudentPopover = ( {student, classes, teacherStudents} : {student: 
         })
 
         if (res.status==401) {
-            alert("Alle timer er allerede satt som fakturert!")
+            toast.error("Alle timer er allerede satt som fakturert!")
         }
 
         else if (!res.ok){
             setSuccess(false)
-            alert("En feil har skjedd. Kunne ikke sette timene til fakturert!")
+            toast.error("En feil har skjedd. Kunne ikke sette timene til fakturert!")
         }
 
         else {
@@ -468,7 +468,7 @@ const InvoiceStudentPopover = ( {student, classes, teacherStudents} : {student: 
                 setClickedCopy(true)
             }).catch(err => {
                 setClickedCopy(false)
-                alert("error copying text")
+                toast.error("error copying text")
                 console.error("Failed to copy text: ", err);
             });
         }
@@ -576,10 +576,10 @@ const handleSetInactive = async (student: Student) => {
             throw new Error(`Error: ${response.status} - ${response.statusText}`);
         }
 
-        alert(`${student.firstname_parent} ${student.lastname_parent} er satt til inaktiv`)
+        toast.success(`${student.firstname_parent} ${student.lastname_parent} er satt til inaktiv`)
 
     } catch (error) {
-        alert(`Failed to set student inactive: ${error}`);
+        toast.error(`Failed to set student inactive: ${error}`);
     }
 }
 const SetStudentInactive = ({ student }: { student: Student }) => {
@@ -645,11 +645,11 @@ const saveNotes = async ( notes :string, studentUserId :string) => {
             throw new Error("An error occurred. Please try again.");
         } 
 
-        toast("Notater lagret")        
+        toast.error("Notater lagret")        
         return true
     } catch (error) {
         console.error("Error uploading notes:", error);
-        alert("An error occurred. Please try again.");
+        toast.error("An error occurred. Please try again.");
     }
 }
 
@@ -674,9 +674,9 @@ const handleRemoveTeacher = async (student: Student, teacher: Teacher) => {
         if (!response.ok) {
             throw new Error(`Error: ${response.status} - ${response.statusText}`);
         }
-        toast(`${teacher.firstname} ${teacher.lastname} ble fjernet fra ${student.firstname_parent} ${student.lastname_parent}`);
+        toast.success(`${teacher.firstname} ${teacher.lastname} ble fjernet fra ${student.firstname_parent} ${student.lastname_parent}`);
     } catch (error) {
-        alert(`Fjerning mislyktes: ${error}`);
+        toast.error(`Fjerning mislyktes: ${error}`);
     }
 };
 
@@ -700,9 +700,9 @@ const handleUpdateTravelPay = async (travelPayToTeacher: number, travelPayFromSt
         if (!response.ok) {
             throw new Error(`Error: ${response.status} - ${response.statusText}`);
         }
-        toast("Reisetillegg oppdatert");
+        toast.success("Reisetillegg oppdatert");
     } catch (error) {
-        alert(`Oppdatering mislyktes: ${error}`);
+        toast.error(`Oppdatering mislyktes: ${error}`);
     }
 };
 
@@ -758,7 +758,7 @@ async function getClasses(token :string) {
     });
 
     if(!response.ok) {
-        alert("En feil har skjedd, prøv igjen");
+        toast.error("En feil har skjedd, prøv igjen");
         return [];
     }
 
@@ -775,7 +775,7 @@ async function getStudents(token :string) {
     });
 
     if (!response.ok) {
-        alert("Error fetching students " + response.statusText);
+        toast.error("Error fetching students " + response.statusText);
         return [];
     }
 
@@ -783,7 +783,7 @@ async function getStudents(token :string) {
     const students: Student[] = data.students;
 
     if (students.length === 0) {
-        alert("No students found");
+        toast.error("No students found");
         console.log("No students found");
         return [];
     } else {
@@ -800,7 +800,7 @@ async function getTeachers(token :string) {
     });
 
     if (!response.ok) {
-        alert("Error fetching teachers and students " + response.statusText);
+        toast.error("Error fetching teachers and students " + response.statusText);
         return [];
     }
 
@@ -808,8 +808,8 @@ async function getTeachers(token :string) {
     const teachers: Teacher[] = data.teachers;
 
     if (teachers.length === 0) {
-        alert("No students found");
-        console.log("No students found");
+        toast.error("No teachers found");
+        console.log("No teachers found");
         return [];
     } else {
         return teachers;
@@ -825,7 +825,7 @@ async function getTeacherStudent(token: string) {
     });
 
     if (!response.ok) {
-        alert("Error fetching teacher-student relationships: " + response.statusText);
+        toast.error("Error fetching teacher-student relationships: " + response.statusText);
         return [];
     }
 
@@ -833,7 +833,7 @@ async function getTeacherStudent(token: string) {
     const teacherStudent: TeacherStudent[] = data.teacher_student;
 
     if (!teacherStudent || teacherStudent.length === 0) {
-        alert("Ingen tilkoblinger mellom elev og lærer funnet (teacherStudent)");
+        toast.error("Ingen tilkoblinger mellom elev og lærer funnet (teacherStudent)");
         console.log("No teacher-student relationships found");
         return [];
     }
@@ -862,9 +862,9 @@ const assignTeacher = async (
     });
   
     if (!response.ok) {
-      alert("Error while assigning teacher to student");
+      toast.error("Error while assigning teacher to student");
     } else {
-      toast("Læreren er blitt tildelt til eleven");
+      toast.success("Læreren er blitt tildelt til eleven");
     }
 };
 
@@ -897,7 +897,7 @@ const SetTeacherCombobox = ({
   
     const handleSelectTeacher = (userId: string | null) => {
         if (!userId) {
-            alert('Velg en lærer dumbasss')
+            toast.error('Velg en lærer')
             return
         }
         setTeacherUserId(userId);

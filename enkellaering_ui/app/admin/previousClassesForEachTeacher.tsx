@@ -262,7 +262,7 @@ export function PreviousClassesForEachTeacher() {
             })
 
             if(!response.ok) {
-                alert("En feil har skjedd, prøv igjen")
+                toast.error("En feil har skjedd, prøv igjen")
                 return null;
             }
 
@@ -288,7 +288,7 @@ export function PreviousClassesForEachTeacher() {
             })
 
             if (!response.ok) {
-                alert("Error fetching teachers " + response.statusText)
+                toast.error("Error fetching teachers " + response.statusText)
                 setTeachers([])
                 return null
             }
@@ -297,7 +297,7 @@ export function PreviousClassesForEachTeacher() {
             const teachers :Teacher[] = data.teachers
 
             if (teachers.length===0) {
-                alert("No teachers found")
+                toast.error("No teachers found")
                 console.log("No teachers found")
                 setTeachers([])
                 return null
@@ -331,7 +331,7 @@ export function PreviousClassesForEachTeacher() {
             })
 
             if (!response.ok) {
-                alert("Error fetching students " + response.statusText)
+                toast.error("Error fetching students " + response.statusText)
                 setStudents([])
                 return null
             }
@@ -340,7 +340,7 @@ export function PreviousClassesForEachTeacher() {
             const students :Student[] = data.students
 
             if (students.length===0) {
-                alert("No students found")
+                toast.error("No students found")
                 console.log("No students found")
                 setStudents([])
                 return null
@@ -360,7 +360,7 @@ export function PreviousClassesForEachTeacher() {
                 }
             })
             if (!response.ok) {
-                alert("Error fetching teacher student relation " + response.statusText)
+                toast.error("Error fetching teacher student relation " + response.statusText)
                 setTeacherStudents([])
                 return null
             }
@@ -402,7 +402,7 @@ export function PreviousClassesForEachTeacher() {
     useEffect( () => {
         
         if (!classes || !teachers) {
-            alert("Teachers or classes not found")
+            toast.error("Teachers or classes not found")
         }
 
         const classesByTeacher :classesJoinTeacher[] = []
@@ -844,12 +844,12 @@ const PayTeacherPopover = ( {teacher, classes, teacherStudents} : {teacher: Teac
         })
 
         if (res.status==401) {
-            alert("Alle timer er allerede satt som betalt!")
+            toast.error("Alle timer er allerede satt som betalt!")
         }
 
         else if (!res.ok){
             setSuccess(false)
-            alert("En feil har skjedd. Kunne ikke sette timene til betalt!")
+            toast.error("En feil har skjedd. Kunne ikke sette timene til betalt!")
         }
 
         else {
@@ -867,7 +867,7 @@ const PayTeacherPopover = ( {teacher, classes, teacherStudents} : {teacher: Teac
                 setClickedCopy(true)
             }).catch(err => {
                 setClickedCopy(false)
-                alert("error copying text")
+                toast.error("error copying text")
                 console.error("Failed to copy text: ", err);
             });
         }
@@ -988,11 +988,11 @@ const saveNotes = async ( notes :string, teacherUserId :string) => {
             throw new Error("An error occurred. Please try again.");
         } 
 
-        toast("Notater lagret")
+        toast.success("Notater lagret")
         return true
     } catch (error) {
         console.error("Error uploading notes:", error);
-        alert("An error occurred. Please try again.");
+        toast.error("An error occurred. Please try again.");
     }
 }
 
@@ -1015,10 +1015,10 @@ const handleRetireTeacher = async (teacher: Teacher) => {
             throw new Error(`Error: ${response.status} - ${response.statusText}`);
         }
 
-        toast(`${teacher.firstname} ${teacher.lastname} har blitt pensjonert`)
+        toast.success(`${teacher.firstname} ${teacher.lastname} har blitt pensjonert`)
 
     } catch (error) {
-        alert(`Failed to retire teacher: ${error}`);
+        toast.error(`Failed to retire teacher: ${error}`);
     }
 }
 

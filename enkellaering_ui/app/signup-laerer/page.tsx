@@ -125,11 +125,11 @@ export default function SignupForm() {
         
       } else {
         const errorData = await response.json();
-        alert(`Signup failed: ${errorData.error}`);
+        toast.error(`Signup failed: ${errorData.error}`);
       }
     } catch (error) {
       console.error("Signup error:", error);
-      alert(`An unexpected error occurred. Please try again. ${error}`);
+      toast.error(`An unexpected error occurred. Please try again. ${error}`);
       setIsSendDisabled(false)
     }
   };
@@ -263,6 +263,7 @@ import {
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { Button } from "@/components/ui/button";
 import { event } from "@/components/facebookPixel/fpixel";
+import { toast } from "sonner";
 
 const cities :string[] = ['Oslo', 'Trondheim', 'Annet']
 

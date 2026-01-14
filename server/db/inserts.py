@@ -270,7 +270,7 @@ def insert_new_student_order(
         'preferred_location': location,
         'order_comments': comments,
         'created_at': datetime.now(timezone.utc).isoformat(),
-        'hidden': 'FALSE'
+        'hidden': False
     }
     supabase.table('teacher_student').insert(data).execute()
     return True

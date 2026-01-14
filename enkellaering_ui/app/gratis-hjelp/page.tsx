@@ -175,7 +175,7 @@ export default function FreeHelpPage() {
 
       if (!response.ok) {
         const error = await response.json()
-        alert(error.error || "Noe gikk galt")
+        toast.error(error.error || "Noe gikk galt")
         setLoading(false)
         return
       }
@@ -197,7 +197,7 @@ export default function FreeHelpPage() {
 
     } catch (error) {
       console.error("Failed to join queue:", error)
-      alert("Kunne ikke bli med i køen")
+      toast.error("Kunne ikke bli med i køen")
     } finally {
       setLoading(false)
     }

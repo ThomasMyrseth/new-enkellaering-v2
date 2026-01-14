@@ -26,7 +26,7 @@ export default function OrderCardsCarouselDemo() {
                 setOrders(o)
             }
             catch (error) {
-                alert(`Klarte ikke å hente inn dine nye bestillinger ${error}`)
+                toast.error(`Klarte ikke å hente inn dine nye bestillinger ${error}`)
             }
         }
         fetchOrders()

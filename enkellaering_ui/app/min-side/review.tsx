@@ -49,7 +49,7 @@ const LeaveReview = ({
 
       if (response.ok) {
         setSuccess(true);
-        toast('Takk for din omtale!')
+        toast.success('Takk for din omtale!')
       } else {
         const errorData = await response.json();
         setError(errorData.error || "Failed to submit review.");

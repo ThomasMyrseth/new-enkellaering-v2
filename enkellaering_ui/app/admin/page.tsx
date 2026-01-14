@@ -17,6 +17,7 @@ import { InactiveStudents } from "./inactiveStudents";
 import { ResignedTeachers } from "./resignedTeachers";
 import { TasksWorkflow } from "./tasksWorkflow";
 import { HelpAdminPanel } from "./helpAdmin";
+import { toast } from "sonner";
 
 
 
@@ -41,7 +42,7 @@ export default function AdminPage() {
           });
     
           if (!response.ok) {
-            alert("Failed to fetch teacher: " + response.statusText);
+            toast.error("Failed to fetch teacher: " + response.statusText);
             
             return false
           }

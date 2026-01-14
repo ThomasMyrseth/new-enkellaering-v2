@@ -31,10 +31,10 @@ export const DeleteClass = ({hasPaid, hasInvoiced, classId} : {hasPaid :boolean,
         const res = await deleteClass(classId)
 
         if (!res) {
-            alert("Error deleting class")
+            toast.error("Error deleting class")
         }
         if (res) {
-            toast("timen er slettet")
+            toast.success("timen er slettet")
         }
     }
     return (<>

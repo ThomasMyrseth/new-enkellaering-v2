@@ -76,7 +76,7 @@ export default function JobPage() {
     };
 
     if (files.length > 0 && files[0].type !== "application/pdf") {
-        alert("Kun PDF-filer er tillatt.");
+        toast.error("Kun PDF-filer er tillatt.");
         setFiles([]); // Clear the files if the type is not PDF
     }
 
@@ -85,7 +85,7 @@ export default function JobPage() {
       setIsDisabled(true);
 
       if (!firstname || !lastname || !email || !phone || !subject || !grades || files.length === 0) {
-            alert("Vennligst fyll ut alle feltene og last opp din CV.");
+            toast.error("Vennligst fyll ut alle feltene og last opp din CV.");
             setIsDisabled(false);
             return;
       }
@@ -103,11 +103,11 @@ export default function JobPage() {
         console.log("sending formdata to server url: ", `${BASEURL}/upload-job-application`);
         const res = await fetch(`${BASEURL}/upload-job-application`, { method: "POST", body: formData });
         if (!res.ok) {
-            alert("Det oppstod en feil ved innsending. Prøv igjen");
+            toast.error("Det oppstod en feil ved innsending. Prøv igjen");
             setIsDisabled(false);
             return;
         }
-        toast("Tusen takk! Vi har mottatt din søknad.")
+        toast.success("Tusen takk! Vi har mottatt din søknad.")
         setFirstname("");
         setLastname("");
         setEmail("");
@@ -117,7 +117,7 @@ export default function JobPage() {
         setFiles([]);
       } catch (error) {
         console.error(error);
-        alert("Det oppstod en nettverksfeil.");
+        toast.error("Det oppstod en nettverksfeil.");
       }
         setIsDisabled(false);
     };

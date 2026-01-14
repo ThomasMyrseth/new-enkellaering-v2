@@ -94,8 +94,8 @@ def set_student_to_active(student_user_id: str, admin_user_id: str):
 def toggle_want_more_students(physical: bool, digital: bool, teacher_user_id: str):
     """Toggle teacher's preferences for accepting new students"""
     supabase.table('teachers').update({
-        'digital_tutouring': str(digital),
-        'physical_tutouring': str(physical)
+        'digital_tutouring': digital,
+        'physical_tutouring': physical
     }).eq('user_id', teacher_user_id).execute()
 
 def update_student_notes(admin_user_id: str, student_user_id: str, notes: str):

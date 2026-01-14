@@ -16,6 +16,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea";
 import { event } from "@/components/facebookPixel/fpixel";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export default function SignupForm() {
   return (
@@ -149,12 +150,12 @@ function SignupFormContent() {
       } else {
         setIsSendDisabled(false)
         const errorData = await response.json();
-        alert(`Signup failed: ${errorData.error}`);
+        toast.error(`Signup failed: ${errorData.error}`);
       }
     } catch (error) {
       setIsSendDisabled(false)
       console.error("Signup error:", error);
-      alert("An unexpected error occurred. Please try again.");
+      toast.error("An unexpected error occurred. Please try again.");
     }
   };
 

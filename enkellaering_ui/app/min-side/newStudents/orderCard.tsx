@@ -79,13 +79,13 @@ export default function OrderCard({ order, handleUIDelete }: {order: TeacherOrde
         }),
       });
       if (!response.ok) {
-        alert("Error saving updates to order");
+        toast.error("Error saving updates to order");
         return;
       }
-      toast("Oppdateringer lagret");
+      toast.success("Oppdateringer lagret");
     } catch (error) {
       console.error("Error saving updates:", error);
-      alert("Error saving updates");
+      toast.error("Error saving updates");
     }
   };
 
@@ -110,13 +110,13 @@ export default function OrderCard({ order, handleUIDelete }: {order: TeacherOrde
         body: JSON.stringify({ row_id: order.order.row_id }),
       });
       if (!response.ok) {
-        alert("Error deleting order");
+        toast.error("Error deleting order");
         return;
       }
-      toast("Bestillingen er slettet");
+      toast.success("Bestillingen er slettet");
     } catch (error) {
       console.error("Error deleting order:", error);
-      alert("Error deleting order");
+      toast.error("Error deleting order");
     }
   };
 

@@ -61,14 +61,14 @@ export const DeleteQuiz = () => {
             });
 
             if (!res.ok) {
-                toast(`Failed to delete quiz ${res.statusText}`)
+                toast.error(`Failed to delete quiz ${res.statusText}`)
                 return
             }
 
-            toast("Quiz deleted successfully")
+            toast.success("Quiz deleted successfully")
             setQuizzes((prev) => prev.filter((quiz) => quiz.quiz_id !== quizId));
         } catch (err) {
-            toast(`Failed to delete quiz: ${err}`)
+            toast.error(`Failed to delete quiz: ${err}`)
             console.error(err);
         }
     };
