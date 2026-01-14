@@ -31,12 +31,12 @@ export function ProfileForm( {teacher} : {teacher : Teacher}) {
   // Simple form validation for required fields
   const validateForm = () => {
     if (!firstname.trim() || !lastname.trim() || !phone.trim()) {
-      toast("Fornavn, etternavn og telefon er påkrevd.");
+      toast.error("Fornavn, etternavn og telefon er påkrevd.");
       return false;
     }
     // Validate postal code if provided (expecting 4 digits)
     if (postalCode && postalCode.replace(/\s+/g, "").length !== 4) {
-      toast("Postkode må være 4 siffer.");
+      toast.error("Postkode må være 4 siffer.");
       return false;
     }
     return true;
@@ -69,15 +69,15 @@ export function ProfileForm( {teacher} : {teacher : Teacher}) {
         }),
       });
       if (response.ok) {
-        toast("Profilen ble oppdatert!");
+        toast.success("Profilen ble oppdatert!");
         // Optionally redirect or update UI here
       } else {
         const errorData = await response.json();
-        alert(`Oppdatering mislyktes: ${errorData.error}`);
+        toast.error(`Oppdatering mislyktes: ${errorData.error}`);
       }
     } catch (error) {
       console.error("Update profile error:", error);
-      alert("En uventet feil oppsto. Vennligst prøv igjen.");
+      toast.error("En uventet feil oppsto. Vennligst prøv igjen.");
     }
     setIsSendDisabled(false);
   };

@@ -64,11 +64,11 @@ const setWantMoreStudents = async (p :boolean, d: boolean) => {
     });
 
     if (!response.ok) {
-        alert("En feil skjedde når du satte om du ønsker flere elever eller ei");
+        toast.error("En feil skjedde når du satte om du ønsker flere elever eller ei");
         console.log(`Error setting want more students: ${response.statusText}`)
     }
 
     if (response.ok) {
-          toast("Oppdatert dine undervisningspreferanser");
+          toast.success("Oppdatert dine undervisningspreferanser");
     }
 };

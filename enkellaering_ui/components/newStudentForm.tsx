@@ -51,12 +51,12 @@ export default function NewStudentForm() {
 
         if (!response.ok || !response) {
             setErrorMessage(true)
-            alert("En feil har skjedd. Venligst prøv igjen!")
+            toast.error("En feil har skjedd. Venligst prøv igjen!")
         }
         else {
             setErrorMessage(false) //we have success
             setPhone('')
-            toast('Tusen takk! Vi ringer deg innen kort tid')
+            toast.success('Tusen takk! Vi ringer deg innen kort tid')
         }
         setIsDisabled(false)
     }

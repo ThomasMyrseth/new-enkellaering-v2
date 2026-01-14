@@ -48,7 +48,7 @@ export function NewStudentsWithoutTeacher() {
       })
 
       if (!response.ok) {
-        alert("Error fetching new students " + response.statusText)
+        toast.error("Error fetching new students " + response.statusText)
         return null
       }
 
@@ -175,9 +175,9 @@ const TeacherOrderRow = ({ order }: { order: StudentsWithoutTeacher }) => {
     })
 
     if (!response.ok) {
-      alert("Error while deleting new student")
+      toast.error("Error while deleting new student")
     } else {
-      toast("Eleven er slettet")
+      toast.success("Eleven er slettet")
     }
   }
 

@@ -46,7 +46,7 @@ export function NewStudentsWorkflow() {
             })
 
             if (!response.ok) {
-                alert("Error fetching new students " + response.statusText)
+                toast.error("Error fetching new students " + response.statusText)
                 return null
             }
 
@@ -245,11 +245,11 @@ function NewStudentRow({ ns }: { ns: NewStudent }) {
         })
 
         if (!response.ok) {
-            alert("Error while saving updates to new student")
+            toast.error("Error while saving updates to new student")
             return null;
         }
         else {
-            toast("Oppdateringer lagret")
+            toast.success("Oppdateringer lagret")
         }
         
     }
@@ -268,11 +268,11 @@ function NewStudentRow({ ns }: { ns: NewStudent }) {
         })
 
         if (!response.ok) {
-            alert("Error while deleting new student")
+            toast.error("Error while deleting new student")
             return null;
         }
         else {
-            toast("Eleven er slettet")
+            toast.success("Eleven er slettet")
         }
 
     }

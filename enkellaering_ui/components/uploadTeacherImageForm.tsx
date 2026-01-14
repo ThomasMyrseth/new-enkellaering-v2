@@ -66,7 +66,7 @@ export const FileUploadForm = ({firstname, lastname, title} : {firstname? :strin
             setSuccess(true);
             setFiles([]);
             setAboutMe("");
-            toast("Nydelig! Tekst og bilde er lastet opp. Sjekk ut om-oss")
+            toast.success("Nydelig! Tekst og bilde er lastet opp. Sjekk ut om-oss")
           }
         } catch (error) {
           console.error("Error uploading file:", error);

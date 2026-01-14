@@ -52,7 +52,7 @@ export function PreviousClasses({student} : {student : Student}) {
             })
 
             if(!response.ok) {
-                alert("En feil har skjedd, prøv igjen")
+                toast.error("En feil har skjedd, prøv igjen")
                 return null;
             }
 

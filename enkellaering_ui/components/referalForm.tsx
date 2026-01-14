@@ -67,13 +67,13 @@ export default function ReferalForm() {
         if (!response.ok) {
             setErrorMessage(true)
             setIsSendDisabled(false)
-            alert("En feil har skjedd. Venligst prøv igjen!")
+            toast.error("En feil har skjedd. Venligst prøv igjen!")
         }
         else {
             setErrorMessage(false) //we have success
             setIsSendDisabled(false)
             setReferalPhone('')
-            toast("Takk for at du vervet!")
+            toast.success("Takk for at du vervet!")
         }
     }
 

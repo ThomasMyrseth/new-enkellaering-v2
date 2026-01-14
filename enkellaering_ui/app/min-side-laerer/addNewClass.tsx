@@ -306,7 +306,7 @@ function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUse
         setIsSendButtonDisabled(true); // Prevent multiple clicks right away
 
         if (!teacher || !started_at || !ended_at || !comment || !selectedStudentUserIds) {
-            alert("Fyll ut alle felter");
+            toast.error("Fyll ut alle felter");
             setUploadSuccessfull(false);
             setIsSendButtonDisabled(false);
             return;
@@ -337,7 +337,7 @@ function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUse
 
     const uploadClass = async() => {
         if (!teacher || !started_at || !ended_at || !comment || !selectedStudentUserIds) {
-            alert("Alle felter må være utfylt");
+            toast.error("Alle felter må være utfylt");
             setUploadSuccessfull(false);
             return true;
         }
@@ -368,14 +368,14 @@ function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUse
             clearTimeout(timeoutId); // Clear timeout if request completes
 
             if (!response.ok) {
-                alert("En feil skjedde prøv igjen");
+                toast.error("En feil skjedde prøv igjen");
                 setUploadSuccessfull(false);
                 setIsSendButtonDisabled(false)
                 return true;
             } else {
                 setUploadSuccessfull(true);
                 setIsSendButtonDisabled(false);
-                toast("Ny time lastet opp");
+                toast.success("Ny time lastet opp");
                 return true;
             }
         } catch (error) {
@@ -384,10 +384,10 @@ function SendButton( {teacher, started_at, ended_at, comment, selectedStudentUse
             // Check if error is due to timeout
             if (error instanceof Error && error.name === 'AbortError') {
                 console.error("Request timed out after 30 seconds");
-                alert("Forespørselen tok for lang tid. Vennligst prøv igjen.");
+                toast.error("Forespørselen tok for lang tid. Vennligst prøv igjen.");
             } else {
                 console.error("Error uploading class:", error);
-                alert("En feil skjedde prøv igjen");
+                toast.error("En feil skjedde prøv igjen");
             }
 
             setUploadSuccessfull(false);

@@ -161,18 +161,18 @@ export function TeacherFocusCards() {
         }
         
         if (!orderedTeacher) {
-            alert('Klarte ikke å bestille lærer. Prøv igjen')
+            toast.error('Klarte ikke å bestille lærer. Prøv igjen')
             setDisableButton(false)
             return;
         }
 
         if(!comments) {
-            toast('Skriv om hva og hvilke fag du trenger hjelp med.')
+            toast.success('Skriv om hva og hvilke fag du trenger hjelp med.')
             return
         }
 
         if (wantPhysicalOrDigital===null) {
-            alert("Velg om dere ønsker digital eller fysisk undervisning")
+            toast.error("Velg om dere ønsker digital eller fysisk undervisning")
             return;
         }
         try {
@@ -182,7 +182,7 @@ export function TeacherFocusCards() {
         }
         catch {
             setDisableButton(false)
-            alert("Klarte ikke å bestille, prøv igjen.")
+            toast.error("Klarte ikke å bestille, prøv igjen.")
         }
     }
 

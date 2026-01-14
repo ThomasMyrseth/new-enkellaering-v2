@@ -18,6 +18,7 @@ import {
   
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
 import { Classes } from "./types";
+import { toast } from "sonner";
   
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
@@ -78,7 +79,7 @@ export function DailyRevenueChart() {
                 })
 
                 if (!response.ok) {
-                    alert("An error happened while fetching revenue")
+                    toast.error("An error happened while fetching revenue")
                 }
 
                 const data = await response.json()
@@ -88,7 +89,7 @@ export function DailyRevenueChart() {
 
             }
             catch {
-                alert("An error happened while fetching revenue")
+                toast.error("An error happened while fetching revenue")
             }
         }
         fetchRevenue()

@@ -28,7 +28,7 @@ export const ResignedTeachers = () => {
         async function fetchData() {
             const token = localStorage.getItem('token')
             if (!token) {
-                alert("Token not found")
+                toast.error("Token not found")
                 return
             }
             const t: Teacher[] =  await getTeachers(token)
@@ -133,10 +133,10 @@ const handleReactivateTeacher = async (teacher: Teacher) => {
             throw new Error(`Error: ${response.status} - ${response.statusText}`);
         }
 
-        toast(`${teacher.firstname} ${teacher.lastname} har blitt reaktivert`)
+        toast.success(`${teacher.firstname} ${teacher.lastname} har blitt reaktivert`)
 
     } catch (error) {
-        alert(`Failed to reactivate teacher: ${error}`);
+        toast.error(`Failed to reactivate teacher: ${error}`);
     }
 }
 
@@ -153,7 +153,7 @@ async function getTeachers(token :string) {
     });
 
     if (!response.ok) {
-        alert("Error fetching teachers " + response.statusText);
+        toast.error("Error fetching teachers " + response.statusText);
         return [];
     }
 
@@ -161,7 +161,7 @@ async function getTeachers(token :string) {
     const teachers: Teacher[] = data.teachers;
 
     if (teachers.length === 0) {
-        alert("No teachers found");
+        toast.error("No teachers found");
         console.log("No teachers found");
         return [];
     } else {

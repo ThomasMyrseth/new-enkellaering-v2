@@ -105,15 +105,15 @@ export function HelpAdminPanel({ token }: { token: string }) {
       })
 
       if (!response.ok) {
-        alert("Kunne ikke slette økten")
+        toast.error("Kunne ikke slette økten")
         return
       }
 
-      alert("Økten er slettet")
+      toast.success("Økten er slettet")
       fetchAllSessions()
     } catch (error) {
       console.error("Failed to delete session:", error)
-      alert("Kunne ikke slette økten")
+      toast.error("Kunne ikke slette økten")
     }
   }
 

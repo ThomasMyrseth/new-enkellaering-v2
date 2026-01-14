@@ -35,7 +35,7 @@ export const StudentsWithoutAnyTeachers = ({token, BASEURL} : {token :string, BA
       })
 
       if (!studentsResponse.ok) {
-        alert("Error fetching new students " + studentsResponse.statusText)
+        toast.error("Error fetching new students " + studentsResponse.statusText)
         return null
       }
 
@@ -110,14 +110,14 @@ export const StudentsWithoutAnyTeachers = ({token, BASEURL} : {token :string, BA
       })
 
       if (!response.ok) {
-        alert("Error while assigning teacher to student")
+        toast.error("Error while assigning teacher to student")
       } else {
-        toast("Læreren er blitt tildelt til eleven")
+        toast.success("Læreren er blitt tildelt til eleven")
         // Refresh the data
         window.location.reload()
       }
     } catch (error) {
-      alert(`Error assigning teacher: ${error}`)
+      toast.error(`Error assigning teacher: ${error}`)
     }
   }
 
@@ -229,7 +229,7 @@ const SetTeacherCombobox = ({
 
   const handleSelectTeacher = (userId: string | null) => {
     if (!userId) {
-      alert('Velg en lærer')
+      toast.error('Velg en lærer')
       return
     }
     setTeacherUserId(userId)
@@ -328,11 +328,11 @@ const StudentNotes = ({student, BASEURL, token} : {student : Student, BASEURL: s
         throw new Error("An error occurred. Please try again.")
       } 
 
-      toast("Notater lagret")        
+      toast.success("Notater lagret")        
       return true
     } catch (error) {
       console.error("Error uploading notes:", error)
-      alert("An error occurred. Please try again.")
+      toast.error("An error occurred. Please try again.")
     }
   }
 

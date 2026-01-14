@@ -18,6 +18,7 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@/components/ui/accordion"
+import { toast } from "sonner"
 
 export const InactiveStudents = () => {
     const [students, setStudents] = useState<Student[]>([])
@@ -27,7 +28,7 @@ export const InactiveStudents = () => {
         async function fetchData() {
             const token = localStorage.getItem('token')
             if (!token) {
-                alert("Token not found")
+                toast.error("Token not found")
                 return
             }
             const s: Student[] =  await getStudents(token)
@@ -125,10 +126,10 @@ const handleSetActive = async (student: Student) => {
             throw new Error(`Error: ${response.status} - ${response.statusText}`);
         }
 
-        alert(`${student.firstname_parent} ${student.lastname_parent} er satt til aktiv`)
+        toast.success(`${student.firstname_parent} ${student.lastname_parent} er satt til aktiv`)
 
     } catch (error) {
-        alert(`Failed to set student inactive: ${error}`);
+        toast.error(`Failed to set student inactive: ${error}`);
     }
 }
 
@@ -145,7 +146,7 @@ async function getStudents(token :string) {
     });
 
     if (!response.ok) {
-        alert("Error fetching students " + response.statusText);
+        toast.error("Error fetching students " + response.statusText);
         return [];
     }
 
@@ -153,7 +154,7 @@ async function getStudents(token :string) {
     const students: Student[] = data.students;
 
     if (students.length === 0) {
-        alert("No students found");
+        toast.error("No students found");
         console.log("No students found");
         return [];
     } else {

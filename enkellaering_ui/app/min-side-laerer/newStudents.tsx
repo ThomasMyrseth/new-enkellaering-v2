@@ -169,7 +169,7 @@ async function getNewStudents(token :string) {
     }
   );
   if (!response.ok) {
-    alert("Error fetching new students " + response.statusText);
+    toast.error("Error fetching new students " + response.statusText);
     return [];
   }
   const data = await response.json();
@@ -197,13 +197,13 @@ const handleSaveClick = async (accept :boolean, token :string, ns :TeacherOrderJ
 
   if (!response.ok) {
     console.log("error message:", response.statusText)
-    alert("Klarte ikke å oppdatere bestillingen. Prøv igjen om litt.");
+    toast.error("Klarte ikke å oppdatere bestillingen. Prøv igjen om litt.");
     return;
   }
   if (accept) {
-    toast(`Du takker ja til ${ns.student.firstname_parent}`)
+    toast.success(`Du takker ja til ${ns.student.firstname_parent}`)
   }
   if(!accept) {
-    toast(`Du takker nei til ${ns.student.firstname_parent}`)
+    toast.success(`Du takker nei til ${ns.student.firstname_parent}`)
   }
 };

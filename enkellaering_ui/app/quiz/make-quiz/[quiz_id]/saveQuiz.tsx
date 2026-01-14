@@ -23,7 +23,7 @@ export const SaveQuiz = ( {questions} : {questions : QuestionWithFileType[]}) =>
             saveToDB( { questions })
         }
         catch(error){
-            toast(`En feil skjedde mens vi lagret quizzen ${error}`)
+            toast.error(`En feil skjedde mens vi lagret quizzen ${error}`)
             setSuccess(false)
         }
 
@@ -90,7 +90,7 @@ const saveToDB = async ({ questions }: { questions: QuestionWithFileType[] }) =>
     }
   
     const data = await res.json();
-    toast('Questions saved successfully');
+    toast.success('Questions saved successfully');
     return data;
   } 
   catch (error) {
