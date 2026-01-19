@@ -149,6 +149,8 @@ function TaskCard({ task, onUpdate }: { task: Task, onUpdate: () => void }) {
                     <div className="text-sm">
                         <span className="font-semibold">Elev:</span>{" "}
                         {task.student_data?.firstname_student} {task.student_data?.lastname_student}
+                        <br />
+                        <span className="text-gray-500">{task.student_data?.phone_student}</span>
                     </div>
                     <div className="text-sm">
                         <span className="font-semibold">Forelder:</span>{" "}
