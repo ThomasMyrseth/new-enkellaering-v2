@@ -161,15 +161,13 @@ function TaskCard({ task, onUpdate }: { task: Task, onUpdate: () => void }) {
                     <div className="text-sm">
                         <span className="font-semibold">Lærere:</span>{" "}
                         {task.teachers_data && task.teachers_data.length > 0 ? (
-                            <div className="ml-2">
-                                {[...new Map(
-                                    task.teachers_data.map(t => [t.user_id, t])
-                                ).values()].map((teacher, index) => (
+                            <div className="ml-2 flex flex-col">
+                                {task.teachers_data.map((teacher) => (
                                     <div key={teacher.user_id}>
-                                    {index + 1}. {teacher.firstname} {teacher.lastname}
+                                        {teacher.firstname} {teacher.lastname} | {teacher.phone}
                                     </div>
                                 ))}
-                                </div>
+                            </div>
                         ) : (
                             <span className="text-gray-500">Ingen lærere</span>
                         )}

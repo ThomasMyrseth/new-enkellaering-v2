@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta, timezone
-from db.sql_types import Students
 from supabase_client import supabase
 
 def get_students_with_no_classes(number_of_days: int = 21) -> list[dict]:
@@ -100,36 +99,9 @@ def get_all_open_tasks() -> list[dict]:
     """
 
     # Get all open tasks with student data
-    response = supabase.table('tasks').select(
-        '*, student_data:students!tasks_student_fkey(*)'
-    ).eq('completed', False).execute()
-
+    response = supabase.rpc("get_all_open_tasks").execute()
     tasks = response.data
-
-    # Collect all unique teacher IDs from all tasks
-    all_teacher_ids = set()
-    for task in tasks:
-        teacher_ids = task.get('teacher_ids', [])
-        if teacher_ids:
-            all_teacher_ids.update(teacher_ids)
-
-    # Fetch all teachers in a single query
-    teachers_map = {}
-    if all_teacher_ids:
-        teachers_response = supabase.table('teachers').select('*').in_('user_id', list(all_teacher_ids)).execute()
-        # Create a map of teacher_id -> teacher data for fast lookup
-        for teacher in teachers_response.data:
-            teachers_map[teacher['user_id']] = teacher
-
-    # Map teachers back to each task
-    for task in tasks:
-        teacher_ids = task.get('teacher_ids', [])
-        if teacher_ids:
-            # Look up each teacher from the map
-            task['teachers_data'] = [teachers_map[tid] for tid in teacher_ids if tid in teachers_map]
-        else:
-            task['teachers_data'] = []
-
+    print(f"tasks: {tasks}")
     return tasks
 
 def close_task(task_id: int) -> None:

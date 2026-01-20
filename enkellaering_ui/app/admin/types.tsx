@@ -313,8 +313,6 @@ export type Task = {
     description: string;
     status: string;
     type: string;
-    teacher_ids: string[];
-    student: string;
     completed: boolean;
     completed_at: string | null;
     student_data?: Student;
