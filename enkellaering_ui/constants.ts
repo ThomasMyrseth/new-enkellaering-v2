@@ -47,7 +47,7 @@ export const AVAILABLE_SUBJECTS: Record<string, string[]> = {
     "Samfunnsfag Barneskole",
   ],
 
-  okonomi_og_samfunn: [
+  økonomi_og_samfunn: [
     "Økonomistyring",
     "Samfunnsøkonomi 1",
     "Samfunnsøkonomi 2",
