@@ -5,7 +5,7 @@ import { Quiz } from "@/app/min-side-laerer/types";
 export type CardType = {
     teacher: Teacher;
     reviews: Review[];
-    qualifications: string[] //R1, Ungdomskole, Spansk
+    availableSubjects: string[] //Matematikk 1T, Fysikk 1, Spansk I, etc.
     description: string; //Jeg heter Thomas og er ...
     src: string; //bilde av meg
 }
@@ -53,7 +53,7 @@ export type AboutMe = {
 }
 
 
-export const cities :string[] = ['Oslo', 'Trondheim', 'Annet']
+export const cities :string[] = ['Oslo', 'Trondheim', 'Annen by']
 
 
 

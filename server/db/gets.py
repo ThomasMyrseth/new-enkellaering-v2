@@ -264,17 +264,21 @@ def get_all_reviews():
     response = supabase.table('reviews').select('*').execute()
     return response.data
 
-def get_all_qualifications():
+def get_available_subjects(teacher_user_id: str):
     """Get all qualifications (quizzes with passed results)"""
-    response = supabase.table('quiz_results').select('*, quizzes(*)').eq('passed', 'TRUE').execute()
+    response = supabase.table('available_subjects').select('*').eq('teacher_user_id', teacher_user_id).execute()
 
-    # Filter out any results where the quiz has been deleted (quizzes is null)
-    valid_qualifications = [
-        result for result in response.data
-        if result.get('quizzes') is not None
-    ]
+    return response.data
 
-    return valid_qualifications
+def get_all_available_subjects():
+    """Get all available subjects"""
+    response = (
+        supabase
+        .table('available_subjects')
+        .select('*')
+        .execute()
+    )
+    return response.data
 
 def get_all_quiz_types():
     """Get all quiz types"""

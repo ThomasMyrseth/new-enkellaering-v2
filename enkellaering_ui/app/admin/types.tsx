@@ -319,6 +319,14 @@ export type Task = {
     teachers_data?: Teacher[];
 };
 
+export type AvailableSubject = {
+    id :number;
+    teacher_user_id :string;
+    subject :string;
+    created_at :string;
+    teacher?: Teacher;
+};
+
 // ============================================================================
 // GRATIS LEKSEHJELP (FREE HOMEWORK HELP) TYPES
 // ============================================================================

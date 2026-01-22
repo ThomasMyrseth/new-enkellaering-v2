@@ -5,7 +5,6 @@ import logging
 from .config import token_required
 from db.gets import (
     get_all_quizzes,
-    get_all_qualifications,
     get_quiz_meta_data,
     get_quiz,
     get_quiz_status,
@@ -35,15 +34,6 @@ def get_all_quizzes_route():
         return jsonify({"quizzes": quizzes}), 200
     except Exception as e:
         logging.error(f"Error retrieving quizzes: {e}")
-        return jsonify({"message": str(e)}), 500
-
-@quiz_bp.route('/get-all-qualifications', methods=["GET"])
-def get_all_qualifications_route():
-    try:
-        q = get_all_qualifications()
-        return jsonify({"qualifications": q}), 200
-    except Exception as e:
-        logging.error(f"Error retrieving qualifications: {e}")
         return jsonify({"message": str(e)}), 500
     
 @quiz_bp.route('/get-all-qualification-types', methods=["GET"])

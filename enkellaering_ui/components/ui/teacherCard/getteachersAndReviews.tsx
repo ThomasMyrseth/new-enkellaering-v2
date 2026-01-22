@@ -1,7 +1,6 @@
-import { Review } from "@/app/admin/types";
-import { CardType, ExpandedTeacher, AboutMe, Qualification } from "./typesAndData";
+import { AvailableSubject, Review } from "@/app/admin/types";
+import { CardType, ExpandedTeacher, AboutMe } from "./typesAndData";
 import { TeacherOrderJoinTeacher } from "@/app/min-side/types";
-import { Quiz } from "@/app/min-side-laerer/types";
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080";
 
@@ -56,24 +55,21 @@ const getAllImagesAndAboutMes = async () => {
     }
 }
 
-const getAllQualifications = async () => {
-    try{
-        const response = await fetch(`${BASEURL}/get-all-qualifications`);
+const getAllAvailableSubjects = async (): Promise<AvailableSubject[]> => {
+    try {
+        const response = await fetch(`${BASEURL}/get-all-available-subjects`);
         if (!response.ok) {
-            throw new Error("Failed to fetch qualifications");
+            throw new Error("Failed to fetch available subjects");
         }
         const data = await response.json();
-        console.log("Fetched qualifications:", data);
-        return data.qualifications || [];
-    }
-
-    catch(error) {
-        console.error("Error fetching qualifications:", error);
+        return data || [];
+    } catch (error) {
+        console.error("Error fetching available subjects:", error);
         return [];
     }
 }
 
-const buildTeacherCards = (teachers: ExpandedTeacher[], reviews: Review[], imagesAndAboutMes: AboutMe[], qualifications: Qualification[]): CardType[] => {
+const buildTeacherCards = (teachers: ExpandedTeacher[], reviews: Review[], imagesAndAboutMes: AboutMe[], availableSubjects: AvailableSubject[]): CardType[] => {
     const cards :CardType[] = [];
 
 
@@ -84,19 +80,21 @@ const buildTeacherCards = (teachers: ExpandedTeacher[], reviews: Review[], image
         firstname: 'Enkel',
         lastname: 'Læring'
       };
-      
+
     teachers.map((teacher) => {
         const teacherReviews :Review[]= reviews.filter((review) => review.teacher_user_id === teacher.user_id);
         const imageAndAboutMe :AboutMe= imagesAndAboutMes.find((i) => i.user_id === teacher.user_id) || fallbackAboutMe;
-        const teacherQualifications :Qualification[]= qualifications.filter((qualification) => qualification.user_id === teacher.user_id && qualification.passed === true);
-        const qualificationTitles :string[]= teacherQualifications.map((qualification) => qualification.quizzes.title);
-        
+
+        const teacherAvailableSubjects = availableSubjects
+            .filter(as => as.teacher_user_id === teacher.user_id)
+            .map(as => as.subject);
+
         const card :CardType = {
             teacher: teacher,
             reviews: teacherReviews,
             description: imageAndAboutMe.about_me || '',
             src: imageAndAboutMe.image_url || fallbackAboutMe.image_url,
-            qualifications: qualificationTitles,
+            availableSubjects: teacherAvailableSubjects,
         }
 
         cards.push(card);
@@ -109,8 +107,8 @@ export const getTeacherCards = async (): Promise<CardType[]> => {
     const teachers = await getAllTeachers();
     const reviews = await getAllReviews();
     const imagesAndAboutMes = await getAllImagesAndAboutMes();
-    const qualifications = await getAllQualifications();
-    return buildTeacherCards(teachers, reviews, imagesAndAboutMes, qualifications);
+    const availableSubjects = await getAllAvailableSubjects();
+    return buildTeacherCards(teachers, reviews, imagesAndAboutMes, availableSubjects);
 };
 
 export const getMyOrders = async () => {
@@ -143,29 +141,5 @@ export const getMyOrders = async () => {
 };
 
 
-export const getAllAvailableQualifications = async (): Promise<string[]> => {
-    try {
-        const [qualifications] = await Promise.all([
-            fetch(`${BASEURL}/get-all-qualification-types`),
-        ]);
-
-        if (!qualifications.ok) {
-            throw new Error("Failed to fetch qualifications");
-        }
-
-        const qualificationsData = await qualifications.json();
-        console.log("Qualifications data fetched:", qualificationsData);
-        const qs :Quiz[]= qualificationsData.quizzes || [];
-
-        const qualificationsList = qs.map( (q) => {
-            return q.title
-        })
-
-        //avoid duplicates
-        return Array.from(new Set(qualificationsList));
-
-    } catch (error) {
-        console.error("Error fetching qualificationsData:", error);
-        return [];
-    }
-};
+// Removed: getAllAvailableQualifications() - no longer needed for display
+// Quiz system kept only for internal job application review

@@ -28,21 +28,19 @@ import {
 import { CardType } from "./typesAndData";
 import { cities } from "./typesAndData";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { AVAILABLE_SUBJECTS } from "@/constants";
 
 export const ToggleFilterCards = ({
     passFilterDigital,
     passFilterPhysical,
     passFilterLocation,
-    passFilterQualification,
-    qualifications,
-    
+    passFilterAvailableSubject,
+
   }: {
     passFilterDigital: (value: boolean) => void;
     passFilterPhysical: (value: boolean) => void;
     passFilterLocation: (value: string | null) => void;
-    passFilterQualification: (value: string | null) => void;
-
-    qualifications :string[];
+    passFilterAvailableSubject: (value: string | null) => void;
 
   }) => {
     const [filterDigital, setFilterDigital] = useState<boolean>(false);
@@ -92,12 +90,11 @@ export const ToggleFilterCards = ({
                 />
                 </div>
 
-                {/* Qualification Filter */}
+                {/* Available Subject Filter */}
                 <div className="">
-                <ComboBoxResponsive
-                    values={qualifications}
-                    placeholder="Søk etter fag"
-                    passSelectedValue={passFilterQualification}
+                <ComboBoxGrouped
+                    placeholder="Filter på tilgjengelige fag"
+                    passSelectedValue={passFilterAvailableSubject}
                 />
                 </div>
             </div>
@@ -111,20 +108,20 @@ export const ToggleFilterCards = ({
 
 
 export const filterCards = (
-    cards: CardType[], 
-    filterLocation: string | null, 
-    filterQualification: string | null, 
-    filterDigital: boolean, 
+    cards: CardType[],
+    filterLocation: string | null,
+    filterAvailableSubject: string | null,
+    filterDigital: boolean,
     filterPhysical: boolean
   ): CardType[] => {
-  
+
     return cards.filter((card) => {
       // Check location filter
       if (filterLocation && card.teacher.location !== filterLocation) {
         return false;
       }
-      // Check qualification filter
-      if (filterQualification && !card.qualifications.includes(filterQualification)) {
+      // Check available subject filter
+      if (filterAvailableSubject && !card.availableSubjects.includes(filterAvailableSubject)) {
         return false;
       }
       // Filter for digital tutoring
@@ -221,6 +218,97 @@ function StatusList({
               >
                 {value}
               </CommandItem>
+            ))}
+          </CommandGroup>
+        </CommandList>
+      </Command>
+    );
+}
+
+// Grouped combobox for available subjects
+const ComboBoxGrouped = ({ placeholder, passSelectedValue }: { placeholder: string, passSelectedValue: (value: string | null) => void }) => {
+    const [open, setOpen] = useState(false);
+    const isDesktop: boolean = useMediaQuery("(min-width: 768px)");
+    const [selectedValue, setSelectedValue] = useState<string | null>(null);
+
+    const handleSetSelectedValue = (value: string | null) => {
+      setSelectedValue(value);
+      setOpen(false);
+      passSelectedValue(value);
+    };
+
+    if (isDesktop) {
+      return (
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="w-[200px] justify-start">
+              {selectedValue ? selectedValue : placeholder}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[250px] p-0" align="start">
+            <GroupedStatusList setOpen={setOpen} setSelectedValue={handleSetSelectedValue} />
+          </PopoverContent>
+        </Popover>
+      );
+    } else {
+      return (
+        <Drawer open={open} onOpenChange={setOpen}>
+          <DrawerTrigger asChild>
+            <Button variant="outline" className="w-[200px] justify-start">
+              {selectedValue ? selectedValue : placeholder}
+            </Button>
+          </DrawerTrigger>
+          <DrawerContent>
+            <div className="mt-4 border-t">
+              <GroupedStatusList setOpen={setOpen} setSelectedValue={handleSetSelectedValue} />
+            </div>
+          </DrawerContent>
+        </Drawer>
+      );
+    }
+};
+
+function GroupedStatusList({
+    setOpen,
+    setSelectedValue,
+  }: {
+    setOpen: (open: boolean) => void;
+    setSelectedValue: (value: string | null) => void;
+  }) {
+    return (
+      <Command>
+        <CommandInput placeholder="Søk fag..." />
+        <CommandList>
+          <CommandEmpty>Ingen fag funnet.</CommandEmpty>
+          <CommandGroup>
+            {/* Option to clear the selection */}
+            <CommandItem
+                onSelect={() => {
+                  setSelectedValue(null);
+                  setOpen(false);
+                }}
+            >
+                Fjern filter
+            </CommandItem>
+            {/* Group by category */}
+            {Object.entries(AVAILABLE_SUBJECTS).map(([category, subjects]) => (
+              <div key={category}>
+                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground capitalize">
+                  {category.replace(/_/g, " ")}
+                </div>
+                {subjects.map((subject) => (
+                  <CommandItem
+                    key={subject}
+                    value={subject}
+                    onSelect={() => {
+                      setSelectedValue(subject);
+                      setOpen(false);
+                    }}
+                  >
+                    {subject}
+                  </CommandItem>
+                ))}
+              </div>
             ))}
           </CommandGroup>
         </CommandList>
