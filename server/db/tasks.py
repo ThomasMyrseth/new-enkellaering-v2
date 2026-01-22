@@ -30,9 +30,20 @@ def get_students_who_have_had_task(number_of_days: int = 21, task_type :str = 'f
     #query table directly, filtering by type='followup_student'
     response = supabase.table('tasks').select('student').gte('created_at', cutof_date).eq('type', task_type).execute()
     student_ids = list(set([task['student'] for task in response.data])) #get a list of unique IDs
-
     return student_ids
 
+def get_students_with_open_tasks() -> list[str]:
+    """
+    Retrieve a list of student IDs who have open tasks assigned.
+
+    Returns:
+        list[str]: A list of student IDs
+    """
+
+    #query table directly, filtering by status != 'completed'
+    response = supabase.table('tasks').select('student').neq('status', 'completed').execute()
+    student_ids = list(set([task['student'] for task in response.data])) #get a list of unique IDs
+    return student_ids
 
 def create_new_tasks(cutoff_days: int = 21) -> None:
     """
@@ -43,13 +54,18 @@ def create_new_tasks(cutoff_days: int = 21) -> None:
 
     students_with_no_classes :list[dict] = get_students_with_no_classes(cutoff_days)
     students_ids_with_tasks :list[str] = get_students_who_have_had_task(cutoff_days)
+    students_with_open_tasks :list[str] = get_students_with_open_tasks()
 
     #convert cutof days to number of weeks
     cutoff_weeks = cutoff_days // 7
 
     # Filter out students who already have tasks
-    students_to_create_tasks_for = [student for student in students_with_no_classes if student['student']['user_id'] not in students_ids_with_tasks]
-
+    students_to_create_tasks_for = [
+        student
+        for student in students_with_no_classes
+        if student['student']['user_id'] not in students_ids_with_tasks
+        and student['student']['user_id'] not in students_with_open_tasks
+    ]
     # Group by student and collect all their UNIQUE teachers
     student_teachers_map = {}
     for student in students_to_create_tasks_for:
@@ -101,7 +117,6 @@ def get_all_open_tasks() -> list[dict]:
     # Get all open tasks with student data
     response = supabase.rpc("get_all_open_tasks").execute()
     tasks = response.data
-    print(f"tasks: {tasks}")
     return tasks
 
 def close_task(task_id: int) -> None:
