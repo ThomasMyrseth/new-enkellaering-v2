@@ -3,14 +3,18 @@ import logging
 
 from .config import token_required
 from db.gets import (
+    get_available_subjects,
     get_teacher_by_user_id,
     get_teacher_for_student,
     get_all_teachers,
-    get_all_teachers_join_students
+    get_all_teachers_join_students,
+    get_all_available_subjects,
+    get_available_subjects
 )
 from db.alters import (
     toggle_want_more_students,
-    update_teacher_profile
+    update_teacher_profile,
+    update_available_subject
 )
 
 teacher_bp = Blueprint('teacher', __name__)
@@ -204,4 +208,39 @@ def reactivate_teacher_route(user_id):
         return jsonify({"message": "Teacher reactivated successfully"}), 200
     except Exception as e:
         logging.exception(f"Failed to reactivate teacher {teacher_user_id}: {e}")
+        return jsonify({"message": str(e)}), 500
+    
+
+@teacher_bp.route('/get-all-available-subjects', methods=["GET"])
+def get_available_subjects_route():
+    try:
+        q = get_all_available_subjects()
+        return jsonify(q), 200
+    except Exception as e:
+        logging.error(f"Error retrieving available subjects: {e}")
+        return jsonify({"message": str(e)}), 500
+    
+@teacher_bp.route('/get-available-subjects', methods=["GET"])
+@token_required
+def get_available_subjects_for_teacher_route(user_id):
+    try:
+        subjects = get_available_subjects(user_id)
+        return jsonify({"available_subjects": subjects}), 200
+    except Exception as e:
+        logging.exception("Failed to fetch available subjects for teacher")
+        return jsonify({"message": str(e)}), 500
+    
+@teacher_bp.route('/update-available-subjects', methods=["POST"])
+@token_required
+def update_available_subjects_route(user_id):
+    data = request.get_json() or {}
+    subject = data.get('subject')
+    availability = data.get('availability')
+    if subject is None or availability is None:
+        return jsonify({"message": "Missing required fields"}), 400
+    try:
+        update_available_subject(user_id, availability, subject )
+        return jsonify({"message": "Available subjects updated"}), 200
+    except Exception as e:
+        logging.exception("Failed to update available subjects")
         return jsonify({"message": str(e)}), 500

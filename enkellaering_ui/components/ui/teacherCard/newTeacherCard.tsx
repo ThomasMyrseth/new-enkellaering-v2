@@ -12,6 +12,12 @@ import {
     AlertDialogCancel,
     AlertDialogContent,
   } from "@/components/ui/alert-dialog"
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { useRouter } from "next/navigation";
 import { Skeleton } from "../skeleton";
 import ReactMarkdown from "react-markdown";
@@ -22,11 +28,12 @@ import { Button } from "../button";
 import { CardType } from "./typesAndData";
 
 import { ToggleFilterCards, filterCards } from "./filter";
-import { getAllAvailableQualifications, getMyOrders, getTeacherCards } from "./getteachersAndReviews";
+import { getMyOrders, getTeacherCards } from "./getteachersAndReviews";
 import { Textarea } from "../textarea";
 import { TeacherOrderJoinTeacher } from "@/app/min-side/types";
 import { toast } from "sonner";
 import { event } from "@/components/facebookPixel/fpixel";
+import { AVAILABLE_SUBJECTS } from "@/constants";
   
 
 export function TeacherFocusCards() {
@@ -56,10 +63,9 @@ export function TeacherFocusCards() {
     const [wantPhysicalOrDigital, setWantPhysicalOrDigital] = useState<boolean | null>(null)
     const [address, setAddress] = useState<string>('')
     const [comments, setComments] = useState<string>()
-    const [allQualifications, setAllQualifications] = useState<string[]>([])
     // Filter states
     const [filterLocation, setFilterLocation] = useState<string | null>(null);
-    const [filterQualification, setFilterQualification] = useState<string | null>(null);
+    const [filterAvailableSubject, setFilterAvailableSubject] = useState<string | null>(null);
     const [filterDigital, setFilterDigital] = useState<boolean>(false);
     const [filterPhysical, setFilterPhysical] = useState<boolean>(false);
     const [filteredCards, setFilteredCards] = useState<CardType[]>([]); //default to cards, which os unfiltered
@@ -109,27 +115,11 @@ export function TeacherFocusCards() {
         fetchPreviousOrders()
     },[])
 
-    //fetch all the different possible qualifications
-    useEffect( () => {
-        async function fetchQualifications() {
-            const res = await getAllAvailableQualifications()
-
-            if (!res) {
-                return
-            }
-            else {
-                setAllQualifications(res)
-            }
-        }
-        fetchQualifications()
-    },[])
-
-
     // Apply filtering function
     useEffect(() => {
-        const c :CardType[] = filterCards(cards, filterLocation, filterQualification, filterDigital, filterPhysical);
+        const c :CardType[] = filterCards(cards, filterLocation, filterAvailableSubject, filterDigital, filterPhysical);
         setFilteredCards(c);
-    },[filterLocation, filterQualification, filterDigital, filterPhysical, cards])
+    },[filterLocation, filterAvailableSubject, filterDigital, filterPhysical, cards])
 
 
     const handleOrderClick = (card :CardType) => {
@@ -261,12 +251,11 @@ export function TeacherFocusCards() {
         {/*Filtering */}
         <div className="bg-wgite w-3/4 md:w-1/2 dark:bg-black p-4 rounded-xl">
           <ToggleFilterCards
-                qualifications={allQualifications}
                 passFilterDigital={setFilterDigital}
                 passFilterPhysical={setFilterPhysical}
                 passFilterLocation={setFilterLocation}
-                passFilterQualification={setFilterQualification}
-          />   
+                passFilterAvailableSubject={setFilterAvailableSubject}
+          />
         </div>
 
         {/* Modal for Expanded Card */}
@@ -322,29 +311,49 @@ export function TeacherFocusCards() {
                         >
                         {active.teacher.firstname}, {active.teacher.location}
                         </motion.h3>
-                        <div className="relative w-60">
-                            <motion.div
-                                layoutId={`description-${active.teacher.firstname}-${id}`}
-                                className="flex flex-row text-neutral-600 dark:text-white text-center md:text-left overflow-x-auto"
-                                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                            >
-                                {[...new Set(active.qualifications)].sort().map((qualification: string, index: number) => (
-                                        <div key={index} className="bg-neutral-200 dark:bg-neutral-600 rounded-lg scrollbar-hide mx-1 p-2 text-xs inline-block whitespace-nowrap">
-                                            {qualification}
-                                        </div>
-                                ))}
-                            </motion.div>
-                            <div className="absolute top-0 right-0 w-12 h-full bg-gradient-to-l from-white via-white/80 dark:from-neutral-800 dark:via-neutral-800/80 to-transparent pointer-events-none"></div>
-                        </div>
-                        
-                    
                     </div>
                     <div>
-                        <div className="text-neutral-600 dark:text-neutral-100 mb-10">
+                        <div className="text-neutral-600 dark:text-neutral-100 mb-6">
                             <ReactMarkdown>
                                 {active.description}
                             </ReactMarkdown>
                         </div>
+
+                        {/* Available Subjects Section */}
+                        {active.availableSubjects && active.availableSubjects.length > 0 && (
+                            <div className="mb-10">
+                                <h3 className="font-semibold text-lg mb-2 text-neutral-700 dark:text-neutral-200">Tilgjengelige fag</h3>
+                                <Accordion type="single" collapsible className="w-full">
+                                    {Object.entries(AVAILABLE_SUBJECTS).map(([category, subjects]) => {
+                                        const categorySubjects = subjects.filter(subject =>
+                                            active.availableSubjects.includes(subject)
+                                        );
+
+                                        if (categorySubjects.length === 0) return null;
+
+                                        return (
+                                            <AccordionItem key={category} value={category}>
+                                                <AccordionTrigger className="capitalize text-neutral-700 dark:text-neutral-200">
+                                                    {category.replace(/_/g, " ")}
+                                                </AccordionTrigger>
+                                                <AccordionContent>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {categorySubjects.map(subject => (
+                                                            <span
+                                                                key={subject}
+                                                                className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-100 rounded text-sm"
+                                                            >
+                                                                {subject}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </AccordionContent>
+                                            </AccordionItem>
+                                        );
+                                    })}
+                                </Accordion>
+                            </div>
+                        )}
                         <div> {/* Container for reviews */}
                             {active.reviews.length === 0 ? (
                                 <span>{active.teacher.firstname} har ingen omtaler enda</span>
@@ -429,19 +438,7 @@ export function TeacherFocusCards() {
                                 </span>
                             </span>
                         </motion.h3>
-                        <div className="relative w-40 m-2 min-h-[2.5rem]">
-                            <motion.p
-                                layoutId={`description-${card.teacher.firstname}-${id}`}
-                                className="text-neutral-600 dark:text-neutral-400 text-center md:text-left flex overflow-x-auto min-h-[2.5rem]"
-                                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                            >
-                                {[...new Set(card.qualifications)].sort().map((qualification: string, index: number) => (
-                                    <span key={index} className="whitespace-nowrap rounded-full bg-neutral-200 dark:bg-neutral-600 mx-1 p-2 text-xs">{qualification}</span>
-                                ))}
-                            </motion.p>
-                            <div className="absolute top-0 right-0 w-10 h-full bg-gradient-to-l from-white via-white/80 dark:from-neutral-900 dark:via-neutral-900/80 to-transparent pointer-events-none"></div>
-                        </div>
-                        <div className="flex flex-row">
+                        <div className="flex flex-row mt-2">
                             <motion.p className={`rounded-lg m-2 p-1 ${card.teacher.digital_tutouring? 'text-emerald-400': 'text-rose-400'}`}>
                                 <Laptop/> digital
                             </motion.p>

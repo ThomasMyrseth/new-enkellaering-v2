@@ -9,7 +9,7 @@ import { AddNewClass } from "./addNewClass";
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080";
 
 import { NewStudentsWithPreferredTeacherWorkflowActions} from "./newStudents"
-import QuizStatusPage from "./quiz";
+import AvailableSubjectsPage from "./availableSubjects";
 import { FileUploadForm } from "@/components/uploadTeacherImageForm";
 import { YourStudent } from "./yourStudents";
 import { TeacherName  } from "./teacherName";
@@ -145,7 +145,7 @@ export default function LaererPage() {
                 <TeacherReferalForm token={token}/>
                 <NewStudentsWithPreferredTeacherWorkflowActions/>
                 <ProfileForm teacher={teacher}/>
-                <QuizStatusPage token={token} baseUrl={BASEURL}/>
+                <AvailableSubjectsPage token={token} baseUrl={BASEURL}/>
                 <TeacherHelpDashboard token={token}/>
                 <FileUploadForm firstname={teacher.firstname} lastname={teacher.lastname} title={"Last opp et bilde av deg"}/>
             </div>

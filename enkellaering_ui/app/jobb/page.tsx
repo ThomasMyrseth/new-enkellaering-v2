@@ -100,7 +100,6 @@ export default function JobPage() {
         formData.append("resume", files[0]);
       }
       try {
-        console.log("sending formdata to server url: ", `${BASEURL}/upload-job-application`);
         const res = await fetch(`${BASEURL}/upload-job-application`, { method: "POST", body: formData });
         if (!res.ok) {
             toast.error("Det oppstod en feil ved innsending. Prøv igjen");

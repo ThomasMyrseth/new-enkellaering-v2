@@ -262,3 +262,19 @@ def update_queue_status(queue_id: str, status: str):
         session_id = queue_entry.data[0]['assigned_session_id']
         # Use RPC to reorder positions
         supabase.rpc('reorder_queue_positions', {'session_id_param': session_id}).execute()
+
+
+def update_available_subject(teacher_user_id: str, available :bool, subject: Optional[str]=None):
+    """Update available subjects for a teacher (replaces existing)"""
+
+    if not subject:
+        raise ValueError("subjects_ids list cannot be empty")
+
+    supabase.table('available_subjects').delete().eq('teacher_user_id', teacher_user_id).eq('subject', subject).execute()
+    if available:
+        #insert new subject
+        supabase.table('available_subjects').insert([
+            {'teacher_user_id': teacher_user_id, 'subject': subject}
+        ]).execute()
+
+    return True

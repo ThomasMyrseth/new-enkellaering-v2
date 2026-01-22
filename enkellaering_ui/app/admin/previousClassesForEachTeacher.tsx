@@ -2,8 +2,7 @@
 
 import { Copy } from 'lucide-react';
 
-import { TeacherStudent } from './types';
-import { Qualification } from '@/components/ui/teacherCard/typesAndData';
+import { AvailableSubject, TeacherStudent } from './types';
 
 import { DeleteClass } from '../min-side-laerer/deleteClass';
 import { Switch } from '@/components/ui/switch';
@@ -24,28 +23,28 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { AVAILABLE_SUBJECTS } from "@/constants";
 
 const ToggleFilterPreviousClasses = ({
   passFilterDigital,
   passFilterPhysical,
   passFilterLocation,
-  passFilterQualification,
-  qualifications,
+  passFilterAvailableSubject,
 }: {
   passFilterDigital: (v: boolean) => void;
   passFilterPhysical: (v: boolean) => void;
   passFilterLocation: (v: string) => void;
-  passFilterQualification: (v: string | null) => void;
-  qualifications: string[];
+  passFilterAvailableSubject: (v: string | null) => void;
+  availableSubjects: string[];
 }) => {
   const [filterDigital, setFilterDigital] = useState(false);
   const [filterPhysical, setFilterPhysical] = useState(false);
   const [open, setOpen] = useState(false);
-  const [openQualification, setOpenQualification] = useState(false);
+  const [openAvailableSubject, setOpenAvailableSubject] = useState(false);
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
-  const [selectedQualification, setSelectedQualification] = useState<string | null>(null);
+  const [selectedAvailableSubject, setSelectedAvailableSubject] = useState<string | null>(null);
   const isDesktop = useMediaQuery("(min-width: 768px)");
-  const cities = ["Oslo", "Trondheim"];
+  const cities = ["Oslo", "Trondheim", "Annen by"];
 
   const handleCitySelect = (value: string | null) => {
     setSelectedCity(value);
@@ -53,10 +52,10 @@ const ToggleFilterPreviousClasses = ({
     setOpen(false);
   };
 
-  const handleQualificationSelect = (value: string | null) => {
-    setSelectedQualification(value);
-    passFilterQualification(value);
-    setOpenQualification(false);
+  const handleAvailableSubjectSelect = (value: string | null) => {
+    setSelectedAvailableSubject(value);
+    passFilterAvailableSubject(value);
+    setOpenAvailableSubject(false);
   };
 
   return (
@@ -140,27 +139,35 @@ const ToggleFilterPreviousClasses = ({
             </Drawer>
         )}
 
-        {/* Qualification Filter */}
+        {/* Available Subject Filter */}
         {isDesktop ? (
-            <Popover open={openQualification} onOpenChange={setOpenQualification}>
+            <Popover open={openAvailableSubject} onOpenChange={setOpenAvailableSubject}>
             <PopoverTrigger asChild>
-                <Button variant="outline" className="w-[150px] justify-start">
-                {selectedQualification || "Søk etter fag"}
+                <Button variant="outline" className="w-[200px] justify-start">
+                {selectedAvailableSubject || "Filter på tilgjengelige fag"}
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[200px] p-0" align="start">
+            <PopoverContent className="w-[250px] p-0" align="start">
                 <Command>
-                <CommandInput placeholder="Filter..." />
+                <CommandInput placeholder="Søk fag..." />
                 <CommandList>
-                    <CommandEmpty>No results found.</CommandEmpty>
+                    <CommandEmpty>Ingen fag funnet.</CommandEmpty>
                     <CommandGroup>
-                    <CommandItem onSelect={() => handleQualificationSelect(null)}>
+                    <CommandItem onSelect={() => handleAvailableSubjectSelect(null)}>
                         Fjern filter
                     </CommandItem>
-                    {qualifications.map((qualification) => (
-                        <CommandItem key={qualification} value={qualification} onSelect={() => handleQualificationSelect(qualification)}>
-                        {qualification}
-                        </CommandItem>
+                    {/* Group by category */}
+                    {Object.entries(AVAILABLE_SUBJECTS).map(([category, subjects]) => (
+                      <div key={category}>
+                        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground capitalize">
+                          {category.replace(/_/g, " ")}
+                        </div>
+                        {subjects.map((subject) => (
+                          <CommandItem key={subject} value={subject} onSelect={() => handleAvailableSubjectSelect(subject)}>
+                            {subject}
+                          </CommandItem>
+                        ))}
+                      </div>
                     ))}
                     </CommandGroup>
                 </CommandList>
@@ -168,25 +175,33 @@ const ToggleFilterPreviousClasses = ({
             </PopoverContent>
             </Popover>
         ) : (
-            <Drawer open={openQualification} onOpenChange={setOpenQualification}>
+            <Drawer open={openAvailableSubject} onOpenChange={setOpenAvailableSubject}>
             <DrawerTrigger asChild>
-                <Button variant="outline" className="w-[150px] justify-start">
-                {selectedQualification || "Søk etter fag"}
+                <Button variant="outline" className="w-[200px] justify-start">
+                {selectedAvailableSubject || "Filter på tilgjengelige fag"}
                 </Button>
             </DrawerTrigger>
             <DrawerContent>
                 <Command>
-                <CommandInput placeholder="Filter..." />
+                <CommandInput placeholder="Søk fag..." />
                 <CommandList>
-                    <CommandEmpty>No results found.</CommandEmpty>
+                    <CommandEmpty>Ingen fag funnet.</CommandEmpty>
                     <CommandGroup>
-                    <CommandItem onSelect={() => handleQualificationSelect(null)}>
+                    <CommandItem onSelect={() => handleAvailableSubjectSelect(null)}>
                         Fjern filter
                     </CommandItem>
-                    {qualifications.map((qualification) => (
-                        <CommandItem key={qualification} value={qualification} onSelect={() => handleQualificationSelect(qualification)}>
-                        {qualification}
-                        </CommandItem>
+                    {/* Group by category */}
+                    {Object.entries(AVAILABLE_SUBJECTS).map(([category, subjects]) => (
+                      <div key={category}>
+                        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground capitalize">
+                          {category.replace(/_/g, " ")}
+                        </div>
+                        {subjects.map((subject) => (
+                          <CommandItem key={subject} value={subject} onSelect={() => handleAvailableSubjectSelect(subject)}>
+                            {subject}
+                          </CommandItem>
+                        ))}
+                      </div>
                     ))}
                     </CommandGroup>
                 </CommandList>
@@ -240,8 +255,8 @@ export function PreviousClassesForEachTeacher() {
     const [classesByTeacher, setClassesByTeacher] = useState<classesJoinTeacher[]>([]);
     const [students, setStudents] = useState<Student[]>([]);
     const [teacherStudents, setTeacherStudents] = useState<TeacherStudent[]>([]);
-    const [qualifications, setQualifications] = useState<Qualification[]>([]);
-    const [allQualifications, setAllQualifications] = useState<string[]>([]);
+    const [availableSubjects, setAvailableSubjects] = useState<AvailableSubject[]>([]);
+    // const [allAvailableSubjectTypes, setAllAvailableSubjectTypes] = useState<string[]>([]);
 
     const [loading, setLoading] = useState<boolean>(true)
 
@@ -249,7 +264,7 @@ export function PreviousClassesForEachTeacher() {
     const [filterLocation, setFilterLocation] = useState<string>("");
     const [filterPhysical, setFilterPhysical] = useState<boolean>(false);
     const [filterDigital, setFilterDigital] = useState<boolean>(false);
-    const [filterQualification, setFilterQualification] = useState<string | null>(null);
+    const [filterAvailableSubject, setFilterAvailableSubject] = useState<string | null>(null);
 
     //get classes, teachers and students for everyone
     useEffect( () => {
@@ -369,23 +384,18 @@ export function PreviousClassesForEachTeacher() {
             setTeacherStudents(ts)
         }
 
-        async function fetchQualifications() {
+        async function fetchAvailableSubjects() {
             try {
-                const response = await fetch(`${BASEURL}/get-all-qualifications`);
+                const response = await fetch(`${BASEURL}/get-all-available-subjects`);
                 if (!response.ok) {
-                    throw new Error("Failed to fetch qualifications");
+                    throw new Error("Failed to fetch available subjects");
                 }
                 const data = await response.json();
-                const quals: Qualification[] = data.qualifications || [];
-                setQualifications(quals);
-                
-                // Get unique qualification titles
-                const uniqueTitles = [...new Set(quals.map(q => q.quizzes.title))];
-                setAllQualifications(uniqueTitles);
+                const subjects = data || [];
+                setAvailableSubjects(subjects);
             } catch (error) {
-                console.error("Error fetching qualifications:", error);
-                setQualifications([]);
-                setAllQualifications([]);
+                console.error("Error fetching available subjects:", error);
+                setAvailableSubjects([]);
             }
         }
 
@@ -393,7 +403,7 @@ export function PreviousClassesForEachTeacher() {
         getAllTeachers()
         getAllStudents()
         getAllTeacherStudents()
-        fetchQualifications()
+        fetchAvailableSubjects()
 
     
     },[token])
@@ -437,20 +447,20 @@ export function PreviousClassesForEachTeacher() {
 
     // Apply filters to teachers
     const filteredTeachers = classesByTeacher.filter(ct => {
-        const loc = parseInt(ct.teacher.postal_code) < 4000 ? "Oslo" : "Trondheim";
-        if (filterLocation && loc !== filterLocation) return false;
+        const location = ct.teacher.location || "";
+        if (filterLocation && location !== filterLocation) return false;
         if (filterPhysical && !ct.teacher.physical_tutouring) return false;
         if (filterDigital && !ct.teacher.digital_tutouring) return false;
-        
-        // Check qualification filter
-        if (filterQualification) {
-            const teacherQualifications = qualifications.filter(q => 
-                q.user_id === ct.teacher.user_id && q.passed === true
+
+        // Check available subject filter
+        if (filterAvailableSubject) {
+            const teacherAvailableSubjects = availableSubjects.filter(as =>
+                as.teacher_user_id === ct.teacher.user_id
             );
-            const teacherQualificationTitles = teacherQualifications.map(q => q.quizzes.title);
-            if (!teacherQualificationTitles.includes(filterQualification)) return false;
+            const teacherSubjectNames = teacherAvailableSubjects.map(as => as.subject);
+            if (!teacherSubjectNames.includes(filterAvailableSubject)) return false;
         }
-        
+
         return true;
     });
 
@@ -459,8 +469,8 @@ export function PreviousClassesForEachTeacher() {
           passFilterDigital={setFilterDigital}
           passFilterPhysical={setFilterPhysical}
           passFilterLocation={setFilterLocation}
-          passFilterQualification={setFilterQualification}
-          qualifications={allQualifications}
+          passFilterAvailableSubject={setFilterAvailableSubject}
+          availableSubjects={availableSubjects.map(as => as.subject)}
         />
         <h1 className="text-xl">Oversikt over tidligere timer for hver lærer</h1>
 
@@ -576,6 +586,8 @@ export function PreviousClassesForEachTeacher() {
                                 <p 
                                     className={`${actualTotalHoursLastFourWeeks<estTotalHoursLastFourWeeks ? 'text-red-400' : ''}`}
                                 >{ actualTotalHoursLastFourWeeks}/{estTotalHoursLastFourWeeks}h siste fire uker</p>
+                                <br/>
+                                {ct.teacher.location}
                             </div>
                         </div>
                     </AccordionTrigger>
@@ -589,6 +601,20 @@ export function PreviousClassesForEachTeacher() {
                             Adresse: <span className='font-semibold'>{ct.teacher.address}, {ct.teacher.postal_code}</span>
                             <br/>
                             Spesielle forhold: <span className='font-sembibold'>{ct.teacher.additional_comments? "" : ct.teacher.additional_comments }</span>
+                            <br/>
+                            <div className="flex flex-wrap gap-2">
+                                {availableSubjects
+                                    .filter(as => as.teacher_user_id === ct.teacher.user_id)
+                                    .map(as => (
+                                        <span
+                                        key={as.id}
+                                        className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-100 rounded text-sm"
+                                        >
+                                        {as.subject}
+                                        </span>
+                                ))}
+                            </div>
+                   
                         </p>
 
                         <TeacherNotes teacher={ct.teacher} />
@@ -947,6 +973,7 @@ const PayTeacherPopover = ( {teacher, classes, teacherStudents} : {teacher: Teac
 
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from 'sonner';
+import availableSubjects from '../min-side-laerer/availableSubjects';
 
 const TeacherNotes = ({teacher} : {teacher : Teacher}) => {
     const [notes, setNotes] = useState<string>(teacher.notes)

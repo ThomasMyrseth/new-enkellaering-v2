@@ -11,6 +11,14 @@ CREATE TABLE public.about_me_texts (
   CONSTRAINT about_me_texts_pkey PRIMARY KEY (user_id),
   CONSTRAINT fk_about_me_teacher FOREIGN KEY (user_id) REFERENCES public.teachers(user_id)
 );
+CREATE TABLE public.available_subjects (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  teacher_user_id text DEFAULT gen_random_uuid(),
+  subject text,
+  CONSTRAINT available_subjects_pkey PRIMARY KEY (id),
+  CONSTRAINT available_subjects_teacher_user_id_fkey FOREIGN KEY (teacher_user_id) REFERENCES public.teachers(user_id)
+);
 CREATE TABLE public.classes (
   class_id uuid NOT NULL,
   teacher_user_id text,
@@ -201,16 +209,16 @@ CREATE TABLE public.teacher_student (
   teacher_user_id text,
   student_user_id text,
   teacher_accepted_student boolean,
-  physical_or_digital boolean,
-  preferred_location text,
-  created_at timestamp with time zone,
-  hidden boolean,
+  physical_or_digital boolean DEFAULT false,
+  preferred_location text DEFAULT ''::text,
+  created_at timestamp with time zone DEFAULT now(),
+  hidden boolean DEFAULT false,
   order_comments text,
-  travel_pay_to_teacher integer,
-  travel_pay_from_student integer,
+  travel_pay_to_teacher integer DEFAULT 0,
+  travel_pay_from_student integer DEFAULT 0,
   CONSTRAINT teacher_student_pkey PRIMARY KEY (row_id),
-  CONSTRAINT fk_teacher_student_teacher FOREIGN KEY (teacher_user_id) REFERENCES public.teachers(user_id),
-  CONSTRAINT fk_teacher_student_student FOREIGN KEY (student_user_id) REFERENCES public.students(user_id)
+  CONSTRAINT teacher_student_student_user_id_fkey FOREIGN KEY (student_user_id) REFERENCES public.students(user_id),
+  CONSTRAINT teacher_student_teacher_user_id_fkey FOREIGN KEY (teacher_user_id) REFERENCES public.teachers(user_id)
 );
 CREATE TABLE public.teachers (
   user_id text NOT NULL,
@@ -227,8 +235,8 @@ CREATE TABLE public.teachers (
   resigned boolean,
   resigned_at timestamp with time zone,
   location text,
-  digital_tutouring boolean,
-  physical_tutouring boolean,
+  digital_tutouring boolean DEFAULT false,
+  physical_tutouring boolean DEFAULT false,
   notes text,
   CONSTRAINT teachers_pkey PRIMARY KEY (user_id)
 );

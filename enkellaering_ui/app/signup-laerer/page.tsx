@@ -15,7 +15,7 @@ export default function SignupForm() {
   const [validPostalCode, setValidPostalCode] = useState(true);
   const [passwordsMatch, setPasswordsMatch] = useState(true);
   const [isSendDisabled, setIsSendDisabled] = useState<boolean>(false);
-  const [myCity, setMyCity] = useState<string>('Annet')
+  const [myCity, setMyCity] = useState<string>('Annen by')
   const [digital, setDigital] = useState<boolean>(false)
   const [physical, setPhysical] = useState<boolean>(false)
 
@@ -30,7 +30,7 @@ export default function SignupForm() {
 
   function handleSetMyCity(city :string | null) {
     if (!city) {
-      setMyCity('Annet')
+      setMyCity('Annen by')
       return;
     }
     setMyCity(city)
@@ -265,7 +265,7 @@ import { Button } from "@/components/ui/button";
 import { event } from "@/components/facebookPixel/fpixel";
 import { toast } from "sonner";
 
-const cities :string[] = ['Oslo', 'Trondheim', 'Annet']
+const cities :string[] = ['Oslo', 'Trondheim', 'Annen by']
 
 const ComboBoxResponsive = ({ values, placeholder, passSelectedValue }: { values: string[], placeholder: string, passSelectedValue: (value :string | null) => void }) => {
   const [open, setOpen] = useState(false);
