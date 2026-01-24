@@ -17,9 +17,9 @@ export default function SingletrackSupport() {
           app, feel free to reach out.
         </p>
         <p style={styles.text}>
-          📧 Email:{" "}
-          <a href="mailto:support@enkellaering.no" style={styles.link}>
-            support@enkellaering.no
+          📧 Email:{"thomas.myrsethb@outlook.com"}
+          <a href="mailto:thomas.myrsethb@outlook.com" style={styles.link}>
+            thomas.myrsethb@outlook.com
           </a>
         </p>
       </section>
