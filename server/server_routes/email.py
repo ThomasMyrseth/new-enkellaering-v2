@@ -450,6 +450,61 @@ def sendNewStudentToAdminMail(newStudentPhone: str):
             raise e
 
 
+def sendNewTasksCreatedEmailToAdmin(task_type: str, names: list):
+    """
+    Send email to admins when new follow-up tasks are created.
+
+    Args:
+        task_type: "student" or "teacher"
+        names: List of student/teacher names for whom tasks were created
+    """
+    try:
+        admins = get_all_admins()
+        emails = [admin['email'] for admin in admins]
+        emails.append("kontakt@enkellaering.no")
+    except Exception as e:
+        raise RuntimeError(f"Error getting the email of admins: {e}")
+
+    if task_type == "student":
+        subject = f"{len(names)} nye elevoppgaver opprettet"
+        heading = "Nye oppfølgingsoppgaver for elever"
+        description = "Følgende elever har ikke hatt timer på over 3 uker og har fått oppfølgingsoppgaver:"
+    else:
+        subject = f"{len(names)} nye læreroppgaver opprettet"
+        heading = "Nye oppfølgingsoppgaver for lærere"
+        description = "Følgende lærere har hatt få timer og har fått oppfølgingsoppgaver:"
+
+    names_html = "".join([f"<li>{name}</li>" for name in names])
+
+    html_content = f"""
+    <div style="font-family: sans-serif; background-color: #f9f9f9; padding: 30px;">
+        <h1>{heading}</h1>
+        <div style="background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+            <p style="color: #555;">{description}</p>
+            <ul style="color: #333;">
+                {names_html}
+            </ul>
+            <p style="color: #555;">Logg inn på <code>/admin</code> for å følge opp.</p>
+            <a href="https://enkellaering.no/login-laerer" style="display:inline-block; margin-top: 15px; background-color:#6366F1; color:white; padding:10px 16px; border-radius:5px; text-decoration:none;">Logg inn</a>
+        </div>
+    </div>
+    """
+
+    for email in emails:
+        try:
+            resend.Emails.send({
+                "from": FROM_EMAIL,
+                "to": email,
+                "subject": subject,
+                "html": html_content
+            })
+            print(f"Task notification email sent to {email}")
+            sleep(3)
+        except Exception as e:
+            print(f"Failed to send task notification email to {email}: {e}")
+            raise e
+
+
 import locale
 from datetime import datetime
 def format_last_class_date(date_str, language="no"):
@@ -1424,4 +1479,34 @@ def send_help_queue_completion_email_pubsub():
     except Exception as e:
         logging.exception("Failed to process Pub/Sub message for help queue completion email")
         # Return 500 so Pub/Sub will retry
+        return "Error", 500
+
+
+@mail_bp.route('/pubsub/send-new-tasks-admin-email', methods=["POST"])
+def send_new_tasks_admin_email_pubsub():
+    """
+    Pub/Sub subscriber endpoint to send admin emails when new follow-up tasks are created.
+    """
+    envelope = request.get_json()
+    if not envelope or "message" not in envelope:
+        logging.error("Bad Request: No message in Pub/Sub envelope")
+        return "Bad Request", 400
+
+    try:
+        payload = base64.b64decode(envelope["message"]["data"]).decode("utf-8")
+        data = json.loads(payload)
+
+        task_type = data.get("task_type")
+        names = data.get("names", [])
+
+        if not task_type or not names:
+            logging.error(f"Missing required fields in Pub/Sub message: task_type={task_type}, names count={len(names)}")
+            return "Bad Request: Missing required fields", 400
+
+        sendNewTasksCreatedEmailToAdmin(task_type=task_type, names=names)
+        logging.info(f"Successfully sent new tasks admin email for {len(names)} {task_type}s")
+        return "OK", 200
+
+    except Exception as e:
+        logging.exception("Failed to process Pub/Sub message for new tasks admin email")
         return "Error", 500

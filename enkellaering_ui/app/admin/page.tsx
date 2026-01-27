@@ -16,6 +16,7 @@ import { Teacher } from "./types";
 import { InactiveStudents } from "./inactiveStudents";
 import { ResignedTeachers } from "./resignedTeachers";
 import { TasksWorkflow } from "./tasksWorkflow";
+import { TeacherTasksWorkflow } from "./teacherTasksWorkflow";
 import { HelpAdminPanel } from "./helpAdmin";
 import { toast } from "sonner";
 
@@ -80,6 +81,7 @@ export default function AdminPage() {
         <div className="w-full max-w-full p-4 space-y-10">
           <AnalyticsOverview />
           <TasksWorkflow />
+          <TeacherTasksWorkflow />
           <StudentsWithoutAnyTeachers token={token} BASEURL={BASEURL} />
           <DailyRevenueChart />
           <PreviousClassesForEachTeacher />
