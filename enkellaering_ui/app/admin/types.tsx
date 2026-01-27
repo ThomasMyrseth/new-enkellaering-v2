@@ -317,6 +317,7 @@ export type Task = {
     completed_at: string | null;
     student_data?: Student;
     teachers_data?: Teacher[];
+    teacher_data?: Teacher;
 };
 
 export type AvailableSubject = {

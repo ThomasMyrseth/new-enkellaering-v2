@@ -9,14 +9,14 @@ import { toast } from "sonner"
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080"
 
-export function TasksWorkflow() {
+export function TeacherTasksWorkflow() {
     const token = localStorage.getItem('token')
     const [tasks, setTasks] = useState<Task[]>([])
     const [loading, setLoading] = useState<boolean>(true)
 
     const fetchTasks = async () => {
         try {
-            const response = await fetch(`${BASEURL}/task/all`, {
+            const response = await fetch(`${BASEURL}/task/teacher-tasks/all`, {
                 method: "GET",
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -24,16 +24,15 @@ export function TasksWorkflow() {
             })
 
             if (!response.ok) {
-                throw new Error("Failed to fetch tasks")
+                throw new Error("Failed to fetch teacher tasks")
             }
 
             const data = await response.json()
             const tasksData: Task[] = data.tasks
 
-            //order alphabetically by firstanme student
             tasksData.sort((a, b) => {
-                if (a.student_data && b.student_data) {
-                    return a.student_data.firstname_student.localeCompare(b.student_data.firstname_student)
+                if (a.teacher_data && b.teacher_data) {
+                    return a.teacher_data.firstname.localeCompare(b.teacher_data.firstname)
                 }
                 return 0
             })
@@ -41,8 +40,8 @@ export function TasksWorkflow() {
             setTasks(tasksData)
             setLoading(false)
         } catch (error) {
-            console.error("Error fetching tasks:", error)
-            toast.error("Kunne ikke hente oppgaver")
+            console.error("Error fetching teacher tasks:", error)
+            toast.error("Kunne ikke hente læreroppgaver")
             setLoading(false)
         }
     }
@@ -54,20 +53,20 @@ export function TasksWorkflow() {
     if (loading) {
         return (
             <div className="w-full flex flex-col items-center justify-center shadow-lg dark:bg-black bg-white rounded-lg p-4">
-                <p>Laster oppgaver...</p>
+                <p>Laster læreroppgaver...</p>
             </div>
         )
     }
 
     return (
         <div className="w-full flex flex-col items-center justify-center shadow-lg dark:bg-black bg-white rounded-lg p-4">
-            <h3 className="text-2xl font-bold mb-6">Elevoppgaver ({tasks.length})</h3>
+            <h3 className="text-2xl font-bold mb-6">Læreroppgaver ({tasks.length})</h3>
             {tasks.length === 0 ? (
-                <p className="text-gray-500">Ingen oppgaver funnet</p>
+                <p className="text-gray-500">Ingen læreroppgaver funnet</p>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
                     {tasks.map((task) => (
-                        <TaskCard key={task.id} task={task} onUpdate={fetchTasks} />
+                        <TeacherTaskCard key={task.id} task={task} onUpdate={fetchTasks} />
                     ))}
                 </div>
             )}
@@ -75,7 +74,7 @@ export function TasksWorkflow() {
     )
 }
 
-function TaskCard({ task, onUpdate }: { task: Task, onUpdate: () => void }) {
+function TeacherTaskCard({ task, onUpdate }: { task: Task, onUpdate: () => void }) {
     const token = localStorage.getItem('token')
     const [status, setStatus] = useState<string>(task.status)
 
@@ -146,32 +145,16 @@ function TaskCard({ task, onUpdate }: { task: Task, onUpdate: () => void }) {
             </CardHeader>
             <CardContent className="flex-grow space-y-4">
                 <div className="space-y-2">
-                    <div className="text-sm">
-                        <span className="font-semibold">Elev:</span>{" "}
-                        {task.student_data?.firstname_student} {task.student_data?.lastname_student}
-                        <br />
-                        <span className="text-gray-500">{task.student_data?.phone_student}</span>
-                    </div>
-                    <div className="text-sm">
-                        <span className="font-semibold">Forelder:</span>{" "}
-                        {task.student_data?.firstname_parent} {task.student_data?.lastname_parent}
-                        <br />
-                        <span className="text-gray-500">{task.student_data?.phone_parent}</span>
-                    </div>
-                    <div className="text-sm">
-                        <span className="font-semibold">Lærere:</span>{" "}
-                        {task.teachers_data && task.teachers_data.length > 0 ? (
-                            <div className="ml-2 flex flex-col">
-                                {task.teachers_data.map((teacher) => (
-                                    <div key={teacher.user_id}>
-                                        {teacher.firstname} {teacher.lastname} | {teacher.phone}
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <span className="text-gray-500">Ingen lærere</span>
-                        )}
-                    </div>
+                    {task.teacher_data && (
+                        <div className="text-sm">
+                            <span className="font-semibold">Lærer:</span>{" "}
+                            {task.teacher_data.firstname} {task.teacher_data.lastname}
+                            <br />
+                            <span className="text-gray-500">{task.teacher_data.phone}</span>
+                            <br />
+                            <span className="text-gray-500">{task.teacher_data.email}</span>
+                        </div>
+                    )}
                 </div>
 
                 <div className="space-y-2">

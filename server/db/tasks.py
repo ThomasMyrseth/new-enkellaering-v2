@@ -45,11 +45,14 @@ def get_students_with_open_tasks() -> list[str]:
     student_ids = list(set([task['student'] for task in response.data])) #get a list of unique IDs
     return student_ids
 
-def create_new_tasks(cutoff_days: int = 21) -> None:
+def create_new_tasks(cutoff_days: int = 21) -> list[str]:
     """
     Create new tasks for students who have not attended classes in the past 3 weeks
     and have not had tasks assigned in the past 3 weeks.
     Creates one task per student with all their teachers.
+
+    Returns:
+        list[str]: Names of students for whom tasks were created
     """
 
     students_with_no_classes :list[dict] = get_students_with_no_classes(cutoff_days)
@@ -78,6 +81,7 @@ def create_new_tasks(cutoff_days: int = 21) -> None:
         student_teachers_map[student_id]['teacher_ids'].add(student['teacher']['user_id'])
 
     # Create one task per student with all their teachers
+    created_names = []
     for student_id, data in student_teachers_map.items():
         student_data = data['student']
         teacher_ids = list(data['teacher_ids'])  # Convert set to list for PostgreSQL array
@@ -92,6 +96,113 @@ def create_new_tasks(cutoff_days: int = 21) -> None:
             'student': student_id
         }
         supabase.table('tasks').insert(new_task).execute()
+        created_names.append(f"{student_data['firstname_student']} {student_data['lastname_student']}")
+
+    return created_names
+
+
+
+def get_teachers_with_few_hours(cutoff_days: int = 14, min_hours: float = 4.0) -> list[dict]:
+    """
+    Retrieve teachers who have taught less than min_hours in the past cutoff_days days.
+
+    Args:
+        cutoff_days (int): Number of days to look back
+        min_hours (float): Minimum hours threshold
+    Returns:
+        list[dict]: Each dict has 'teacher' (teacher object) and 'total_hours'
+    """
+    response = supabase.rpc('get_teachers_with_few_hours', {
+        'days': cutoff_days,
+        'min_hours': min_hours
+    }).execute()
+    return response.data
+
+
+def get_teachers_who_have_had_task(number_of_days: int = 14) -> list[str]:
+    """
+    Retrieve teacher IDs who have had a followup_teacher task created in the past N days.
+
+    Args:
+        number_of_days (int): Number of days to look back
+    Returns:
+        list[str]: A list of unique teacher user IDs
+    """
+    cutoff_date = (datetime.now(timezone.utc) - timedelta(days=number_of_days)).isoformat()
+    response = supabase.table('tasks').select('teacher').gte('created_at', cutoff_date).eq('type', 'followup_teacher').execute()
+    teacher_ids = list(set([task['teacher'] for task in response.data if task.get('teacher')]))
+    return teacher_ids
+
+
+def get_teachers_with_open_tasks() -> list[str]:
+    """
+    Retrieve teacher IDs who have open followup_teacher tasks.
+
+    Returns:
+        list[str]: A list of unique teacher user IDs
+    """
+    response = supabase.table('tasks').select('teacher').neq('status', 'completed').eq('type', 'followup_teacher').execute()
+    teacher_ids = list(set([task['teacher'] for task in response.data if task.get('teacher')]))
+    return teacher_ids
+
+
+def get_all_open_teacher_tasks() -> list[dict]:
+    """
+    Retrieve all open teacher follow-up tasks with teacher data.
+
+    Returns:
+        list[dict]: A list of open teacher tasks with embedded teacher data
+    """
+    response = supabase.rpc("get_all_open_teacher_tasks").execute()
+    return response.data
+
+
+def create_new_tasks_for_teachers(cutoff_days: int = 14, min_hours: float = 4.0) -> list[str]:
+    """
+    Create new tasks for teachers who have had few hours in the past cutoff_days
+    and have not had tasks assigned recently.
+    Creates one task per teacher.
+
+    Args:
+        cutoff_days (int): Number of days to look back for teaching hours and recent tasks
+        min_hours (float): Minimum hours threshold — teachers below this get a task
+    Returns:
+        list[str]: Names of teachers for whom tasks were created
+    """
+    teachers_with_few_classes: list[dict] = get_teachers_with_few_hours(cutoff_days, min_hours)
+    teacher_ids_with_tasks: list[str] = get_teachers_who_have_had_task(cutoff_days)
+    teacher_ids_with_open_tasks: list[str] = get_teachers_with_open_tasks()
+
+    cutoff_weeks = cutoff_days // 7
+
+    # Filter out teachers who already have tasks or had recent tasks
+    teachers_to_create_tasks_for = [
+        entry
+        for entry in teachers_with_few_classes
+        if entry['teacher']['user_id'] not in teacher_ids_with_tasks
+        and entry['teacher']['user_id'] not in teacher_ids_with_open_tasks
+    ]
+
+    created_names = []
+    for entry in teachers_to_create_tasks_for:
+        teacher = entry['teacher']
+        total_hours = round(entry.get('total_hours', 0), 1)
+        teacher_id = teacher['user_id']
+
+        new_task = {
+            'created_at': datetime.now(timezone.utc).isoformat(),
+            'title': f"{teacher['firstname']} {teacher['lastname']} har hatt få timer de siste {cutoff_weeks} ukene",
+            'description': f"Læreren {teacher['firstname']} {teacher['lastname']} har bare hatt {total_hours} timer de siste {cutoff_weeks} ukene. Vennligst ta kontakt for å følge opp.",
+            'status': 'pending',
+            'type': 'followup_teacher',
+            'teacher_ids': [teacher_id],
+            'teacher': teacher_id,
+            'student': None
+        }
+        supabase.table('tasks').insert(new_task).execute()
+        created_names.append(f"{teacher['firstname']} {teacher['lastname']}")
+
+    return created_names
 
 
 def update_status_on_task(task_id: int, new_status: str) -> None:

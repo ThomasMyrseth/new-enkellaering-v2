@@ -818,3 +818,109 @@ $$;
 -- ============================================================================
 -- END OF HELP RPC FUNCTIONS V2
 -- ============================================================================
+
+-- ============================================================================
+-- TEACHER FOLLOW-UP TASK FUNCTIONS
+-- ============================================================================
+
+-- Step 1: Add teacher column to tasks table
+-- ALTER TABLE public.tasks ADD COLUMN teacher text REFERENCES public.teachers(user_id);
+
+-- ----------------------------------------------------------------------------
+-- FUNCTION: get_teachers_with_few_hours
+-- Description: Returns non-resigned teachers who have taught less than
+--              min_hours in the past N days. Includes teachers with 0 classes.
+-- ----------------------------------------------------------------------------
+DROP FUNCTION IF EXISTS public.get_teachers_with_few_hours(INT, DOUBLE PRECISION);
+
+CREATE OR REPLACE FUNCTION public.get_teachers_with_few_hours(
+    days INT DEFAULT 14,
+    min_hours DOUBLE PRECISION DEFAULT 4.0
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    threshold_date TIMESTAMPTZ;
+    result JSONB;
+BEGIN
+    threshold_date := NOW() - (days || ' days')::INTERVAL;
+
+    SELECT jsonb_agg(
+        jsonb_build_object(
+            'teacher', row_to_json(t),
+            'total_hours', COALESCE(teacher_hours.hours, 0)
+        )
+    )
+    INTO result
+    FROM public.teachers t
+    LEFT JOIN (
+        SELECT
+            c.teacher_user_id,
+            SUM(EXTRACT(EPOCH FROM (c.ended_at - c.started_at)) / 3600.0) AS hours
+        FROM public.classes c
+        WHERE c.started_at >= threshold_date
+          AND c.started_at IS NOT NULL
+          AND c.ended_at IS NOT NULL
+        GROUP BY c.teacher_user_id
+    ) teacher_hours ON teacher_hours.teacher_user_id = t.user_id
+    WHERE t.resigned = FALSE
+      AND COALESCE(teacher_hours.hours, 0) < min_hours;
+
+    RETURN COALESCE(result, '[]'::jsonb);
+END;
+$$;
+
+ALTER FUNCTION public.get_teachers_with_few_hours(INT, DOUBLE PRECISION)
+SET search_path = public;
+
+GRANT EXECUTE ON FUNCTION public.get_teachers_with_few_hours(INT, DOUBLE PRECISION)
+TO anon, authenticated, service_role;
+
+-- ----------------------------------------------------------------------------
+-- FUNCTION: get_all_open_teacher_tasks
+-- Description: Returns all open teacher follow-up tasks with teacher data
+-- ----------------------------------------------------------------------------
+DROP FUNCTION IF EXISTS public.get_all_open_teacher_tasks();
+
+CREATE OR REPLACE FUNCTION public.get_all_open_teacher_tasks()
+RETURNS TABLE (
+    id bigint,
+    created_at timestamptz,
+    title text,
+    description text,
+    status text,
+    type text,
+    completed boolean,
+    completed_at timestamptz,
+    teacher_data jsonb
+)
+LANGUAGE sql
+STABLE
+AS $$
+SELECT
+    t.id,
+    t.created_at,
+    t.title,
+    t.description,
+    t.status,
+    t.type,
+    t.completed,
+    t.completed_at,
+    to_jsonb(te) AS teacher_data
+FROM tasks t
+LEFT JOIN teachers te ON te.user_id = t.teacher
+WHERE t.completed = false
+  AND t.type = 'followup_teacher'
+$$;
+
+ALTER FUNCTION public.get_all_open_teacher_tasks()
+SET search_path = public;
+
+GRANT EXECUTE ON FUNCTION public.get_all_open_teacher_tasks()
+TO anon, authenticated, service_role;
+
+-- ============================================================================
+-- END OF TEACHER FOLLOW-UP TASK FUNCTIONS
+-- ============================================================================
