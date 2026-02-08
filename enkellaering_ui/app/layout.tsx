@@ -12,6 +12,7 @@ import Sidebar from '@/components/ui/sidebar';
 import { Toaster } from "@/components/ui/sonner"
 import FacebookPixel from "@/components/facebookPixel/facebookPixel"
 import PixelTracker from '@/components/facebookPixel/pageTracker';
+import GoogleAds from '@/components/googleAds/googleAds';
 
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -54,6 +55,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 {isProtected ? <ProtectedRoute>{children}</ProtectedRoute> : children}
                 <FacebookPixel/>
                 <PixelTracker/>
+                <GoogleAds />
               </AuthProvider>
             </div>
           </div>

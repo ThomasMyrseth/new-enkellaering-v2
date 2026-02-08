@@ -243,7 +243,7 @@ export function TeacherFocusCards() {
                         placeholder='Jeg heter Thomas og trenger hjelp i matte 1t. Jeg ønsker hjelp én gang i uken, men har en prøve i trigonometri om to uker. Håper vi kan øve litt ekstra til den!'
                     />
                 </div>
-                <Button variant='secondary' disabled={disableButton} onClick={handleSubmit}>Bestill</Button>
+                <Button variant={`${disableButton? 'secondary-static': 'secondary'}`} disabled={disableButton} onClick={handleSubmit}>Bestill</Button>
                 <AlertDialogCancel onClick={() => setShowOrderPopover(false)}>Angre</AlertDialogCancel>
             </AlertDialogContent>
         </AlertDialog>
@@ -450,7 +450,7 @@ export function TeacherFocusCards() {
                 </div>
                 </motion.div>
                 <Button 
-                    variant='secondary'
+                    variant='secondary-static'
                     onClick={() => handleOrderClick(card)}
                     disabled={
                         (!card.teacher.physical_tutouring && !card.teacher.digital_tutouring) ||
