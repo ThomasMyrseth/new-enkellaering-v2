@@ -10,6 +10,10 @@ import { HelpSession, HelpQueueEntry } from "../admin/types"
 import { event } from '@/components/facebookPixel/fpixel'
 import Link from "next/link"
 import { toast } from "sonner"
+import DitherShader from "@/components/ui/dither-shader"
+import WaitlistForm from "@/components/waitlistForm"
+import { motion } from "framer-motion"
+import { useTheme } from "next-themes"
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080"
 
@@ -31,6 +35,7 @@ export default function FreeHelpPage() {
   const [zoomJoinLink, setZoomJoinLink] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+  const pixelSize :number = 2
 
   // Load queue state from localStorage on mount
   useEffect(() => {
@@ -371,9 +376,62 @@ export default function FreeHelpPage() {
     )
   }
 
+  const { theme } = useTheme()
+
+  // Light mode: brighter, more vibrant colors
+  // Dark mode: slightly darker palette
+  const customPalette = theme === "light" 
+    ? ["#fef3c7", "#fbbf24", "#f59e0b", "#fb923c", "#f97316", "#dc2626"]
+    : ["#000000", "#f97316", "#be123c", "#ffffff"]
+
   return (
-    <div className="flex flex-col items-center justify-center w-full min-h-screen bg-slate-200 dark:bg-slate-900 p-4">
-      <div className="w-full md:w-4/5 space-y-4 mt-4">
+    <div className="flex flex-col items-center w-full min-h-screen bg-slate-200 dark:bg-slate-900">
+      {/* Hero Section with Dither Shader */}
+      <section className="relative h-screen w-full flex flex-col items-center justify-center">
+        <div className="absolute inset-0 z-0">
+          <DitherShader 
+            src="/mountain_landscape.png"
+            gridSize={pixelSize}
+            pixelRatio={1}
+            colorMode="custom"
+            customPalette={customPalette}
+            brightness={0.1}
+            contrast={1.2}
+            className="opacity-60"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-black" />
+        </div>
+
+        <div className="flex flex-col items-center justify-center m-4 p-4 z-10 text-center space-y-6 max-w-4xl">
+          <motion.h1
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1 }}
+            className="text-4xl md:text-6xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-white to-white/40 mb-4"
+          >
+            GRATIS LEKSEHJELP
+          </motion.h1>
+          <motion.h2
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1 }}
+            className="text-xl md:text-2xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-white to-white/40 mb-4"
+          >
+            Få hjelp fra våre lærere - helt gratis!
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5, duration: 1 }}
+            className="text-lg md:text-xl text-neutral-200 max-w-2xl mx-auto leading-relaxed"
+          >
+            15-minutters økter med våre mentorer. Velg en lærer under og still deg i køen.
+          </motion.p>
+        </div>
+      </section>
+
+      {/* Main Content */}
+      <div className="w-full md:w-4/5 max-w-4xl space-y-4 mt-4 px-4 md:px-8">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-neutral-800 dark:text-neutral-200 mb-2">
             Gratis Leksehjelp
@@ -382,7 +440,7 @@ export default function FreeHelpPage() {
             Få hjelp fra våre lærere - helt gratis!
           </p>
           <div className="bg-white dark:bg-black p-4 rounded-lg">
-            <p>Vi tilbyr gratis 10-minutters økter med våre mentorer for å hjelpe deg med dine oppgaver. <br/>
+            <p>Vi tilbyr gratis 15-minutters økter med våre mentorer for å hjelpe deg med dine oppgaver. <br/>
               Velg en av lærerne under og still deg i køen. Du vil mota en lenke til videomøtet per epost, du vil også få den opp på siden her.
               <br/><br/><span> Dersom du ønsker mer omfattende hjelp kan du <Link href="/bestill" className="underline">bestille privatundervisning her</Link></span>
               <br/><span className="font-light text-neutral-600 dark:text-neutral-400">Tilbudet er begrenset til én økt per student per dag.</span>
@@ -595,6 +653,11 @@ export default function FreeHelpPage() {
             )}
           </>
         )}
+      </div>
+
+      {/* Waitlist Form */}
+      <div className="w-full flex justify-center mt-8 mb-8 px-4">
+        <WaitlistForm />
       </div>
     </div>
   )

@@ -240,3 +240,11 @@ CREATE TABLE public.teachers (
   notes text,
   CONSTRAINT teachers_pkey PRIMARY KEY (user_id)
 );
+CREATE TABLE public.waitlist (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  email text NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  notified boolean NOT NULL DEFAULT false,
+  CONSTRAINT waitlist_pkey PRIMARY KEY (id),
+  CONSTRAINT waitlist_email_key UNIQUE (email)
+);
