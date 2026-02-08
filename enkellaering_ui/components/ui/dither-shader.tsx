@@ -112,7 +112,7 @@ export const DitherShader = React.forwardRef<HTMLDivElement, DitherShaderProps>(
   animationSpeed = 0.02,
   className,
 }, ref) => {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number | null>(null);
   const timeRef = useRef<number>(0);
@@ -446,14 +446,15 @@ export const DitherShader = React.forwardRef<HTMLDivElement, DitherShaderProps>(
 
   // Merge containerRef with forwarded ref
   const setRefs = useCallback((node: HTMLDivElement | null) => {
-    containerRef.current = node;
+    // Assign to containerRef (mutable)
+    (containerRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
     
     if (ref) {
       if (typeof ref === 'function') {
         ref(node);
       } else {
-        // @ts-ignore - Object.assign is safe for refs
-        ref.current = node;
+        // Assign to forwarded ref
+        (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
       }
     }
   }, [ref]);
