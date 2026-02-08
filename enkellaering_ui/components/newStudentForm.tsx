@@ -57,6 +57,11 @@ export default function NewStudentForm() {
             setErrorMessage(false) //we have success
             setPhone('')
             toast.success('Tusen takk! Vi ringer deg innen kort tid')
+            
+            // Google Ads conversion tracking
+            if (typeof window !== "undefined" && window.gtag_report_conversion) {
+                window.gtag_report_conversion();
+            }
         }
         setIsDisabled(false)
     }
