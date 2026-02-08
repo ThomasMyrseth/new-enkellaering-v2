@@ -35,7 +35,7 @@ export default function Home() {
                 Gratis Leksehjelp
               </h3>
               <p className="text-white/90">
-                Få 15 minutters gratis hjelp fra våre dyktige lærere. Ingen forpliktelser!
+                Pørv vår gratis drop-in leksehjelp. Ingen forpliktelser!
               </p>
             </div>
             <ArrowRight className="w-8 h-8 text-white flex-shrink-0 ml-4" />
