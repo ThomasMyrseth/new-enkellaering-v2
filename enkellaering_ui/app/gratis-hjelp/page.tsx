@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Loader2 } from "lucide-react"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { HelpSession, HelpQueueEntry } from "../admin/types"
@@ -36,6 +37,7 @@ export default function FreeHelpPage() {
   const [loading, setLoading] = useState(false)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const pixelSize :number = 2
+  const [isFetchingSessions, setIsFetchingSessions] = useState<boolean>(true)
 
   // Load queue state from localStorage on mount
   useEffect(() => {
@@ -78,6 +80,7 @@ export default function FreeHelpPage() {
   }, [queueId, position?.status])
 
   async function fetchActiveSessions() {
+    setIsFetchingSessions(true)
     try {
       const response = await fetch(`${BASEURL}/help-sessions/active`)
       if (!response.ok) {
@@ -89,10 +92,12 @@ export default function FreeHelpPage() {
 
       // If no active sessions, fetch future sessions
       if (!data.sessions || data.sessions.length === 0) {
-        fetchFutureSessions()
+        await fetchFutureSessions()
       }
     } catch (error) {
       console.error("Failed to fetch active sessions:", error)
+    } finally {
+      setIsFetchingSessions(false)
     }
   }
 
@@ -536,55 +541,64 @@ export default function FreeHelpPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div
-                  onClick={() => setSelectedSession("snarest")}
-                  className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${selectedSession === "snarest"
-                      ? "border-blue-500 bg-blue-50 dark:bg-blue-900"
-                      : "border-neutral-200 dark:border-neutral-700 hover:border-blue-300"
-                    }`}
-                >
-                  <p className="font-semibold text-lg text-neutral-800 dark:text-neutral-200">Snarest ledig</p>
-                  <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                    Bli automatisk tildelt til læreren med kortest kø
-                  </p>
-                </div>
-
-                {activeSessions.map((session) => (
-                  <div
-                    key={session.session_id}
-                    onClick={() => setSelectedSession(session.teacher_user_id)}
-                    className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${selectedSession === session.teacher_user_id
-                        ? "border-blue-500 bg-blue-50 dark:bg-blue-900"
-                        : "border-neutral-200 dark:border-neutral-700 hover:border-blue-300"
-                      }`}
-                  >
-                    <p className="font-semibold text-lg text-neutral-800 dark:text-neutral-200">
-                      {session.teacher_firstname} {session.teacher_lastname}
-                    </p>
-                    <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                      {session.recurring ? (
-                        <>
-                          {session.day_of_week !== null && DAYS_NO[session.day_of_week]} (Hver uke)
-                        </>
-                      ) : (
-                        <>
-                          {session.start_time && new Date(session.start_time).toLocaleDateString('no-NO', {
-                            timeZone: 'Europe/Oslo',
-                            weekday: 'long',
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                          })} (I dag)
-                        </>
-                      )}
-                      {" "}
-                      {session.start_time && new Date(session.start_time).toLocaleTimeString('no-NO', { timeZone: 'Europe/Oslo', hour: '2-digit', minute: '2-digit' })} - {session.end_time && new Date(session.end_time).toLocaleTimeString('no-NO', { timeZone: 'Europe/Oslo', hour: '2-digit', minute: '2-digit' })}
-                    </p>
-                    <p className="text-xs text-neutral-500 dark:text-neutral-500">
-                      {session.queue_count || 0} i kø
-                    </p>
+                {isFetchingSessions ? (
+                  <div className="flex flex-col items-center justify-center py-8 text-neutral-500">
+                    <Loader2 className="w-8 h-8 animate-spin mb-2" />
+                    <p>Ser etter tilgjengelige lærere...</p>
                   </div>
-                ))}
+                ) : (
+                  <>
+                    <div
+                      onClick={() => setSelectedSession("snarest")}
+                      className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${selectedSession === "snarest"
+                          ? "border-blue-500 bg-blue-50 dark:bg-blue-900"
+                          : "border-neutral-200 dark:border-neutral-700 hover:border-blue-300"
+                        }`}
+                    >
+                      <p className="font-semibold text-lg text-neutral-800 dark:text-neutral-200">Snarest ledig</p>
+                      <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                        Bli automatisk tildelt til læreren med kortest kø
+                      </p>
+                    </div>
+
+                    {activeSessions.map((session) => (
+                      <div
+                        key={session.session_id}
+                        onClick={() => setSelectedSession(session.teacher_user_id)}
+                        className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${selectedSession === session.teacher_user_id
+                            ? "border-blue-500 bg-blue-50 dark:bg-blue-900"
+                            : "border-neutral-200 dark:border-neutral-700 hover:border-blue-300"
+                          }`}
+                      >
+                        <p className="font-semibold text-lg text-neutral-800 dark:text-neutral-200">
+                          {session.teacher_firstname} {session.teacher_lastname}
+                        </p>
+                        <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                          {session.recurring ? (
+                            <>
+                              {session.day_of_week !== null && DAYS_NO[session.day_of_week]} (Hver uke)
+                            </>
+                          ) : (
+                            <>
+                              {session.start_time && new Date(session.start_time).toLocaleDateString('no-NO', {
+                                timeZone: 'Europe/Oslo',
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                              })} (I dag)
+                            </>
+                          )}
+                          {" "}
+                          {session.start_time && new Date(session.start_time).toLocaleTimeString('no-NO', { timeZone: 'Europe/Oslo', hour: '2-digit', minute: '2-digit' })} - {session.end_time && new Date(session.end_time).toLocaleTimeString('no-NO', { timeZone: 'Europe/Oslo', hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                        <p className="text-xs text-neutral-500 dark:text-neutral-500">
+                          {session.queue_count || 0} i kø
+                        </p>
+                      </div>
+                    ))}
+                  </>
+                )}
               </CardContent>
             </Card>
 
