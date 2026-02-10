@@ -288,11 +288,11 @@ export default function FreeHelpPage() {
               </CardTitle>
               <CardDescription>
                 {position?.admitted_at ? (
-                  <>Du har blitt sluppet inn! Bli med i Zoom-møtet NÅ ved å klikke på lenken under.</>
+                  <p>Du har blitt sluppet inn! Bli med i Zoom-møtet NÅ ved å klikke på lenken under.</p>
                 ) : zoomJoinLink ? (
-                  <>Du kan bli med i Zoom-møtet nå ved å klikke på knappen under. Du vil bli sluppet inn når det er din tur.</>
+                  <p>Du kan bli med i Zoom-møtet nå ved å klikke på knappen under. Du vil bli sluppet inn når det er din tur.</p>
                 ) : (
-                  <>Du har fått en epost av oss med lenke til videomøte. Bli med i møtet nå, så slippes du inn så fort det er din tur. Husk å sjekke søppelposten!</>
+                  <p>Du har fått en epost av oss med lenke til videomøte. Bli med i møtet nå, så slippes du inn så fort det er din tur. Husk å sjekke søppelposten!</p>
                 )}
               </CardDescription>
             </CardHeader>
