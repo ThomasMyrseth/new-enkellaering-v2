@@ -110,6 +110,19 @@ def update_student_notes(admin_user_id: str, student_user_id: str, notes: str):
         'notes': notes
     }).eq('user_id', student_user_id).execute()
 
+def update_student_discount(admin_user_id: str, student_user_id: str, discount: float):
+    """Update student discount (admin validated)"""
+    # Verify admin
+    admin_response = is_admin(admin_user_id)
+    if not admin_response:
+        raise ValueError("User is not an admin")
+
+    # Update discount
+    supabase.table('students').update({
+        'discount': discount
+    }).eq('user_id', student_user_id).execute()
+
+
 def update_teacher_notes(admin_user_id: str, teacher_user_id: str, notes: str):
     """Update teacher notes (admin validated)"""
     # Verify admin

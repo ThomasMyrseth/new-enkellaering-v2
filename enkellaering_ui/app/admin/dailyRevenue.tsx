@@ -23,7 +23,7 @@ import { toast } from "sonner";
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
 
-function calculatePayment(classSession: Classes, hourlyCharge: number): number {
+function calculatePayment(classSession: Classes, hourlyCharge: number, discount?: number): number {
     const start = new Date(classSession.started_at);
     const end = new Date(classSession.ended_at);
   
@@ -35,6 +35,10 @@ function calculatePayment(classSession: Classes, hourlyCharge: number): number {
   
     // Calculate the payment
     const payment = durationInHours * hourlyCharge;
+
+    if (discount) {
+        return Math.round(payment * (1 - discount));
+    }
   
     return Math.round(payment); // Optional: Round to the nearest integer
 }
@@ -116,11 +120,12 @@ export function DailyRevenueChart() {
             const startedAtDate = new Date(c.started_at);
             const startedAtString = startedAtDate.toISOString().split("T")[0]; 
             if (startedAtString === thisDateString) {
+                const discount = c.students?.discount || 0
                 if (c.groupclass) {
-                    totalPaymentToday += calculatePayment(c, 350)
+                    totalPaymentToday += calculatePayment(c, 350, discount)
                 }
                 else {
-                    totalPaymentToday += calculatePayment(c, 540);
+                    totalPaymentToday += calculatePayment(c, 540, discount);
                 }
             }
           });

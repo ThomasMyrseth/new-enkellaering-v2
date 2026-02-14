@@ -84,12 +84,18 @@ export function PreviousClasses({student} : {student : Student}) {
             const totalDurationMillis: number = new Date(c.ended_at).getTime() - new Date(c.started_at).getTime();
             const durationHours = (new Date(c.ended_at).getTime() - new Date(c.started_at).getTime()) / (1000 * 60 * 60)
             if (!c.invoiced_student) {
+                let classPrice = 0;
                 if (c.groupclass) {
-                    totalAmount += durationHours*350
+                    classPrice = durationHours*350
                 }
                 else {
-                    totalAmount += durationHours*540;
+                    classPrice = durationHours*540;
                 }
+                
+                if (student.discount) {
+                    classPrice = classPrice * (1 - student.discount);
+                }
+                totalAmount += classPrice;
             }
 
             //add it to the threeweek
@@ -156,13 +162,31 @@ export function PreviousClasses({student} : {student : Student}) {
                     amount = durationHours * 350 + (durationMinutes / 60) * 350; // Adding fractional hours
                 }
 
+                let discountedAmount = amount;
+                if (student.discount) {
+                    discountedAmount = amount * (1 - student.discount);
+                }
+                
+                // Round to nearest integer
+                amount = Math.round(amount);
+                discountedAmount = Math.round(discountedAmount);
+
                 return(
                     <TableRow key={index} className={`${c.was_canselled===true? 'bg-red-50 dark:bg-red-950' : ''}`}>
                         <TableCell className="font-medium">{c.started_at}</TableCell>
                         <TableCell>{c.firstname} {c.lastname}</TableCell>
                         <TableCell>{`${durationHours}t ${Math.round(durationMinutes % 60)}min`}</TableCell>
                         <TableCell>{c.invoiced_student ? <p className="text-green-400">Fakturert</p> : <p className="text-red-400">Ufakturert</p>}</TableCell>
-                        <TableCell className="text-right">{amount}</TableCell>
+                        <TableCell className="text-right">
+                             {student.discount && student.discount > 0 ? (
+                                <div className="flex flex-col items-end">
+                                    <span className="line-through text-xs text-gray-500">{amount}kr</span>
+                                    <span>{discountedAmount}kr</span>
+                                </div>
+                            ) : (
+                                <span>{amount}kr</span>
+                            )}
+                        </TableCell>
                         <TableCell>{c.comment}</TableCell>
                     </TableRow>
                 )
@@ -195,6 +219,15 @@ export function PreviousClasses({student} : {student : Student}) {
                         amount = durationHours * 350 + (durationMinutes / 60) * 350; // Adding fractional hours
                     }
 
+                    let discountedAmount = amount;
+                    if (student.discount) {
+                        discountedAmount = amount * (1 - student.discount);
+                    }
+
+                    // Round to nearest integer
+                    amount = Math.round(amount);
+                    discountedAmount = Math.round(discountedAmount);
+
 
                     return (
                       <TableRow key={index}>
@@ -207,7 +240,16 @@ export function PreviousClasses({student} : {student : Student}) {
                             <p className="text-red-400">Ufakturert</p>
                           )}
                         </TableCell>
-                        <TableCell className="text-right">{amount}kr</TableCell>
+                        <TableCell className="text-right">
+                             {student.discount && student.discount > 0 ? (
+                                <div className="flex flex-col items-end">
+                                    <span className="line-through text-xs text-gray-500">{amount}kr</span>
+                                    <span>{discountedAmount}kr</span>
+                                </div>
+                            ) : (
+                                <span>{amount}kr</span>
+                            )}
+                        </TableCell>
                         <TableCell>{c.comment}</TableCell>
                       </TableRow>
                     );

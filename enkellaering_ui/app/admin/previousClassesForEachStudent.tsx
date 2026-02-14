@@ -269,12 +269,15 @@ export function PreviousClassesForEachStudent() {
                         </AccordionItem>
                 </Accordion>
 
-                <p>Totalt ufakturerte timer fra {s.firstname_parent}: <span className="text-red-400">{totalUninvoicedHoursStudent}h, {totalUninvoicedStudent+totalTravelPayFromStudent}kr. (inkludert reisetillegg)</span></p>
+                <p>Totalt ufakturerte timer fra {s.firstname_parent}: <span className="text-red-400">{totalUninvoicedHoursStudent}h, {totalUninvoicedStudent * (1 - (s.discount ?? 0)) + totalTravelPayFromStudent}kr. (inkludert reisetillegg)</span></p>
                 <p>Total fakturerte timer fra {s.firstname_parent}: <span className="text-green-400">{totalInvoicedHoursStudent}h, {totalInvoicedStudent}kr.</span></p>
                                 
                 <div className="flex flex-row w-full justify-between pt-2">
                     <InvoiceStudentPopover student={s} classes={myClasses} teacherStudents={teacherStudents}/>
-                    <SetStudentInactive student={s} />
+                    <div className="flex flex-row space-x-2">
+                        <DiscountPopover student={s} />
+                        <SetStudentInactive student={s} />
+                    </div>
                 </div>
 
                 <div className="overflow-x-auto w-full">
@@ -416,6 +419,12 @@ const InvoiceStudentPopover = ( {student, classes, teacherStudents} : {student: 
         if (c.groupclass) {
             thisClass = durationHours*350
         }
+        
+        // Apply discount
+        if (student.discount) {
+            thisClass = thisClass * (1 - student.discount);
+        }
+
         totalInvoiceAmmount += thisClass
 
         const ts = teacherStudents.find((ts: TeacherStudent) =>
@@ -488,6 +497,8 @@ const InvoiceStudentPopover = ( {student, classes, teacherStudents} : {student: 
                 <p>
                     Faktura for privatundervisning i {currentMonth} {currentYear}
                     <br/>
+                    {student.discount ? `Rabatt: ${Math.round(student.discount * 100)}%` : ''}
+                    <br/>
                     Total {totalNumberOfHours} timer, {totalInvoiceAmmount+totalTravelPay} kroner, fordelt på {numberOfClassesToInvoice} ganger
                     <br/>
                     Derav {totalTravelPay} kroner i reisetillegg
@@ -524,7 +535,7 @@ const InvoiceStudentPopover = ( {student, classes, teacherStudents} : {student: 
 
                         return (<div key={index}>
                         <p>
-                            Fra {formattedStartTime} til {formattedEndTime}{c.was_canselled? '*':''}<br/>
+                            Fra {formattedStartTime} til {formattedEndTime}{c.was_canselled? '*':''} ({c.groupclass ? 'Gruppetime' : 'Individuell time'})<br/>
                         </p>
                         </div>)
                     })
@@ -601,6 +612,74 @@ const SetStudentInactive = ({ student }: { student: Student }) => {
             </AlertDialogContent>
         </AlertDialog>
     </>)
+};
+
+const DiscountPopover = ({ student }: { student: Student }) => {
+    const token = localStorage.getItem('token');
+    const [discount, setDiscount] = useState<number>(student.discount || 0);
+    const [open, setOpen] = useState(false);
+
+    const handleUpdateDiscount = async () => {
+        try {
+            const response = await fetch(`${BASEURL}/update-student-discount`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    "student_user_id": student.user_id,
+                    "discount": discount/100
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Error: ${response.status} - ${response.statusText}`);
+            }
+
+            toast.success(`Rabatt oppdatert for ${student.firstname_parent}`);
+            setOpen(false);
+            // Refresh logic might be needed here, or just let the user refresh
+            // Ideally, update local state or trigger a refetch
+             window.location.reload(); 
+        } catch (error) {
+            toast.error(`Oppdatering feilet: ${error}`);
+        }
+    };
+
+    return (
+        <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+                <Button variant="outline">{Math.round((student.discount || 0) * 100)}% Rabatt</Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80">
+                <div className="grid gap-4">
+                    <div className="space-y-2">
+                        <h4 className="font-medium leading-none">Sett rabatt</h4>
+                        <p className="text-sm text-muted-foreground">
+                            Sett rabatt som heltall (f.eks. 10 for 10%)
+                        </p>
+                    </div>
+                    <div className="grid gap-2">
+                        <div className="grid grid-cols-3 items-center gap-4">
+                            <Label htmlFor="discount">Rabatt</Label>
+                            <Input
+                                id="discount"
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                max="1"
+                                value={discount}
+                                onChange={(e) => setDiscount(parseFloat(e.target.value))}
+                                className="col-span-2 h-8"
+                            />
+                        </div>
+                        <Button onClick={handleUpdateDiscount} variant="secondary">Oppdater</Button>
+                    </div>
+                </div>
+            </PopoverContent>
+        </Popover>
+    );
 };
 
 import { Textarea } from "@/components/ui/textarea";

@@ -126,7 +126,7 @@ def get_all_classes(admin_user_id: str):
     if not admin_response:
         raise ValueError("User is not an admin")
 
-    response = supabase.table('classes').select('*').execute()
+    response = supabase.table('classes').select('*, students(discount)').execute()
     return response.data
 
 def get_class_by_teacher_and_student_id(admin_user_id: str, teacher_user_id: str, student_user_id: str):
@@ -361,7 +361,7 @@ def get_analytics_dashboard(admin_user_id: str):
         raise ValueError("User is not an admin")
 
     # Fetch all necessary data separately
-    classes_response = supabase.table('classes').select('*, teachers(hourly_pay, firstname, lastname, location)').eq('was_canselled', 'FALSE').execute()
+    classes_response = supabase.table('classes').select('*, teachers(hourly_pay, firstname, lastname, location), students(discount)').eq('was_canselled', 'FALSE').execute()
     students_response = supabase.table('students').select('user_id, is_active, created_at').execute()
     teachers_response = supabase.table('teachers').select('user_id, resigned').execute()
     teacher_student_response = supabase.table('teacher_student').select('teacher_user_id, student_user_id, travel_pay_to_teacher, order_comments').execute()
@@ -457,7 +457,14 @@ def get_analytics_dashboard(admin_user_id: str):
         is_group = cls.get('groupclass', False)
         num_students = cls.get('number_of_students', 1) if is_group else 1
         hourly_rate = 350 if is_group else 540
-        revenue = duration_hours * hourly_rate * num_students
+        
+        base_revenue = duration_hours * hourly_rate * num_students
+        
+        # Apply discount
+        students_data = cls.get('students')
+        discount = float(students_data.get('discount', 0) if students_data else 0)
+        
+        revenue = base_revenue * (1 - discount)
 
         # Calculate teacher cost
         teacher_hourly_pay = float(cls.get('teachers', {}).get('hourly_pay', 0)) if cls.get('teachers') else 0

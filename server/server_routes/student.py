@@ -23,6 +23,7 @@ def get_students(user_id):
         students = get_student_for_teacher(user_id)
         return jsonify({"students": students}), 200
     except Exception as e:
+        print("error: ", e)
         return jsonify({"message": str(e)}), 500
 
 

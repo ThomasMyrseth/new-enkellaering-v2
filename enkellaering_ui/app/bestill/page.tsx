@@ -10,6 +10,12 @@ export default function BestillPage() {
     
     return (<div className="text-center w-fit md:w-full h-full bg-slate-200 dark:bg-slate-950 space-y-10 p-10">
 
+            <div className="w-full flex justify-center">
+                <h2 className="text-2xl md:text-3xl font-bold relative bg-clip-text text-transparent bg-no-repeat bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500 py-4">
+                    Alle nye elever får 25% rabatt ut februar og mars!
+                </h2>
+            </div>
+
             <NewStudentForm/>
             <div className="grid grid-cols-1 md:grid-cols-2 space-x-0 md:space-x-4 items-start space-y-4 md:space-y-0">
               <GroupPrices/>

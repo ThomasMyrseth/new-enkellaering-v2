@@ -22,6 +22,7 @@ export type Student = {
     est_hours_per_week : number
     is_active : boolean
     notes :string
+    discount? :number
 }
 
 export type TeacherStudent = {
@@ -138,6 +139,9 @@ export type Classes = {
     was_canselled :boolean;
     groupclass :boolean;
     number_of_students :number | null;
+    students? : {
+        discount? :number
+    }
 };
 
 export type ClassesJoinTeacher = {

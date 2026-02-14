@@ -3,7 +3,7 @@ import os
 
 from .config import token_required
 from db.gets import is_admin, get_analytics_dashboard
-from db.alters import update_travel_payment
+from db.alters import update_travel_payment, update_student_discount
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -68,4 +68,24 @@ def analytics_dashboard_route(user_id):
         return jsonify(analytics_data), 200
     except Exception as e:
         print(f"Analytics dashboard error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@admin_bp.route('/update-student-discount', methods=["POST"])
+@token_required
+def update_student_discount_route(user_id):
+    """Update student discount via Cloud SQL"""
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+
+    student_user_id = data.get('student_user_id')
+    discount = data.get('discount')
+
+    if None in (student_user_id, discount):
+        return jsonify({"error": "Missing required fields"}), 400
+
+    try:
+        update_student_discount(user_id, student_user_id, discount)
+        return jsonify({"message": "Student discount updated successfully"}), 200
+    except Exception as e:
         return jsonify({"error": str(e)}), 500
