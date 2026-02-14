@@ -236,6 +236,7 @@ import { Classes, Teacher, Student } from "./types";
 
 import { useEffect, useState } from "react"
 import React, { useRef } from "react";
+import { formatDateTime } from "@/lib/utils";
 
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
@@ -746,7 +747,7 @@ export function PreviousClassesForEachTeacher() {
                                 
                                 return (
                                 <TableRow key={index}>
-                                    <TableCell className="font-medium">{c.started_at}</TableCell>
+                                    <TableCell className="font-medium">{formatDateTime(c.started_at)}</TableCell>
                                     <TableCell>{studentName}</TableCell>
                                     <TableCell>{`${durationHours}t ${durationMinutes}min`}</TableCell>
                                     <TableCell>

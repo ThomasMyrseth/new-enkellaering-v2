@@ -1,5 +1,6 @@
 "use client"
 import React, { useRef } from "react";
+import { formatDateTime } from "@/lib/utils";
 import { Input } from "@/components/ui/input"
 
 import {
@@ -318,7 +319,7 @@ export function PreviousClassesForEachStudent() {
 
                         return (
                         <TableRow key={index} className={`${c.was_canselled===true? 'bg-red-50 dark:bg-red-950' : ''}`}>
-                            <TableCell className="font-medium">{c.started_at}</TableCell>
+                            <TableCell className="font-medium">{formatDateTime(c.started_at)}</TableCell>
                             <TableCell>{teacherName}</TableCell>
                             <TableCell>{`${durationHours}t ${durationMinutes}min`}</TableCell>
                             <TableCell>

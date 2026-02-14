@@ -21,6 +21,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Student, ClassesJoinTeacher } from "../admin/types";
 import { toast } from "sonner";
+import { formatDateTime } from "@/lib/utils";
 
 export function PreviousClasses({student} : {student : Student}) {     
     const token = localStorage.getItem('token') 
@@ -173,7 +174,7 @@ export function PreviousClasses({student} : {student : Student}) {
 
                 return(
                     <TableRow key={index} className={`${c.was_canselled===true? 'bg-red-50 dark:bg-red-950' : ''}`}>
-                        <TableCell className="font-medium">{c.started_at}</TableCell>
+                        <TableCell className="font-medium">{formatDateTime(c.started_at)}</TableCell>
                         <TableCell>{c.firstname} {c.lastname}</TableCell>
                         <TableCell>{`${durationHours}t ${Math.round(durationMinutes % 60)}min`}</TableCell>
                         <TableCell>{c.invoiced_student ? <p className="text-green-400">Fakturert</p> : <p className="text-red-400">Ufakturert</p>}</TableCell>
@@ -231,7 +232,7 @@ export function PreviousClasses({student} : {student : Student}) {
 
                     return (
                       <TableRow key={index}>
-                        <TableCell className="font-medium">{c.started_at}</TableCell>
+                        <TableCell className="font-medium">{formatDateTime(c.started_at)}</TableCell>
                         <TableCell>{`${durationHours}t ${durationMinutes}min`}</TableCell>
                         <TableCell>
                           {c.invoiced_student ? (
