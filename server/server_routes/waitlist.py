@@ -6,23 +6,29 @@ waitlist_bp = Blueprint('waitlist', __name__)
 
 @waitlist_bp.route('/submit-waitlist', methods=['POST'])
 def submit_waitlist():
-    """Public endpoint to add email to waitlist for gratis leksehjelp notifications"""
+    """Public endpoint to add email and phone to waitlist for gratis leksehjelp notifications"""
     data = request.get_json() or {}
     
-    # Validate email is provided
+    # Validate required fields
     email = data.get('email')
+    phone = data.get('phone')
+
     if not email:
         return jsonify({"error": "Email er påkrevd"}), 400
     
+    if not phone:
+        return jsonify({"error": "Telefonnummer er påkrevd"}), 400
+
     # Basic email validation
     if '@' not in email or '.' not in email:
         return jsonify({"error": "Ugyldig e-postadresse"}), 400
     
     try:
-        # Insert email into waitlist table
+        # Insert email and phone into waitlist table
         # Supabase will handle duplicate emails via UNIQUE constraint
         response = supabase.table('waitlist').insert({
-            'email': email.lower().strip()  # Normalize email
+            'email': email.lower().strip(),
+            'phone': phone.strip()
         }).execute()
         
         logging.info(f"Successfully added {email} to waitlist")

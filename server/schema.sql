@@ -243,6 +243,7 @@ CREATE TABLE public.teachers (
 CREATE TABLE public.waitlist (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   email text NOT NULL,
+  phone text,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   notified boolean NOT NULL DEFAULT false,
   CONSTRAINT waitlist_pkey PRIMARY KEY (id),
