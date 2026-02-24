@@ -30,15 +30,7 @@ export default function NewStudentForm() {
         setErrorMessage(null);
 
         event("submit-new-student")
-
-        // if (phone.length!=8) {
-        //     setValidPhone(false)
-        //     return
-        // }
-        // else {
-        //     setValidPhone(true)
-        // }
-
+        
         const response = await fetch(`${BASEURL}/submit-new-student`, {
             method: "POST",
             headers: {
