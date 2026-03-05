@@ -141,6 +141,7 @@ function SignupFormContent() {
             localStorage.setItem('isAuthenticated', 'true');
             localStorage.setItem('user_id', userId);
             localStorage.setItem('role', 'student');
+            localStorage.setItem('isTeacher', 'false');
             
             router.push(`/min-side`);
         }).catch(err => {

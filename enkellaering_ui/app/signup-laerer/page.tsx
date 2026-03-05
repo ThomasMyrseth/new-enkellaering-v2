@@ -116,7 +116,7 @@ export default function SignupForm() {
             localStorage.setItem('isAuthenticated', 'true');
             localStorage.setItem('user_id', userId);
             localStorage.setItem('role', 'teacher');
-            localStorage.setItem('isAuthenticated', 'true');
+            localStorage.setItem('isTeacher', 'true');
             
             router.push(`/min-side-laerer`);
         }).catch(err => {
