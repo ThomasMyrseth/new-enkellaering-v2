@@ -29,17 +29,6 @@ export default function Home() {
       <NewStudentForm/>
       </div>
 
-      {/* Gratis Leksehjelp Promotion */}
-        <div className="bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500 rounded-lg p-6 hover:shadow-xl transition-shadow duration-300 w-full">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <p className="text-white font-bold mt-2">
-                Alle nye elever får 25% rabatt ut februar og mars!
-              </p>
-            </div>
-          </div>
-        </div>
-
       <div className="bg-white dark:bg-black rounded-lg w-full p-4 space-y-6 flex flex-col items-center justify-center">
       <h1 className="text-3xl py-4">Eller bestill <span className="relative bg-clip-text text-transparent bg-no-repeat bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500 py-4">drømmelæreren</span> direkte...</h1>
       <TeacherFocusCards/>
