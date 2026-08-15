@@ -1,148 +1,226 @@
-from datetime import datetime, timedelta, timezone
-from supabase_client import supabase
 import json
-import re
 import logging
+import re
+from datetime import datetime, timedelta, timezone
+
+from sqlalchemy import Date, Time, and_, exists, func, or_, select
+
+from db.models import (
+    AboutMeText,
+    AvailableSubject,
+    Classes,
+    HelpQueue,
+    HelpSession,
+    NewStudent,
+    Question,
+    Quiz,
+    QuizResult,
+    Review,
+    Student,
+    Teacher,
+    TeacherHelpConfig,
+    TeacherReferral,
+    TeacherStudent,
+)
+from db.session import get_session
+
+
+def is_admin(user_id: str) -> bool:
+    """Check if a user is an admin"""
+    session = get_session()
+    admin = session.scalar(select(Teacher.admin).where(Teacher.user_id == user_id))
+    return bool(admin)
+
 
 def get_all_teachers():
     """Get all active teachers (not resigned)"""
-    response = supabase.table('teachers').select('*').eq('resigned', 'FALSE').execute()
-    return response.data
+    session = get_session()
+    rows = session.scalars(select(Teacher).where(Teacher.resigned.is_(False))).all()
+    return [t.as_dict() for t in rows]
+
 
 def get_all_teachers_inc_resigned():
     """Get all teachers including resigned ones"""
-    response = supabase.table('teachers').select('*').execute()
-    return response.data
+    session = get_session()
+    rows = session.scalars(select(Teacher)).all()
+    return [t.as_dict() for t in rows]
+
 
 def get_all_students(admin_user_id: str):
     """Get all students (admin validated)"""
-    # Check if user is admin
-    admin_response = is_admin(admin_user_id)
-    if not admin_response:
+    if not is_admin(admin_user_id):
         raise ValueError("User is not an admin")
 
-    response = supabase.table('students').select('*').execute()
-    return response.data
+    session = get_session()
+    rows = session.scalars(select(Student)).all()
+    return [s.as_dict() for s in rows]
+
 
 def get_teacher_by_user_id(user_id: str):
     """Get teacher by user_id"""
-    response = supabase.table('teachers').select('*').eq('user_id', user_id).execute()
-    return response.data
+    session = get_session()
+    rows = session.scalars(select(Teacher).where(Teacher.user_id == user_id)).all()
+    return [t.as_dict() for t in rows]
+
 
 def get_student_by_user_id(user_id: str):
     """Get student by user_id"""
-    response = supabase.table('students').select('*').eq('user_id', user_id).execute()
-    return response.data
+    session = get_session()
+    rows = session.scalars(select(Student).where(Student.user_id == user_id)).all()
+    return [s.as_dict() for s in rows]
+
 
 def get_students_by_user_ids(user_ids: list):
     """Get multiple students by list of user_ids"""
     if not user_ids:
         return []
 
-    # Defensive handling: ensure it's a proper list
-    import logging
-    import json
-
     logging.info(f"get_students_by_user_ids received: {user_ids}, type: {type(user_ids)}")
 
-    # If it's a string, try to parse it
     if isinstance(user_ids, str):
         try:
             user_ids = json.loads(user_ids)
             logging.info(f"Parsed string to list: {user_ids}")
-        except:
+        except Exception:
             logging.error(f"Failed to parse user_ids string: {user_ids}")
             return []
 
-    # Ensure it's a list
     if not isinstance(user_ids, list):
         user_ids = list(user_ids)
 
-    # Ensure all elements are strings (UUIDs should be strings)
     user_ids = [str(uid) for uid in user_ids]
 
-    logging.info(f"Final user_ids before query: {user_ids}, type: {type(user_ids)}")
-    logging.info(f"First user_id type: {type(user_ids[0]) if user_ids else 'empty'}")
+    session = get_session()
+    rows = session.scalars(select(Student).where(Student.user_id.in_(user_ids))).all()
+    return [s.as_dict() for s in rows]
 
-    # Try using tuple instead of list - some libraries prefer this
-    try:
-        response = supabase.table('students').select('*').in_('user_id', tuple(user_ids)).execute()
-    except Exception as e:
-        logging.error(f"Error with tuple, trying list: {e}")
-        # If tuple fails, try the original list approach
-        response = supabase.table('students').select('*').in_('user_id', user_ids).execute()
-
-    return response.data
 
 def get_all_referrals(admin_user_id: str):
     """Get all referrals (admin validated)"""
-    # Check if user is admin
-    admin_response = is_admin(admin_user_id)
-    if not admin_response:
+    if not is_admin(admin_user_id):
         raise ValueError("User is not an admin")
 
-    response = supabase.table('teacher_referrals').select('*').execute()
-    return response.data
+    session = get_session()
+    rows = session.scalars(select(TeacherReferral)).all()
+    return [r.as_dict() for r in rows]
+
 
 def get_referral_by_user_id(admin_user_id: str, target_referee_user_id: str):
     """Get referral by user_id (admin validated)"""
-    # Check if user is admin
-    admin_response = is_admin(admin_user_id)
-    if not admin_response:
+    if not is_admin(admin_user_id):
         raise ValueError("User is not an admin")
 
-    response = supabase.table('teacher_referrals').select('*').eq('referee_teacher_user_id', target_referee_user_id).execute()
-    return response.data
+    session = get_session()
+    rows = session.scalars(
+        select(TeacherReferral).where(TeacherReferral.referee_teacher_user_id == target_referee_user_id)
+    ).all()
+    return [r.as_dict() for r in rows]
+
 
 def get_all_new_students(admin_user_id: str):
     """Get all new students (admin validated)"""
-    # Check if user is admin
-    admin_response = is_admin(admin_user_id)
-    if not admin_response:
+    if not is_admin(admin_user_id):
         raise ValueError("User is not an admin")
 
-    response = supabase.table('new_students').select('*').execute()
-    return response.data
+    session = get_session()
+    rows = session.scalars(select(NewStudent)).all()
+    return [n.as_dict() for n in rows]
+
 
 def get_all_students_without_teacher(admin_user_id: str):
-    """Get all students without teacher (admin validated, uses RPC function)"""
-    response = supabase.rpc('get_all_students_without_teacher', {'admin_id': admin_user_id}).execute()
-    return response.data
+    """Get all students without teacher (admin validated)"""
+    if not is_admin(admin_user_id):
+        raise ValueError("User is not an admin")
+
+    session = get_session()
+    has_accepted_teacher = select(TeacherStudent.student_user_id).where(
+        TeacherStudent.teacher_accepted_student.is_(True),
+        or_(TeacherStudent.hidden.is_(False), TeacherStudent.hidden.is_(None)),
+    )
+    rows = session.scalars(select(Student).where(Student.user_id.not_in(has_accepted_teacher))).all()
+    return [s.as_dict() for s in rows]
+
 
 def get_new_orders_for_teacher(teacher_user_id: str):
-    """Get new orders for teacher (3-table JOIN, uses RPC function)"""
-    response = supabase.rpc('get_new_orders_for_teacher', {'teacher_id': teacher_user_id}).execute()
-    return response.data
+    """Get new orders (pending acceptances) for a teacher, joined with student"""
+    session = get_session()
+    stmt = (
+        select(TeacherStudent, Student)
+        .join(Student, Student.user_id == TeacherStudent.student_user_id)
+        .where(
+            TeacherStudent.teacher_user_id == teacher_user_id,
+            TeacherStudent.teacher_accepted_student.is_(None),
+            or_(TeacherStudent.hidden.is_(None), TeacherStudent.hidden.is_(False)),
+        )
+    )
+    rows = session.execute(stmt).all()
+    return [{"teacher_student": ts.as_dict(), "student": s.as_dict()} for ts, s in rows]
+
+
+def get_new_orders_for_student(student_user_id: str):
+    """Get new orders (pending acceptances) for a student, joined with teacher + about_me"""
+    session = get_session()
+    stmt = (
+        select(TeacherStudent, Teacher, AboutMeText)
+        .join(Teacher, Teacher.user_id == TeacherStudent.teacher_user_id)
+        .outerjoin(AboutMeText, AboutMeText.user_id == Teacher.user_id)
+        .where(
+            TeacherStudent.student_user_id == student_user_id,
+            or_(TeacherStudent.teacher_accepted_student.is_(None), TeacherStudent.teacher_accepted_student.is_(False)),
+            or_(TeacherStudent.hidden.is_(None), TeacherStudent.hidden.is_(False)),
+        )
+    )
+    rows = session.execute(stmt).all()
+    return [
+        {"order": ts.as_dict(), "teacher": t.as_dict(), "about_me": am.as_dict() if am else None}
+        for ts, t, am in rows
+    ]
+
+
+# Kept as an alias — the Flask route layer calls this name.
+get_new_orders = get_new_orders_for_student
+
 
 def get_new_student_by_phone(phone: str):
     """Get new student by phone number"""
-    response = supabase.table('new_students').select('*').eq('phone', phone).execute()
-    return response.data
+    session = get_session()
+    rows = session.scalars(select(NewStudent).where(NewStudent.phone == phone)).all()
+    return [n.as_dict() for n in rows]
+
 
 def get_all_classes(admin_user_id: str):
-    """Get all classes (admin validated)"""
-    # Check if user is admin
-    admin_response = is_admin(admin_user_id)
-    if not admin_response:
+    """Get all classes (admin validated), with student discount nested"""
+    if not is_admin(admin_user_id):
         raise ValueError("User is not an admin")
 
-    response = supabase.table('classes').select('*, students(discount)').execute()
-    return response.data
+    session = get_session()
+    stmt = select(Classes, Student.discount).outerjoin(Student, Student.user_id == Classes.student_user_id)
+    rows = session.execute(stmt).all()
+    result = []
+    for cls, discount in rows:
+        d = cls.as_dict()
+        d["students"] = {"discount": discount} if cls.student_user_id else None
+        result.append(d)
+    return result
+
 
 def get_class_by_teacher_and_student_id(admin_user_id: str, teacher_user_id: str, student_user_id: str):
     """Get class by teacher and student ID (admin validated)"""
-    # Check if user is admin
-    admin_response = is_admin(admin_user_id)
-    if not admin_response:
+    if not is_admin(admin_user_id):
         raise ValueError("User is not an admin")
 
-    response = supabase.table('classes').select('*').eq('teacher_user_id', teacher_user_id).eq('student_user_id', student_user_id).execute()
-    return response.data
+    session = get_session()
+    rows = session.scalars(
+        select(Classes).where(Classes.teacher_user_id == teacher_user_id, Classes.student_user_id == student_user_id)
+    ).all()
+    return [c.as_dict() for c in rows]
+
 
 def get_classes_by_teacher(user_id: str):
     """Get all classes for a teacher"""
-    response = supabase.table('classes').select('*').eq('teacher_user_id', user_id).execute()
-    return response.data
+    session = get_session()
+    rows = session.scalars(select(Classes).where(Classes.teacher_user_id == user_id)).all()
+    return [c.as_dict() for c in rows]
 
 
 def get_classes_by_ids(class_ids: list[str]):
@@ -150,108 +228,137 @@ def get_classes_by_ids(class_ids: list[str]):
     if not class_ids:
         return []
 
-    logging.info(f"Final class_ids before query: {class_ids}, type: {type(class_ids)}")
-    logging.info(f"First class_id type: {type(class_ids[0]) if class_ids else 'empty'}")
+    session = get_session()
+    rows = session.scalars(select(Classes).where(Classes.class_id.in_(class_ids))).all()
+    return [c.as_dict() for c in rows]
 
-    # Try using tuple instead of list - some libraries prefer this
-    try:
-        response = supabase.table('classes').select('*').in_('class_id', class_ids).execute()
-    except Exception as e:
-        logging.error(f"Error with tuple, trying list: {e}")
-        # If tuple fails, try the original list approach
-        response = supabase.table('classes').select('*').in_('class_id', class_ids).execute()
-
-    return response.data
 
 def get_student_for_teacher(teacher_user_id: str):
-    """Get students for teacher (uses RPC function with JOIN)"""
-    response = supabase.rpc('get_student_for_teacher', {'teacher_id': teacher_user_id}).execute()
-    return response.data
+    """Get distinct students accepted for a teacher"""
+    session = get_session()
+    stmt = (
+        select(Student)
+        .distinct()
+        .join(TeacherStudent, TeacherStudent.student_user_id == Student.user_id)
+        .where(
+            TeacherStudent.teacher_user_id == teacher_user_id,
+            TeacherStudent.teacher_accepted_student.is_(True),
+            or_(TeacherStudent.hidden.is_(None), TeacherStudent.hidden.isnot(True)),
+        )
+    )
+    rows = session.scalars(stmt).all()
+    return [s.as_dict() for s in rows]
+
 
 def get_student_by_email(email: str):
     """Get student by email"""
-    response = supabase.table('students').select('*').eq('email_parent', email).execute()
-    return response.data
+    session = get_session()
+    rows = session.scalars(select(Student).where(Student.email_parent == email)).all()
+    return [s.as_dict() for s in rows]
+
 
 def get_teacher_by_email(email: str):
     """Get teacher by email"""
-    response = supabase.table('teachers').select('*').eq('email', email).execute()
-    return response.data
+    session = get_session()
+    rows = session.scalars(select(Teacher).where(Teacher.email == email)).all()
+    return [t.as_dict() for t in rows]
+
 
 def get_teacher_for_student(student_user_id: str):
-    """Get teachers for student (uses RPC function with JOIN)"""
-    response = supabase.rpc('get_teacher_for_student', {'student_id': student_user_id}).execute()
-    return response.data
+    """Get teachers accepted for a student"""
+    session = get_session()
+    stmt = (
+        select(Teacher)
+        .join(TeacherStudent, TeacherStudent.teacher_user_id == Teacher.user_id)
+        .where(
+            TeacherStudent.student_user_id == student_user_id,
+            TeacherStudent.teacher_accepted_student.is_(True),
+            or_(TeacherStudent.hidden.is_(None), TeacherStudent.hidden.isnot(True)),
+        )
+    )
+    rows = session.scalars(stmt).all()
+    return [t.as_dict() for t in rows]
+
 
 def get_classes_for_student(student_user_id: str):
-    """Get classes for student with teacher info"""
-    # Using direct query with select for JOIN-like behavior
-    response = supabase.table('classes').select('*, teachers(*)').eq('student_user_id', student_user_id).execute()
-    return response.data
+    """Get classes for student with teacher info nested"""
+    session = get_session()
+    stmt = select(Classes, Teacher).outerjoin(Teacher, Teacher.user_id == Classes.teacher_user_id).where(
+        Classes.student_user_id == student_user_id
+    )
+    rows = session.execute(stmt).all()
+    result = []
+    for cls, teacher in rows:
+        d = cls.as_dict()
+        d["teachers"] = teacher.as_dict() if teacher else None
+        result.append(d)
+    return result
+
 
 def get_classes_for_teacher(teacher_user_id: str):
     """Get all classes for a teacher"""
-    response = supabase.table('classes').select('*').eq('teacher_user_id', teacher_user_id).execute()
-    return response.data
+    session = get_session()
+    rows = session.scalars(select(Classes).where(Classes.teacher_user_id == teacher_user_id)).all()
+    return [c.as_dict() for c in rows]
+
 
 def get_about_me_text(user_id: str):
     """Get about_me text for a user"""
-    response = supabase.table('about_me_texts').select('about_me').eq('user_id', user_id).execute()
-    return response.data
+    session = get_session()
+    rows = session.scalars(select(AboutMeText.about_me).where(AboutMeText.user_id == user_id)).all()
+    return [{"about_me": row} for row in rows]
+
 
 def get_all_about_me_texts():
     """Get all about_me texts"""
-    response = supabase.table('about_me_texts').select('user_id, about_me, firstname, lastname, image_url').execute()
-    return response.data
+    session = get_session()
+    stmt = select(
+        AboutMeText.user_id, AboutMeText.about_me, AboutMeText.firstname, AboutMeText.lastname, AboutMeText.image_url
+    )
+    rows = session.execute(stmt).all()
+    return [dict(row._mapping) for row in rows]
+
 
 def get_all_quizzes():
     """Get all quizzes"""
-    response = supabase.table('quizzes').select('*').execute()
-    return response.data
+    session = get_session()
+    rows = session.scalars(select(Quiz)).all()
+    return [q.as_dict() for q in rows]
+
 
 def get_quiz_meta_data(quiz_id: str):
     """Get quiz metadata by quiz_id"""
-    response = supabase.table('quizzes').select('*').eq('quiz_id', quiz_id).execute()
-    return response.data
+    session = get_session()
+    rows = session.scalars(select(Quiz).where(Quiz.quiz_id == quiz_id)).all()
+    return [q.as_dict() for q in rows]
+
 
 def get_quiz(quiz_id: str):
     """Get all questions for a quiz"""
-    response = supabase.table('questions').select('*').eq('quiz_id', quiz_id).execute()
-    questions = response.data
+    session = get_session()
+    rows = session.scalars(select(Question).where(Question.quiz_id == quiz_id)).all()
+    questions = [q.as_dict() for q in rows]
 
-    # Parse answer_options if it's a string (PostgreSQL array format)
     for question in questions:
-        if 'answer_options' in question and isinstance(question['answer_options'], str):
+        if "answer_options" in question and isinstance(question["answer_options"], str):
             try:
-                answer_str = question['answer_options']
-
-                # Convert PostgreSQL array format to JSON array format
-                # Replace outer {} with []
-                answer_str = answer_str.replace('{', '[', 1)
-                answer_str = answer_str[::-1].replace('}', ']', 1)[::-1]
-
-                # Replace escaped quotes \" with regular quotes "
+                answer_str = question["answer_options"]
+                answer_str = answer_str.replace("{", "[", 1)
+                answer_str = answer_str[::-1].replace("}", "]", 1)[::-1]
                 answer_str = answer_str.replace('\\"', '"')
-
-                # Wrap unquoted items in quotes using regex
-                # Match items that aren't already quoted
                 answer_str = re.sub(r'(?<=[,\[])\s*([^",\[\]]+)\s*(?=[,\]])', r'"\1"', answer_str)
-
-                # Parse as JSON
-                question['answer_options'] = json.loads(answer_str)
+                question["answer_options"] = json.loads(answer_str)
             except (json.JSONDecodeError, TypeError, ValueError):
-                # If parsing fails, keep the original value
                 pass
 
     return questions
 
+
 def get_quiz_status(user_id: str):
     """Get quiz status for a user (combines quizzes and results)"""
-    quizzes_response = supabase.table('quizzes').select('*').execute()
-    results_response = supabase.table('quiz_results').select('*').eq('user_id', user_id).execute()
-
-    quizzes = quizzes_response.data
-    results = results_response.data
+    session = get_session()
+    quizzes = [q.as_dict() for q in session.scalars(select(Quiz)).all()]
+    results = [r.as_dict() for r in session.scalars(select(QuizResult).where(QuizResult.user_id == user_id)).all()]
 
     status = []
     for quiz in quizzes:
@@ -259,161 +366,272 @@ def get_quiz_status(user_id: str):
         status.append({"quiz": quiz, "result": match})
     return status
 
+
 def get_all_reviews():
     """Get all reviews"""
-    response = supabase.table('reviews').select('*').execute()
-    return response.data
+    session = get_session()
+    rows = session.scalars(select(Review)).all()
+    return [r.as_dict() for r in rows]
+
 
 def get_available_subjects(teacher_user_id: str):
-    """Get all qualifications (quizzes with passed results)"""
-    response = supabase.table('available_subjects').select('*').eq('teacher_user_id', teacher_user_id).execute()
+    """Get all subjects a teacher is qualified to teach"""
+    session = get_session()
+    rows = session.scalars(select(AvailableSubject).where(AvailableSubject.teacher_user_id == teacher_user_id)).all()
+    return [a.as_dict() for a in rows]
 
-    return response.data
 
 def get_all_available_subjects():
     """Get all available subjects"""
-    response = (
-        supabase
-        .table('available_subjects')
-        .select('*')
-        .execute()
-    )
-    return response.data
+    session = get_session()
+    rows = session.scalars(select(AvailableSubject)).all()
+    return [a.as_dict() for a in rows]
+
 
 def get_all_quiz_types():
     """Get all quiz types"""
-    response = supabase.table('quizzes').select('*').execute()
-    return response.data
+    session = get_session()
+    rows = session.scalars(select(Quiz)).all()
+    return [q.as_dict() for q in rows]
 
-def get_new_orders(student_user_id: str):
-    """Get new orders for student (pending teacher acceptances) - returns TeacherOrderJoinTeacher[]"""
-    response = supabase.rpc('get_new_orders_for_student', {'student_id': student_user_id}).execute()
-    return response.data
 
 def get_teacher_student():
-    """Get all active teacher-student relationships"""
-    response = supabase.table('teacher_student').select('*').or_('hidden.is.null,hidden.eq.FALSE').execute()
-    return response.data
+    """Get all active teacher-student relationships, nested as {relation, teacher, student}"""
+    session = get_session()
+    stmt = (
+        select(TeacherStudent, Teacher, Student)
+        .outerjoin(Teacher, Teacher.user_id == TeacherStudent.teacher_user_id)
+        .outerjoin(Student, Student.user_id == TeacherStudent.student_user_id)
+        .where(or_(TeacherStudent.hidden.is_(None), TeacherStudent.hidden.is_(False)))
+    )
+    rows = session.execute(stmt).all()
+    return [
+        {
+            "relation": ts.as_dict(),
+            "teacher": teacher.as_dict() if teacher else None,
+            "student": student.as_dict() if student else None,
+        }
+        for ts, teacher, student in rows
+    ]
+
 
 def get_students_with_few_classes(days: int):
-    """Get students with few classes (uses RPC function with window function)"""
-    response = supabase.rpc('get_students_with_few_classes', {'days': days}).execute()
-    return response.data
+    """
+    Get students with few classes: active students with no class started after
+    the cutoff, paired with their earliest non-hidden teacher_student relation
+    (with a non-resigned teacher), and most recent class.
+
+    Matches the *live* Postgres function body (introspected via
+    pg_get_functiondef), which has diverged from the checked-in
+    supabase_rpc_functions.sql: the live version filters ts.hidden = false and
+    t.resigned = false, and dedupes the last-class join with
+    `LEFT JOIN LATERAL ... LIMIT 1` rather than the file's undeduplicated
+    version. This ROW_NUMBER()-based rewrite reproduces that LATERAL/LIMIT-1
+    behavior exactly (verified against the live RPC's output).
+    """
+    session = get_session()
+    threshold_date = (datetime.now(timezone.utc) - timedelta(days=days)).date()
+
+    non_hidden_ts = select(TeacherStudent).where(TeacherStudent.hidden.is_(False)).subquery("non_hidden_ts")
+    earliest_ts_rn = func.row_number().over(
+        partition_by=non_hidden_ts.c.student_user_id, order_by=non_hidden_ts.c.created_at.asc()
+    )
+    earliest_ts = select(non_hidden_ts, earliest_ts_rn.label("rn")).subquery("earliest_ts")
+    earliest_ts_alias = select(earliest_ts).where(earliest_ts.c.rn == 1).subquery("earliest_ts_filtered")
+
+    last_class_rn = func.row_number().over(
+        partition_by=Classes.student_user_id, order_by=Classes.started_at.desc()
+    )
+    last_class = (
+        select(Classes.student_user_id, Classes.started_at, Classes.class_id, last_class_rn.label("rn"))
+        .where(Classes.started_at.isnot(None))
+        .subquery("last_class")
+    )
+    last_class_filtered = select(last_class).where(last_class.c.rn == 1).subquery("last_class_filtered")
+
+    has_recent_class = exists(
+        select(1).where(
+            Classes.student_user_id == Student.user_id,
+            func.cast(Classes.started_at, Date) > threshold_date,
+        )
+    )
+
+    ts_cols = [c for c in TeacherStudent.__table__.columns]
+
+    stmt = (
+        select(
+            Student,
+            Teacher,
+            *[earliest_ts_alias.c[c.name].label(f"ts_{c.name}") for c in ts_cols],
+            last_class_filtered.c.started_at.label("last_class_started_at"),
+            last_class_filtered.c.class_id.label("last_class_id"),
+        )
+        .join(earliest_ts_alias, earliest_ts_alias.c.student_user_id == Student.user_id)
+        .join(Teacher, Teacher.user_id == earliest_ts_alias.c.teacher_user_id)
+        .outerjoin(last_class_filtered, last_class_filtered.c.student_user_id == Student.user_id)
+        .where(Student.is_active.is_(True), Teacher.resigned.is_(False), ~has_recent_class)
+    )
+
+    rows = session.execute(stmt).mappings().all()
+    result = []
+    for row in rows:
+        student = row[Student]
+        teacher = row[Teacher]
+        result.append(
+            {
+                "student": student.as_dict(),
+                "teacher_student": {c.name: row[f"ts_{c.name}"] for c in ts_cols},
+                "teacher": teacher.as_dict(),
+                "last_class_started_at": row["last_class_started_at"],
+                "last_class_id": row["last_class_id"],
+            }
+        )
+    return result
+
 
 def get_all_admins():
     """Get all admin teachers"""
-    response = supabase.table('teachers').select('*').eq('admin', 'TRUE').execute()
-    return response.data
+    session = get_session()
+    rows = session.scalars(select(Teacher).where(Teacher.admin.is_(True))).all()
+    return [t.as_dict() for t in rows]
+
 
 def get_all_teachers_join_students():
-    """Get all teachers joined with students (complex LEFT JOINs)"""
-    # Using Supabase's query builder with nested selects
-    response = supabase.table('students').select('*, teacher_student!inner(*, teachers(*))').or_('teachers.resigned.eq.FALSE,teachers.resigned.is.null', foreign_table='teacher_student.teachers').or_('teacher_student.teacher_accepted_student.eq.TRUE,teacher_student.teacher_accepted_student.is.null').or_('teacher_student.hidden.eq.FALSE,teacher_student.hidden.is.null').execute()
-    return response.data
+    """Get all teachers joined with students (accepted, non-hidden, non-resigned)"""
+    session = get_session()
+    stmt = (
+        select(Student, TeacherStudent, Teacher)
+        .join(TeacherStudent, TeacherStudent.student_user_id == Student.user_id)
+        .join(Teacher, Teacher.user_id == TeacherStudent.teacher_user_id)
+        .where(
+            or_(Teacher.resigned.is_(False), Teacher.resigned.is_(None)),
+            or_(TeacherStudent.teacher_accepted_student.is_(True), TeacherStudent.teacher_accepted_student.is_(None)),
+            or_(TeacherStudent.hidden.is_(False), TeacherStudent.hidden.is_(None)),
+        )
+    )
+    rows = session.execute(stmt).all()
+    result = []
+    for student, ts, teacher in rows:
+        d = student.as_dict()
+        ts_dict = ts.as_dict()
+        ts_dict["teachers"] = teacher.as_dict()
+        d["teacher_student"] = ts_dict
+        result.append(d)
+    return result
+
 
 def get_students_without_teacher():
-    """Get students without teacher (uses RPC function)"""
-    response = supabase.rpc('get_students_without_teacher').execute()
-    return response.data
+    """Get active students without an accepted, non-resigned teacher"""
+    session = get_session()
+    has_teacher = (
+        select(TeacherStudent.student_user_id)
+        .join(Teacher, Teacher.user_id == TeacherStudent.teacher_user_id)
+        .where(
+            TeacherStudent.teacher_accepted_student.is_(True),
+            or_(TeacherStudent.hidden.is_(False), TeacherStudent.hidden.is_(None)),
+            Teacher.resigned.is_(False),
+        )
+    )
+    rows = session.scalars(
+        select(Student).where(Student.user_id.not_in(has_teacher), Student.is_active.is_(True))
+    ).all()
+    return [s.as_dict() for s in rows]
+
 
 def get_teachers_without_about_me():
     """Get teachers without about_me text"""
-    # Get all teachers
-    teachers_response = supabase.table('teachers').select('user_id, firstname, lastname, email').eq('resigned', 'FALSE').execute()
-    # Get all teacher user_ids with about_me
-    about_me_response = supabase.table('about_me_texts').select('user_id').execute()
+    session = get_session()
+    teachers = session.execute(
+        select(Teacher.user_id, Teacher.firstname, Teacher.lastname, Teacher.email).where(Teacher.resigned.is_(False))
+    ).all()
+    about_me_user_ids = set(session.scalars(select(AboutMeText.user_id)).all())
 
-    about_me_user_ids = {row['user_id'] for row in about_me_response.data}
-    teachers_without_about_me = [
-        teacher for teacher in teachers_response.data
-        if teacher['user_id'] not in about_me_user_ids
-    ]
+    return [dict(row._mapping) for row in teachers if row.user_id not in about_me_user_ids]
 
-    return teachers_without_about_me
 
 def get_teachers_without_quizes():
     """Get teachers without quiz results"""
-    # Get all teachers
-    teachers_response = supabase.table('teachers').select('user_id, firstname, lastname, email').eq('resigned', 'FALSE').execute()
-    # Get all teacher user_ids with quiz results
-    quiz_results_response = supabase.table('quiz_results').select('user_id').execute()
+    session = get_session()
+    teachers = session.execute(
+        select(Teacher.user_id, Teacher.firstname, Teacher.lastname, Teacher.email).where(Teacher.resigned.is_(False))
+    ).all()
+    quiz_user_ids = set(session.scalars(select(QuizResult.user_id)).all())
 
-    quiz_user_ids = {row['user_id'] for row in quiz_results_response.data}
-    teachers_without_quizzes = [
-        teacher for teacher in teachers_response.data
-        if teacher['user_id'] not in quiz_user_ids
-    ]
+    return [dict(row._mapping) for row in teachers if row.user_id not in quiz_user_ids]
 
-    return teachers_without_quizzes
-
-
-
-def is_admin(user_id: str) -> bool:
-    """Check if a user is an admin"""
-    response = supabase.table('teachers').select('admin').eq('user_id', user_id).execute()
-    return bool(response.data and response.data[0].get("admin"))
 
 def get_analytics_dashboard(admin_user_id: str):
     """Get comprehensive analytics dashboard data (admin validated)"""
-    # Check if user is admin
-    admin_response = is_admin(admin_user_id)
-    if not admin_response:
+    if not is_admin(admin_user_id):
         raise ValueError("User is not an admin")
 
-    # Fetch all necessary data separately
-    classes_response = supabase.table('classes').select('*, teachers(hourly_pay, firstname, lastname, location), students(discount)').eq('was_canselled', 'FALSE').execute()
-    students_response = supabase.table('students').select('user_id, is_active, created_at').execute()
-    teachers_response = supabase.table('teachers').select('user_id, resigned').execute()
-    teacher_student_response = supabase.table('teacher_student').select('teacher_user_id, student_user_id, travel_pay_to_teacher, order_comments').execute()
+    session = get_session()
 
-    classes = classes_response.data
-    students = students_response.data
-    teachers = teachers_response.data
-    teacher_student_relations = teacher_student_response.data
+    classes_stmt = (
+        select(Classes, Teacher, Student.discount)
+        .outerjoin(Teacher, Teacher.user_id == Classes.teacher_user_id)
+        .outerjoin(Student, Student.user_id == Classes.student_user_id)
+        .where(Classes.was_canselled.is_(False))
+    )
+    classes_rows = session.execute(classes_stmt).all()
+    classes = []
+    for cls, teacher, discount in classes_rows:
+        d = cls.as_dict()
+        d["teachers"] = (
+            {"hourly_pay": teacher.hourly_pay, "firstname": teacher.firstname, "lastname": teacher.lastname, "location": teacher.location}
+            if teacher
+            else None
+        )
+        d["students"] = {"discount": discount} if cls.student_user_id else None
+        classes.append(d)
 
-    # Create a lookup dictionary for teacher_student relationships
-    # Key: (teacher_user_id, student_user_id), Value: relationship data
+    students = [
+        dict(row._mapping)
+        for row in session.execute(select(Student.user_id, Student.is_active, Student.created_at)).all()
+    ]
+    teachers = [dict(row._mapping) for row in session.execute(select(Teacher.user_id, Teacher.resigned)).all()]
+    teacher_student_relations = [
+        dict(row._mapping)
+        for row in session.execute(
+            select(
+                TeacherStudent.teacher_user_id,
+                TeacherStudent.student_user_id,
+                TeacherStudent.travel_pay_to_teacher,
+                TeacherStudent.order_comments,
+            )
+        ).all()
+    ]
+
     ts_lookup = {}
     for ts in teacher_student_relations:
-        key = (ts.get('teacher_user_id'), ts.get('student_user_id'))
+        key = (ts.get("teacher_user_id"), ts.get("student_user_id"))
         ts_lookup[key] = ts
-
-    # Calculate metrics
-    from datetime import datetime, timedelta
-    import re
 
     def parse_datetime(dt_string):
         """Parse datetime string handling various formats"""
         if not dt_string:
             return None
+        if isinstance(dt_string, datetime):
+            return dt_string if dt_string.tzinfo else dt_string.replace(tzinfo=timezone.utc)
         try:
-            # Normalize the datetime string
-            dt_normalized = dt_string.replace('Z', '+00:00')
-
-            # Handle fractional seconds with varying precision (e.g., .75 vs .750000)
-            # Match ISO format with optional fractional seconds
-            match = re.match(r'^(\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2})\.?(\d*)([+-]\d{2}:\d{2})?$', dt_normalized)
+            dt_normalized = dt_string.replace("Z", "+00:00")
+            match = re.match(r"^(\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2})\.?(\d*)([+-]\d{2}:\d{2})?$", dt_normalized)
             if match:
                 base_dt, fraction, tz = match.groups()
-                # Pad or truncate fraction to 6 digits (microseconds)
                 if fraction:
-                    fraction = fraction.ljust(6, '0')[:6]
+                    fraction = fraction.ljust(6, "0")[:6]
                     dt_normalized = f"{base_dt}.{fraction}{tz or ''}"
                 else:
                     dt_normalized = f"{base_dt}{tz or ''}"
-
             return datetime.fromisoformat(dt_normalized)
         except (ValueError, AttributeError) as e:
             print(f"Failed to parse datetime '{dt_string}': {e}")
             return None
 
-    # Get current year start
     now = datetime.now(timezone.utc)
     year_start = datetime(now.year, 1, 1, tzinfo=timezone.utc)
-    one_eighty_days_ago = now - timedelta(days=180)
     ninety_days_ago = now - timedelta(days=90)
 
-    # Initialize aggregations
     total_revenue_ytd = 0
     total_profit_ytd = 0
     total_teacher_cost_ytd = 0
@@ -425,124 +643,105 @@ def get_analytics_dashboard(admin_user_id: str):
     student_ltv = {}
     student_last_class = {}
 
-    # Track classes this week and one month ago
     classes_this_week = 0
     classes_one_month_ago_week = 0
-    week_start = now - timedelta(days=now.weekday())  # Monday of current week
+    week_start = now - timedelta(days=now.weekday())
     week_end = week_start + timedelta(days=7)
     one_month_ago = now - timedelta(days=30)
     one_month_ago_week_start = one_month_ago - timedelta(days=one_month_ago.weekday())
     one_month_ago_week_end = one_month_ago_week_start + timedelta(days=7)
 
-    # Process classes
     for cls in classes:
-        started_at = parse_datetime(cls.get('started_at'))
-        ended_at = parse_datetime(cls.get('ended_at'))
+        started_at = parse_datetime(cls.get("started_at"))
+        ended_at = parse_datetime(cls.get("ended_at"))
 
         if not started_at or not ended_at:
             continue
 
-        # Track classes this week
         if week_start <= started_at < week_end:
             classes_this_week += 1
 
-        # Track classes one month ago (same week)
         if one_month_ago_week_start <= started_at < one_month_ago_week_end:
             classes_one_month_ago_week += 1
 
-        # Calculate duration in hours
         duration_hours = (ended_at - started_at).total_seconds() / 3600
 
-        # Calculate revenue
-        is_group = cls.get('groupclass', False)
-        num_students = cls.get('number_of_students', 1) if is_group else 1
+        is_group = cls.get("groupclass", False)
+        num_students = cls.get("number_of_students", 1) if is_group else 1
         hourly_rate = 350 if is_group else 540
-        
+
         base_revenue = duration_hours * hourly_rate * num_students
-        
-        # Apply discount
-        students_data = cls.get('students')
-        discount = float(students_data.get('discount', 0) if students_data else 0)
-        
+
+        students_data = cls.get("students")
+        discount = float(students_data.get("discount", 0) if students_data else 0)
+
         revenue = base_revenue * (1 - discount)
 
-        # Calculate teacher cost
-        teacher_hourly_pay = float(cls.get('teachers', {}).get('hourly_pay', 0)) if cls.get('teachers') else 0
+        teacher_hourly_pay = float(cls.get("teachers", {}).get("hourly_pay", 0)) if cls.get("teachers") else 0
         teacher_cost = duration_hours * teacher_hourly_pay
 
-        # Get teacher_student relationship for travel cost and subject
-        teacher_id = cls.get('teacher_user_id')
-        student_id = cls.get('student_user_id')
+        teacher_id = cls.get("teacher_user_id")
+        student_id = cls.get("student_user_id")
         ts_relation = ts_lookup.get((teacher_id, student_id), {})
 
-        # Add travel compensation
-        travel_cost = ts_relation.get('travel_pay_to_teacher', 0) or 0
+        travel_cost = ts_relation.get("travel_pay_to_teacher", 0) or 0
         total_cost = teacher_cost + travel_cost
 
         profit = revenue - total_cost
 
-        # YTD calculations
         if started_at >= year_start:
             total_revenue_ytd += revenue
             total_profit_ytd += profit
             total_teacher_cost_ytd += total_cost
             total_hours_ytd += duration_hours
 
-        # Monthly revenue (last 12 months)
-        month_key = started_at.strftime('%Y-%m')
+        month_key = started_at.strftime("%Y-%m")
         if month_key not in monthly_revenue:
-            monthly_revenue[month_key] = {'revenue': 0, 'profit': 0}
-        monthly_revenue[month_key]['revenue'] += revenue
-        monthly_revenue[month_key]['profit'] += profit
+            monthly_revenue[month_key] = {"revenue": 0, "profit": 0}
+        monthly_revenue[month_key]["revenue"] += revenue
+        monthly_revenue[month_key]["profit"] += profit
 
-        # Teacher revenue (YTD only)
         if started_at >= year_start:
-            teacher_id = cls.get('teacher_user_id')
+            teacher_id = cls.get("teacher_user_id")
             if teacher_id:
-                teacher_name = f"{cls.get('teachers', {}).get('firstname', '')} {cls.get('teachers', {}).get('lastname', '')}" if cls.get('teachers') else 'Unknown'
+                teacher_name = (
+                    f"{cls.get('teachers', {}).get('firstname', '')} {cls.get('teachers', {}).get('lastname', '')}"
+                    if cls.get("teachers")
+                    else "Unknown"
+                )
                 if teacher_id not in teacher_revenue:
-                    teacher_revenue[teacher_id] = {
-                        'teacherName': teacher_name,
-                        'revenue': 0,
-                        'classCount': 0,
-                        'totalHours': 0
-                    }
-                teacher_revenue[teacher_id]['revenue'] += revenue
-                teacher_revenue[teacher_id]['classCount'] += 1
-                teacher_revenue[teacher_id]['totalHours'] += duration_hours
+                    teacher_revenue[teacher_id] = {"teacherName": teacher_name, "revenue": 0, "classCount": 0, "totalHours": 0}
+                teacher_revenue[teacher_id]["revenue"] += revenue
+                teacher_revenue[teacher_id]["classCount"] += 1
+                teacher_revenue[teacher_id]["totalHours"] += duration_hours
 
-        # Location revenue (YTD only)
         if started_at >= year_start:
-            location = cls.get('teachers', {}).get('location', 'Unknown') if cls.get('teachers') else 'Unknown'
+            location = cls.get("teachers", {}).get("location", "Unknown") if cls.get("teachers") else "Unknown"
             if location:
                 if location not in location_revenue:
-                    location_revenue[location] = {'revenue': 0, 'classCount': 0}
-                location_revenue[location]['revenue'] += revenue
-                location_revenue[location]['classCount'] += 1
+                    location_revenue[location] = {"revenue": 0, "classCount": 0}
+                location_revenue[location]["revenue"] += revenue
+                location_revenue[location]["classCount"] += 1
 
-        # Student LTV tracking
-        student_id = cls.get('student_user_id')
+        student_id = cls.get("student_user_id")
         if student_id:
             if student_id not in student_ltv:
                 student_ltv[student_id] = 0
             student_ltv[student_id] += revenue
 
-            # Track last class date
             if student_id not in student_last_class or started_at > student_last_class[student_id]:
                 student_last_class[student_id] = started_at
 
-    # Calculate active students and churn
     active_students = []
-    churned_students = []  # For LTV distribution: is_active=false OR no classes in 90 days
-    active_marked_students = 0  # Students marked as is_active=true
-    inactive_among_active = 0   # Students marked active but no classes in 90 days (for churn rate)
+    churned_students = []
+    active_marked_students = 0
+    inactive_among_active = 0
 
     for student in students:
-        student_id = student['user_id']
-        is_active = student.get('is_active', True)
+        student_id = student["user_id"]
+        is_active = student.get("is_active", True)
         last_class = student_last_class.get(student_id)
 
-        # For LTV distribution: churned = is_active=false OR no classes in 90 days
         is_churned_for_ltv = not is_active or (not last_class or last_class < ninety_days_ago)
 
         if is_churned_for_ltv:
@@ -550,30 +749,19 @@ def get_analytics_dashboard(admin_user_id: str):
         else:
             active_students.append(student_id)
 
-        # For churn rate: count students marked as active in the system
         if is_active:
             active_marked_students += 1
-
-            # Check if they've had a class in the last 90 days
             if not last_class or last_class < ninety_days_ago:
                 inactive_among_active += 1
 
     active_students_count = len(active_students)
-
-    # Churn rate: percentage of active students who haven't had classes in 90 days
     churn_rate = (inactive_among_active / active_marked_students * 100) if active_marked_students > 0 else 0
-
-    # Calculate active teachers
-    active_teachers_count = sum(1 for t in teachers if not t.get('resigned', False))
-
-    # Calculate average hourly margin
+    active_teachers_count = sum(1 for t in teachers if not t.get("resigned", False))
     avg_hourly_margin = ((total_revenue_ytd - total_teacher_cost_ytd) / total_hours_ytd) if total_hours_ytd > 0 else 0
 
-    # Calculate average LTV
     total_ltv = sum(student_ltv.values())
     avg_ltv = total_ltv / len(student_ltv) if student_ltv else 0
 
-    # Calculate LTV distribution
     ltv_buckets = [0, 1000, 2000, 5000, 10000, 20000, 50000, 100000]
     ltv_distribution = []
 
@@ -583,73 +771,49 @@ def get_analytics_dashboard(admin_user_id: str):
         active_count = sum(1 for sid in active_students if start <= student_ltv.get(sid, 0) < end)
         churned_count_bucket = sum(1 for sid in churned_students if start <= student_ltv.get(sid, 0) < end)
 
-        ltv_distribution.append({
-            'rangeLabel': f"{start}-{end}",
-            'rangeStart': start,
-            'rangeEnd': end,
-            'activeCount': active_count,
-            'churnedCount': churned_count_bucket
-        })
+        ltv_distribution.append(
+            {"rangeLabel": f"{start}-{end}", "rangeStart": start, "rangeEnd": end, "activeCount": active_count, "churnedCount": churned_count_bucket}
+        )
 
-    # Add final bucket for >100000
     active_count_final = sum(1 for sid in active_students if student_ltv.get(sid, 0) >= 100000)
     churned_count_final = sum(1 for sid in churned_students if student_ltv.get(sid, 0) >= 100000)
-    ltv_distribution.append({
-        'rangeLabel': '100000+',
-        'rangeStart': 100000,
-        'rangeEnd': None,  # Use None instead of float('inf') for JSON compatibility
-        'activeCount': active_count_final,
-        'churnedCount': churned_count_final
-    })
+    ltv_distribution.append(
+        {"rangeLabel": "100000+", "rangeStart": 100000, "rangeEnd": None, "activeCount": active_count_final, "churnedCount": churned_count_final}
+    )
 
-    # Format monthly revenue (last 12 months)
     twelve_months_ago = now - timedelta(days=365)
     revenue_by_month = []
     for month_key in sorted(monthly_revenue.keys()):
-        month_date = datetime.strptime(month_key, '%Y-%m')
+        month_date = datetime.strptime(month_key, "%Y-%m")
         if month_date.replace(tzinfo=timezone.utc) >= twelve_months_ago:
-            revenue_by_month.append({
-                'month': month_key,
-                'revenue': monthly_revenue[month_key]['revenue'],
-                'profit': monthly_revenue[month_key]['profit']
-            })
+            revenue_by_month.append(
+                {"month": month_key, "revenue": monthly_revenue[month_key]["revenue"], "profit": monthly_revenue[month_key]["profit"]}
+            )
 
-    # Format teacher revenue
     revenue_by_teacher = [
-        {
-            'teacherId': teacher_id,
-            'teacherName': data['teacherName'],
-            'revenue': data['revenue'],
-            'classCount': data['classCount'],
-            'totalHours': data['totalHours']
-        }
-        for teacher_id, data in sorted(teacher_revenue.items(), key=lambda x: x[1]['revenue'], reverse=True)
+        {"teacherId": teacher_id, "teacherName": data["teacherName"], "revenue": data["revenue"], "classCount": data["classCount"], "totalHours": data["totalHours"]}
+        for teacher_id, data in sorted(teacher_revenue.items(), key=lambda x: x[1]["revenue"], reverse=True)
     ]
 
-    # Format location revenue
     revenue_by_location = [
-        {
-            'location': location,
-            'revenue': data['revenue'],
-            'classCount': data['classCount']
-        }
-        for location, data in sorted(location_revenue.items(), key=lambda x: x[1]['revenue'], reverse=True)
+        {"location": location, "revenue": data["revenue"], "classCount": data["classCount"]}
+        for location, data in sorted(location_revenue.items(), key=lambda x: x[1]["revenue"], reverse=True)
     ]
 
     return {
-        'totalRevenueYTD': round(total_revenue_ytd, 2),
-        'totalProfitYTD': round(total_profit_ytd, 2),
-        'activeStudentsCount': active_students_count,
-        'activeTeachersCount': active_teachers_count,
-        'averageHourlyMargin': round(avg_hourly_margin, 2),
-        'averageLTVPerStudent': round(avg_ltv, 2),
-        'churnRate': round(churn_rate, 2),
-        'classesThisWeek': classes_this_week,
-        'classesOneMonthAgoWeek': classes_one_month_ago_week,
-        'ltvDistribution': ltv_distribution,
-        'revenueByMonth': revenue_by_month,
-        'revenueByTeacher': revenue_by_teacher,
-        'revenueByLocation': revenue_by_location
+        "totalRevenueYTD": round(total_revenue_ytd, 2),
+        "totalProfitYTD": round(total_profit_ytd, 2),
+        "activeStudentsCount": active_students_count,
+        "activeTeachersCount": active_teachers_count,
+        "averageHourlyMargin": round(avg_hourly_margin, 2),
+        "averageLTVPerStudent": round(avg_ltv, 2),
+        "churnRate": round(churn_rate, 2),
+        "classesThisWeek": classes_this_week,
+        "classesOneMonthAgoWeek": classes_one_month_ago_week,
+        "ltvDistribution": ltv_distribution,
+        "revenueByMonth": revenue_by_month,
+        "revenueByTeacher": revenue_by_teacher,
+        "revenueByLocation": revenue_by_location,
     }
 
 
@@ -657,59 +821,143 @@ def get_analytics_dashboard(admin_user_id: str):
 # GRATIS LEKSEHJELP (FREE HOMEWORK HELP) QUERY FUNCTIONS
 # ============================================================================
 
+
 def get_teacher_help_config(teacher_user_id: str):
     """Get help config for a specific teacher"""
-    response = supabase.table('teacher_help_config').select('*').eq('teacher_user_id', teacher_user_id).execute()
-    return response.data[0] if response.data else None
+    session = get_session()
+    row = session.scalar(select(TeacherHelpConfig).where(TeacherHelpConfig.teacher_user_id == teacher_user_id))
+    return row.as_dict() if row else None
 
 
 def get_all_available_teachers():
     """Get all teachers available for help with their config"""
-    response = supabase.table('teacher_help_config').select('*, teachers(*)').eq('available_for_help', True).execute()
-    return response.data
+    session = get_session()
+    stmt = (
+        select(TeacherHelpConfig, Teacher)
+        .join(Teacher, Teacher.user_id == TeacherHelpConfig.teacher_user_id)
+        .where(TeacherHelpConfig.available_for_help.is_(True))
+    )
+    rows = session.execute(stmt).all()
+    result = []
+    for config, teacher in rows:
+        d = config.as_dict()
+        d["teachers"] = teacher.as_dict()
+        result.append(d)
+    return result
 
 
 def get_active_help_sessions():
-    """Get currently active help sessions (based on day/time)"""
-    response = supabase.rpc('get_currently_active_help_sessions').execute()
-    return response.data
+    """Get currently active help sessions (based on day/time, recurring or one-time)"""
+    session = get_session()
+
+    # Mirrors the original RPC's `CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Oslo'` —
+    # computed via SQL functions rather than in Python so Postgres (not this
+    # process) remains the source of truth for "now" and for the timestamptz ->
+    # time-of-day cast, matching production semantics exactly.
+    oslo_now = func.timezone("Europe/Oslo", func.current_timestamp())
+    now_utc_col = func.current_timestamp()
+
+    queue_count_subq = (
+        select(HelpQueue.assigned_session_id, func.count(HelpQueue.queue_id).label("queue_count"))
+        .where(HelpQueue.status == "waiting")
+        .group_by(HelpQueue.assigned_session_id)
+        .subquery()
+    )
+
+    recurring_match = and_(
+        HelpSession.recurring.is_(True),
+        HelpSession.day_of_week == func.extract("isodow", oslo_now) - 1,
+        func.cast(oslo_now, Time) >= func.cast(HelpSession.start_time, Time),
+        func.cast(oslo_now, Time) < func.cast(HelpSession.end_time, Time),
+    )
+    one_time_match = and_(HelpSession.recurring.is_(False), now_utc_col >= HelpSession.start_time, now_utc_col < HelpSession.end_time)
+
+    stmt = (
+        select(
+            HelpSession,
+            Teacher.firstname,
+            Teacher.lastname,
+            func.coalesce(queue_count_subq.c.queue_count, 0).label("queue_count"),
+        )
+        .join(Teacher, Teacher.user_id == HelpSession.teacher_user_id)
+        .join(TeacherHelpConfig, TeacherHelpConfig.teacher_user_id == HelpSession.teacher_user_id)
+        .outerjoin(queue_count_subq, queue_count_subq.c.assigned_session_id == HelpSession.session_id)
+        .where(HelpSession.is_active.is_(True), TeacherHelpConfig.available_for_help.is_(True), or_(recurring_match, one_time_match))
+        .order_by(func.coalesce(queue_count_subq.c.queue_count, 0).asc())
+    )
+    rows = session.execute(stmt).all()
+    return [
+        {
+            "session_id": hs.session_id,
+            "teacher_user_id": hs.teacher_user_id,
+            "recurring": hs.recurring,
+            "day_of_week": hs.day_of_week,
+            "start_time": hs.start_time,
+            "end_time": hs.end_time,
+            "queue_count": queue_count,
+            "teacher_firstname": firstname,
+            "teacher_lastname": lastname,
+            "zoom_join_link": hs.zoom_link,
+        }
+        for hs, firstname, lastname, queue_count in rows
+    ]
 
 
 def get_help_sessions_for_teacher(teacher_user_id: str):
     """Get all help sessions for a teacher, which are not completed yet"""
+    session = get_session()
     now_utc = datetime.now(timezone.utc)
-    response = (
-        supabase
-        .table("help_sessions")
-        .select("*")
-        .eq("teacher_user_id", teacher_user_id)
-        .or_(f"end_time.gte.{now_utc.isoformat()},recurring.eq.true")
-        .eq("is_active", True)
-        .execute()
+    stmt = select(HelpSession).where(
+        HelpSession.teacher_user_id == teacher_user_id,
+        or_(HelpSession.end_time >= now_utc, HelpSession.recurring.is_(True)),
+        HelpSession.is_active.is_(True),
     )
-    return response.data
+    rows = session.scalars(stmt).all()
+    return [h.as_dict() for h in rows]
 
 
 def get_help_queue_for_session(session_id: str):
     """Get queue for a specific session, ordered by position"""
-    response = supabase.table('help_queue').select('*').eq('assigned_session_id', session_id).eq('status', 'waiting').order('position').execute()
-    return response.data
+    session = get_session()
+    stmt = (
+        select(HelpQueue)
+        .where(HelpQueue.assigned_session_id == session_id, HelpQueue.status == "waiting")
+        .order_by(HelpQueue.position)
+    )
+    rows = session.scalars(stmt).all()
+    return [q.as_dict() for q in rows]
 
 
 def get_queue_position(queue_id: str):
     """Get position and info for a queue entry"""
-    response = supabase.table('help_queue').select('*, help_sessions(teacher_user_id)').eq('queue_id', queue_id).execute()
-    return response.data[0] if response.data else None
+    session = get_session()
+    stmt = (
+        select(HelpQueue, HelpSession.teacher_user_id)
+        .outerjoin(HelpSession, HelpSession.session_id == HelpQueue.assigned_session_id)
+        .where(HelpQueue.queue_id == queue_id)
+    )
+    row = session.execute(stmt).first()
+    if not row:
+        return None
+    queue_entry, teacher_user_id = row
+    d = queue_entry.as_dict()
+    d["help_sessions"] = {"teacher_user_id": teacher_user_id} if teacher_user_id else None
+    return d
+
 
 def get_all_uncompleted_help_sessions():
     """Get all future help sessions (recurring + one-time sessions that haven't ended)"""
+    session = get_session()
     now_utc = datetime.now(timezone.utc)
-    response = (
-        supabase
-        .table("help_sessions")
-        .select("*, teachers!fk_help_session_teacher(firstname, lastname, user_id)")
-        .eq("is_active", True)
-        .or_(f"end_time.gte.{now_utc.isoformat()},recurring.eq.true")
-        .execute()
+    stmt = (
+        select(HelpSession, Teacher.firstname, Teacher.lastname, Teacher.user_id)
+        .join(Teacher, Teacher.user_id == HelpSession.teacher_user_id)
+        .where(HelpSession.is_active.is_(True), or_(HelpSession.end_time >= now_utc, HelpSession.recurring.is_(True)))
     )
-    return response.data
+    rows = session.execute(stmt).all()
+    result = []
+    for hs, firstname, lastname, teacher_user_id in rows:
+        d = hs.as_dict()
+        d["teachers"] = {"firstname": firstname, "lastname": lastname, "user_id": teacher_user_id}
+        result.append(d)
+    return result
