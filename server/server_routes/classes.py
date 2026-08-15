@@ -4,10 +4,10 @@ import logging
 import json
 import os
 
-from google.cloud import pubsub_v1
 from db.gets import get_student_by_user_id, get_teacher_by_user_id
 
 from .config import token_required
+from .tasks_client import enqueue_email_task
 from db.gets import (
     get_classes_for_student,
     get_classes_for_teacher,
@@ -25,11 +25,6 @@ classes_bp = Blueprint('classes', __name__)
 
 from db.sql_types import Classes
 import uuid
-
-# Initialize Pub/Sub publisher
-publisher = pubsub_v1.PublisherClient()
-GCP_PROJECT_ID = os.getenv('GCP_PROJECT_ID', 'your-project-id')
-TOPIC_PATH = publisher.topic_path(GCP_PROJECT_ID, "send-class-email")
 
 @classes_bp.route('/get-classes-for-student', methods=["GET"])
 @token_required
@@ -169,9 +164,9 @@ def upload_new_class(user_id):
         return jsonify({"message": str(e)}), 500
     
 
-    # Publish email job to Pub/Sub
+    # Enqueue email job via Cloud Tasks
     try:
-        logging.info("Publishing email job to Pub/Sub for new class")
+        logging.info("Enqueuing email job for new class")
 
         # Prepare class data
         class_data = [{
@@ -204,18 +199,13 @@ def upload_new_class(user_id):
             "number_of_students": int(number_of_students) if number_of_students else 1
         }
 
-        logging.info(f"Publishing message to Pub/Sub: {message}")
+        logging.info(f"Enqueuing message: {message}")
 
-        # Publish to Pub/Sub
-        publisher.publish(
-            TOPIC_PATH,
-            json.dumps(message).encode("utf-8")
-        )
-        logging.info(f"Email job published successfully. Message: {message}")
-        logging.info("Email job published to Pub/Sub successfully")
+        enqueue_email_task("/tasks/send-class-email", message)
+        logging.info(f"Email job enqueued successfully. Message: {message}")
     except Exception as e:
         # IMPORTANT: Class is already inserted - don't fail the request
-        logging.error(f"Failed to publish email job to Pub/Sub: {e}, but class already inserted")
+        logging.error(f"Failed to enqueue email job: {e}, but class already inserted")
 
     return jsonify({"message": "Class successfully inserted"}), 200
 

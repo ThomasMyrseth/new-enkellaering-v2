@@ -5,9 +5,8 @@ from flask import Blueprint, request, jsonify
 from datetime import datetime
 import logging
 
-from google.cloud import pubsub_v1
-
 from .config import token_required
+from .tasks_client import enqueue_email_task
 from db.gets import (
     get_all_new_students,
     get_all_students_without_teacher,
@@ -38,16 +37,6 @@ from db.deletes import (
 
 
 order_bp = Blueprint('order', __name__)
-
-# Initialize Pub/Sub publisher
-publisher = pubsub_v1.PublisherClient()
-GCP_PROJECT_ID = os.getenv('GCP_PROJECT_ID', 'your-project-id')
-
-# Topic paths
-TOPIC_NEW_STUDENT_ADMIN = publisher.topic_path(GCP_PROJECT_ID, "send-new-student-admin-email")
-TOPIC_NEW_ORDER_ADMIN = publisher.topic_path(GCP_PROJECT_ID, "send-new-order-admin-email")
-TOPIC_TEACHER_REFERAL_ADMIN = publisher.topic_path(GCP_PROJECT_ID, "send-teacher-referal-admin-email")
-TOPIC_STUDENT_TEACHER_NOTIFICATION = publisher.topic_path(GCP_PROJECT_ID, "send-student-teacher-notification-email")
 
 
 @order_bp.route('/get-new-students', methods=["GET"])
@@ -268,21 +257,18 @@ def submit_new_student_route():
         logging.error(f"Error inserting new student: {e}")
         return jsonify({"message": str(e)}), 500
 
-    # Publish email job to Pub/Sub
+    # Enqueue email job via Cloud Tasks
     try:
-        logging.info("Publishing new student admin email job to Pub/Sub")
+        logging.info("Enqueuing new student admin email job")
         message = {"phone": str(phone)}
-        publisher.publish(
-            TOPIC_NEW_STUDENT_ADMIN,
-            json.dumps(message).encode("utf-8")
-        )
-        logging.info(f"New student admin email job published successfully: {message}")
+        enqueue_email_task("/tasks/send-new-student-admin-email", message)
+        logging.info(f"New student admin email job enqueued successfully: {message}")
     except Exception as e:
         # Student is already inserted - don't fail the request
-        logging.error(f"Failed to publish email job: {e}, but student already inserted")
+        logging.error(f"Failed to enqueue email job: {e}, but student already inserted")
 
     return jsonify({"message": "New student successfully inserted"}), 200
-    
+
 
 
 
@@ -352,18 +338,15 @@ def submit_new_referal_route():
     except Exception as e:
         return jsonify({"message": str(e)}), 500
 
-    # Publish email job to Pub/Sub
+    # Enqueue email job via Cloud Tasks
     try:
-        logging.info("Publishing new referral student admin email job to Pub/Sub")
+        logging.info("Enqueuing new referral student admin email job")
         message = {"phone": str(referal_phone)}
-        publisher.publish(
-            TOPIC_NEW_STUDENT_ADMIN,
-            json.dumps(message).encode("utf-8")
-        )
-        logging.info(f"New referral student admin email job published successfully: {message}")
+        enqueue_email_task("/tasks/send-new-student-admin-email", message)
+        logging.info(f"New referral student admin email job enqueued successfully: {message}")
     except Exception as e:
         # Student is already inserted - don't fail the request
-        logging.error(f"Failed to publish email job: {e}, but student already inserted")
+        logging.error(f"Failed to enqueue email job: {e}, but student already inserted")
 
     return jsonify({"message": "New student successfully inserted"}), 200
 
@@ -406,27 +389,24 @@ def request_new_teacher_route(user_id):
         logging.error(f"Error inserting new student order: {e}")
         return jsonify({"message": f"Error inserting new student order {e}"}), 500
 
-    # Publish email to teacher (async)
+    # Enqueue email to teacher (async)
     if teacher:
         try:
-            logging.info("Publishing new student to teacher email job to Pub/Sub")
+            logging.info("Enqueuing new student to teacher email job")
             name = str(teacher.get('firstname', '')) + " " + str(teacher.get('lastname', ''))
             message = {
                 "email_type": "new_student_to_teacher",
                 "teacher_email": str(teacher.get('email', '')),
                 "teacher_name": str(name)
             }
-            publisher.publish(
-                TOPIC_STUDENT_TEACHER_NOTIFICATION,
-                json.dumps(message).encode("utf-8")
-            )
-            logging.info(f"New student to teacher email job published successfully: {message}")
+            enqueue_email_task("/tasks/send-student-teacher-notification-email", message)
+            logging.info(f"New student to teacher email job enqueued successfully: {message}")
         except Exception as e:
-            logging.error(f"Failed to publish teacher email job: {e}, but order already inserted")
+            logging.error(f"Failed to enqueue teacher email job: {e}, but order already inserted")
 
-    # Publish email to admin (async)
+    # Enqueue email to admin (async)
     try:
-        logging.info("Publishing new order admin email job to Pub/Sub")
+        logging.info("Enqueuing new order admin email job")
         message = {
             "firstname_parent": str(student_row.get('firstname_parent', '')),
             "lastname_parent": str(student_row.get('lastname_parent', '')),
@@ -435,14 +415,11 @@ def request_new_teacher_route(user_id):
             "teacher_lastname": str(teacher.get('lastname', '')) if teacher else '',
             "teacher_phone": str(teacher.get('phone', '')) if teacher else ''
         }
-        publisher.publish(
-            TOPIC_NEW_ORDER_ADMIN,
-            json.dumps(message).encode("utf-8")
-        )
-        logging.info(f"New order admin email job published successfully: {message}")
+        enqueue_email_task("/tasks/send-new-order-admin-email", message)
+        logging.info(f"New order admin email job enqueued successfully: {message}")
     except Exception as e:
         # Order is already inserted - don't fail the request
-        logging.error(f"Failed to publish admin email job: {e}, but order already inserted")
+        logging.error(f"Failed to enqueue admin email job: {e}, but order already inserted")
 
     return jsonify({"message": "inserted new student order"}), 200
 
@@ -531,9 +508,9 @@ def teacher_accepts_route(user_id):
         logging.error(f"Error updating new order: {e}")
         return jsonify({"message": f"Error updating new order {e}"}), 500
 
-    # Publish email job to Pub/Sub (async)
+    # Enqueue email job via Cloud Tasks (async)
     try:
-        logging.info("Publishing accept/reject student email job to Pub/Sub")
+        logging.info("Enqueuing accept/reject student email job")
         message = {
             "email_type": "accept_reject_to_student",
             "student_name": str(firstname),
@@ -541,14 +518,11 @@ def teacher_accepts_route(user_id):
             "accept_or_reject": bool(accept),
             "student_email": str(mail)
         }
-        publisher.publish(
-            TOPIC_STUDENT_TEACHER_NOTIFICATION,
-            json.dumps(message).encode("utf-8")
-        )
-        logging.info(f"Accept/reject student email job published successfully: {message}")
+        enqueue_email_task("/tasks/send-student-teacher-notification-email", message)
+        logging.info(f"Accept/reject student email job enqueued successfully: {message}")
     except Exception as e:
         # Order is already updated - don't fail the request
-        logging.error(f"Failed to publish email job: {e}, but order already updated")
+        logging.error(f"Failed to enqueue email job: {e}, but order already updated")
 
     return jsonify({"message": "Updated new order"}), 200
 
@@ -644,22 +618,19 @@ def submit_new_teacher_referal_route(user_id):
         logging.error(f"Error inserting new teacher referal: {e}")
         return jsonify({"message": f"An error occured {e}"}), 500
 
-    # Publish email job to Pub/Sub
+    # Enqueue email job via Cloud Tasks
     try:
-        logging.info("Publishing teacher referral admin email job to Pub/Sub")
+        logging.info("Enqueuing teacher referral admin email job")
         message = {
             "referal_name": str(referal_name),
             "referal_email": str(referal_email) if referal_email else "",
             "referal_phone": str(referal_phone),
             "teacher_name": str(teacher_name)
         }
-        publisher.publish(
-            TOPIC_TEACHER_REFERAL_ADMIN,
-            json.dumps(message).encode("utf-8")
-        )
-        logging.info(f"Teacher referral admin email job published successfully: {message}")
+        enqueue_email_task("/tasks/send-teacher-referal-admin-email", message)
+        logging.info(f"Teacher referral admin email job enqueued successfully: {message}")
     except Exception as e:
         # Referral is already inserted - don't fail the request
-        logging.error(f"Failed to publish email job: {e}, but referral already inserted")
+        logging.error(f"Failed to enqueue email job: {e}, but referral already inserted")
 
     return jsonify({"message": "New teacher referal submitted successfully"}), 200

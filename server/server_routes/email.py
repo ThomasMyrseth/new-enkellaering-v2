@@ -8,40 +8,15 @@ import logging
 from zoneinfo import ZoneInfo
 from datetime import datetime, time
 from babel.dates import format_datetime
-import base64
-import json
 
 from db.gets import get_students_with_few_classes, get_all_admins
+from .config import verify_cloud_tasks_oidc
 
 resend.api_key = os.getenv('RESEND_API_KEY')
 FROM_EMAIL = os.getenv("MAIL_USERNAME") or "Enkel Laering <kontakt@enkellaering.no>"
 
 
 mail_bp = Blueprint('mail', __name__)
-
-
-from google.cloud import pubsub_v1
-import os
-
-project_id = os.getenv("GCP_PROJECT_ID", 'no_project_id')
-publisher = pubsub_v1.PublisherClient()
-
-# topics = [
-#     "send-class-email",
-#     "send-new-order-admin-email",
-#     "send-teacher-referal-admin-email",
-#     "send-student-teacher-notification-email",
-#     "send-help-queue-email"
-# ]
-
-# for topic_name in topics:
-#     topic_path = publisher.topic_path(project_id, topic_name)
-#     try:
-#         publisher.get_topic(request={"topic": topic_path})
-#         print(f"Topic exists: {topic_name}")
-#     except:
-#         publisher.create_topic(request={"name": topic_path})
-#         print(f"Created topic: {topic_name}")
 
 # This route builds and sends the email dynamically on request
 @mail_bp.route('/send-hello-email', methods=['GET'])
@@ -1101,24 +1076,18 @@ def sendEmailToAdminAboutNewTeacherReferal(referalName :str, referalEmail :str, 
     return True
 
 
-@mail_bp.route('/pubsub/send-class-email', methods=["POST"])
-def send_class_email_pubsub():
+@mail_bp.route('/tasks/send-class-email', methods=["POST"])
+@verify_cloud_tasks_oidc
+def send_class_email_task():
     """
-    Pub/Sub subscriber endpoint to send emails for new classes.
-    Receives messages from Google Cloud Pub/Sub with class information.
+    Cloud Tasks endpoint to send emails for new classes.
     """
-    envelope = request.get_json()
-    if not envelope or "message" not in envelope:
-        logging.error("Bad Request: No message in Pub/Sub envelope")
+    data = request.get_json()
+    if not data:
+        logging.error("Bad Request: No JSON body")
         return "Bad Request", 400
 
     try:
-        # Decode the Pub/Sub message
-        payload = base64.b64decode(envelope["message"]["data"]).decode("utf-8")
-        logging.info(f"Decoded Pub/Sub payload: {payload}")
-        data = json.loads(payload)
-        logging.info(f"Parsed Pub/Sub data: {data}")
-
         # Extract data from message
         classes = data.get("classes", [])
         students = data.get("students", [])
@@ -1129,7 +1098,7 @@ def send_class_email_pubsub():
         logging.info(f"Extracted - classes: {classes}, students: {students}, teacher: {teacher}")
 
         if not (classes and students and teacher):
-            logging.error(f"Missing required fields in Pub/Sub message. classes={bool(classes)}, students={bool(students)}, teacher={bool(teacher)}")
+            logging.error(f"Missing required fields in task payload. classes={bool(classes)}, students={bool(students)}, teacher={bool(teacher)}")
             logging.error(f"Full data received: {data}")
             return "Bad Request: Missing required fields", 400
 
@@ -1146,31 +1115,28 @@ def send_class_email_pubsub():
         return "OK", 200
 
     except Exception as e:
-        logging.exception("Failed to process Pub/Sub message for sending class emails")
-        # Return 500 so Pub/Sub will retry
+        logging.exception("Failed to process task for sending class emails")
+        # Return 500 so Cloud Tasks will retry
         return "Error", 500
 
 
-@mail_bp.route('/pubsub/send-new-student-admin-email', methods=["POST"])
-def send_new_student_admin_email_pubsub():
+@mail_bp.route('/tasks/send-new-student-admin-email', methods=["POST"])
+@verify_cloud_tasks_oidc
+def send_new_student_admin_email_task():
     """
-    Pub/Sub subscriber endpoint to send admin emails for new students.
+    Cloud Tasks endpoint to send admin emails for new students.
     """
-    envelope = request.get_json()
-    if not envelope or "message" not in envelope:
-        logging.error("Bad Request: No message in Pub/Sub envelope")
+    data = request.get_json()
+    if not data:
+        logging.error("Bad Request: No JSON body")
         return "Bad Request", 400
 
     try:
-        # Decode the Pub/Sub message
-        payload = base64.b64decode(envelope["message"]["data"]).decode("utf-8")
-        data = json.loads(payload)
-
         # Extract data from message
         phone = data.get("phone")
 
         if not phone:
-            logging.error("Missing phone in Pub/Sub message")
+            logging.error("Missing phone in task payload")
             return "Bad Request: Missing phone", 400
 
         # Send email to admins
@@ -1180,26 +1146,23 @@ def send_new_student_admin_email_pubsub():
         return "OK", 200
 
     except Exception as e:
-        logging.exception("Failed to process Pub/Sub message for new student admin email")
-        # Return 500 so Pub/Sub will retry
+        logging.exception("Failed to process task for new student admin email")
+        # Return 500 so Cloud Tasks will retry
         return "Error", 500
 
 
-@mail_bp.route('/pubsub/send-new-order-admin-email', methods=["POST"])
-def send_new_order_admin_email_pubsub():
+@mail_bp.route('/tasks/send-new-order-admin-email', methods=["POST"])
+@verify_cloud_tasks_oidc
+def send_new_order_admin_email_task():
     """
-    Pub/Sub subscriber endpoint to send admin emails for new orders.
+    Cloud Tasks endpoint to send admin emails for new orders.
     """
-    envelope = request.get_json()
-    if not envelope or "message" not in envelope:
-        logging.error("Bad Request: No message in Pub/Sub envelope")
+    data = request.get_json()
+    if not data:
+        logging.error("Bad Request: No JSON body")
         return "Bad Request", 400
 
     try:
-        # Decode the Pub/Sub message
-        payload = base64.b64decode(envelope["message"]["data"]).decode("utf-8")
-        data = json.loads(payload)
-
         # Extract data from message
         firstname_parent = data.get("firstname_parent")
         lastname_parent = data.get("lastname_parent")
@@ -1209,7 +1172,7 @@ def send_new_order_admin_email_pubsub():
         teacher_phone = data.get("teacher_phone")
 
         if not all([firstname_parent, lastname_parent, phone_parent]):
-            logging.error(f"Missing required fields in Pub/Sub message, firstname_parent: {firstname_parent}, lastname_parent: {lastname_parent}, phone_parent: {phone_parent}")
+            logging.error(f"Missing required fields in task payload, firstname_parent: {firstname_parent}, lastname_parent: {lastname_parent}, phone_parent: {phone_parent}")
             return "Bad Request: Missing required fields", 400
 
         # Send email to admins
@@ -1226,26 +1189,23 @@ def send_new_order_admin_email_pubsub():
         return "OK", 200
 
     except Exception as e:
-        logging.exception("Failed to process Pub/Sub message for new order admin email")
-        # Return 500 so Pub/Sub will retry
+        logging.exception("Failed to process task for new order admin email")
+        # Return 500 so Cloud Tasks will retry
         return "Error", 500
 
 
-@mail_bp.route('/pubsub/send-teacher-referal-admin-email', methods=["POST"])
-def send_teacher_referal_admin_email_pubsub():
+@mail_bp.route('/tasks/send-teacher-referal-admin-email', methods=["POST"])
+@verify_cloud_tasks_oidc
+def send_teacher_referal_admin_email_task():
     """
-    Pub/Sub subscriber endpoint to send admin emails for teacher referrals.
+    Cloud Tasks endpoint to send admin emails for teacher referrals.
     """
-    envelope = request.get_json()
-    if not envelope or "message" not in envelope:
-        logging.error("Bad Request: No message in Pub/Sub envelope")
+    data = request.get_json()
+    if not data:
+        logging.error("Bad Request: No JSON body")
         return "Bad Request", 400
 
     try:
-        # Decode the Pub/Sub message
-        payload = base64.b64decode(envelope["message"]["data"]).decode("utf-8")
-        data = json.loads(payload)
-
         # Extract data from message
         referal_name = data.get("referal_name")
         referal_email = data.get("referal_email")
@@ -1253,7 +1213,7 @@ def send_teacher_referal_admin_email_pubsub():
         teacher_name = data.get("teacher_name")
 
         if not all([referal_name, referal_phone, teacher_name]):
-            logging.error(f"Missing required fields in Pub/Sub message, referal name: {referal_name}, referal phone: {referal_phone}, teacher name: {teacher_name}")
+            logging.error(f"Missing required fields in task payload, referal name: {referal_name}, referal phone: {referal_phone}, teacher name: {teacher_name}")
             return "Bad Request: Missing required fields", 400
 
         # Send email to admins
@@ -1268,27 +1228,24 @@ def send_teacher_referal_admin_email_pubsub():
         return "OK", 200
 
     except Exception as e:
-        logging.exception("Failed to process Pub/Sub message for teacher referral admin email")
-        # Return 500 so Pub/Sub will retry
+        logging.exception("Failed to process task for teacher referral admin email")
+        # Return 500 so Cloud Tasks will retry
         return "Error", 500
 
 
-@mail_bp.route('/pubsub/send-student-teacher-notification-email', methods=["POST"])
-def send_student_teacher_notification_email_pubsub():
+@mail_bp.route('/tasks/send-student-teacher-notification-email', methods=["POST"])
+@verify_cloud_tasks_oidc
+def send_student_teacher_notification_email_task():
     """
-    Pub/Sub subscriber endpoint to send notification emails to students/teachers.
+    Cloud Tasks endpoint to send notification emails to students/teachers.
     Handles both sendNewStudentToTeacherMail and sendAcceptOrRejectToStudentMail.
     """
-    envelope = request.get_json()
-    if not envelope or "message" not in envelope:
-        logging.error("Bad Request: No message in Pub/Sub envelope")
+    data = request.get_json()
+    if not data:
+        logging.error("Bad Request: No JSON body")
         return "Bad Request", 400
 
     try:
-        # Decode the Pub/Sub message
-        payload = base64.b64decode(envelope["message"]["data"]).decode("utf-8")
-        data = json.loads(payload)
-
         # Extract email type
         email_type = data.get("email_type")
 
@@ -1330,27 +1287,24 @@ def send_student_teacher_notification_email_pubsub():
         return "OK", 200
 
     except Exception as e:
-        logging.exception("Failed to process Pub/Sub message for student/teacher notification email")
-        # Return 500 so Pub/Sub will retry
+        logging.exception("Failed to process task for student/teacher notification email")
+        # Return 500 so Cloud Tasks will retry
         return "Error", 500
 
 
-@mail_bp.route('/pubsub/send-help-queue-email', methods=["POST"])
-def send_help_queue_email_pubsub():
+@mail_bp.route('/tasks/send-help-queue-email', methods=["POST"])
+@verify_cloud_tasks_oidc
+def send_help_queue_email_task():
     """
-    Pub/Sub subscriber endpoint to send emails when students join help queue.
+    Cloud Tasks endpoint to send emails when students join help queue.
     Sends emails to both student and teacher.
     """
-    envelope = request.get_json()
-    if not envelope or "message" not in envelope:
-        logging.error("Bad Request: No message in Pub/Sub envelope")
+    data = request.get_json()
+    if not data:
+        logging.error("Bad Request: No JSON body")
         return "Bad Request", 400
 
     try:
-        # Decode the Pub/Sub message
-        payload = base64.b64decode(envelope["message"]["data"]).decode("utf-8")
-        data = json.loads(payload)
-
         # Extract data from message
         student_name = data.get("student_name")
         student_email = data.get("student_email")
@@ -1362,7 +1316,7 @@ def send_help_queue_email_pubsub():
         zoom_link = data.get("zoom_link")
 
         if not all([student_name, teacher_email, teacher_name, subject, zoom_link]):
-            logging.error("Missing required fields in Pub/Sub message for help queue email")
+            logging.error("Missing required fields in task payload for help queue email")
             return "Bad Request: Missing required fields", 400
 
         # Send email to student (only if student_email is provided)
@@ -1393,33 +1347,30 @@ def send_help_queue_email_pubsub():
             logging.info(f"Successfully sent help queue email to teacher: {teacher_email}")
         except Exception as e:
             logging.error(f"Failed to send email to teacher {teacher_email}: {e}")
-            # Return error so Pub/Sub will retry
+            # Return error so Cloud Tasks will retry
             return "Error", 500
 
         return "OK", 200
 
     except Exception as e:
-        logging.exception("Failed to process Pub/Sub message for help queue email")
-        # Return 500 so Pub/Sub will retry
+        logging.exception("Failed to process task for help queue email")
+        # Return 500 so Cloud Tasks will retry
         return "Error", 500
 
 
-@mail_bp.route('/pubsub/send-help-queue-completion-email', methods=["POST"])
-def send_help_queue_completion_email_pubsub():
+@mail_bp.route('/tasks/send-help-queue-completion-email', methods=["POST"])
+@verify_cloud_tasks_oidc
+def send_help_queue_completion_email_task():
     """
-    Pub/Sub subscriber endpoint to send completion emails for help queue sessions.
+    Cloud Tasks endpoint to send completion emails for help queue sessions.
     Handles both 'completed' and 'no_show' completion types.
     """
-    envelope = request.get_json()
-    if not envelope or "message" not in envelope:
-        logging.error("Bad Request: No message in Pub/Sub envelope")
+    data = request.get_json()
+    if not data:
+        logging.error("Bad Request: No JSON body")
         return "Bad Request", 400
 
     try:
-        # Decode the Pub/Sub message
-        payload = base64.b64decode(envelope["message"]["data"]).decode("utf-8")
-        data = json.loads(payload)
-
         # Extract data from message
         completion_type = data.get("completion_type")
         student_name = data.get("student_name")
@@ -1430,7 +1381,7 @@ def send_help_queue_completion_email_pubsub():
         session_date = data.get("session_date")
 
         if not all([completion_type, student_name, teacher_name, subject, session_date]):
-            logging.error("Missing required fields in Pub/Sub message for help queue completion email")
+            logging.error("Missing required fields in task payload for help queue completion email")
             return "Bad Request: Missing required fields", 400
 
         # Only send email if student provided an email address
@@ -1469,7 +1420,7 @@ def send_help_queue_completion_email_pubsub():
 
             except Exception as e:
                 logging.error(f"Failed to send completion email to student {student_email}: {e}")
-                # Return error so Pub/Sub will retry
+                # Return error so Cloud Tasks will retry
                 return "Error", 500
         else:
             logging.info(f"No student email provided for {completion_type} session, skipping email notification")
@@ -1477,30 +1428,28 @@ def send_help_queue_completion_email_pubsub():
         return "OK", 200
 
     except Exception as e:
-        logging.exception("Failed to process Pub/Sub message for help queue completion email")
-        # Return 500 so Pub/Sub will retry
+        logging.exception("Failed to process task for help queue completion email")
+        # Return 500 so Cloud Tasks will retry
         return "Error", 500
 
 
-@mail_bp.route('/pubsub/send-new-tasks-admin-email', methods=["POST"])
-def send_new_tasks_admin_email_pubsub():
+@mail_bp.route('/tasks/send-new-tasks-admin-email', methods=["POST"])
+@verify_cloud_tasks_oidc
+def send_new_tasks_admin_email_task():
     """
-    Pub/Sub subscriber endpoint to send admin emails when new follow-up tasks are created.
+    Cloud Tasks endpoint to send admin emails when new follow-up tasks are created.
     """
-    envelope = request.get_json()
-    if not envelope or "message" not in envelope:
-        logging.error("Bad Request: No message in Pub/Sub envelope")
+    data = request.get_json()
+    if not data:
+        logging.error("Bad Request: No JSON body")
         return "Bad Request", 400
 
     try:
-        payload = base64.b64decode(envelope["message"]["data"]).decode("utf-8")
-        data = json.loads(payload)
-
         task_type = data.get("task_type")
         names = data.get("names", [])
 
         if not task_type or not names:
-            logging.error(f"Missing required fields in Pub/Sub message: task_type={task_type}, names count={len(names)}")
+            logging.error(f"Missing required fields in task payload: task_type={task_type}, names count={len(names)}")
             return "Bad Request: Missing required fields", 400
 
         sendNewTasksCreatedEmailToAdmin(task_type=task_type, names=names)
@@ -1508,5 +1457,5 @@ def send_new_tasks_admin_email_pubsub():
         return "OK", 200
 
     except Exception as e:
-        logging.exception("Failed to process Pub/Sub message for new tasks admin email")
+        logging.exception("Failed to process task for new tasks admin email")
         return "Error", 500

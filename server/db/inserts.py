@@ -4,7 +4,6 @@ from datetime import datetime, timezone
 import logging
 import json
 import os
-from google.cloud import pubsub_v1
 from zoneinfo import ZoneInfo
 from typing import Optional
 import uuid
@@ -12,6 +11,7 @@ import uuid
 from db.gets import is_admin
 from .sql_types import Classes, Teacher, Students, NewStudentWithPreferredTeacher
 from supabase_client import supabase
+from server_routes.tasks_client import enqueue_email_task
 
 def insert_teacher(teacher: Teacher):
     """Insert a new teacher"""
@@ -436,13 +436,9 @@ def insert_help_queue_entry(student_name: str, student_email: Optional[str], stu
 
     supabase.table('help_queue').insert(data).execute()
 
-    # Publish email notification to Pub/Sub
+    # Enqueue email notification via Cloud Tasks
     if teacher_email and zoom_join_link:
         try:
-            project_id = os.getenv("GCP_PROJECT_ID", 'no_project_id')
-            publisher = pubsub_v1.PublisherClient()
-            topic_path = publisher.topic_path(project_id, "send-help-queue-email")
-
             message_data = {
                 "student_name": student_name,
                 "student_email": student_email,
@@ -454,14 +450,11 @@ def insert_help_queue_entry(student_name: str, student_email: Optional[str], stu
                 "zoom_link": zoom_join_link
             }
 
-            message_json = json.dumps(message_data)
-            message_bytes = message_json.encode("utf-8")
-
-            future = publisher.publish(topic_path, message_bytes)
-            logging.info(f"Published help queue email message: {future.result()}")
+            enqueue_email_task("/tasks/send-help-queue-email", message_data)
+            logging.info(f"Enqueued help queue email message: {message_data}")
         except Exception as e:
-            print("Failed to publish help queue email to Pub/Sub:", e)
-            logging.error(f"Failed to publish help queue email to Pub/Sub: {e}")
+            print("Failed to enqueue help queue email:", e)
+            logging.error(f"Failed to enqueue help queue email: {e}")
             # Don't fail the queue insertion if email fails
 
     return queue_id, zoom_join_link
