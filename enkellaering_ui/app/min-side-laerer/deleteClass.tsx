@@ -25,7 +25,7 @@ const deleteClass = async (classId: string) => {
 };
 
 
-export const DeleteClass = ({hasPaid, hasInvoiced, classId} : {hasPaid :boolean, hasInvoiced :boolean, classId :string}) => {
+export const DeleteClass = ({hasPaid, hasInvoiced, classId, onDeleted} : {hasPaid :boolean, hasInvoiced :boolean, classId :string, onDeleted?: (classId: string) => void}) => {
 
     const handleButtonClick = async () => {
         const res = await deleteClass(classId)
@@ -35,6 +35,7 @@ export const DeleteClass = ({hasPaid, hasInvoiced, classId} : {hasPaid :boolean,
         }
         if (res) {
             toast.success("timen er slettet")
+            onDeleted?.(classId)
         }
     }
     return (<>

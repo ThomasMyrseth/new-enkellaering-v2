@@ -32,7 +32,7 @@ export default function LaererPage() {
     const token :string = localStorage.getItem('token') || ''
 
     const [teacher, teacherLoading, teacherError] = useTeacher()
-    const [classes, classesLoading, classesError] = useClassesForTeacher()
+    const [classes, classesLoading, classesError, setClasses] = useClassesForTeacher()
     const [rawStudents, studentsLoading, studentsError] = useMyStudents()
     const [teacherStudentsRaw, teacherStudentsLoading, teacherStudentsError] = useTeacherStudent()
 
@@ -165,7 +165,7 @@ export default function LaererPage() {
                 <DailyRevenueChart teacher={teacher}/>
                 <WantMoreStudents teacher={teacher}/>
                 <AddNewClass teacher={teacher} students={students}/>
-                <YourStudent teacher={teacher} classes={classes as unknown as Classes[]} students={students} teacherStudents={teacherStudents}/>
+                <YourStudent teacher={teacher} classes={classes as unknown as Classes[]} students={students} teacherStudents={teacherStudents} onClassDeleted={(classId) => setClasses(prev => prev.filter(c => c.class_id !== classId))}/>
                 <TeacherReferalForm token={token}/>
                 <NewStudentsWithPreferredTeacherWorkflowActions/>
                 <ProfileForm teacher={teacher}/>

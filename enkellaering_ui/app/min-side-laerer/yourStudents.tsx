@@ -22,7 +22,7 @@ const formatToNorwegian = (utcString: string) => {
   });
 };
 
-export function YourStudent( {teacher, classes, students, teacherStudents} : {teacher: Teacher, classes :Classes[], students :Student[], teacherStudents :TeacherStudent[]} ) {
+export function YourStudent( {teacher, classes, students, teacherStudents, onClassDeleted} : {teacher: Teacher, classes :Classes[], students :Student[], teacherStudents :TeacherStudent[], onClassDeleted: (classId: string) => void} ) {
     
     if (!teacher || !students) {
         return (<p>Loading...</p>)
@@ -101,7 +101,7 @@ export function YourStudent( {teacher, classes, students, teacherStudents} : {te
                         </p>
                       </div>
 
-                        <PreviousClasses student={student} teacher={teacher} allClasses={classes} teacherStudent={teacherStudent || null}/>
+                        <PreviousClasses student={student} teacher={teacher} allClasses={classes} teacherStudent={teacherStudent || null} onClassDeleted={onClassDeleted}/>
                     </AccordionContent>
                 </AccordionItem>
                 )
@@ -151,7 +151,7 @@ import { useMemo } from "react"
 import { DeleteClass } from "./deleteClass"
 
 
-const PreviousClasses =  ({student, teacher, allClasses, teacherStudent}  : {student :FullStudent, teacher :Teacher, allClasses :Classes[], teacherStudent :TeacherStudent | null})  => {     
+const PreviousClasses =  ({student, teacher, allClasses, teacherStudent, onClassDeleted}  : {student :FullStudent, teacher :Teacher, allClasses :Classes[], teacherStudent :TeacherStudent | null, onClassDeleted: (classId: string) => void})  => {
 
     const sortedFilteredClasses = useMemo(() => {
       return allClasses
@@ -199,7 +199,7 @@ const PreviousClasses =  ({student, teacher, allClasses, teacherStudent}  : {stu
                         <TableCell>{c.paid_teacher ? <p className="text-green-400">Betalt</p> : <p className="text-red-400">Ubetalt</p>}</TableCell>
                         <TableCell className="text-right">{amount}</TableCell>
                         <TableCell>{c.comment}</TableCell>
-                        <TableCell><DeleteClass classId={c.class_id} hasInvoiced={c.invoiced_student} hasPaid={c.paid_teacher}/></TableCell>
+                        <TableCell><DeleteClass classId={c.class_id} hasInvoiced={c.invoiced_student} hasPaid={c.paid_teacher} onDeleted={onClassDeleted}/></TableCell>
                     </TableRow>
                 )
             })}

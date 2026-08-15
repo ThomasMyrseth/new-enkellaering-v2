@@ -32,7 +32,7 @@ import { useNewStudents } from "@/hooks/use-new-students";
 
 
 export function NewStudentsWorkflow() {
-    const [newStudents, loading, error] = useNewStudents()
+    const [newStudents, loading, error, setNewStudents] = useNewStudents()
 
     if (error) toast.error(error)
 
@@ -52,8 +52,12 @@ export function NewStudentsWorkflow() {
     }
 
 
+    const handleDeleteStudent = (newStudentId: string) => {
+        setNewStudents(prev => prev.filter(s => s.new_student_id !== newStudentId))
+    }
+
     return (<div className="overflow-x-auto w-full sm:max-w-screen-sm md:max-w-screen-md lg:max-w-screen-lg xl:max-w-screen-xl 2xl:max-w-screen-2xl">
-            <NewStudentTable newStudents={newStudents}/>
+            <NewStudentTable newStudents={newStudents} onDelete={handleDeleteStudent}/>
     </div>
     )
 
@@ -68,7 +72,7 @@ import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 
 
-const NewStudentTable =( {newStudents} : {newStudents : NewStudent[]})  => {
+const NewStudentTable =( {newStudents, onDelete} : {newStudents : NewStudent[], onDelete: (newStudentId: string) => void})  => {
     const [hideCompleted, setHideCompleted] = useState<boolean>(true)
     const [onlyShowUnpaidReferals, setOnlyShowUnpaidReferrals] = useState<boolean>(false)
 
@@ -138,7 +142,7 @@ const NewStudentTable =( {newStudents} : {newStudents : NewStudent[]})  => {
                     </TableHeader>
                     <TableBody className="">
                         {filteredStudents.map( ns => {
-                            return <NewStudentRow key={ns.new_student_id} ns={ns}/>
+                            return <NewStudentRow key={ns.new_student_id} ns={ns} onDelete={onDelete}/>
                         })}
                     </TableBody>
         </Table>
@@ -147,7 +151,7 @@ const NewStudentTable =( {newStudents} : {newStudents : NewStudent[]})  => {
 }
 
 
-function NewStudentRow({ ns }: { ns: NewStudent }) {
+function NewStudentRow({ ns, onDelete }: { ns: NewStudent, onDelete: (newStudentId: string) => void }) {
     const [hasCalled, setHasCalled] = useState<boolean>(ns.has_called)
     const [calledAt, setCalledAt] = useState<Date>(new Date(ns.called_at))
     const [hasAnswered, setHasAnswered] = useState<boolean>(ns.has_answered)
@@ -228,6 +232,7 @@ function NewStudentRow({ ns }: { ns: NewStudent }) {
                 }
             })
             toast.success("Eleven er slettet")
+            onDelete(ns.new_student_id)
         } catch (error) {
             toast.error(error instanceof ApiError ? error.message : "Error while deleting new student")
         }
@@ -306,7 +311,7 @@ function NewStudentRow({ ns }: { ns: NewStudent }) {
 
         <TableCell>
             <AlertDialog>
-            <AlertDialogTrigger><Button variant="destructive">Slett ny elev</Button></AlertDialogTrigger>
+            <AlertDialogTrigger asChild><Button variant="destructive">Slett ny elev</Button></AlertDialogTrigger>
             <AlertDialogContent>
                 <AlertDialogHeader>
                 <AlertDialogTitle>Er du sikker på at du vil slette den nye eleven?</AlertDialogTitle>

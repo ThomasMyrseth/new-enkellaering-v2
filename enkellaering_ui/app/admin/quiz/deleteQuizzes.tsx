@@ -1,6 +1,5 @@
 "use client"
 
-import { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -15,16 +14,9 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
 import { apiFetch } from "@/lib/api"
 import { useQuizzes } from "@/hooks/use-quizzes"
-import { Quiz } from "@/app/min-side-laerer/types"
 
 export const DeleteQuiz = () => {
-    const [fetchedQuizzes, loading, error] = useQuizzes();
-
-    const [quizzes, setQuizzes] = useState<Quiz[]>([]);
-
-    useEffect(() => {
-        setQuizzes(fetchedQuizzes);
-    }, [fetchedQuizzes]);
+    const [quizzes, loading, error, setQuizzes] = useQuizzes();
 
     if (error) toast.error(error);
 

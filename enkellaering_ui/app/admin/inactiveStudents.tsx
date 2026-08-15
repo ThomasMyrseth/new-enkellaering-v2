@@ -24,7 +24,24 @@ import {
 import { toast } from "sonner"
 
 export const InactiveStudents = () => {
-    const [students, loading, error] = useStudents()
+    const [students, loading, error, setStudents] = useStudents()
+
+    const handleSetActive = async (student: Student) => {
+        try {
+            await apiFetch("/set-student-to-active", {
+                method: "POST",
+                body: {
+                    "student_user_id": student.user_id
+                }
+            });
+
+            toast.success(`${student.firstname_parent} ${student.lastname_parent} er satt til aktiv`)
+            setStudents(prev => prev.map(s => s.user_id === student.user_id ? { ...s, is_active: true } : s))
+
+        } catch (error) {
+            toast.error(`Failed to set student inactive: ${error}`);
+        }
+    }
 
     const inactiveStudents = useMemo(() => {
         return students
@@ -104,20 +121,4 @@ export const InactiveStudents = () => {
             </Accordion>
         )}
     </div>)
-}
-
-const handleSetActive = async (student: Student) => {
-    try {
-        await apiFetch("/set-student-to-active", {
-            method: "POST",
-            body: {
-                "student_user_id": student.user_id
-            }
-        });
-
-        toast.success(`${student.firstname_parent} ${student.lastname_parent} er satt til aktiv`)
-
-    } catch (error) {
-        toast.error(`Failed to set student inactive: ${error}`);
-    }
 }

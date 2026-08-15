@@ -255,7 +255,7 @@ type classesJoinTeacher = {
 }
 
 export function PreviousClassesForEachTeacher() {
-    const [classes, classesLoading, classesError] = useClasses();
+    const [classes, classesLoading, classesError, setClasses] = useClasses();
     const [teachers, teachersLoading, teachersError] = useTeachers();
     const [students, studentsLoading, studentsError] = useStudents();
     const [teacherStudents, teacherStudentsLoading, teacherStudentsError] = useTeacherStudent();
@@ -315,6 +315,10 @@ export function PreviousClassesForEachTeacher() {
 
     if (loading) {
         return <p>Loading...</p>
+    }
+
+    const handleClassDeleted = (classId: string) => {
+        setClasses(prev => prev.filter(c => c.class_id !== classId))
     }
 
     // Apply filters to teachers
@@ -639,7 +643,7 @@ export function PreviousClassesForEachTeacher() {
                                     </TableCell>
                                     <TableCell className="text-right">{toTeacherAmmount}kr</TableCell>
                                     <TableCell>{c.comment}</TableCell>
-                                    <TableCell><DeleteClass classId={c.class_id} hasInvoiced={c.invoiced_student} hasPaid={c.paid_teacher}/></TableCell>
+                                    <TableCell><DeleteClass classId={c.class_id} hasInvoiced={c.invoiced_student} hasPaid={c.paid_teacher} onDeleted={handleClassDeleted}/></TableCell>
                                     
                                 </TableRow>
                                 );
@@ -924,7 +928,7 @@ const handleRetireTeacher = async (teacher: Teacher) => {
 const RetireTeacher = ({ teacher }: { teacher: Teacher }) => {
     return(<>
          <AlertDialog>
-            <AlertDialogTrigger><Button variant="destructive">Pensjonér {teacher.firstname}</Button></AlertDialogTrigger>
+            <AlertDialogTrigger asChild><Button variant="destructive">Pensjonér {teacher.firstname}</Button></AlertDialogTrigger>
             <AlertDialogContent>
                 <AlertDialogHeader>
                 <AlertDialogTitle>Er du sikker på du vil pensjonere denne læreren?</AlertDialogTitle>
