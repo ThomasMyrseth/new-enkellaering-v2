@@ -52,6 +52,9 @@ CORS(app,
 
 logging.basicConfig(level=logging.INFO)
 
+from db import session as db_session
+db_session.init_app(app)
+
 #URL blueprints for the different files
 from server_routes.authentication import auth_bp
 from server_routes.teacher import teacher_bp
