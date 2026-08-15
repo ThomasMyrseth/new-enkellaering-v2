@@ -20,6 +20,8 @@ import { HelpAdminPanel } from "./helpAdmin";
 import { toast } from "sonner";
 import { useTeacher } from "@/hooks/use-teacher";
 import { Skeleton } from "@/components/ui/skeleton";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 
 
@@ -61,6 +63,7 @@ export default function AdminPage() {
     return (<div className="w-full min-h-screen max-w-full bg-stone-100 dark:bg-slate-950 ">
         <TeacherName teacher={teacher}/>
         <div className="w-full max-w-full p-4 space-y-10">
+          <Link href="/admin/manual-submit"><Button variant="outline">Manuell registrering av ny elev</Button></Link>
           <AnalyticsOverview />
           <TasksWorkflow />
           <TeacherTasksWorkflow />

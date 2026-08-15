@@ -284,6 +284,49 @@ def submit_new_student_route():
     return jsonify({"message": "New student successfully inserted"}), 200
 
 
+@order_bp.route('/submit-new-student-manual', methods=["POST"])
+@token_required
+def submit_new_student_manual_route(user_id):
+    """Admin-entered lead: source is picked manually rather than inferred from click-ids/UTMs."""
+    data = request.get_json()
+    phone = data.get("phone")
+    source = data.get("source")
+    comments = data.get("comments")
+    norway_tz = pytz.timezone("Europe/Oslo")
+
+    if not phone:
+        return jsonify({"message": "Missing phone number"}), 400
+    if not source:
+        return jsonify({"message": "Missing source"}), 400
+
+    try:
+        ns = {
+            "new_student_id": str(uuid.uuid4()),
+            "phone": phone,
+            "preffered_teacher": '',
+            "created_at": datetime.now(norway_tz).isoformat(),
+            "has_called": False,
+            "called_at": None,
+            "has_answered": False,
+            "answered_at": None,
+            "from_referal": False,
+            "referee_phone": None,
+            "referee_name": None,
+            "referee_account_number": None,
+            "has_finished_onboarding": False,
+            "finished_onboarding_at": None,
+            "comments": comments,
+            "paid_referee": False,
+            "paid_referee_at": None,
+            "meta": {"source": source},
+        }
+        insert_new_student(ns)
+    except Exception as e:
+        logging.error(f"Error inserting manual new student: {e}")
+        return jsonify({"message": str(e)}), 500
+
+    return jsonify({"message": "New student successfully inserted"}), 200
+
 
 
 @order_bp.route('/submit-new-referal', methods = ["POST"])
