@@ -12,7 +12,13 @@ def _get_engine():
     global _engine, _SessionLocal
     if _engine is None:
         database_url = os.environ["POSTGRES_URL"]
-        _engine = create_engine(database_url, pool_pre_ping=True)
+        _engine = create_engine(
+            database_url,
+            pool_pre_ping=True,
+            pool_size=5,
+            max_overflow=5,
+            pool_recycle=300,
+        )
         _SessionLocal = sessionmaker(bind=_engine, expire_on_commit=False)
     return _engine
 
