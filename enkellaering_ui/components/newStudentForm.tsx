@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/alert"
 import { toast } from "sonner";
 import { event } from '@/components/facebookPixel/fpixel';
+import { getStoredAttribution } from '@/lib/attribution';
 import { Button } from "./ui/button";
  
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
@@ -31,13 +32,16 @@ export default function NewStudentForm() {
 
         event("submit-new-student")
         
+        const attribution = getStoredAttribution();
+
         const response = await fetch(`${BASEURL}/submit-new-student`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                "phone": phone
+                "phone": phone,
+                ...attribution
             })
         })
 

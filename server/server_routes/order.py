@@ -222,6 +222,21 @@ def delete_new_student_from_new_students_table_route(user_id):
 import uuid
 import pytz
 
+
+def classify_lead_source(data: dict) -> str:
+    """Bucket a lead's raw click-id/UTM fields into a coarse attribution source."""
+    fbclid = data.get("fbclid")
+    gclid = data.get("gclid")
+    utm_source = (data.get("utm_source") or "").lower()
+    utm_medium = (data.get("utm_medium") or "").lower()
+
+    if fbclid or utm_source in ("facebook", "fb", "instagram", "ig"):
+        return "meta"
+    if gclid or (utm_source == "google" and utm_medium in ("cpc", "ppc")):
+        return "google"
+    return "organic"
+
+
 @order_bp.route('/submit-new-student', methods = ["POST"])
 def submit_new_student_route():
     data = request.get_json()
@@ -248,7 +263,8 @@ def submit_new_student_route():
             "finished_onboarding_at": None,
             "comments": None,
             "paid_referee": False,
-            "paid_referee_at": None
+            "paid_referee_at": None,
+            "meta": {"source": classify_lead_source(data)},
         }
         insert_new_student(ns)
     except Exception as e:
@@ -267,6 +283,49 @@ def submit_new_student_route():
 
     return jsonify({"message": "New student successfully inserted"}), 200
 
+
+@order_bp.route('/submit-new-student-manual', methods=["POST"])
+@token_required
+def submit_new_student_manual_route(user_id):
+    """Admin-entered lead: source is picked manually rather than inferred from click-ids/UTMs."""
+    data = request.get_json()
+    phone = data.get("phone")
+    source = data.get("source")
+    comments = data.get("comments")
+    norway_tz = pytz.timezone("Europe/Oslo")
+
+    if not phone:
+        return jsonify({"message": "Missing phone number"}), 400
+    if not source:
+        return jsonify({"message": "Missing source"}), 400
+
+    try:
+        ns = {
+            "new_student_id": str(uuid.uuid4()),
+            "phone": phone,
+            "preffered_teacher": '',
+            "created_at": datetime.now(norway_tz).isoformat(),
+            "has_called": False,
+            "called_at": None,
+            "has_answered": False,
+            "answered_at": None,
+            "from_referal": False,
+            "referee_phone": None,
+            "referee_name": None,
+            "referee_account_number": None,
+            "has_finished_onboarding": False,
+            "finished_onboarding_at": None,
+            "comments": comments,
+            "paid_referee": False,
+            "paid_referee_at": None,
+            "meta": {"source": source},
+        }
+        insert_new_student(ns)
+    except Exception as e:
+        logging.error(f"Error inserting manual new student: {e}")
+        return jsonify({"message": str(e)}), 500
+
+    return jsonify({"message": "New student successfully inserted"}), 200
 
 
 
@@ -297,7 +356,8 @@ def submit_new_referal_route():
         "paid_referee": False,
         "paid_referee_at": None,
         "referee_account_number": account_number,
-        "preffered_teacher": None
+        "preffered_teacher": None,
+        "meta": {"source": "organic"},
     }
 
     try:

@@ -195,6 +195,7 @@ export type NewStudent = {
     new_student_id: string;
     has_physical_tutoring: boolean | null
     hidden : boolean | null
+    meta: { source: string } | null
 }
 
 export type StudentsWithoutTeacher = {

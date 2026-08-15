@@ -13,11 +13,12 @@ import { Toaster } from "@/components/ui/sonner"
 import FacebookPixel from "@/components/facebookPixel/facebookPixel"
 import PixelTracker from '@/components/facebookPixel/pageTracker';
 import GoogleAds from '@/components/googleAds/googleAds';
+import AttributionTracker from '@/components/attributionTracker';
 
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const protectedPaths = ['/min-side', '/min-side-laerer', '/profil', '/admin'];
+  const protectedPaths = ['/min-side', '/min-side-laerer', '/profil', '/admin', '/admin/manual-submit'];
 
   const isProtected = protectedPaths.includes(pathname);
 
@@ -56,6 +57,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <FacebookPixel/>
                 <PixelTracker/>
                 <GoogleAds />
+                <AttributionTracker/>
               </AuthProvider>
             </div>
           </div>
