@@ -10,6 +10,7 @@ from sqlalchemy import (
     Identity,
     Index,
     Integer,
+    JSON,
     PrimaryKeyConstraint,
     Text,
     UniqueConstraint,
@@ -173,6 +174,7 @@ class NewStudent(Base):
     hidden: Mapped[bool | None] = mapped_column(Boolean, comment="TRUE/FALSE string - soft delete flag")
     preffered_teacher: Mapped[str | None] = mapped_column(Text)
     referee_account_number: Mapped[str | None] = mapped_column(Text)
+    meta: Mapped[dict | None] = mapped_column(JSON, comment='Lead attribution, e.g. {"source": "meta"|"google"|"organic"}')
 
 
 class TeacherReferral(Base):

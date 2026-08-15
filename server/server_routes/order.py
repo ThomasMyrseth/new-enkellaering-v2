@@ -222,6 +222,21 @@ def delete_new_student_from_new_students_table_route(user_id):
 import uuid
 import pytz
 
+
+def classify_lead_source(data: dict) -> str:
+    """Bucket a lead's raw click-id/UTM fields into a coarse attribution source."""
+    fbclid = data.get("fbclid")
+    gclid = data.get("gclid")
+    utm_source = (data.get("utm_source") or "").lower()
+    utm_medium = (data.get("utm_medium") or "").lower()
+
+    if fbclid or utm_source in ("facebook", "fb", "instagram", "ig"):
+        return "meta"
+    if gclid or (utm_source == "google" and utm_medium in ("cpc", "ppc")):
+        return "google"
+    return "organic"
+
+
 @order_bp.route('/submit-new-student', methods = ["POST"])
 def submit_new_student_route():
     data = request.get_json()
@@ -248,7 +263,8 @@ def submit_new_student_route():
             "finished_onboarding_at": None,
             "comments": None,
             "paid_referee": False,
-            "paid_referee_at": None
+            "paid_referee_at": None,
+            "meta": {"source": classify_lead_source(data)},
         }
         insert_new_student(ns)
     except Exception as e:
@@ -297,7 +313,8 @@ def submit_new_referal_route():
         "paid_referee": False,
         "paid_referee_at": None,
         "referee_account_number": account_number,
-        "preffered_teacher": None
+        "preffered_teacher": None,
+        "meta": {"source": "organic"},
     }
 
     try:

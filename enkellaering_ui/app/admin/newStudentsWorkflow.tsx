@@ -125,6 +125,7 @@ const NewStudentTable =( {newStudents} : {newStudents : NewStudent[]})  => {
                     <TableHeader>
                         <TableRow>
                             <TableHead>Telefonnummer & dato opprettet</TableHead>
+                            <TableHead>Kilde</TableHead>
                             <TableHead>Jeg har ringt</TableHead>
                             <TableHead>Ny elev har svart</TableHead>
                             <TableHead>Ny elev er en referanse</TableHead>
@@ -249,6 +250,8 @@ function NewStudentRow({ ns }: { ns: NewStudent }) {
                     {Math.floor((Date.now() - new Date(ns.created_at).getTime()) / (1000 * 60 * 60 * 24))} dager siden
                 </span>
         </TableCell>
+
+        <TableCell className="">{ns.meta?.source ?? "-"}</TableCell>
 
         <TableCell className="">
             <RadioGroup onValueChange={handleSetCalled} defaultValue={ns.has_called? "Ja" : "Nei"} value={hasCalled? "Ja" : "Nei"}>

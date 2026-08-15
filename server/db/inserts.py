@@ -102,6 +102,7 @@ def insert_new_student(new_student):
             preffered_teacher=new_student["preffered_teacher"],
             created_at=new_student["created_at"],
             referee_account_number=new_student["referee_account_number"],
+            meta=new_student["meta"],
         )
     )
     session.commit()
