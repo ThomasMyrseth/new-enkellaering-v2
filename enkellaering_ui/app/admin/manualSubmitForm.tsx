@@ -23,11 +23,10 @@ export function ManualSubmitForm() {
 
     const isOther = source === "other";
     const resolvedSource = isOther ? customSource.trim() : source;
-    const canSubmit = Boolean(phone.trim()) && Boolean(resolvedSource);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        if (!canSubmit || isSubmitting) return;
+        if (isSubmitting) return;
 
         setIsSubmitting(true);
         try {
@@ -41,8 +40,6 @@ export function ManualSubmitForm() {
             });
             toast.success("Ny elev registrert");
             setPhone("");
-            setSource(null);
-            setCustomSource("");
             setComments("");
         } catch (error) {
             toast.error(error instanceof ApiError ? error.message : "Kunne ikke registrere ny elev");
@@ -111,7 +108,7 @@ export function ManualSubmitForm() {
                 />
             </div>
 
-            <Button type="submit" variant="default" disabled={!canSubmit || isSubmitting} className="w-full h-10">
+            <Button type="submit" variant="default" disabled={isSubmitting} className="w-full h-10">
                 Registrer ny elev
             </Button>
         </form>
