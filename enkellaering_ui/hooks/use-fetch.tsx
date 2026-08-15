@@ -1,8 +1,8 @@
 "use client"
-import { useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { apiFetch, ApiError } from "@/lib/api";
 
-type FetchState<T> = [T, boolean, string | null];
+type FetchState<T> = [T, boolean, string | null, Dispatch<SetStateAction<T>>];
 
 export function useFetch<T>(
     path: string | null,
@@ -45,5 +45,5 @@ export function useFetch<T>(
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [path, ...(opts?.deps ?? [])]);
 
-    return [data, loading, error];
+    return [data, loading, error, setData];
 }

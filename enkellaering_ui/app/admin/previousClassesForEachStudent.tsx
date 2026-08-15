@@ -40,8 +40,8 @@ const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
 
 export function PreviousClassesForEachStudent() {
 
-    const [classes, classesLoading, classesError] = useClasses();
-    const [rawStudents, studentsLoading, studentsError] = useStudents();
+    const [classes, classesLoading, classesError, setClasses] = useClasses();
+    const [rawStudents, studentsLoading, studentsError, setRawStudents] = useStudents();
     const [rawTeachers, teachersLoading, teachersError] = useTeachers(true);
     const [teacherStudents, tsLoading, tsError] = useTeacherStudent();
     const loading = classesLoading || studentsLoading || teachersLoading || tsLoading;
@@ -85,7 +85,19 @@ export function PreviousClassesForEachStudent() {
         return <p>Loading...</p>
     }
 
-      
+    const handleStudentSetInactive = (studentUserId: string) => {
+        setRawStudents(prev => prev.map(s => s.user_id === studentUserId ? { ...s, is_active: false } : s))
+    }
+
+    const handleDiscountUpdated = (studentUserId: string, discount: number) => {
+        setRawStudents(prev => prev.map(s => s.user_id === studentUserId ? { ...s, discount } : s))
+    }
+
+    const handleClassDeleted = (classId: string) => {
+        setClasses(prev => prev.filter(c => c.class_id !== classId))
+    }
+
+
     return (<div className="flex flex-col justify-center items-center w-full shadow-lg p-4 bg-white dark:bg-black rounded-lg">
         <h1 className="text-xl">En oversikt over tidligere time for hver elev</h1>
 
@@ -264,8 +276,8 @@ export function PreviousClassesForEachStudent() {
                 <div className="flex flex-row w-full justify-between pt-2">
                     <InvoiceStudentPopover student={s} classes={myClasses} teacherStudents={teacherStudents}/>
                     <div className="flex flex-row space-x-2">
-                        <DiscountPopover student={s} />
-                        <SetStudentInactive student={s} />
+                        <DiscountPopover student={s} onDiscountUpdated={handleDiscountUpdated} />
+                        <SetStudentInactive student={s} onSetInactive={handleStudentSetInactive} />
                     </div>
                 </div>
 
@@ -327,7 +339,7 @@ export function PreviousClassesForEachStudent() {
                             )}
                             </TableCell>
                             <TableCell>{c.comment}</TableCell>
-                            <TableCell><DeleteClass classId={c.class_id} hasInvoiced={c.invoiced_student} hasPaid={c.paid_teacher}/></TableCell>
+                            <TableCell><DeleteClass classId={c.class_id} hasInvoiced={c.invoiced_student} hasPaid={c.paid_teacher} onDeleted={handleClassDeleted}/></TableCell>
                         </TableRow>
                         );
                     })}
@@ -557,7 +569,7 @@ import {
   } from "@/components/ui/alert-dialog"
 
 
-const handleSetInactive = async (student: Student) => {
+const handleSetInactive = async (student: Student, onSetInactive: (studentUserId: string) => void) => {
     const token = localStorage.getItem('token')
 
     try {
@@ -577,16 +589,17 @@ const handleSetInactive = async (student: Student) => {
         }
 
         toast.success(`${student.firstname_parent} ${student.lastname_parent} er satt til inaktiv`)
+        onSetInactive(student.user_id)
 
     } catch (error) {
         toast.error(`Failed to set student inactive: ${error}`);
     }
 }
-const SetStudentInactive = ({ student }: { student: Student }) => {
+const SetStudentInactive = ({ student, onSetInactive }: { student: Student, onSetInactive: (studentUserId: string) => void }) => {
 
     return(<>
          <AlertDialog>
-            <AlertDialogTrigger><Button variant="destructive">Sett {student.firstname_parent} som inaktiv</Button></AlertDialogTrigger>
+            <AlertDialogTrigger asChild><Button variant="destructive">Sett {student.firstname_parent} som inaktiv</Button></AlertDialogTrigger>
             <AlertDialogContent>
                 <AlertDialogHeader>
                 <AlertDialogTitle>Er du sikker på du vil sette denne eleven som inaktiv</AlertDialogTitle>
@@ -596,14 +609,14 @@ const SetStudentInactive = ({ student }: { student: Student }) => {
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                 <AlertDialogCancel>Kanseler</AlertDialogCancel>
-                <AlertDialogAction onClick={ () => handleSetInactive(student)}>Fortsett</AlertDialogAction>
+                <AlertDialogAction onClick={ () => handleSetInactive(student, onSetInactive)}>Fortsett</AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
     </>)
 };
 
-const DiscountPopover = ({ student }: { student: Student }) => {
+const DiscountPopover = ({ student, onDiscountUpdated }: { student: Student, onDiscountUpdated: (studentUserId: string, discount: number) => void }) => {
     const token = localStorage.getItem('token');
     const [discount, setDiscount] = useState<number>(student.discount || 0);
     const [open, setOpen] = useState(false);
@@ -628,9 +641,7 @@ const DiscountPopover = ({ student }: { student: Student }) => {
 
             toast.success(`Rabatt oppdatert for ${student.firstname_parent}`);
             setOpen(false);
-            // Refresh logic might be needed here, or just let the user refresh
-            // Ideally, update local state or trigger a refetch
-             window.location.reload(); 
+            onDiscountUpdated(student.user_id, discount / 100);
         } catch (error) {
             toast.error(`Oppdatering feilet: ${error}`);
         }

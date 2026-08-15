@@ -35,7 +35,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
 
 export function NewStudentsWithoutTeacher() {
-  const [studentsWithoutTeacher, loading, error] = useNewStudentsWithPreferredTeacher()
+  const [studentsWithoutTeacher, loading, error, setStudentsWithoutTeacher] = useNewStudentsWithPreferredTeacher()
 
   if (error) toast.error(error)
 
@@ -54,18 +54,23 @@ export function NewStudentsWithoutTeacher() {
     return <p className="w-full rounded-lg bg-white dark:bg-black m-4 p-4 shadow-lg text-center">No new students found</p>
   }
 
+  const handleDeleteOrder = (rowId: string) => {
+    setStudentsWithoutTeacher(prev => prev.filter(s => s.row_id !== rowId))
+  }
+
   return (<div className="w-full">
     <h2 className="w-full text-center text-xl md:text-3xl font-semibold mb-4">Elever uten lærer</h2>
-    <NewStudentsAccordion studentsWithoutTeacher={studentsWithoutTeacher} />
+    <NewStudentsAccordion studentsWithoutTeacher={studentsWithoutTeacher} onDelete={handleDeleteOrder} />
   </div>)
-  
+
 }
 
 type NewStudentsAccordionProps = {
   studentsWithoutTeacher: StudentsWithoutTeacher[]
+  onDelete: (rowId: string) => void
 }
 
-const NewStudentsAccordion = ({ studentsWithoutTeacher }: NewStudentsAccordionProps) => {
+const NewStudentsAccordion = ({ studentsWithoutTeacher, onDelete }: NewStudentsAccordionProps) => {
   // Group orders by student (assuming "user_id" uniquely identifies the student)
   const grouped = studentsWithoutTeacher.reduce((acc, order) => {
     const key = order.user_id
@@ -104,7 +109,7 @@ const NewStudentsAccordion = ({ studentsWithoutTeacher }: NewStudentsAccordionPr
             </div>
           </AccordionTrigger>
           <AccordionContent>
-            <StudentTeacherOrdersTable orders={orders} />
+            <StudentTeacherOrdersTable orders={orders} onDelete={onDelete} />
           </AccordionContent>
         </AccordionItem>
       ))}
@@ -114,9 +119,10 @@ const NewStudentsAccordion = ({ studentsWithoutTeacher }: NewStudentsAccordionPr
 
 type StudentTeacherOrdersTableProps = {
   orders: StudentsWithoutTeacher[]
+  onDelete: (rowId: string) => void
 }
 
-const StudentTeacherOrdersTable = ({ orders }: StudentTeacherOrdersTableProps) => {
+const StudentTeacherOrdersTable = ({ orders, onDelete }: StudentTeacherOrdersTableProps) => {
   return (
     <div className="">
       <Table>
@@ -134,7 +140,7 @@ const StudentTeacherOrdersTable = ({ orders }: StudentTeacherOrdersTableProps) =
         </TableHeader>
         <TableBody>
           {orders.map((order) => (
-            <TeacherOrderRow key={order.row_id} order={order} />
+            <TeacherOrderRow key={order.row_id} order={order} onDelete={onDelete} />
           ))}
         </TableBody>
       </Table>
@@ -142,7 +148,7 @@ const StudentTeacherOrdersTable = ({ orders }: StudentTeacherOrdersTableProps) =
   )
 }
 
-const TeacherOrderRow = ({ order }: { order: StudentsWithoutTeacher }) => {
+const TeacherOrderRow = ({ order, onDelete }: { order: StudentsWithoutTeacher, onDelete: (rowId: string) => void }) => {
   const handleDelete = async () => {
     try {
       await apiFetch("/hide-new-student", {
@@ -150,6 +156,7 @@ const TeacherOrderRow = ({ order }: { order: StudentsWithoutTeacher }) => {
         body: { row_id: order.row_id },
       })
       toast.success("Eleven er slettet")
+      onDelete(order.row_id)
     } catch {
       toast.error("Error while deleting new student")
     }

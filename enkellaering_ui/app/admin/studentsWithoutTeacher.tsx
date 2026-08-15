@@ -25,7 +25,7 @@ import { apiFetch } from "@/lib/api"
 
 
 export const StudentsWithoutAnyTeachers = ({token, BASEURL} : {token :string, BASEURL :string}) => {
-  const [studentsData, studentsLoading, studentsError] = useStudentsWithoutTeacher()
+  const [studentsData, studentsLoading, studentsError, setStudentsData] = useStudentsWithoutTeacher()
   const [teachersData, teachersLoading, teachersError] = useTeachers()
 
   const loading = studentsLoading || teachersLoading
@@ -83,8 +83,7 @@ export const StudentsWithoutAnyTeachers = ({token, BASEURL} : {token :string, BA
       })
 
       toast.success("Læreren er blitt tildelt til eleven")
-      // Refresh the data
-      window.location.reload()
+      setStudentsData(prev => prev.filter(s => s.user_id !== studentUserId))
     } catch (error) {
       toast.error(`Error assigning teacher: ${error}`)
     }
