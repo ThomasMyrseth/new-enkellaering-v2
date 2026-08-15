@@ -1,10 +1,17 @@
 "use client"
-import { useState, useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
-import { Classes, TeacherStudent } from "../admin/types";
-import { Teacher, Student } from "../admin/types";
+import { Classes, Student } from "../admin/types";
+import { TeacherStudent } from "@/types/teacher-student";
 import { AddNewClass } from "./addNewClass";
+
+import { useTeacher } from "@/hooks/use-teacher";
+import { useClassesForTeacher } from "@/hooks/use-classes-for-teacher";
+import { useMyStudents } from "@/hooks/use-my-students";
+import { useTeacherStudent } from "@/hooks/use-teacher-student";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080";
 
@@ -20,48 +27,65 @@ import TeacherReferalForm from "@/components/teacherReferalForm";
 import { TeacherHelpDashboard } from "./helpDashboard";
 
 export default function LaererPage() {
-    const [teacher, setTeacher] = useState<Teacher>()
-    const [classes, setClasses] = useState<Classes[]>([])
-    const [students, setStudents] = useState<Student[]>([])
-    const [teacherStudents, setTeacherStudents] = useState<TeacherStudent[]>([])
     const router = useRouter()
 
     const token :string = localStorage.getItem('token') || ''
 
+    const [teacher, teacherLoading, teacherError] = useTeacher()
+    const [classes, classesLoading, classesError] = useClassesForTeacher()
+    const [rawStudents, studentsLoading, studentsError] = useMyStudents()
+    const [teacherStudentsRaw, teacherStudentsLoading, teacherStudentsError] = useTeacherStudent()
+
+    const loading = teacherLoading || classesLoading || studentsLoading || teacherStudentsLoading
+
+    if (teacherError) toast.error(teacherError);
+    if (classesError) toast.error(classesError);
+    if (studentsError) toast.error(studentsError);
+    if (teacherStudentsError) toast.error(teacherStudentsError);
+
     useEffect(() => {
-        async function getData() {
-            const s = await fetchStudents(token);
-            const c = await fetchClasses(token);
-            const t = await fetchTeacherName(token);
-            const tss: TeacherStudent[] = await fetchTeacherStudents(token);
-
-            if (!t) {
-                router.push('/login-laerer')
-                return
-            }
-
-            // Build a set of valid student IDs for fast lookup
-            const studentIds = new Set((s || []).map((s: Student) => s.user_id));
-
-            // Filter only those teacher-student records matching this teacher and existing students
-            const ts = (tss || []).filter((ts: TeacherStudent) =>
-                ts.teacher_user_id === t.user_id &&
-                studentIds.has(ts.student_user_id)
-            );
-
-
-            setTeacher(t)
-            setClasses(c)
-            setStudents(s)
-            setTeacherStudents(ts);
+        if (!loading && !teacher) {
+            router.push('/login-laerer')
         }
+    }, [loading, teacher, router])
 
-        getData()
-    
-    },[router, token])
+    // order the students alfabetically
+    const students = useMemo(() => {
+        return [...rawStudents].sort((a: Student, b: Student) => {
+            const nameA = a.firstname_parent.toUpperCase()
+            const nameB = b.firstname_parent.toUpperCase()
+            if (nameA < nameB) {
+                return -1
+            }
+            if (nameA > nameB) {
+                return 1
+            }
+            return 0
+        })
+    }, [rawStudents])
 
-    if (!teacher) {
-        return (<p>Loading...</p>)
+    const teacherStudents = useMemo(() => {
+        if (!teacher) return []
+
+        // Build a set of valid student IDs for fast lookup
+        const studentIds = new Set(students.map((s: Student) => s.user_id));
+
+        // Filter only those teacher-student records matching this teacher and existing students
+        return teacherStudentsRaw.filter((ts: TeacherStudent) =>
+            ts.teacher?.user_id === teacher.user_id &&
+            ts.student != null &&
+            studentIds.has(ts.student.user_id)
+        );
+    }, [teacher, students, teacherStudentsRaw])
+
+    if (loading || !teacher) {
+        return (
+            <div className="flex flex-col items-center justify-center w-full min-h-screen bg-slate-200 dark:bg-slate-900 gap-4 p-4">
+                <Skeleton className="h-10 w-64" />
+                <Skeleton className="h-40 w-full max-w-2xl" />
+                <Skeleton className="h-40 w-full max-w-2xl" />
+            </div>
+        )
     }
 
     if (teacher.resigned) {
@@ -81,11 +105,11 @@ export default function LaererPage() {
                             Din tilgang til Enkel Læring har blitt suspendert
                         </p>
                     </div>
-                    
+
                     <div className="bg-red-50 dark:bg-red-900/50 rounded-lg p-6 mb-6">
                         <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                            Du har enten sagt opp din stilling i Enkel Læring AS, 
-                            ikke vært å få kontakt i av administratorer, 
+                            Du har enten sagt opp din stilling i Enkel Læring AS,
+                            ikke vært å få kontakt i av administratorer,
                             eller fått kontoen deaktivert av andre årsaker.
                         </p>
                     </div>
@@ -125,7 +149,7 @@ export default function LaererPage() {
                         </div>
                         <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/50 rounded-lg">
                             <p className="text-sm text-gray-700 dark:text-gray-300">
-                                <span className="font-medium">Ta kontakt dersom</span> dette er en feil, 
+                                <span className="font-medium">Ta kontakt dersom</span> dette er en feil,
                                 du ønsker å fortsette å jobbe, eller du har spørsmål.
                             </p>
                         </div>
@@ -141,7 +165,7 @@ export default function LaererPage() {
                 <DailyRevenueChart teacher={teacher}/>
                 <WantMoreStudents teacher={teacher}/>
                 <AddNewClass teacher={teacher} students={students}/>
-                <YourStudent teacher={teacher} classes={classes} students={students} teacherStudents={teacherStudents}/>
+                <YourStudent teacher={teacher} classes={classes as unknown as Classes[]} students={students} teacherStudents={teacherStudents}/>
                 <TeacherReferalForm token={token}/>
                 <NewStudentsWithPreferredTeacherWorkflowActions/>
                 <ProfileForm teacher={teacher}/>
@@ -153,93 +177,3 @@ export default function LaererPage() {
     </div>)
 
 }
-
-
-
-async function fetchTeacherName(token :string) {
-    const response = await fetch(`${BASEURL}/get-teacher`, {
-        method: 'GET',
-        headers: {
-            'Authorization': `Bearer ${token}`
-        }
-    })
-
-    if (response.ok) {
-        const data = await response.json()
-        return data.teacher
-    }
-    else {
-        return false
-    }
-}
-
-//get classes for teacher
-async function fetchClasses(token :string) {
-    const response = await fetch(`${BASEURL}/get-classes-for-teacher`, {
-        method: "GET",
-        headers: {
-            'Authorization': `Bearer ${token}`
-        },
-    })
-
-    if(!response.ok) {
-        return null;
-    }
-
-    const data = await response.json()
-    const classes = data.classes
-
-    return classes
-}
-
-
-async function fetchStudents(token :string) {
-    const response = await fetch(`${BASEURL}/get-students`, {
-        method: "GET",
-        headers: {
-            'Authorization': `Bearer ${token}`
-        }
-    })
-
-    const r = await response.json()
-
-    let students = r.students
-
-    // order the students alfabetically
-    students = students.sort( (a :Student, b :Student) => {
-        const nameA = a.firstname_parent.toUpperCase()
-        const nameB = b.firstname_parent.toUpperCase()
-        if (nameA < nameB) {
-            return -1
-        }
-        if (nameA > nameB) {
-            return 1
-        }
-        return 0
-    })
-    return students
-}
-
-async function fetchTeacherStudents(token :string) {
-    const response = await fetch(`${BASEURL}/get-teacher-student`, {
-        method: "GET",
-        headers: {
-            'Authorization': `Bearer ${token}`
-        }
-    })
-
-    if(!response.ok) {
-        return null;
-    }
-
-    const data = await response.json()
-    const ts = data.teacher_student
-
-    return ts
-}
-
-
-
-
-
-

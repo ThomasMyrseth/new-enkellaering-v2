@@ -2,58 +2,57 @@
 
 import { useEffect, useState } from "react"
 import { Task } from "./types"
+import { useTeacherTasks } from "@/hooks/use-tasks"
+import { apiFetch } from "@/lib/api"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
+import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
 
-const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080"
+async function updateTaskStatus(taskId: string | number, status: string) {
+    return apiFetch<void>(`/task/${taskId}/status`, {
+        method: "PUT",
+        body: { status }
+    })
+}
+
+async function completeTask(taskId: string | number) {
+    return apiFetch<void>(`/task/${taskId}/complete`, {
+        method: "POST"
+    })
+}
 
 export function TeacherTasksWorkflow() {
-    const token = localStorage.getItem('token')
+    const [teacherTasks, loading, error] = useTeacherTasks()
     const [tasks, setTasks] = useState<Task[]>([])
-    const [loading, setLoading] = useState<boolean>(true)
-
-    const fetchTasks = async () => {
-        try {
-            const response = await fetch(`${BASEURL}/task/teacher-tasks/all`, {
-                method: "GET",
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            })
-
-            if (!response.ok) {
-                throw new Error("Failed to fetch teacher tasks")
-            }
-
-            const data = await response.json()
-            const tasksData: Task[] = data.tasks
-
-            tasksData.sort((a, b) => {
-                if (a.teacher_data && b.teacher_data) {
-                    return a.teacher_data.firstname.localeCompare(b.teacher_data.firstname)
-                }
-                return 0
-            })
-
-            setTasks(tasksData)
-            setLoading(false)
-        } catch (error) {
-            console.error("Error fetching teacher tasks:", error)
-            toast.error("Kunne ikke hente læreroppgaver")
-            setLoading(false)
-        }
-    }
 
     useEffect(() => {
-        fetchTasks()
-    }, [token])
+        const tasksData = [...teacherTasks]
+
+        tasksData.sort((a, b) => {
+            if (a.teacher_data && b.teacher_data) {
+                return a.teacher_data.firstname.localeCompare(b.teacher_data.firstname)
+            }
+            return 0
+        })
+
+        setTasks(tasksData)
+    }, [teacherTasks])
+
+    if (error) toast.error(error)
+
+    const handleTaskCompleted = (taskId: string | number) => {
+        setTasks((prev) => prev.filter((t) => t.id !== taskId))
+    }
 
     if (loading) {
         return (
             <div className="w-full flex flex-col items-center justify-center shadow-lg dark:bg-black bg-white rounded-lg p-4">
-                <p>Laster læreroppgaver...</p>
+                <Skeleton className="h-6 w-48 mt-4 mb-4" />
+                <Skeleton className="h-10 w-full mb-2" />
+                <Skeleton className="h-10 w-full mb-2" />
+                <Skeleton className="h-10 w-full" />
             </div>
         )
     }
@@ -66,7 +65,7 @@ export function TeacherTasksWorkflow() {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
                     {tasks.map((task) => (
-                        <TeacherTaskCard key={task.id} task={task} onUpdate={fetchTasks} />
+                        <TeacherTaskCard key={task.id} task={task} onUpdate={() => handleTaskCompleted(task.id)} />
                     ))}
                 </div>
             )}
@@ -75,23 +74,11 @@ export function TeacherTasksWorkflow() {
 }
 
 function TeacherTaskCard({ task, onUpdate }: { task: Task, onUpdate: () => void }) {
-    const token = localStorage.getItem('token')
     const [status, setStatus] = useState<string>(task.status)
 
     const handleStatusChange = async (newStatus: string) => {
         try {
-            const response = await fetch(`${BASEURL}/task/${task.id}/status`, {
-                method: "PUT",
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ status: newStatus })
-            })
-
-            if (!response.ok) {
-                throw new Error("Failed to update status")
-            }
+            await updateTaskStatus(task.id, newStatus)
 
             setStatus(newStatus)
             toast.success("Status oppdatert")
@@ -103,16 +90,7 @@ function TeacherTaskCard({ task, onUpdate }: { task: Task, onUpdate: () => void 
 
     const handleComplete = async () => {
         try {
-            const response = await fetch(`${BASEURL}/task/${task.id}/complete`, {
-                method: "POST",
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            })
-
-            if (!response.ok) {
-                throw new Error("Failed to complete task")
-            }
+            await completeTask(task.id)
 
             toast.success("Oppgave fullført")
             onUpdate()

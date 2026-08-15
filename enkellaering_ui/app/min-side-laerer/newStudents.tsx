@@ -1,31 +1,18 @@
 "use client";
 
-import { useEffect } from "react";
 import { Carousel } from "@/components/ui/apple-cards-carousel";
+import { useNewOrdersForTeacher } from "@/hooks/use-new-orders-for-teacher";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080";
 
 export function NewStudentsWithPreferredTeacherWorkflowActions() {
-  const token = localStorage.getItem("token") || '';
-  const [loading, setLoading] = useState<boolean>(true);
-  const [newStudents, setNewStudents] = useState<TeacherOrderJoinStudent[]>([]);
-
-
-
-  // Fetch new students with preferred teacher data.
-  useEffect(() => {
-      async function fetchData() {
-        const students = await getNewStudents(token)
-        setNewStudents(students);
-        setLoading(false);
-      }
-      fetchData();
-  }, [token]);
+  const [newStudents, loading] = useNewOrdersForTeacher();
 
   if (loading) {
-    return <p>Loading...</p>;
+    return <Skeleton className="h-40 w-full" />;
   }
-  if (!newStudents) {
+  if (newStudents.length === 0) {
     return <p>No new students found</p>;
   }
 
@@ -34,11 +21,11 @@ export function NewStudentsWithPreferredTeacherWorkflowActions() {
 
 
 const NewStudentWithPreferredTeacherActionsTable = ({newStudents,}: {newStudents: TeacherOrderJoinStudent[];}) => {
-  
-  // Order new students by created_at (most recent first)
-  newStudents.sort((a, b) => new Date(b.teacher_student.created_at).getTime() - new Date(a.teacher_student.created_at).getTime());
 
-  const cards = newStudents.map((ns) => {
+  // Order new students by created_at (most recent first)
+  const sortedStudents = [...newStudents].sort((a, b) => new Date(b.teacher_student.created_at).getTime() - new Date(a.teacher_student.created_at).getTime());
+
+  const cards = sortedStudents.map((ns) => {
     return (
       <NewStudentWithPreferredTeacherActionsCard
         key={ns.teacher_student.row_id}
@@ -158,25 +145,6 @@ export default function NewStudentWithPreferredTeacherActionsCard({ ns }: { ns :
 }
 
 
-
-
-async function getNewStudents(token :string) {
-  const response = await fetch(
-    `${BASEURL}/get-new-students-for-teacher`,
-    {
-      method: "GET",
-      headers: { Authorization: `Bearer ${token}` },
-    }
-  );
-  if (!response.ok) {
-    toast.error("Error fetching new students " + response.statusText);
-    return [];
-  }
-  const data = await response.json();
-  console.log("New students data:", data);
-  const students :TeacherOrderJoinStudent[] = data.new_orders || [];
-  return students
-}
 
 
 const handleSaveClick = async (accept :boolean, token :string, ns :TeacherOrderJoinStudent) => {

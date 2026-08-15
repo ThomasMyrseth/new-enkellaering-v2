@@ -2,59 +2,28 @@
 "use client"
 
 import React from "react"
-import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { FocusCards } from "@/components/ui/focus-cards"
 import { motion } from "framer-motion";
 import { LampContainer } from "@/components/ui/lamp"
-import { Quiz } from "../min-side-laerer/types"
+import { useQuizzes } from "@/hooks/use-quizzes"
+import { Skeleton } from "@/components/ui/skeleton"
+import { toast } from "sonner"
 
 
 export function QuizPageComponent({description} : {description?: string}) {
-    const [token, setToken] = useState<string | null>(null)
-    const baseUrl :string= process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8080'
     const router = useRouter()
-    
-    const [quizzes, setQuizzes] = useState<Quiz[]>([])
 
-    //fetch token
-    useEffect(() => {
-        const token = localStorage.getItem('token')
+    const [quizzes, loading, error] = useQuizzes()
 
-        if (!token) {
-            console.error("No token found in localStorage");
-            setToken("")
-        }
-        else {
-            setToken(token)
-        }
-    }, [router])
-
-    //fetch the quiszes
-    useEffect(() => {
-        async function fetchQuizzes() {
-            const res = await fetch(`${baseUrl}/get-all-quizzes`, {
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                method: "GET",
-            })
-
-            if (res.ok) {
-                const data = await res.json()
-                setQuizzes(data.quizzes)
-            }
-        }
-
-        fetchQuizzes()
-    },[token, baseUrl])
+    if (error) toast.error("Error fetching quizzes: " + error);
 
    const handleSetSelectedQuiz =(quizId :string) => {
         router.push(`/quiz/${quizId}`)
    }
 
 
-   const cards = quizzes.map((quiz: Quiz) => ({
+   const cards = quizzes.map((quiz) => ({
         title: quiz.title,
         src: quiz.image_url || "/enkel_laering_transparent.png",
         description: "",
@@ -91,7 +60,15 @@ export function QuizPageComponent({description} : {description?: string}) {
              </motion.p>
         </LampContainer>
         <div className="w-full mt-4 flex flex-col items-center justify-center">
-            <FocusCards cards={cards}/>
+            {loading ? (
+                <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-3 gap-4 px-4">
+                    <Skeleton className="h-64 w-full" />
+                    <Skeleton className="h-64 w-full" />
+                    <Skeleton className="h-64 w-full" />
+                </div>
+            ) : (
+                <FocusCards cards={cards}/>
+            )}
         </div>
     </div>)
 }

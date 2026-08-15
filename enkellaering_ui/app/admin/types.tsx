@@ -25,20 +25,6 @@ export type Student = {
     discount? :number
 }
 
-export type TeacherStudent = {
-    created_at: string; // ISO or RFC string like "Sun, 09 Mar 2025 21:06:04 GMT"
-    hidden: boolean;
-    order_comments: string | null;
-    physical_or_digital: boolean;
-    preferred_location: string | null;
-    row_id: string;
-    student_user_id: string;
-    teacher_accepted_student: boolean | null;
-    teacher_user_id: string;
-    travel_pay_to_teacher: number;
-    travel_pay_from_student: number;
-};
-
 export type Teacher = {
     user_id: string;
     firstname: string;

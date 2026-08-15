@@ -24,74 +24,61 @@ import { DeleteClass } from "../min-side-laerer/deleteClass";
 
 import { Copy } from 'lucide-react';
 
-import { Classes, Student, Teacher, TeacherStudent } from "./types";
+import { Classes, Student, Teacher } from "./types";
+import { TeacherStudent } from "@/types/teacher-student";
 
-import { useEffect, useState } from "react"
+import { useMemo, useState } from "react"
+import { useClasses } from "@/hooks/use-classes"
+import { useStudents } from "@/hooks/use-students"
+import { useTeachers } from "@/hooks/use-teachers"
+import { useTeacherStudent } from "@/hooks/use-teacher-student"
 
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
 
 
 
-export function PreviousClassesForEachStudent() {      
-    const token = localStorage.getItem('token') || ''
+export function PreviousClassesForEachStudent() {
 
-    const [classes, setClasses] = useState<Classes[]>([]);
-    const [teachers, setTeachers] = useState<Teacher[]>([]);
-    const [students, setStudents] = useState<Student[]>([]);
-    const [teacherStudents, setTeacherStudents] = useState<TeacherStudent[]>([]);
+    const [classes, classesLoading, classesError] = useClasses();
+    const [rawStudents, studentsLoading, studentsError] = useStudents();
+    const [rawTeachers, teachersLoading, teachersError] = useTeachers(true);
+    const [teacherStudents, tsLoading, tsError] = useTeacherStudent();
+    const loading = classesLoading || studentsLoading || teachersLoading || tsLoading;
 
-    const [loading, setLoading] = useState<boolean>(true)
+    if (classesError) toast.error("Error fetching classes: " + classesError);
+    if (studentsError) toast.error("Error fetching students: " + studentsError);
+    if (teachersError) toast.error("Error fetching teachers: " + teachersError);
+    if (tsError) toast.error("Error fetching teacher-student relationships: " + tsError);
 
-
-    //populate data fields
-    useEffect( () => {
-        async function getData() {
-            const t :Teacher[] = await getTeachers(token)
-            const s: Student[] = await getStudents(token)
-            const c :Classes[] = await getClasses(token)
-            const ts: TeacherStudent[] = await getTeacherStudent(token)
-
-            if (t) {
-                //order alfabetcically
-                t.sort((a: Teacher, b: Teacher) => {
-                    const nameA = a.firstname.toUpperCase();
-                    const nameB = b.firstname.toUpperCase();
-                    if (nameA < nameB) {
-                        return -1;
-                    }
-                    if (nameA > nameB) {
-                        return 1;
-                    }
-                    return 0;
-                });
-                setTeachers(t);
+    //order alfabetically, same ordering as the previous manual fetch implementation
+    const teachers = useMemo(() => {
+        return [...rawTeachers].sort((a: Teacher, b: Teacher) => {
+            const nameA = a.firstname.toUpperCase();
+            const nameB = b.firstname.toUpperCase();
+            if (nameA < nameB) {
+                return -1;
             }
-            if (s) {
-                s.sort((a: Student, b: Student) => {
-                    const nameA = a.firstname_parent.toUpperCase();
-                    const nameB = b.firstname_parent.toUpperCase();
-                    if (nameA < nameB) {
-                        return -1;
-                    }
-                    if (nameA > nameB) {
-                        return 1;
-                    }
-                    return 0;
-                });
-                setStudents(s);
+            if (nameA > nameB) {
+                return 1;
             }
-            if (c) {
-                setClasses(c)
-            }
-            if (ts) {
-                setTeacherStudents(ts)
-            }
-            setLoading(false)
+            return 0;
+        });
+    }, [rawTeachers]);
 
-        }
-        getData()
-    },[token])
+    const students = useMemo(() => {
+        return [...rawStudents].sort((a: Student, b: Student) => {
+            const nameA = a.firstname_parent.toUpperCase();
+            const nameB = b.firstname_parent.toUpperCase();
+            if (nameA < nameB) {
+                return -1;
+            }
+            if (nameA > nameB) {
+                return 1;
+            }
+            return 0;
+        });
+    }, [rawStudents]);
 
 
     if (loading) {
@@ -118,8 +105,9 @@ export function PreviousClassesForEachStudent() {
             });
 
             const myTeacherUserIds: string[] = teacherStudents
-                .filter((ts) => {return ts.student_user_id === s.user_id && ts.teacher_accepted_student==true})
-                .map((ts) => ts.teacher_user_id);
+                .filter((ts) => {return ts.student?.user_id === s.user_id && ts.relation.teacher_accepted_student==true})
+                .map((ts) => ts.teacher?.user_id)
+                .filter((id): id is string => id != null);
 
             const myTeachers: Teacher[] = teachers.filter((t) => 
                 myTeacherUserIds.includes(t.user_id) && t.resigned === false
@@ -159,10 +147,10 @@ export function PreviousClassesForEachStudent() {
 
 
                     const ts = teacherStudents.find((ts: TeacherStudent) =>
-                        ts.student_user_id === c.student_user_id &&
-                        ts.teacher_user_id === c.teacher_user_id
+                        ts.student?.user_id === c.student_user_id &&
+                        ts.teacher?.user_id === c.teacher_user_id
                     );
-                    const travelPayFromStudent = Number(ts?.travel_pay_from_student || 0)
+                    const travelPayFromStudent = Number(ts?.relation.travel_pay_from_student || 0)
                     totalTravelPayFromStudent += travelPayFromStudent
                     invoiceAmount += travelPayFromStudent
 
@@ -223,7 +211,7 @@ export function PreviousClassesForEachStudent() {
                         <div className="flex flex-row space-x-2 m-4">
                             {myTeachers.map( (t) => {
                                 return <RemoveTeacherDialog teacher={t} key={t.user_id} student={s} teacherStudent={teacherStudents.find(
-                                    (ts: TeacherStudent) => ts.student_user_id === s.user_id && ts.teacher_user_id === t.user_id
+                                    (ts: TeacherStudent) => ts.student?.user_id === s.user_id && ts.teacher?.user_id === t.user_id
                                 )}/>;
                             })}
                         </div>
@@ -310,9 +298,9 @@ export function PreviousClassesForEachStudent() {
                             invoiceAmount = Math.round(durationHours*350)
                         }
                         invoiceAmount += Number(teacherStudents.find((ts: TeacherStudent) =>
-                            ts.student_user_id === c.student_user_id &&
-                            ts.teacher_user_id === c.teacher_user_id
-                        )?.travel_pay_from_student || 0);
+                            ts.student?.user_id === c.student_user_id &&
+                            ts.teacher?.user_id === c.teacher_user_id
+                        )?.relation.travel_pay_from_student || 0);
                         
                         const classTeacher = teachers.find(t => t.user_id === c.teacher_user_id);
                         const teacherName = classTeacher ? `${classTeacher.firstname} ${classTeacher.lastname}` : "Ukjent lærer";
@@ -429,10 +417,10 @@ const InvoiceStudentPopover = ( {student, classes, teacherStudents} : {student: 
         totalInvoiceAmmount += thisClass
 
         const ts = teacherStudents.find((ts: TeacherStudent) =>
-            ts.student_user_id === c.student_user_id &&
-            ts.teacher_user_id === c.teacher_user_id
+            ts.student?.user_id === c.student_user_id &&
+            ts.teacher?.user_id === c.teacher_user_id
         );
-        const travelPayFromStudent = Number(ts?.travel_pay_from_student || 0)
+        const travelPayFromStudent = Number(ts?.relation.travel_pay_from_student || 0)
         totalTravelPay += travelPayFromStudent
     });
 
@@ -788,8 +776,8 @@ const handleUpdateTravelPay = async (travelPayToTeacher: number, travelPayFromSt
 
 // AlertDialog component to confirm teacher removal
 const RemoveTeacherDialog = ({ student, teacher, teacherStudent }: { student: Student, teacher: Teacher, teacherStudent? :TeacherStudent }) => {
-    const [travelPayToTeacher, setTravelPayToTeacher] = useState<number>(teacherStudent?.travel_pay_to_teacher || 0);
-    const [travelPayFromStudent, setTravelPayFromStudent] = useState<number>(teacherStudent?.travel_pay_from_student || 0);
+    const [travelPayToTeacher, setTravelPayToTeacher] = useState<number>(teacherStudent?.relation.travel_pay_to_teacher || 0);
+    const [travelPayFromStudent, setTravelPayFromStudent] = useState<number>(teacherStudent?.relation.travel_pay_from_student || 0);
 
 
     return (
@@ -827,99 +815,6 @@ const RemoveTeacherDialog = ({ student, teacher, teacherStudent }: { student: St
         </AlertDialog>
     );
 };
-
-
-async function getClasses(token :string) {
-    const response = await fetch(`${BASEURL}/get-all-classes`, {
-        method: "GET",
-        headers: {
-            'Authorization': `Bearer ${token}`
-        }
-    });
-
-    if(!response.ok) {
-        toast.error("En feil har skjedd, prøv igjen");
-        return [];
-    }
-
-    const data = await response.json();
-    return data.classes || [];
-}
-
-async function getStudents(token :string) {
-    const response = await fetch(`${BASEURL}/get-all-students`, {
-        method: "GET",
-        headers: {
-            'Authorization': `Bearer ${token}`
-        }
-    });
-
-    if (!response.ok) {
-        toast.error("Error fetching students " + response.statusText);
-        return [];
-    }
-
-    const data = await response.json();
-    const students: Student[] = data.students;
-
-    if (students.length === 0) {
-        toast.error("No students found");
-        console.log("No students found");
-        return [];
-    } else {
-        return students;
-    }
-}
-
-async function getTeachers(token :string) {
-    const response = await fetch(`${BASEURL}/get-all-teachers-inc-resigned`, {
-        method: "GET",
-        headers: {
-            'Authorization': `Bearer ${token}`
-        },
-    });
-
-    if (!response.ok) {
-        toast.error("Error fetching teachers and students " + response.statusText);
-        return [];
-    }
-
-    const data = await response.json();
-    const teachers: Teacher[] = data.teachers;
-
-    if (teachers.length === 0) {
-        toast.error("No teachers found");
-        console.log("No teachers found");
-        return [];
-    } else {
-        return teachers;
-    }
-}
-
-async function getTeacherStudent(token: string) {
-    const response = await fetch(`${BASEURL}/get-teacher-student`, {
-        method: "GET",
-        headers: {
-            'Authorization': `Bearer ${token}`
-        }
-    });
-
-    if (!response.ok) {
-        toast.error("Error fetching teacher-student relationships: " + response.statusText);
-        return [];
-    }
-
-    const data = await response.json();
-    const teacherStudent: TeacherStudent[] = data.teacher_student;
-
-    if (!teacherStudent || teacherStudent.length === 0) {
-        toast.error("Ingen tilkoblinger mellom elev og lærer funnet (teacherStudent)");
-        console.log("No teacher-student relationships found");
-        return [];
-    }
-
-    return teacherStudent;
-}
 
 
 const assignTeacher = async (

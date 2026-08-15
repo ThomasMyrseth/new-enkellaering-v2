@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import React, { useEffect, useId, useRef, useState } from "react";
+import React, { useEffect, useId, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useOutsideClick } from "@/hooks/use-outside-click";
 import { Label } from "@/components/ui/label"
@@ -28,9 +28,9 @@ import { Button } from "../button";
 import { CardType } from "./typesAndData";
 
 import { ToggleFilterCards, filterCards } from "./filter";
-import { getMyOrders, getTeacherCards } from "./getteachersAndReviews";
+import { useTeacherCards } from "@/hooks/use-teacher-cards";
+import { useMyOrders } from "@/hooks/use-my-orders";
 import { Textarea } from "../textarea";
-import { TeacherOrderJoinTeacher } from "@/app/min-side/types";
 import { toast } from "sonner";
 import { event } from "@/components/facebookPixel/fpixel";
 import { AVAILABLE_SUBJECTS } from "@/constants";
@@ -39,7 +39,6 @@ import { AVAILABLE_SUBJECTS } from "@/constants";
 export function TeacherFocusCards() {
     const [hasToken, setHasToken] = useState<string | null>(null)
     const [isTeacher, setIsTeacher] = useState<boolean>(false)
-    const [loading, setLoading] = useState<boolean>(true)
 
     useEffect(() => {
     const token = localStorage.getItem('token')
@@ -70,50 +69,33 @@ export function TeacherFocusCards() {
     const [filterPhysical, setFilterPhysical] = useState<boolean>(false);
     const [filteredCards, setFilteredCards] = useState<CardType[]>([]); //default to cards, which os unfiltered
 
-    const [cards, setCards] = useState<CardType[]>([])
-    const [previousOrders, setPreviousOrders] = useState<TeacherOrderJoinTeacher[]>([])
+    const [rawCards, cardsLoading] = useTeacherCards()
+    const [rawOrders, ordersLoading] = useMyOrders()
+    const loading = cardsLoading || ordersLoading
 
-    //fetch the cards from database
-    useEffect( () => {
-        async function fetchCards() {
-            const cards = await getTeacherCards()
-            if (!cards) {
-                return
-            }
-            else {
-                //show available teacher on top
-                const sortedCards = cards.sort((a, b) => {
-                    const aAvailable = a.teacher.physical_tutouring || a.teacher.digital_tutouring ? 1 : 0
-                    const bAvailable = b.teacher.physical_tutouring || b.teacher.digital_tutouring ? 1 : 0
-                    return bAvailable - aAvailable // puts available ones on top
-                })
+    //show available teacher on top
+    const cards = useMemo(() => {
+        return [...rawCards].sort((a, b) => {
+            const aAvailable = a.teacher.physical_tutouring || a.teacher.digital_tutouring ? 1 : 0
+            const bAvailable = b.teacher.physical_tutouring || b.teacher.digital_tutouring ? 1 : 0
+            return bAvailable - aAvailable // puts available ones on top
+        })
+    }, [rawCards])
 
-                setFilteredCards(sortedCards)
-                setCards(sortedCards)
-                setLoading(false)
-            }
-        }
+    //keep all the orders that are less than seven days old, or orders that are already accepted
+    //the student should not be able to reorder these
+    const previousOrders = useMemo(() => {
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-        async function fetchPreviousOrders() {
-            const orders = await getMyOrders();
-            if (!orders) {
-                return;
-            } else {
-                const sevenDaysAgo = new Date();
-                sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-                
-                //keep all the orders that are less than seven days old, or orders that are already accepted
-                //the student should not be able to reorder these
-                const filteredOrders = orders.filter((o) => {
-                    return new Date(o.order.created_at) < sevenDaysAgo || o.order.teacher_user_id;
-                });
-                
-                setPreviousOrders(filteredOrders);
-            }
-        }
-        fetchCards()
-        fetchPreviousOrders()
-    },[])
+        return rawOrders.filter((o) => {
+            return new Date(o.order.created_at) < sevenDaysAgo || o.order.teacher_user_id;
+        });
+    }, [rawOrders])
+
+    useEffect(() => {
+        setFilteredCards(cards)
+    }, [cards])
 
     // Apply filtering function
     useEffect(() => {

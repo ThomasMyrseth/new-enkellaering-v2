@@ -2,59 +2,39 @@
 
 import { useEffect, useState } from "react"
 import { Task } from "./types"
+import { useTasks } from "@/hooks/use-tasks"
+import { apiFetch } from "@/lib/api"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
+import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
 
-const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080"
-
 export function TasksWorkflow() {
-    const token = localStorage.getItem('token')
+    const [tasksData, loading, error] = useTasks()
     const [tasks, setTasks] = useState<Task[]>([])
-    const [loading, setLoading] = useState<boolean>(true)
-
-    const fetchTasks = async () => {
-        try {
-            const response = await fetch(`${BASEURL}/task/all`, {
-                method: "GET",
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            })
-
-            if (!response.ok) {
-                throw new Error("Failed to fetch tasks")
-            }
-
-            const data = await response.json()
-            const tasksData: Task[] = data.tasks
-
-            //order alphabetically by firstanme student
-            tasksData.sort((a, b) => {
-                if (a.student_data && b.student_data) {
-                    return a.student_data.firstname_student.localeCompare(b.student_data.firstname_student)
-                }
-                return 0
-            })
-
-            setTasks(tasksData)
-            setLoading(false)
-        } catch (error) {
-            console.error("Error fetching tasks:", error)
-            toast.error("Kunne ikke hente oppgaver")
-            setLoading(false)
-        }
-    }
 
     useEffect(() => {
-        fetchTasks()
-    }, [token])
+        //order alphabetically by firstanme student
+        const sorted = [...tasksData].sort((a, b) => {
+            if (a.student_data && b.student_data) {
+                return a.student_data.firstname_student.localeCompare(b.student_data.firstname_student)
+            }
+            return 0
+        })
+
+        setTasks(sorted)
+    }, [tasksData])
+
+    if (error) toast.error("Kunne ikke hente oppgaver")
 
     if (loading) {
         return (
             <div className="w-full flex flex-col items-center justify-center shadow-lg dark:bg-black bg-white rounded-lg p-4">
-                <p>Laster oppgaver...</p>
+                <Skeleton className="h-6 w-48 mt-4 mb-4" />
+                <Skeleton className="h-10 w-full mb-2" />
+                <Skeleton className="h-10 w-full mb-2" />
+                <Skeleton className="h-10 w-full" />
             </div>
         )
     }
@@ -67,7 +47,11 @@ export function TasksWorkflow() {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
                     {tasks.map((task) => (
-                        <TaskCard key={task.id} task={task} onUpdate={fetchTasks} />
+                        <TaskCard
+                            key={task.id}
+                            task={task}
+                            onUpdate={() => setTasks((prev) => prev.filter((t) => t.id !== task.id))}
+                        />
                     ))}
                 </div>
             )}
@@ -76,23 +60,14 @@ export function TasksWorkflow() {
 }
 
 function TaskCard({ task, onUpdate }: { task: Task, onUpdate: () => void }) {
-    const token = localStorage.getItem('token')
     const [status, setStatus] = useState<string>(task.status)
 
     const handleStatusChange = async (newStatus: string) => {
         try {
-            const response = await fetch(`${BASEURL}/task/${task.id}/status`, {
+            await apiFetch(`/task/${task.id}/status`, {
                 method: "PUT",
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ status: newStatus })
+                body: { status: newStatus }
             })
-
-            if (!response.ok) {
-                throw new Error("Failed to update status")
-            }
 
             setStatus(newStatus)
             toast.success("Status oppdatert")
@@ -104,16 +79,9 @@ function TaskCard({ task, onUpdate }: { task: Task, onUpdate: () => void }) {
 
     const handleComplete = async () => {
         try {
-            const response = await fetch(`${BASEURL}/task/${task.id}/complete`, {
-                method: "POST",
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+            await apiFetch(`/task/${task.id}/complete`, {
+                method: "POST"
             })
-
-            if (!response.ok) {
-                throw new Error("Failed to complete task")
-            }
 
             toast.success("Oppgave fullført")
             onUpdate()

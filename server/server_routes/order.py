@@ -19,12 +19,10 @@ from db.gets import (
 from db.inserts import (
     insert_new_student,
     insert_new_student_order,
-    insert_new_student_with_preferred_teacher,
     add_teacher_to_new_student
 )
 from db.alters import (
     alter_new_student,
-    set_your_teacher as cloud_set_your_teacher,
     cancel_new_order,
     update_new_order as cloud_update_new_order,
 )
@@ -272,37 +270,6 @@ def submit_new_student_route():
 
 
 
-@order_bp.route('/submit-new-student-with-preffered-teacher', methods = ["POST"])
-def submit_new_student_with_preffered_route():
-    data = request.get_json()
-    phone = data.get("phone")
-    physical_or_digital = data.get("physical_or_digital")
-    preffered_teacher = data.get("preffered_teacher")
-    if not phone:
-        return jsonify({"message": "Missing phone number"}), 400
-    ns = {
-        "new_student_id": str(uuid.uuid4()),
-        "phone": phone,
-        "teacher_called": False,
-        "created_at": datetime.now(pytz.timezone("Europe/Oslo")),
-        "preferred_teacher": preffered_teacher or '',
-        "teacher_answered": False,
-        "teacher_has_accepted": False,
-        "hidden": False,
-        "physical_or_digital": physical_or_digital,
-        "called_at": None,
-        "answered_at": None,
-        "teacher_accepted_at": None,
-        "comments": None
-    }
-    try:
-        insert_new_student_with_preferred_teacher(ns)
-        return jsonify({"message": "New student successfully inserted"}), 200
-    except Exception as e:
-        return jsonify({"message": str(e)}), 500
-    
-
-    
 @order_bp.route('/submit-new-referal', methods = ["POST"])
 def submit_new_referal_route():
     data = request.get_json()

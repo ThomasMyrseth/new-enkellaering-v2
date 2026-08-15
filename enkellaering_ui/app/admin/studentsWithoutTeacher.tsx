@@ -1,5 +1,5 @@
 "use client"
-import React, { useState, useEffect } from "react"
+import React, { useState, useMemo } from "react"
 import { Student, Teacher } from "./types"
 import {
   Accordion,
@@ -18,104 +18,73 @@ import { Command, CommandGroup, CommandInput, CommandItem, CommandList, CommandE
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import { Textarea } from "@/components/ui/textarea"
+import { Skeleton } from "@/components/ui/skeleton"
+import { useStudentsWithoutTeacher } from "@/hooks/use-students-without-teacher"
+import { useTeachers } from "@/hooks/use-teachers"
+import { apiFetch } from "@/lib/api"
 
 
-export const StudentsWithoutAnyTeachers = ({token, BASEURL} : {token :string, BASEURL :string}) => { 
-  const [students, setStudents] = useState<Student[]>([])
-  const [teachers, setTeachers] = useState<Teacher[]>([])
-  const [loading, setLoading] = useState<boolean>(true)
+export const StudentsWithoutAnyTeachers = ({token, BASEURL} : {token :string, BASEURL :string}) => {
+  const [studentsData, studentsLoading, studentsError] = useStudentsWithoutTeacher()
+  const [teachersData, teachersLoading, teachersError] = useTeachers()
 
-  useEffect(() => {
-    async function getData() {
-      const studentsResponse = await fetch(`${BASEURL}/get-student-without-teacher`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+  const loading = studentsLoading || teachersLoading
+  const error = studentsError || teachersError
 
-      if (!studentsResponse.ok) {
-        toast.error("Error fetching new students " + studentsResponse.statusText)
-        return null
+  const students = useMemo(() => {
+    return [...studentsData].sort((a: Student, b: Student) => {
+      const nameA = a.firstname_parent.toUpperCase()
+      const nameB = b.firstname_parent.toUpperCase()
+      if (nameA < nameB) {
+        return -1
       }
-
-      const studentsData = await studentsResponse.json()
-      const s = studentsData.students
-
-      //order the students alfabetically
-      s.sort( (a :Student, b :Student) => {
-          const nameA = a.firstname_parent.toUpperCase()
-          const nameB = b.firstname_parent.toUpperCase()
-          if (nameA < nameB) {
-              return -1
-          }
-          if (nameA > nameB) {
-              return 1
-          }
-          return 0
-      })
-
-      setStudents(s)
-
-      // Fetch teachers
-      const teachersResponse = await fetch(`${BASEURL}/get-all-teachers`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-
-      if (teachersResponse.ok) {
-        const teachersData = await teachersResponse.json()
-        const t = teachersData.teachers
-        
-        // Sort teachers alphabetically
-        t.sort((a: Teacher, b: Teacher) => {
-          const nameA = a.firstname.toUpperCase()
-          const nameB = b.firstname.toUpperCase()
-          if (nameA < nameB) {
-            return -1
-          }
-          if (nameA > nameB) {
-            return 1
-          }
-          return 0
-        })
-        
-        setTeachers(t)
+      if (nameA > nameB) {
+        return 1
       }
+      return 0
+    })
+  }, [studentsData])
 
-      setLoading(false)
-    }
+  const teachers = useMemo(() => {
+    return [...teachersData].sort((a: Teacher, b: Teacher) => {
+      const nameA = a.firstname.toUpperCase()
+      const nameB = b.firstname.toUpperCase()
+      if (nameA < nameB) {
+        return -1
+      }
+      if (nameA > nameB) {
+        return 1
+      }
+      return 0
+    })
+  }, [teachersData])
 
-    getData()
-  }, [token, BASEURL])
+  if (error) toast.error("Error fetching data: " + error)
 
   if (loading) {
-    return <p>Loading...</p>
+    return (
+      <div className="flex flex-col justify-center items-center w-full shadow-lg p-4 bg-white dark:bg-black rounded-lg">
+        <Skeleton className="h-6 w-72 mt-4 mb-4" />
+        <Skeleton className="h-16 w-full mb-2" />
+        <Skeleton className="h-16 w-full mb-2" />
+        <Skeleton className="h-16 w-full" />
+      </div>
+    )
   }
 
   const handleAddNewTeacher = async (teacherUserId: string, studentUserId: string) => {
     try {
-      const response = await fetch(`${BASEURL}/assign-teacher-for-student`, {
+      await apiFetch("/assign-teacher-for-student", {
         method: "POST",
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
+        body: {
           teacher_user_id: teacherUserId,
           student_user_id: studentUserId
-        })
+        }
       })
 
-      if (!response.ok) {
-        toast.error("Error while assigning teacher to student")
-      } else {
-        toast.success("Læreren er blitt tildelt til eleven")
-        // Refresh the data
-        window.location.reload()
-      }
+      toast.success("Læreren er blitt tildelt til eleven")
+      // Refresh the data
+      window.location.reload()
     } catch (error) {
       toast.error(`Error assigning teacher: ${error}`)
     }
@@ -160,7 +129,7 @@ export const StudentsWithoutAnyTeachers = ({token, BASEURL} : {token :string, BA
                     />
                   </div>
 
-                  <StudentNotes student={s} BASEURL={BASEURL} token={token} />
+                  <StudentNotes student={s} />
 
                   <Accordion type="single" collapsible className="w-full">
                     <AccordionItem value={`Om ${s.firstname_parent}`} key={1}>
@@ -303,7 +272,7 @@ const SetTeacherCombobox = ({
   )
 }
 
-const StudentNotes = ({student, BASEURL, token} : {student : Student, BASEURL: string, token: string}) => {
+const StudentNotes = ({student} : {student : Student}) => {
   const [notes, setNotes] = useState<string>(student.notes)
 
   const handleAddNotes = (note: string) => {
@@ -312,23 +281,15 @@ const StudentNotes = ({student, BASEURL, token} : {student : Student, BASEURL: s
 
   const saveNotes = async (notes: string, studentUserId: string) => {
     try {
-      const response = await fetch(`${BASEURL}/upload-notes-about-student`, {
+      await apiFetch("/upload-notes-about-student", {
         method: "POST",
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+        body: {
           student_user_id: studentUserId,
           notes: notes
-        }),
+        }
       })
 
-      if (!response.ok) {
-        throw new Error("An error occurred. Please try again.")
-      } 
-
-      toast.success("Notater lagret")        
+      toast.success("Notater lagret")
       return true
     } catch (error) {
       console.error("Error uploading notes:", error)
