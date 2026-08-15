@@ -24,7 +24,8 @@ import { DeleteClass } from "../min-side-laerer/deleteClass";
 
 import { Copy } from 'lucide-react';
 
-import { Classes, Student, Teacher, TeacherStudent } from "./types";
+import { Classes, Student, Teacher } from "./types";
+import { TeacherStudent } from "@/types/teacher-student";
 
 import { useMemo, useState } from "react"
 import { useClasses } from "@/hooks/use-classes"
@@ -104,8 +105,9 @@ export function PreviousClassesForEachStudent() {
             });
 
             const myTeacherUserIds: string[] = teacherStudents
-                .filter((ts) => {return ts.student_user_id === s.user_id && ts.teacher_accepted_student==true})
-                .map((ts) => ts.teacher_user_id);
+                .filter((ts) => {return ts.student?.user_id === s.user_id && ts.relation.teacher_accepted_student==true})
+                .map((ts) => ts.teacher?.user_id)
+                .filter((id): id is string => id != null);
 
             const myTeachers: Teacher[] = teachers.filter((t) => 
                 myTeacherUserIds.includes(t.user_id) && t.resigned === false
@@ -145,10 +147,10 @@ export function PreviousClassesForEachStudent() {
 
 
                     const ts = teacherStudents.find((ts: TeacherStudent) =>
-                        ts.student_user_id === c.student_user_id &&
-                        ts.teacher_user_id === c.teacher_user_id
+                        ts.student?.user_id === c.student_user_id &&
+                        ts.teacher?.user_id === c.teacher_user_id
                     );
-                    const travelPayFromStudent = Number(ts?.travel_pay_from_student || 0)
+                    const travelPayFromStudent = Number(ts?.relation.travel_pay_from_student || 0)
                     totalTravelPayFromStudent += travelPayFromStudent
                     invoiceAmount += travelPayFromStudent
 
@@ -209,7 +211,7 @@ export function PreviousClassesForEachStudent() {
                         <div className="flex flex-row space-x-2 m-4">
                             {myTeachers.map( (t) => {
                                 return <RemoveTeacherDialog teacher={t} key={t.user_id} student={s} teacherStudent={teacherStudents.find(
-                                    (ts: TeacherStudent) => ts.student_user_id === s.user_id && ts.teacher_user_id === t.user_id
+                                    (ts: TeacherStudent) => ts.student?.user_id === s.user_id && ts.teacher?.user_id === t.user_id
                                 )}/>;
                             })}
                         </div>
@@ -296,9 +298,9 @@ export function PreviousClassesForEachStudent() {
                             invoiceAmount = Math.round(durationHours*350)
                         }
                         invoiceAmount += Number(teacherStudents.find((ts: TeacherStudent) =>
-                            ts.student_user_id === c.student_user_id &&
-                            ts.teacher_user_id === c.teacher_user_id
-                        )?.travel_pay_from_student || 0);
+                            ts.student?.user_id === c.student_user_id &&
+                            ts.teacher?.user_id === c.teacher_user_id
+                        )?.relation.travel_pay_from_student || 0);
                         
                         const classTeacher = teachers.find(t => t.user_id === c.teacher_user_id);
                         const teacherName = classTeacher ? `${classTeacher.firstname} ${classTeacher.lastname}` : "Ukjent lærer";
@@ -415,10 +417,10 @@ const InvoiceStudentPopover = ( {student, classes, teacherStudents} : {student: 
         totalInvoiceAmmount += thisClass
 
         const ts = teacherStudents.find((ts: TeacherStudent) =>
-            ts.student_user_id === c.student_user_id &&
-            ts.teacher_user_id === c.teacher_user_id
+            ts.student?.user_id === c.student_user_id &&
+            ts.teacher?.user_id === c.teacher_user_id
         );
-        const travelPayFromStudent = Number(ts?.travel_pay_from_student || 0)
+        const travelPayFromStudent = Number(ts?.relation.travel_pay_from_student || 0)
         totalTravelPay += travelPayFromStudent
     });
 
@@ -774,8 +776,8 @@ const handleUpdateTravelPay = async (travelPayToTeacher: number, travelPayFromSt
 
 // AlertDialog component to confirm teacher removal
 const RemoveTeacherDialog = ({ student, teacher, teacherStudent }: { student: Student, teacher: Teacher, teacherStudent? :TeacherStudent }) => {
-    const [travelPayToTeacher, setTravelPayToTeacher] = useState<number>(teacherStudent?.travel_pay_to_teacher || 0);
-    const [travelPayFromStudent, setTravelPayFromStudent] = useState<number>(teacherStudent?.travel_pay_from_student || 0);
+    const [travelPayToTeacher, setTravelPayToTeacher] = useState<number>(teacherStudent?.relation.travel_pay_to_teacher || 0);
+    const [travelPayFromStudent, setTravelPayFromStudent] = useState<number>(teacherStudent?.relation.travel_pay_from_student || 0);
 
 
     return (

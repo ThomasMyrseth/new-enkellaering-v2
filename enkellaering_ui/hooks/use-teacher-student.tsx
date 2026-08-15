@@ -1,5 +1,5 @@
 "use client"
-import { TeacherStudent } from "@/app/admin/types";
+import { TeacherStudent } from "@/types/teacher-student";
 import { useFetch } from "./use-fetch";
 
 // /get-teacher-student has no @token_required on the backend

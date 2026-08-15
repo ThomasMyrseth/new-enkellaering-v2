@@ -2,7 +2,8 @@
 
 import { Copy } from 'lucide-react';
 
-import { AvailableSubject, TeacherStudent } from './types';
+import { AvailableSubject } from './types';
+import { TeacherStudent } from '@/types/teacher-student';
 
 import { DeleteClass } from '../min-side-laerer/deleteClass';
 import { Switch } from '@/components/ui/switch';
@@ -384,8 +385,8 @@ export function PreviousClassesForEachTeacher() {
 
             classes.map((c :Classes) => {
                 const teacherStudent :TeacherStudent | null= teacherStudents.find((ts: TeacherStudent) =>
-                    ts.student_user_id === c.student_user_id &&
-                    ts.teacher_user_id === c.teacher_user_id
+                    ts.student?.user_id === c.student_user_id &&
+                    ts.teacher?.user_id === c.teacher_user_id
                 ) || null
 
 
@@ -397,14 +398,14 @@ export function PreviousClassesForEachTeacher() {
                 if (c.groupclass) {
                     invoiceAmount = (totalDurationMillis / (1000 * 60 * 60)) * 350
                 }
-                invoiceAmount += Number(teacherStudent?.travel_pay_from_student || 0)
+                invoiceAmount += Number(teacherStudent?.relation.travel_pay_from_student || 0)
 
                 let toTeacherAmmount :number = totalDurationMillis / (1000 * 60 * 60) * teacherHourlyPay
                 if (c.groupclass) {
                     const numberOfStudents :number = c.number_of_students || 1
                     toTeacherAmmount = (totalDurationMillis / (1000 * 60 * 60) * (teacherHourlyPay+60))/numberOfStudents
                 }
-                toTeacherAmmount += Number(teacherStudent?.travel_pay_to_teacher || 0)
+                toTeacherAmmount += Number(teacherStudent?.relation.travel_pay_to_teacher || 0)
 
                 //add up to see how many hours the teacher has had the last four weeks
                 if (new Date(c.started_at).getTime() > fourWeeksAgo.getTime()) {
@@ -499,7 +500,7 @@ export function PreviousClassesForEachTeacher() {
 
                                         {students.map( (student, index) => {
                                             //skip students that are not this teachers students
-                                            if (!teacherStudents.some((ts) => ts.teacher_user_id === ct.teacher.user_id && ts.student_user_id === student.user_id)){
+                                            if (!teacherStudents.some((ts) => ts.teacher?.user_id === ct.teacher.user_id && ts.student?.user_id === student.user_id)){
                                                 return null;
                                             }
 
@@ -598,9 +599,9 @@ export function PreviousClassesForEachTeacher() {
                                     invoiceAmount = Math.round(totalDurationMillis / (1000 * 60 * 60) *350)
                                 }
                                 invoiceAmount += Number(teacherStudents.find((ts: TeacherStudent) =>
-                                    ts.student_user_id === c.student_user_id &&
-                                    ts.teacher_user_id === c.teacher_user_id
-                                )?.travel_pay_from_student || 0)
+                                    ts.student?.user_id === c.student_user_id &&
+                                    ts.teacher?.user_id === c.teacher_user_id
+                                )?.relation.travel_pay_from_student || 0)
 
                                 let toTeacherAmmount :number = Math.round(totalDurationMillis / (1000 * 60 * 60) * teacherHourlyPay)
                                 if (c.groupclass) {
@@ -608,9 +609,9 @@ export function PreviousClassesForEachTeacher() {
                                     toTeacherAmmount = Math.round( (totalDurationMillis / (1000 * 60 * 60) * (teacherHourlyPay+60))/numberOfStudents )
                                 }
                                 toTeacherAmmount += Number(teacherStudents.find((ts: TeacherStudent) =>
-                                    ts.student_user_id === c.student_user_id &&
-                                    ts.teacher_user_id === c.teacher_user_id
-                                )?.travel_pay_to_teacher || 0)
+                                    ts.student?.user_id === c.student_user_id &&
+                                    ts.teacher?.user_id === c.teacher_user_id
+                                )?.relation.travel_pay_to_teacher || 0)
 
                                 const classStudent = students.find(s => s.user_id === c.student_user_id);
                                 const studentName = classStudent ? `${classStudent.firstname_student} ${classStudent.lastname_student}` : "Ukjent elev";
@@ -715,10 +716,10 @@ const PayTeacherPopover = ( {teacher, classes, teacherStudents} : {teacher: Teac
 
         //add travel pay to teacher
         const ts = teacherStudents.find((ts: TeacherStudent) =>
-          ts.student_user_id === c.student_user_id &&
-          ts.teacher_user_id === c.teacher_user_id
+          ts.student?.user_id === c.student_user_id &&
+          ts.teacher?.user_id === c.teacher_user_id
         );
-        const travelPayToTeacher = Number(ts?.travel_pay_to_teacher || 0)
+        const travelPayToTeacher = Number(ts?.relation.travel_pay_to_teacher || 0)
         totalTravelPay += travelPayToTeacher
     });
 

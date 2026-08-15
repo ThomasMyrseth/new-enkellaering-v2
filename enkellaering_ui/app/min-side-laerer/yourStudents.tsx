@@ -7,7 +7,8 @@ import {
     AccordionTrigger,
 } from "@/components/ui/accordion"
 
-import { Teacher, Classes, Student, TeacherStudent } from "../admin/types"
+import { Teacher, Classes, Student } from "../admin/types"
+import { TeacherStudent } from "@/types/teacher-student"
 
 const formatToNorwegian = (utcString: string) => {
   return new Date(utcString).toLocaleString("no-NO", {
@@ -34,7 +35,7 @@ export function YourStudent( {teacher, classes, students, teacherStudents} : {te
         <Accordion type="single" collapsible className="w-full">
             {students.map( (student, index) => {
 
-                const teacherStudent = teacherStudents.find((ts) => ts.student_user_id === student.user_id && ts.teacher_user_id === teacher.user_id);
+                const teacherStudent = teacherStudents.find((ts) => ts.student?.user_id === student.user_id && ts.teacher?.user_id === teacher.user_id);
 
                 let totalDurationMillisLastFourWeeks :number = 0
                 const fourWeeksAgo = new Date()
@@ -94,8 +95,8 @@ export function YourStudent( {teacher, classes, students, teacherStudents} : {te
                             <br/>
                             {`${student.has_physical_tutoring? 'fysisk undervisning' : 'digital undervisning'}`}
                             <br/>
-                            {teacherStudent?.travel_pay_to_teacher && Number(teacherStudent?.travel_pay_to_teacher) > 0
-                              ? `Reisetillegg: ${teacherStudent.travel_pay_to_teacher}kr per gang`
+                            {teacherStudent?.relation.travel_pay_to_teacher && Number(teacherStudent?.relation.travel_pay_to_teacher) > 0
+                              ? `Reisetillegg: ${teacherStudent.relation.travel_pay_to_teacher}kr per gang`
                               :``}
                         </p>
                       </div>
@@ -189,7 +190,7 @@ const PreviousClasses =  ({student, teacher, allClasses, teacherStudent}  : {stu
                     const numberOfStudents: number = c.number_of_students || 1;
                     amount = Math.round( (durationHours * (parseInt(teacher.hourly_pay)+60) + (durationMinutes / 60) * (parseInt(teacher.hourly_pay)+60))/numberOfStudents )
                 }
-                amount += Number(teacherStudent?.travel_pay_to_teacher || 0)
+                amount += Number(teacherStudent?.relation.travel_pay_to_teacher || 0)
 
                 return(
                     <TableRow key={index} className={`${c.was_canselled===true ? 'bg-red-50 dark:bg-red-950' : ''}`}>

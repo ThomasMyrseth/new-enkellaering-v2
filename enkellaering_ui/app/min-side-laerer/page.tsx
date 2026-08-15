@@ -3,7 +3,8 @@ import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { Classes, Student, TeacherStudent } from "../admin/types";
+import { Classes, Student } from "../admin/types";
+import { TeacherStudent } from "@/types/teacher-student";
 import { AddNewClass } from "./addNewClass";
 
 import { useTeacher } from "@/hooks/use-teacher";
@@ -71,8 +72,9 @@ export default function LaererPage() {
 
         // Filter only those teacher-student records matching this teacher and existing students
         return teacherStudentsRaw.filter((ts: TeacherStudent) =>
-            ts.teacher_user_id === teacher.user_id &&
-            studentIds.has(ts.student_user_id)
+            ts.teacher?.user_id === teacher.user_id &&
+            ts.student != null &&
+            studentIds.has(ts.student.user_id)
         );
     }, [teacher, students, teacherStudentsRaw])
 
