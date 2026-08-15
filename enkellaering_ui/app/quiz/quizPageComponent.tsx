@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import { LampContainer } from "@/components/ui/lamp"
 import { useQuizzes } from "@/hooks/use-quizzes"
 import { Skeleton } from "@/components/ui/skeleton"
+import { toast } from "sonner"
 
 
 export function QuizPageComponent({description} : {description?: string}) {
@@ -15,7 +16,7 @@ export function QuizPageComponent({description} : {description?: string}) {
 
     const [quizzes, loading, error] = useQuizzes()
 
-    if (error) console.error("Error fetching quizzes: " + error);
+    if (error) toast.error("Error fetching quizzes: " + error);
 
    const handleSetSelectedQuiz =(quizId :string) => {
         router.push(`/quiz/${quizId}`)

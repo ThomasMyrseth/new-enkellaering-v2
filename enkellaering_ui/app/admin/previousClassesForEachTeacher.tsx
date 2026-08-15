@@ -270,7 +270,7 @@ export function PreviousClassesForEachTeacher() {
         if (teachersError) toast.error("Error fetching teachers " + teachersError)
         if (studentsError) toast.error("Error fetching students " + studentsError)
         if (teacherStudentsError) toast.error("Error fetching teacher student relation " + teacherStudentsError)
-        if (availableSubjectsError) console.error("Error fetching available subjects:", availableSubjectsError)
+        if (availableSubjectsError) toast.error("Error fetching available subjects: " + availableSubjectsError)
     }, [classesError, teachersError, studentsError, teacherStudentsError, availableSubjectsError])
 
     // Filter states

@@ -10,6 +10,7 @@ import { QuestionWithFileType } from "../../types"
 import { SaveQuiz } from "./saveQuiz";
 import { useIsAdmin } from "@/hooks/use-is-admin";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 
 export default function MakeQuizPage() {
@@ -24,7 +25,7 @@ export default function MakeQuizPage() {
         if (adminLoading) return;
 
         if (adminError) {
-            console.error('Error checking admin status:', adminError);
+            toast.error('Error checking admin status: ' + adminError);
             router.push('/login-laerer');
             return;
         }
