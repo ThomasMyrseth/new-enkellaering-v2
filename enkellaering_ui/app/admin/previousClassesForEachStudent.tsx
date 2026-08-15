@@ -26,72 +26,58 @@ import { Copy } from 'lucide-react';
 
 import { Classes, Student, Teacher, TeacherStudent } from "./types";
 
-import { useEffect, useState } from "react"
+import { useMemo, useState } from "react"
+import { useClasses } from "@/hooks/use-classes"
+import { useStudents } from "@/hooks/use-students"
+import { useTeachers } from "@/hooks/use-teachers"
+import { useTeacherStudent } from "@/hooks/use-teacher-student"
 
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
 
 
 
-export function PreviousClassesForEachStudent() {      
-    const token = localStorage.getItem('token') || ''
+export function PreviousClassesForEachStudent() {
 
-    const [classes, setClasses] = useState<Classes[]>([]);
-    const [teachers, setTeachers] = useState<Teacher[]>([]);
-    const [students, setStudents] = useState<Student[]>([]);
-    const [teacherStudents, setTeacherStudents] = useState<TeacherStudent[]>([]);
+    const [classes, classesLoading, classesError] = useClasses();
+    const [rawStudents, studentsLoading, studentsError] = useStudents();
+    const [rawTeachers, teachersLoading, teachersError] = useTeachers(true);
+    const [teacherStudents, tsLoading, tsError] = useTeacherStudent();
+    const loading = classesLoading || studentsLoading || teachersLoading || tsLoading;
 
-    const [loading, setLoading] = useState<boolean>(true)
+    if (classesError) toast.error("Error fetching classes: " + classesError);
+    if (studentsError) toast.error("Error fetching students: " + studentsError);
+    if (teachersError) toast.error("Error fetching teachers: " + teachersError);
+    if (tsError) toast.error("Error fetching teacher-student relationships: " + tsError);
 
-
-    //populate data fields
-    useEffect( () => {
-        async function getData() {
-            const t :Teacher[] = await getTeachers(token)
-            const s: Student[] = await getStudents(token)
-            const c :Classes[] = await getClasses(token)
-            const ts: TeacherStudent[] = await getTeacherStudent(token)
-
-            if (t) {
-                //order alfabetcically
-                t.sort((a: Teacher, b: Teacher) => {
-                    const nameA = a.firstname.toUpperCase();
-                    const nameB = b.firstname.toUpperCase();
-                    if (nameA < nameB) {
-                        return -1;
-                    }
-                    if (nameA > nameB) {
-                        return 1;
-                    }
-                    return 0;
-                });
-                setTeachers(t);
+    //order alfabetically, same ordering as the previous manual fetch implementation
+    const teachers = useMemo(() => {
+        return [...rawTeachers].sort((a: Teacher, b: Teacher) => {
+            const nameA = a.firstname.toUpperCase();
+            const nameB = b.firstname.toUpperCase();
+            if (nameA < nameB) {
+                return -1;
             }
-            if (s) {
-                s.sort((a: Student, b: Student) => {
-                    const nameA = a.firstname_parent.toUpperCase();
-                    const nameB = b.firstname_parent.toUpperCase();
-                    if (nameA < nameB) {
-                        return -1;
-                    }
-                    if (nameA > nameB) {
-                        return 1;
-                    }
-                    return 0;
-                });
-                setStudents(s);
+            if (nameA > nameB) {
+                return 1;
             }
-            if (c) {
-                setClasses(c)
-            }
-            if (ts) {
-                setTeacherStudents(ts)
-            }
-            setLoading(false)
+            return 0;
+        });
+    }, [rawTeachers]);
 
-        }
-        getData()
-    },[token])
+    const students = useMemo(() => {
+        return [...rawStudents].sort((a: Student, b: Student) => {
+            const nameA = a.firstname_parent.toUpperCase();
+            const nameB = b.firstname_parent.toUpperCase();
+            if (nameA < nameB) {
+                return -1;
+            }
+            if (nameA > nameB) {
+                return 1;
+            }
+            return 0;
+        });
+    }, [rawStudents]);
 
 
     if (loading) {
@@ -827,99 +813,6 @@ const RemoveTeacherDialog = ({ student, teacher, teacherStudent }: { student: St
         </AlertDialog>
     );
 };
-
-
-async function getClasses(token :string) {
-    const response = await fetch(`${BASEURL}/get-all-classes`, {
-        method: "GET",
-        headers: {
-            'Authorization': `Bearer ${token}`
-        }
-    });
-
-    if(!response.ok) {
-        toast.error("En feil har skjedd, prøv igjen");
-        return [];
-    }
-
-    const data = await response.json();
-    return data.classes || [];
-}
-
-async function getStudents(token :string) {
-    const response = await fetch(`${BASEURL}/get-all-students`, {
-        method: "GET",
-        headers: {
-            'Authorization': `Bearer ${token}`
-        }
-    });
-
-    if (!response.ok) {
-        toast.error("Error fetching students " + response.statusText);
-        return [];
-    }
-
-    const data = await response.json();
-    const students: Student[] = data.students;
-
-    if (students.length === 0) {
-        toast.error("No students found");
-        console.log("No students found");
-        return [];
-    } else {
-        return students;
-    }
-}
-
-async function getTeachers(token :string) {
-    const response = await fetch(`${BASEURL}/get-all-teachers-inc-resigned`, {
-        method: "GET",
-        headers: {
-            'Authorization': `Bearer ${token}`
-        },
-    });
-
-    if (!response.ok) {
-        toast.error("Error fetching teachers and students " + response.statusText);
-        return [];
-    }
-
-    const data = await response.json();
-    const teachers: Teacher[] = data.teachers;
-
-    if (teachers.length === 0) {
-        toast.error("No teachers found");
-        console.log("No teachers found");
-        return [];
-    } else {
-        return teachers;
-    }
-}
-
-async function getTeacherStudent(token: string) {
-    const response = await fetch(`${BASEURL}/get-teacher-student`, {
-        method: "GET",
-        headers: {
-            'Authorization': `Bearer ${token}`
-        }
-    });
-
-    if (!response.ok) {
-        toast.error("Error fetching teacher-student relationships: " + response.statusText);
-        return [];
-    }
-
-    const data = await response.json();
-    const teacherStudent: TeacherStudent[] = data.teacher_student;
-
-    if (!teacherStudent || teacherStudent.length === 0) {
-        toast.error("Ingen tilkoblinger mellom elev og lærer funnet (teacherStudent)");
-        console.log("No teacher-student relationships found");
-        return [];
-    }
-
-    return teacherStudent;
-}
 
 
 const assignTeacher = async (

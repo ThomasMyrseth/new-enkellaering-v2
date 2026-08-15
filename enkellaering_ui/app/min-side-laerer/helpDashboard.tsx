@@ -6,10 +6,12 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Input } from "@/components/ui/input"
-import { TeacherHelpConfig, HelpSession, HelpQueueEntry } from "../admin/types"
 import { toast } from "sonner"
+import { useHelpConfig } from "@/hooks/use-help-config"
+import { useMyHelpSessions } from "@/hooks/use-my-help-sessions"
+import { useHelpQueue } from "@/hooks/use-help-queue"
+import { apiFetch, ApiError } from "@/lib/api"
 
-const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080"
 const DAYS_NO = ["Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag", "Lørdag", "Søndag"]
 
 interface Payload {
@@ -22,9 +24,11 @@ interface Payload {
 }
 
 export function TeacherHelpDashboard({ token }: { token: string }) {
-  const [config, setConfig] = useState<TeacherHelpConfig | null>(null)
-  const [sessions, setSessions] = useState<HelpSession[]>([])
-  const [queue, setQueue] = useState<HelpQueueEntry[]>([])
+  const [config, , configError] = useHelpConfig()
+  const [sessionsRefreshKey, setSessionsRefreshKey] = useState<number>(0)
+  const [sessions, , sessionsError] = useMyHelpSessions(sessionsRefreshKey)
+  const [queueRefreshKey, setQueueRefreshKey] = useState<number>(0)
+  const [queue, , queueError] = useHelpQueue(queueRefreshKey)
   const [availableForHelp, setAvailableForHelp] = useState<boolean>(false)
 
   // New session form
@@ -38,86 +42,22 @@ export function TeacherHelpDashboard({ token }: { token: string }) {
   })
 
   useEffect(() => {
-    fetchConfig()
-    fetchSessions()
-    fetchQueue()
-
-    // Poll queue every 10 seconds
-    const interval = setInterval(fetchQueue, 10000)
-    return () => clearInterval(interval)
-  }, [])
-
-  useEffect(() => {
     if (config) {
       setAvailableForHelp(config.available_for_help)
     }
   }, [config])
 
-  async function fetchConfig() {
-    try {
-      const response = await fetch(`${BASEURL}/teacher/help-config`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      if (!response.ok) {
-        console.error("Failed to fetch config")
-        return
-      }
-      const data = await response.json()
-      setConfig(data.config)
-      setAvailableForHelp(data.config.available_for_help)
-    } catch (error) {
-      console.error("Failed to fetch config:", error)
-    }
-  }
+  useEffect(() => {
+    if (configError) toast.error(configError)
+  }, [configError])
 
-  async function fetchSessions() {
-    try {
-      const response = await fetch(`${BASEURL}/teacher/my-sessions`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      if (!response.ok) {
-        console.error("Failed to fetch sessions")
-        return
-      }
-      const data = await response.json()
-      setSessions(data.sessions || []) //list of dicts
-      console.log("Fetched sessions:", data.sessions)
-    } catch (error) {
-      console.error("Failed to fetch sessions:", error)
-    }
-  }
+  useEffect(() => {
+    if (sessionsError) toast.error(sessionsError)
+  }, [sessionsError])
 
-  async function fetchQueue() {
-    try {
-      const response = await fetch(`${BASEURL}/teacher/queue`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      if (!response.ok) {
-        console.error("Failed to fetch queue")
-        return
-      }
-      const data = await response.json()
-      const queues = data.queues || [] //list of dicts
-
-      console.log("Fetched queues:", queues)
-
-      if (queues.length > 1) {
-        console.warn("Multiple queues found for teacher, using the first one.")
-        toast.warning('Du har flere aktive økter nå. Vennligst slett alle untatt én for å unngå forvirring.')
-      }
-
-      if (queues.length === 0) {
-        setQueue([])
-        return
-      }
-
-      const firstQueue = queues[0].queue
-      setQueue(firstQueue || [])
-
-    } catch (error) {
-      console.error("Failed to fetch queue:", error)
-    }
-  }
+  useEffect(() => {
+    if (queueError) toast.error(queueError)
+  }, [queueError])
 
   async function createSession() {
     // Validate based on session type
@@ -156,20 +96,10 @@ export function TeacherHelpDashboard({ token }: { token: string }) {
         payload.session_date = newSession.session_date
       }
 
-      const response = await fetch(`${BASEURL}/teacher/my-sessions`, {
+      await apiFetch("/teacher/my-sessions", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify(payload)
+        body: payload
       })
-
-      if (!response.ok) {
-        const error = await response.json()
-        toast.error(`Kunne ikke opprette økten: ${error.error || 'Ukjent feil'}`)
-        return
-      }
 
       toast.success("Økten er opprettet!")
       setNewSession({
@@ -179,10 +109,10 @@ export function TeacherHelpDashboard({ token }: { token: string }) {
         end_time: "20:00",
         zoom_link: ""
       })
-      fetchSessions()
+      setSessionsRefreshKey((k) => k + 1)
     } catch (error) {
       console.error("Failed to create session:", error)
-      toast.error("Kunne ikke opprette økten")
+      toast.error(error instanceof ApiError ? `Kunne ikke opprette økten: ${error.message}` : "Kunne ikke opprette økten")
     }
   }
 
@@ -190,18 +120,10 @@ export function TeacherHelpDashboard({ token }: { token: string }) {
     if (!confirm("Er du sikker på at du vil slette denne økten?")) return
 
     try {
-      const response = await fetch(`${BASEURL}/teacher/my-sessions/${sessionId}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` }
-      })
-
-      if (!response.ok) {
-        toast.error("Kunne ikke slette økten")
-        return
-      }
+      await apiFetch(`/teacher/my-sessions/${sessionId}`, { method: "DELETE" })
 
       toast.success("Økten er slettet")
-      fetchSessions()
+      setSessionsRefreshKey((k) => k + 1)
     } catch (error) {
       console.error("Failed to delete session:", error)
       toast.error("Kunne ikke slette økten")
@@ -210,19 +132,12 @@ export function TeacherHelpDashboard({ token }: { token: string }) {
 
   async function handleQueueAction(queueId: string, action: 'admit' | 'complete' | 'no-show') {
     try {
-      const response = await fetch(`${BASEURL}/teacher/queue/${queueId}/${action}`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` }
-      })
+      await apiFetch(`/teacher/queue/${queueId}/${action}`, { method: "POST" })
 
-      if (!response.ok) {
-        toast.error(`Kunne ikke ${action} student`)
-        return
-      }
-
-      fetchQueue()
+      setQueueRefreshKey((k) => k + 1)
     } catch (error) {
       console.error(`Failed to ${action} student:`, error)
+      toast.error(`Kunne ikke ${action} student`)
     }
   }
 

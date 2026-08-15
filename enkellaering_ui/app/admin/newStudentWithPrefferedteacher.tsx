@@ -1,7 +1,9 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React from "react"
 import { StudentsWithoutTeacher } from "./types"
+import { useNewStudentsWithPreferredTeacher } from "@/hooks/use-new-students-with-preferred-teacher"
+import { apiFetch } from "@/lib/api"
 import {
   Table,
   TableBody,
@@ -29,41 +31,23 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion"
+import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
 
 export function NewStudentsWithoutTeacher() {
-  const token = localStorage.getItem("token")
-  const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080"
-  const [loading, setLoading] = useState<boolean>(true)
-  const [studentsWithoutTeacher, setStudentsWithoutTeacher] = useState<StudentsWithoutTeacher[]>([])
+  const [studentsWithoutTeacher, loading, error] = useNewStudentsWithPreferredTeacher()
 
-  // get all new students
-  useEffect(() => {
-    async function getNewStudents() {
-      const response = await fetch(`${BASEURL}/get-new-students-with-preferred-teacher`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-
-      if (!response.ok) {
-        toast.error("Error fetching new students " + response.statusText)
-        return null
-      }
-
-      const data = await response.json()
-      const s = data.students_without_teacher
-
-      setStudentsWithoutTeacher(s)
-      setLoading(false)
-    }
-
-    getNewStudents()
-  }, [token, BASEURL])
+  if (error) toast.error(error)
 
   if (loading) {
-    return <p className="w-full rounded-lg bg-white dark:bg-black m-4 p-4 shadow-lg">Loading...</p>
+    return (
+      <div className="w-full flex flex-col rounded-lg bg-white dark:bg-black m-4 p-4 shadow-lg">
+        <Skeleton className="h-6 w-48 mt-4 mb-4" />
+        <Skeleton className="h-10 w-full mb-2" />
+        <Skeleton className="h-10 w-full mb-2" />
+        <Skeleton className="h-10 w-full" />
+      </div>
+    )
   }
 
   if (!studentsWithoutTeacher || studentsWithoutTeacher.length === 0) {
@@ -159,25 +143,15 @@ const StudentTeacherOrdersTable = ({ orders }: StudentTeacherOrdersTableProps) =
 }
 
 const TeacherOrderRow = ({ order }: { order: StudentsWithoutTeacher }) => {
-  const token = localStorage.getItem("token")
-  const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080"
-
   const handleDelete = async () => {
-    const response = await fetch(`${BASEURL}/hide-new-student`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        row_id: order.row_id,
-      }),
-    })
-
-    if (!response.ok) {
-      toast.error("Error while deleting new student")
-    } else {
+    try {
+      await apiFetch("/hide-new-student", {
+        method: "POST",
+        body: { row_id: order.row_id },
+      })
       toast.success("Eleven er slettet")
+    } catch {
+      toast.error("Error while deleting new student")
     }
   }
 

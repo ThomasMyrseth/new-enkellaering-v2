@@ -8,6 +8,7 @@ import {
   } from "@/components/ui/card";
 import { AVAILABLE_SUBJECTS } from "@/constants";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import {
@@ -16,37 +17,33 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
-import { AvailableSubject } from "../admin/types";
+import { useMySubjects } from "@/hooks/use-my-subjects";
 
 export default function AvailableSubjectsPage( {token, baseUrl} : {token :string, baseUrl :string}) {
+  const [mySubjects, loading, error] = useMySubjects()
   const [checkedSubjects, setCheckedSubjects] = useState<string[]>([])
 
   useEffect(() => {
-    async function fetchAvailableSubjects() {
-      try {
-        const response = await fetch(`${baseUrl}/get-available-subjects`, {
-          method: "GET",
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+    setCheckedSubjects(mySubjects.map(subj => subj.subject));
+  }, [mySubjects]);
 
-        if (!response.ok) {
-          toast.error("Failed to fetch available subjects: " + response.statusText);
-          return;
-        }
+  if (error) toast.error(error);
 
-        const data = await response.json();
-        const subjects: AvailableSubject[] = data.available_subjects;
-        setCheckedSubjects(subjects.map(subj => subj.subject));
-      } catch (error) {
-        console.error("Error fetching available subjects:", error);
-        toast.error("Error fetching available subjects");
-      }
-    }
-
-    fetchAvailableSubjects();
-  }, [baseUrl, token]);
+  if (loading) {
+    return (
+      <Card className="flex flex-col items-center w-full">
+        <CardHeader>
+          <Skeleton className="h-6 w-64 mb-2" />
+          <Skeleton className="h-4 w-full" />
+        </CardHeader>
+        <CardContent className="w-full space-y-2">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+        </CardContent>
+      </Card>
+    )
+  }
 
     return(<>
     <Card className="flex flex-col items-center w-full">

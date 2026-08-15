@@ -237,6 +237,11 @@ import { Classes, Teacher, Student } from "./types";
 import { useEffect, useState } from "react"
 import React, { useRef } from "react";
 import { formatDateTime } from "@/lib/utils";
+import { useClasses } from "@/hooks/use-classes";
+import { useTeachers } from "@/hooks/use-teachers";
+import { useStudents } from "@/hooks/use-students";
+import { useTeacherStudent } from "@/hooks/use-teacher-student";
+import { useAvailableSubjects } from "@/hooks/use-subjects";
 
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
@@ -248,166 +253,31 @@ type classesJoinTeacher = {
     teacher: Teacher;
 }
 
-export function PreviousClassesForEachTeacher() {      
-    const token = localStorage.getItem('token')
+export function PreviousClassesForEachTeacher() {
+    const [classes, classesLoading, classesError] = useClasses();
+    const [teachers, teachersLoading, teachersError] = useTeachers();
+    const [students, studentsLoading, studentsError] = useStudents();
+    const [teacherStudents, teacherStudentsLoading, teacherStudentsError] = useTeacherStudent();
+    const [availableSubjects, availableSubjectsLoading, availableSubjectsError] = useAvailableSubjects();
 
-    const [classes, setClasses] = useState<Classes[]>([]);
-    const [teachers, setTeachers] = useState<Teacher[]>([]);
     const [classesByTeacher, setClassesByTeacher] = useState<classesJoinTeacher[]>([]);
-    const [students, setStudents] = useState<Student[]>([]);
-    const [teacherStudents, setTeacherStudents] = useState<TeacherStudent[]>([]);
-    const [availableSubjects, setAvailableSubjects] = useState<AvailableSubject[]>([]);
     // const [allAvailableSubjectTypes, setAllAvailableSubjectTypes] = useState<string[]>([]);
 
-    const [loading, setLoading] = useState<boolean>(true)
+    const loading = classesLoading || teachersLoading || studentsLoading || teacherStudentsLoading || availableSubjectsLoading;
+
+    useEffect(() => {
+        if (classesError) toast.error("En feil har skjedd, prøv igjen")
+        if (teachersError) toast.error("Error fetching teachers " + teachersError)
+        if (studentsError) toast.error("Error fetching students " + studentsError)
+        if (teacherStudentsError) toast.error("Error fetching teacher student relation " + teacherStudentsError)
+        if (availableSubjectsError) console.error("Error fetching available subjects:", availableSubjectsError)
+    }, [classesError, teachersError, studentsError, teacherStudentsError, availableSubjectsError])
 
     // Filter states
     const [filterLocation, setFilterLocation] = useState<string>("");
     const [filterPhysical, setFilterPhysical] = useState<boolean>(false);
     const [filterDigital, setFilterDigital] = useState<boolean>(false);
     const [filterAvailableSubject, setFilterAvailableSubject] = useState<string | null>(null);
-
-    //get classes, teachers and students for everyone
-    useEffect( () => {
-        async function fetchClasses() {
-            const response = await fetch(`${BASEURL}/get-all-classes`, {
-                method: "GET",
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            })
-
-            if(!response.ok) {
-                toast.error("En feil har skjedd, prøv igjen")
-                return null;
-            }
-
-            const data = await response.json()
-            const classes = data.classes
-
-            if (classes.length === 0) {
-                setClasses([])
-                setLoading(false)
-            }
-            else {
-                setClasses(classes)
-                setLoading(false)
-            }
-        }
-        async function getAllTeachers() {
-
-            const response = await fetch(`${BASEURL}/get-all-teachers`, {
-                method: "GET",
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            })
-
-            if (!response.ok) {
-                toast.error("Error fetching teachers " + response.statusText)
-                setTeachers([])
-                return null
-            }
-
-            const data = await response.json()
-            const teachers :Teacher[] = data.teachers
-
-            if (teachers.length===0) {
-                toast.error("No teachers found")
-                console.log("No teachers found")
-                setTeachers([])
-                return null
-            }
-
-            else {
-
-                //order the teachers alfabetically
-                teachers.sort( (a :Teacher, b :Teacher) => {
-                    const nameA = a.firstname.toUpperCase()
-                    const nameB = b.firstname.toUpperCase()
-                    if (nameA < nameB) {
-                        return -1
-                    }
-                    if (nameA > nameB) {
-                        return 1
-                    }
-                    return 0
-                })
-                
-                setTeachers(teachers)
-            }
-        }
-        async function getAllStudents() {
-
-            const response = await fetch(`${BASEURL}/get-all-students`, {
-                method: "GET",
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            })
-
-            if (!response.ok) {
-                toast.error("Error fetching students " + response.statusText)
-                setStudents([])
-                return null
-            }
-
-            const data = await response.json()
-            const students :Student[] = data.students
-
-            if (students.length===0) {
-                toast.error("No students found")
-                console.log("No students found")
-                setStudents([])
-                return null
-            }
-
-
-            else {
-                setStudents(students)
-                setLoading(false)
-            }
-        }
-        async function getAllTeacherStudents() {
-            const response = await fetch(`${BASEURL}/get-teacher-student`, {
-                method: "GET",
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            })
-            if (!response.ok) {
-                toast.error("Error fetching teacher student relation " + response.statusText)
-                setTeacherStudents([])
-                return null
-            }
-            const data = await response.json()
-            const ts :TeacherStudent[] = data.teacher_student
-            setTeacherStudents(ts)
-        }
-
-        async function fetchAvailableSubjects() {
-            try {
-                const response = await fetch(`${BASEURL}/get-all-available-subjects`);
-                if (!response.ok) {
-                    throw new Error("Failed to fetch available subjects");
-                }
-                const data = await response.json();
-                const subjects = data || [];
-                setAvailableSubjects(subjects);
-            } catch (error) {
-                console.error("Error fetching available subjects:", error);
-                setAvailableSubjects([]);
-            }
-        }
-
-        fetchClasses()
-        getAllTeachers()
-        getAllStudents()
-        getAllTeacherStudents()
-        fetchAvailableSubjects()
-
-    
-    },[token])
 
     //map each teacher to his classes
     useEffect( () => {

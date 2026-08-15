@@ -1,6 +1,8 @@
 "use client"
-import React, {useEffect, useState} from "react"
+import React, {useMemo} from "react"
 import { Student } from "./types"
+import { useStudents } from "@/hooks/use-students"
+import { apiFetch } from "@/lib/api"
 
 import {
     Table,
@@ -12,6 +14,7 @@ import {
 } from "@/components/ui/table"
 
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
     Accordion,
     AccordionContent,
@@ -21,33 +24,30 @@ import {
 import { toast } from "sonner"
 
 export const InactiveStudents = () => {
-    const [students, setStudents] = useState<Student[]>([])
+    const [students, loading, error] = useStudents()
 
-    //fetch data
-    useEffect(() => {
-        async function fetchData() {
-            const token = localStorage.getItem('token')
-            if (!token) {
-                toast.error("Token not found")
-                return
-            }
-            const s: Student[] =  await getStudents(token)
-
-            //order by name
-            s.sort((a, b) => {
+    const inactiveStudents = useMemo(() => {
+        return students
+            .filter(s => s.is_active === false)
+            .sort((a, b) => {
                 const nameA = `${a.firstname_parent} ${a.lastname_parent}`.toLowerCase();
                 const nameB = `${b.firstname_parent} ${b.lastname_parent}`.toLowerCase();
                 return nameA.localeCompare(nameB);
             });
-            setStudents(s)
-        }
+    }, [students]);
 
-        fetchData()
-    },[])
+    if (error) toast.error("Error fetching students: " + error);
 
-    
-
-    const inactiveStudents = students.filter(s => s.is_active === false);
+    if (loading) {
+        return (
+            <div className="w-full flex flex-col items-center justify-center shadow-lg dark:bg-black bg-white rounded-lg p-4">
+                <Skeleton className="h-6 w-48 mt-4 mb-4" />
+                <Skeleton className="h-10 w-full mb-2" />
+                <Skeleton className="h-10 w-full mb-2" />
+                <Skeleton className="h-10 w-full" />
+            </div>
+        )
+    }
 
     const StudentRow = ({ student }: { student: Student }) => (
         <TableRow key={student.user_id}>
@@ -107,57 +107,17 @@ export const InactiveStudents = () => {
 }
 
 const handleSetActive = async (student: Student) => {
-    const token = localStorage.getItem('token')
-    const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
-
     try {
-        const response = await fetch(`${BASEURL}/set-student-to-active`, {
+        await apiFetch("/set-student-to-active", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
+            body: {
                 "student_user_id": student.user_id
-            })
+            }
         });
-
-        if (!response.ok) {
-            throw new Error(`Error: ${response.status} - ${response.statusText}`);
-        }
 
         toast.success(`${student.firstname_parent} ${student.lastname_parent} er satt til aktiv`)
 
     } catch (error) {
         toast.error(`Failed to set student inactive: ${error}`);
-    }
-}
-
-
-
-async function getStudents(token :string) {
-    const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080";
-
-    const response = await fetch(`${BASEURL}/get-all-students`, {
-        method: "GET",
-        headers: {
-            'Authorization': `Bearer ${token}`
-        }
-    });
-
-    if (!response.ok) {
-        toast.error("Error fetching students " + response.statusText);
-        return [];
-    }
-
-    const data = await response.json();
-    const students: Student[] = data.students;
-
-    if (students.length === 0) {
-        toast.error("No students found");
-        console.log("No students found");
-        return [];
-    } else {
-        return students;
     }
 }

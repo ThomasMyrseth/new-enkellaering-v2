@@ -11,59 +11,29 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
+import { apiFetch } from "@/lib/api"
+import { useQuizzes } from "@/hooks/use-quizzes"
+import { Quiz } from "@/app/min-side-laerer/types"
 
 export const DeleteQuiz = () => {
-    const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8080';
-    const token = localStorage.getItem('token')
+    const [fetchedQuizzes, loading, error] = useQuizzes();
 
-    const [quizzes, setQuizzes] = useState<{ quiz_id: string; title: string }[]>([]);
-    const [loading, setLoading] = useState<boolean>(false);
+    const [quizzes, setQuizzes] = useState<Quiz[]>([]);
 
     useEffect(() => {
-        fetchAllQuizzes();
-    }, []);
+        setQuizzes(fetchedQuizzes);
+    }, [fetchedQuizzes]);
 
-    const fetchAllQuizzes = async () => {
-        setLoading(true);
-        try {
-            const res = await fetch(`${BASEURL}/get-all-quizzes`,  {
-                method: "GET",
-                headers: {
-                    'Authorization': token ? `Bearer ${token}` : ''
-                    // Do not set 'Content-Type'; let the browser set it for FormData
-                },
-            });
-
-            if (!res.ok) {
-                throw new Error("Failed to fetch quizzes");
-            }
-
-            const data = await res.json();
-            setQuizzes(data.quizzes || []);
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
-    };
+    if (error) toast.error(error);
 
     const deleteQuiz = async (quizId: string) => {
         try {
-            const res = await fetch(`${BASEURL}/delete-quiz`, {
+            await apiFetch(`/delete-quiz`, {
                 method: "POST",
-                credentials: "include",
-                headers: {
-                    "Content-Type": "application/json",
-                    'Authorization': token ? `Bearer ${token}` : ''
-                },
-                body: JSON.stringify({ quiz_ids: [quizId] }),
+                body: { quiz_ids: [quizId] },
             });
-
-            if (!res.ok) {
-                toast.error(`Failed to delete quiz ${res.statusText}`)
-                return
-            }
 
             toast.success("Quiz deleted successfully")
             setQuizzes((prev) => prev.filter((quiz) => quiz.quiz_id !== quizId));
@@ -77,7 +47,12 @@ export const DeleteQuiz = () => {
         <div className="w-full bg-white dark:bg-black rounded-sm shadow-lg p-4">
           <h2 className="w-full text-center text-xl font-semibold mb-4">Delete a Quiz</h2>
           {loading ? (
-            <p>Loading quizzes...</p>
+            <div className="w-full flex flex-col items-center">
+                <Skeleton className="h-6 w-48 mt-4 mb-4" />
+                <Skeleton className="h-10 w-full mb-2" />
+                <Skeleton className="h-10 w-full mb-2" />
+                <Skeleton className="h-10 w-full" />
+            </div>
           ) : (
             <Table className="">
               <TableCaption>

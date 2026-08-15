@@ -2,6 +2,9 @@
 "use client"
 import { useState, useEffect } from "react";
 import { Classes, Teacher } from "../admin/types";
+import { useClassesForTeacherRevenue } from "@/hooks/use-classes-for-teacher";
+import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
     Card,
     CardContent,
@@ -23,8 +26,6 @@ type FormattedClass = {
     started_at: string;
     payment: number;
 }
-
-const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080/server";
 
 function calculatePayment(classSession: Classes, hourlyPay: number): number {
     const numberOfStudents :number = classSession.number_of_students || 1; // Default to 1 if null
@@ -48,9 +49,7 @@ function calculatePayment(classSession: Classes, hourlyPay: number): number {
 }
 
 export function DailyRevenueChart({ teacher }: { teacher: Teacher }) {
-    const token = localStorage.getItem('token')
-
-    const [chartData, setChartData] = useState<Classes[]>()
+    const [chartData, loading, error] = useClassesForTeacherRevenue()
     const [formattedChartData, setFormattedChartdata] = useState<FormattedClass[]>()
     const [totalPayment, setTotalPayment] = useState<number>(0); // Use state for totalPayment
 
@@ -66,36 +65,10 @@ export function DailyRevenueChart({ teacher }: { teacher: Teacher }) {
         },
     } satisfies ChartConfig
 
-    useEffect( () => {
-        async function fetchRevenue() {
-            try {
-                const response = await fetch(`${BASEURL}/fetch-classes-for-teacher`, {
-                    method: "GET",
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                })
-
-                if (!response.ok) {
-                }
-
-                const data = await response.json()
-                const classes = data.classes
-
-                setChartData(classes)
-
-            }
-            catch {
-            }
-        }
-        fetchRevenue()
-    },[])
-
-
     useEffect(() => {
         if (chartData) {
           // Aggregate payments by date
-          const aggregatedData = chartData.reduce<FormattedClass[]>((acc, c: Classes) => {
+          const aggregatedData = chartData.reduce<FormattedClass[]>((acc, c) => {
 
             //skip the class if it is already paid out
             if (c.paid_teacher) {
@@ -109,7 +82,7 @@ export function DailyRevenueChart({ teacher }: { teacher: Teacher }) {
             });
       
             // Calculate the payment for this class
-            const payment = calculatePayment(c, parseInt(teacher?.hourly_pay));
+            const payment = calculatePayment(c as unknown as Classes, parseInt(teacher?.hourly_pay));
 
       
             // Check if the date already exists in the accumulator
@@ -144,10 +117,26 @@ export function DailyRevenueChart({ teacher }: { teacher: Teacher }) {
       }, [chartData, teacher]);
     
     
-    // if (formattedChartData?.length === 0) {
-    // return <p>Loading...</p>;
-    // }
-    
+    if (error) toast.error(error);
+
+    if (loading) {
+        return (
+            <div className="w-full">
+                <Card>
+                    <CardHeader>
+                        <Skeleton className="h-6 w-64 mb-2" />
+                        <Skeleton className="h-4 w-32" />
+                    </CardHeader>
+                    <CardContent>
+                        <Skeleton className="h-48 w-full" />
+                    </CardContent>
+                    <CardFooter>
+                        <Skeleton className="h-4 w-40" />
+                    </CardFooter>
+                </Card>
+            </div>
+        )
+    }
 
     return(<div className="w-full">
         <Card>

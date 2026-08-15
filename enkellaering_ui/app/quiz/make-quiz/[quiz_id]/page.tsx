@@ -8,48 +8,42 @@ import { MakeQuizForm } from "./newQuestionForm"
 import { CountQuestions } from "./countQuestions";
 import { QuestionWithFileType } from "../../types"
 import { SaveQuiz } from "./saveQuiz";
+import { useIsAdmin } from "@/hooks/use-is-admin";
+import { Skeleton } from "@/components/ui/skeleton";
 
 
 export default function MakeQuizPage() {
-    const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8080'
-    const token = localStorage.getItem('token')
     const router = useRouter()
 
     const [questions, setQuestion] = useState<QuestionWithFileType[]>([])
     const { quiz_id } = useParams() as { quiz_id: string };
 
+    const [isAdmin, adminLoading, adminError] = useIsAdmin()
+
     useEffect(() => {
-        async function isUserAdmin() {
-          if (!token) {
-            console.warn('No token found, redirecting to login.');
+        if (adminLoading) return;
+
+        if (adminError) {
+            console.error('Error checking admin status:', adminError);
             router.push('/login-laerer');
             return;
-          }
-      
-          try {
-            const res = await fetch(`${BASEURL}/is-admin`, {
-              method: 'GET',
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-              },
-              credentials: 'include',
-            });
-      
-            const data = await res.json();
-      
-            if (!res.ok || !data.is_admin) {
-              console.warn('Not an admin user, redirecting to login.');
-              router.push('/login-laerer');
-            }
-          } catch (error) {
-            console.error('Error checking admin status:', error);
-            router.push('/login-laerer');
-          }
         }
-      
-        isUserAdmin();
-      }, [BASEURL, token, router]);
+
+        if (!isAdmin) {
+            console.warn('Not an admin user, redirecting to login.');
+            router.push('/login-laerer');
+        }
+    }, [isAdmin, adminLoading, adminError, router]);
+
+    if (adminLoading) {
+        return (
+            <div className="w-full flex flex-col space-y-4">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-64 w-full" />
+                <Skeleton className="h-10 w-full" />
+            </div>
+        )
+    }
 
 
     const handleAddQuestion = (file :File, timelimit :number, question :string, options :string[], correct : 0|1|2|3) => {

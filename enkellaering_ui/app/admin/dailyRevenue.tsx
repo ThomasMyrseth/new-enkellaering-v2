@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useMemo } from "react"
 import {
     Card,
     CardContent,
@@ -15,13 +15,13 @@ import {
     ChartTooltip,
     ChartTooltipContent,
   } from "@/components/ui/chart";
-  
+
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
 import { Classes } from "./types";
 import { toast } from "sonner";
-  
+import { Skeleton } from "@/components/ui/skeleton";
+import { useClasses } from "@/hooks/use-classes";
 
-const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
 
 function calculatePayment(classSession: Classes, hourlyCharge: number, discount?: number): number {
     const start = new Date(classSession.started_at);
@@ -55,11 +55,9 @@ function getDaysInMonth(year :number, month :number) {
 }
 
 export function DailyRevenueChart() {
-    const token = localStorage.getItem('token')
-    const [chartData, setChartData] = useState<Classes[]>()
-    const [formattedChartData, setFormattedChartdata] = useState<FormattedClass[]>([])
-    const [totalPayment, setTotalPayment] = useState<number>(0); // Use state for totalPayment
+    const [chartData, loading, error] = useClasses()
 
+    if (error) toast.error(error);
 
     const chartConfig = {
         desktop: {
@@ -72,53 +70,27 @@ export function DailyRevenueChart() {
         },
     } satisfies ChartConfig
 
-    useEffect( () => {
-        async function fetchRevenue() {
-            try {
-                const response = await fetch(`${BASEURL}/get-all-classes`, {
-                    method: "GET",
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                      }
-                })
-
-                if (!response.ok) {
-                    toast.error("An error happened while fetching revenue")
-                }
-
-                const data = await response.json()
-                const classes = data.classes
-
-                setChartData(classes)
-
-            }
-            catch {
-                toast.error("An error happened while fetching revenue")
-            }
+    const { formattedChartData, totalPayment } = useMemo(() => {
+        if (!chartData || chartData.length === 0) {
+            return { formattedChartData: [] as FormattedClass[], totalPayment: 0 };
         }
-        fetchRevenue()
-    },[token])
 
-    //fetching chartData
-    useEffect(() => {
-        if (!chartData) return; // or if (chartData.length === 0) return;
-        
         const currentDate = new Date();
         const currentMonth = currentDate.getMonth();
         const numberOfDays = getDaysInMonth(currentDate.getFullYear(), currentMonth + 1);
-      
-        let totalPayment = 0;
+
+        let total = 0;
         const tempFormattedData: FormattedClass[] = [];
-      
+
         for (let day = 1; day <= numberOfDays; day++) {
           const thisDate = new Date(currentDate.getFullYear(), currentMonth, day);
           const thisDateString = thisDate.toISOString().split("T")[0];
-      
+
           let totalPaymentToday = 0;
-      
+
           chartData.forEach((c) => {
             const startedAtDate = new Date(c.started_at);
-            const startedAtString = startedAtDate.toISOString().split("T")[0]; 
+            const startedAtString = startedAtDate.toISOString().split("T")[0];
             if (startedAtString === thisDateString) {
                 const discount = c.students?.discount || 0
                 if (c.groupclass) {
@@ -129,23 +101,35 @@ export function DailyRevenueChart() {
                 }
             }
           });
-      
+
           tempFormattedData.push({
             started_at: thisDateString,
             payment: totalPaymentToday,
           });
-      
-          totalPayment += totalPaymentToday;
+
+          total += totalPaymentToday;
         }
-      
-        // Now do just one update
-        setFormattedChartdata(tempFormattedData);
-        setTotalPayment(totalPayment);
-      }, [chartData]);
-    
-    
-    if (formattedChartData?.length === 0) {
-        return <p>Loading...</p>;
+
+        return { formattedChartData: tempFormattedData, totalPayment: total };
+    }, [chartData]);
+
+    if (loading) {
+        return (
+            <div className="w-full h-full">
+                <Card>
+                    <CardHeader>
+                        <Skeleton className="h-6 w-64 mb-2" />
+                        <Skeleton className="h-4 w-24" />
+                    </CardHeader>
+                    <CardContent>
+                        <Skeleton className="h-64 w-full" />
+                    </CardContent>
+                    <CardFooter>
+                        <Skeleton className="h-5 w-56" />
+                    </CardFooter>
+                </Card>
+            </div>
+        );
     }
 
 

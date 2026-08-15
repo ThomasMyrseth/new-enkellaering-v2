@@ -44,23 +44,16 @@ def get_teacher_for_student_route(user_id):
         return jsonify({"message": str(e)}), 500
 
 
+from db.gets import get_all_teachers_inc_resigned
+
 @teacher_bp.route('/get-all-teachers', methods=["GET"])
 def get_all_teachers_route():
     try:
-        teachers = get_all_teachers()
+        resigned = request.args.get('resigned', 'false').lower() == 'true'
+        teachers = get_all_teachers_inc_resigned() if resigned else get_all_teachers()
         return jsonify({"teachers": teachers}), 200
     except Exception as e:
         logging.exception("Failed to fetch all teachers")
-        return jsonify({"message": str(e)}), 500
-    
-from db.gets import get_all_teachers_inc_resigned
-@teacher_bp.route('/get-all-teachers-inc-resigned', methods=["GET"])
-def get_all_teachers_inc_resigned_route():
-    try:
-        teachers = get_all_teachers_inc_resigned()
-        return jsonify({"teachers": teachers}), 200
-    except Exception as e:
-        logging.exception("Failed to fetch all teachers including resigned")
         return jsonify({"message": str(e)}), 500
 
 @teacher_bp.route('/get-all-teachers-join-students', methods=["GET"])

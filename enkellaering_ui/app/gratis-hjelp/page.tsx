@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Loader2 } from "lucide-react"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { HelpSession, HelpQueueEntry } from "../admin/types"
+import { HelpSession } from "../admin/types"
 import { event } from "@/components/facebookPixel/fpixel"
 import Link from "next/link"
 import { toast } from "sonner"
@@ -15,14 +15,15 @@ import DitherShader from "@/components/ui/dither-shader"
 import WaitlistForm from "@/components/waitlistForm"
 import { motion } from "framer-motion"
 import { useTheme } from "next-themes"
-
-const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080"
+import { useActiveHelpSessions, useUpcomingHelpSessions } from "@/hooks/use-help-sessions"
+import { useHelpQueuePosition } from "@/hooks/use-help-queue-position"
+import { apiFetch } from "@/lib/api"
 
 const DAYS_NO = ["Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag", "Lørdag", "Søndag"]
 
 export default function FreeHelpPage() {
-  const [activeSessions, setActiveSessions] = useState<HelpSession[]>([])
-  const [futureSessions, setFutureSessions] = useState<HelpSession[]>([])
+  const [activeSessions, isFetchingSessions] = useActiveHelpSessions()
+  const [futureSessions] = useUpcomingHelpSessions()
   const [selectedSession, setSelectedSession] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     student_name: "",
@@ -32,15 +33,24 @@ export default function FreeHelpPage() {
     description: ""
   })
   const [queueId, setQueueId] = useState<string | null>(null)
-  const [position, setPosition] = useState<HelpQueueEntry | null>(null)
   const [zoomJoinLink, setZoomJoinLink] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+  const [terminalReached, setTerminalReached] = useState(false)
   const pixelSize: number = 2
 
-  // ✅ Loader state for sessions fetching
-  const [isFetchingSessions, setIsFetchingSessions] = useState<boolean>(true)
-  const [hasLoadedSessions, setHasLoadedSessions] = useState<boolean>(false)
+  // Stop polling once the session reaches a terminal status
+  const [position] = useHelpQueuePosition(terminalReached ? null : queueId, {
+    onNotFound: () => handleLeaveQueue()
+  })
+
+  useEffect(() => {
+    if (!position) return
+    setLastUpdated(new Date())
+    if (position.status === "completed" || position.status === "no_show") {
+      setTerminalReached(true)
+    }
+  }, [position])
 
   // Load queue state from localStorage on mount
   useEffect(() => {
@@ -61,91 +71,12 @@ export default function FreeHelpPage() {
         console.error("Failed to parse saved form data", e)
       }
     }
-
-    fetchActiveSessions()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  useEffect(() => {
-    if (queueId) {
-      fetchPosition()
-
-      // Stop polling if status is completed or no_show
-      if (position?.status === "completed" || position?.status === "no_show") {
-        return
-      }
-
-      const interval = setInterval(() => {
-        fetchPosition()
-      }, 5000) // Poll every 5 seconds
-
-      return () => clearInterval(interval)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queueId, position?.status])
-
-  async function fetchActiveSessions() {
-    setIsFetchingSessions(true)
-    try {
-      const response = await fetch(`${BASEURL}/help-sessions/active`)
-      if (!response.ok) {
-        console.error("Failed to fetch active sessions")
-        return
-      }
-      const data = await response.json()
-      setActiveSessions(data.sessions || [])
-
-      // If no active sessions, fetch future sessions
-      if (!data.sessions || data.sessions.length === 0) {
-        await fetchFutureSessions()
-      }
-    } catch (error) {
-      console.error("Failed to fetch active sessions:", error)
-    } finally {
-      setIsFetchingSessions(false)
-      setHasLoadedSessions(true)
-    }
-  }
-
-  async function fetchFutureSessions() {
-    try {
-      const response = await fetch(`${BASEURL}/help-sessions`)
-      if (!response.ok) {
-        console.error("Failed to fetch future sessions")
-        return
-      }
-      const data = await response.json()
-      setFutureSessions(data.sessions || [])
-    } catch (error) {
-      console.error("Failed to fetch future sessions:", error)
-    }
-  }
-
-  async function fetchPosition() {
-    if (!queueId) return
-
-    try {
-      const response = await fetch(`${BASEURL}/help-queue/position/${queueId}`)
-      if (!response.ok) {
-        console.error("Failed to fetch position")
-        // If 404, the queue entry might be deleted - clear localStorage
-        if (response.status === 404) {
-          handleLeaveQueue()
-        }
-        return
-      }
-      const data = await response.json()
-      setPosition(data.position)
-      setLastUpdated(new Date())
-    } catch (error) {
-      console.error("Failed to fetch position:", error)
-    }
-  }
 
   function handleLeaveQueue() {
     // Clear state
     setQueueId(null)
-    setPosition(null)
+    setTerminalReached(false)
     setZoomJoinLink(null)
     setFormData({
       student_name: "",
@@ -162,9 +93,7 @@ export default function FreeHelpPage() {
 
     //update the server that the user has left the queue
     if (queueId) {
-      fetch(`${BASEURL}/teacher/queue/${queueId}`, {
-        method: "DELETE"
-      }).catch((error) => {
+      apiFetch(`/teacher/queue/${queueId}`, { method: "DELETE", auth: false }).catch((error) => {
         console.error("Failed to notify server about leaving the queue:", error)
         toast.error("Kunne ikke forlate køen. prøv igjen senere.")
       })
@@ -183,24 +112,14 @@ export default function FreeHelpPage() {
 
       event("join-free-help-queue")
 
-      const response = await fetch(`${BASEURL}/help-queue/join`, {
+      const data = await apiFetch<{ queue_id: string; zoom_join_link: string }>("/help-queue/join", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: payload,
+        auth: false
       })
 
-      if (!response.ok) {
-        const error = await response.json()
-        toast.error(error.error || "Noe gikk galt")
-        setLoading(false)
-        return
-      }
-
-      const data = await response.json()
       setQueueId(data.queue_id)
       setZoomJoinLink(data.zoom_join_link)
-
-      console.log("recieved zoom link:", data.zoom_join_link)
 
       // Save to localStorage for persistence across refreshes (only if values exist)
       if (data.queue_id) {
@@ -212,7 +131,7 @@ export default function FreeHelpPage() {
       localStorage.setItem("help_form_data", JSON.stringify(formData))
     } catch (error) {
       console.error("Failed to join queue:", error)
-      toast.error("Kunne ikke bli med i køen")
+      toast.error(error instanceof Error ? error.message : "Kunne ikke bli med i køen")
     } finally {
       setLoading(false)
     }
@@ -461,7 +380,7 @@ export default function FreeHelpPage() {
         </div>
 
         {/* ✅ FIX: loader gates the entire "no sessions" UI */}
-        {isFetchingSessions && !hasLoadedSessions ? (
+        {isFetchingSessions ? (
           <Card className="bg-white dark:bg-black rounded-lg">
             <CardHeader>
               <CardTitle className="text-neutral-800 dark:text-neutral-200">Ser etter tilgjengelige lærere...</CardTitle>

@@ -20,18 +20,17 @@ import {
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Student, ClassesJoinTeacher } from "../admin/types";
-import { toast } from "sonner";
 import { formatDateTime } from "@/lib/utils";
+import { useClassesForStudent } from "@/hooks/use-classes-for-student";
+import { Skeleton } from "@/components/ui/skeleton";
 
-export function PreviousClasses({student} : {student : Student}) {     
-    const token = localStorage.getItem('token') 
-    const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8080' 
+export function PreviousClasses({student} : {student : Student}) {
+    const token = localStorage.getItem('token')
     const router = useRouter()
 
-    const [classes, setClasses] = useState<ClassesJoinTeacher[]>();
+    const [classes, loading] = useClassesForStudent();
     const [firstTenClasses, setFirstTenclasses] = useState<ClassesJoinTeacher[]>()
     const [remainingClasses, setRemainingClasses] = useState<ClassesJoinTeacher[]>()
-    const [loading, setLoading] = useState<boolean>(true)
     let totalAmount :number = 0
 
     let hoursOfClassesLastFourWeeks :number = 0
@@ -39,38 +38,10 @@ export function PreviousClasses({student} : {student : Student}) {
     const fourWeeksAgo = new Date(now)
     fourWeeksAgo.setDate(now.getDate() - 28); // Subtract 21 days
 
-    //get classes for student
     useEffect( () => {
         if (!token) {
             router.push('/login')
         }
-
-        async function fetchClasses() {
-            const response = await fetch(`${BASEURL}/get-classes-for-student`, {
-                method: "GET",
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                },
-            })
-
-            if(!response.ok) {
-                toast.error("En feil har skjedd, prøv igjen")
-                return null;
-            }
-
-            const data = await response.json()
-            const classes = data.classes
-
-            if (classes.length === 0) {
-                setLoading(false)
-            }
-            else {
-                setClasses(classes)
-                setLoading(false)
-            }
-        }
-        fetchClasses()
-    
     },[])
 
     if (classes) {
@@ -122,7 +93,7 @@ export function PreviousClasses({student} : {student : Student}) {
 
 
     if (loading) {
-        return <p>Loading...</p>
+        return <Skeleton className="h-60 w-full" />
     }
 
       

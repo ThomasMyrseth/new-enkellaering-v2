@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { useRouter } from "next/navigation";
-  
+
 import { DailyRevenueChart } from "./dailyRevenue";
 import { TeacherName } from "./teacherName";
 import { NewStudentsWorkflow } from "./newStudentsWorkflow";
@@ -12,13 +12,14 @@ import { StudentsWithoutAnyTeachers } from "./studentsWithoutTeacher";
 import Quiz from "./quiz/main";
 import AnalyticsOverview from "./analyticsOverview";
 
-import { Teacher } from "./types";
 import { InactiveStudents } from "./inactiveStudents";
 import { ResignedTeachers } from "./resignedTeachers";
 import { TasksWorkflow } from "./tasksWorkflow";
 import { TeacherTasksWorkflow } from "./teacherTasksWorkflow";
 import { HelpAdminPanel } from "./helpAdmin";
 import { toast } from "sonner";
+import { useTeacher } from "@/hooks/use-teacher";
+import { Skeleton } from "@/components/ui/skeleton";
 
 
 
@@ -27,53 +28,34 @@ export default function AdminPage() {
     const token = localStorage.getItem('token')!
     const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080"
     const router = useRouter()
-    const [teacher, setTeacher] = useState<Teacher>()
+    const [teacher, loading, error] = useTeacher()
 
+    if (error) toast.error("Failed to fetch teacher: " + error);
 
-    //fetch the current logged in teacher, and redirect if he is not admin
+    //redirect if the current logged in teacher is not an admin
     useEffect(() => {
+      if (loading) return
 
-      async function fetchTeacher() {
-        try {
-          const response = await fetch(`${BASEURL}/get-teacher`, {
-            method: "GET",
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
-    
-          if (!response.ok) {
-            toast.error("Failed to fetch teacher: " + response.statusText);
-            
-            return false
-          }
-    
-          const data = await response.json();
-          const teacher = data.teacher;
-
-          if (!teacher) {
-            console.log("error fetching teacher!")
-            router.push("/error")
-          }
-          if (!teacher.admin) {
-            console.log(`${teacher.firstname} er ikke admin!`)
-            router.push("/login-laerer")
-          }
-
-          setTeacher(teacher)
-
-        } 
-        catch (error) {
-          console.error("Error fetching teacher:", error);
-          router.push("/error")
-        }
+      if (!teacher) {
+        console.log("error fetching teacher!")
+        router.push("/error")
+        return
       }
-      fetchTeacher()
-    },[router, token, BASEURL])
+      if (!teacher.admin) {
+        console.log(`${teacher.firstname} er ikke admin!`)
+        router.push("/login-laerer")
+      }
+    },[router, loading, teacher])
 
     //this user is an admin
-    if (!teacher) {
-        return <p>Loading...</p>
+    if (loading || !teacher) {
+        return (
+            <div className="w-full min-h-screen max-w-full bg-stone-100 dark:bg-slate-950 p-4 space-y-4">
+                <Skeleton className="h-10 w-64" />
+                <Skeleton className="h-40 w-full" />
+                <Skeleton className="h-40 w-full" />
+            </div>
+        )
     }
 
     return (<div className="w-full min-h-screen max-w-full bg-stone-100 dark:bg-slate-950 ">

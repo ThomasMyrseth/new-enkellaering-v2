@@ -22,54 +22,29 @@ import {
     AlertDialogTrigger,
   } from "@/components/ui/alert-dialog"
   
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { NewStudent } from "./types";
 import { toast } from "sonner";
-
-const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
+import { apiFetch, ApiError } from "@/lib/api";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useNewStudents } from "@/hooks/use-new-students";
 
 
 
 export function NewStudentsWorkflow() {
-    const token = localStorage.getItem('token')
-    const [loading, setLoading] = useState<boolean>(true)
-    const [newStudents, setNewStudents] = useState<NewStudent[]>()
+    const [newStudents, loading, error] = useNewStudents()
 
-    //get all new students
-    useEffect( () => {
-        async function getNewStudents() {
-            const response = await fetch(`${BASEURL}/get-new-students`, {
-                method: "GET",
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            })
+    if (error) toast.error(error)
 
-            if (!response.ok) {
-                toast.error("Error fetching new students " + response.statusText)
-                return null
-            }
-
-            const data = await response.json()
-            const newStudents :NewStudent[] = data.new_students
-
-            if (newStudents.length===0) {
-                setLoading(false)
-                setNewStudents([])
-                return null
-            }
-
-            else {
-                setNewStudents(newStudents)
-                setLoading(false)
-            }
-        }
-
-        getNewStudents()
-    },[token])
-
-    if (loading ) {
-        return <p>Loading...</p>
+    if (loading) {
+        return (
+            <div className="overflow-x-auto w-full sm:max-w-screen-sm md:max-w-screen-md lg:max-w-screen-lg xl:max-w-screen-xl 2xl:max-w-screen-2xl">
+                <Skeleton className="h-6 w-48 mt-4 mb-4" />
+                <Skeleton className="h-10 w-full mb-2" />
+                <Skeleton className="h-10 w-full mb-2" />
+                <Skeleton className="h-10 w-full" />
+            </div>
+        )
     }
 
     if (!newStudents) {
@@ -81,7 +56,7 @@ export function NewStudentsWorkflow() {
             <NewStudentTable newStudents={newStudents}/>
     </div>
     )
-    
+
 
 }
 
@@ -172,8 +147,6 @@ const NewStudentTable =( {newStudents} : {newStudents : NewStudent[]})  => {
 
 
 function NewStudentRow({ ns }: { ns: NewStudent }) {
-    const token = localStorage.getItem('token')
-
     const [hasCalled, setHasCalled] = useState<boolean>(ns.has_called)
     const [calledAt, setCalledAt] = useState<Date>(new Date(ns.called_at))
     const [hasAnswered, setHasAnswered] = useState<boolean>(ns.has_answered)
@@ -220,61 +193,43 @@ function NewStudentRow({ ns }: { ns: NewStudent }) {
     }
 
     const handleSaveClick = async () => {
-
-        const response = await fetch(`${BASEURL}/update-new-student`, {
-            method: "POST",
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json' // Added Content-Type header
-            },
-            body: JSON.stringify({
-                "new_student_id": ns.new_student_id,
-                "phone" : ns.phone,
-                "has_called": hasCalled,
-                "called_at": calledAt || null,
-                "has_answered": hasAnswered,
-                "answered_at": answeredAt || null,
-                "from_referal": fromReferal,
-                "referee_phone": refereePhone || null,
-                "has_finished_onboarding": hasFinishedOnboarding,
-                "finished_onboarding_at": finishedOnboardingAt || null,
-                "comments": comments || null,
-                "paid_referee": paidReferee,
-                "paid_referee_at": paidRefereeAt || null,
+        try {
+            await apiFetch("/update-new-student", {
+                method: "POST",
+                body: {
+                    "new_student_id": ns.new_student_id,
+                    "phone" : ns.phone,
+                    "has_called": hasCalled,
+                    "called_at": calledAt || null,
+                    "has_answered": hasAnswered,
+                    "answered_at": answeredAt || null,
+                    "from_referal": fromReferal,
+                    "referee_phone": refereePhone || null,
+                    "has_finished_onboarding": hasFinishedOnboarding,
+                    "finished_onboarding_at": finishedOnboardingAt || null,
+                    "comments": comments || null,
+                    "paid_referee": paidReferee,
+                    "paid_referee_at": paidRefereeAt || null,
+                }
             })
-        })
-
-        if (!response.ok) {
-            toast.error("Error while saving updates to new student")
-            return null;
-        }
-        else {
             toast.success("Oppdateringer lagret")
+        } catch (error) {
+            toast.error(error instanceof ApiError ? error.message : "Error while saving updates to new student")
         }
-        
     }
 
     const handleDelete = async () => {
-
-        const response = await fetch(`${BASEURL}/hide-new-student-from-new-students-table`, {
-            method: "POST",
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json' // Added Content-Type header
-            },
-            body: JSON.stringify({
-                new_student_id : ns.new_student_id
+        try {
+            await apiFetch("/hide-new-student-from-new-students-table", {
+                method: "POST",
+                body: {
+                    new_student_id : ns.new_student_id
+                }
             })
-        })
-
-        if (!response.ok) {
-            toast.error("Error while deleting new student")
-            return null;
-        }
-        else {
             toast.success("Eleven er slettet")
+        } catch (error) {
+            toast.error(error instanceof ApiError ? error.message : "Error while deleting new student")
         }
-
     }
 
     return(

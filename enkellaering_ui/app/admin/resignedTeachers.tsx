@@ -1,6 +1,7 @@
 "use client"
-import React, {useEffect, useState} from "react"
+import React, {useMemo} from "react"
 import { Teacher } from "./types"
+import { useTeachers } from "@/hooks/use-teachers"
 
 import {
     Table,
@@ -12,6 +13,7 @@ import {
 } from "@/components/ui/table"
 
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
 import {
     Accordion,
@@ -21,40 +23,37 @@ import {
 } from "@/components/ui/accordion"
 
 export const ResignedTeachers = () => {
-    const [teachers, setTeachers] = useState<Teacher[]>([])
+    const [teachers, loading, error] = useTeachers(true)
 
-    //fetch data
-    useEffect(() => {
-        async function fetchData() {
-            const token = localStorage.getItem('token')
-            if (!token) {
-                toast.error("Token not found")
-                return
-            }
-            const t: Teacher[] =  await getTeachers(token)
-
-            //cronological sort - most recent resignations first
-            t.sort((a: Teacher, b: Teacher) => {
+    const resignedTeachers = useMemo(() => {
+        return teachers
+            .filter(t => t.resigned === true)
+            .sort((a: Teacher, b: Teacher) => {
                 // Handle null/undefined resigned_at dates
                 if (!a.resigned_at && !b.resigned_at) return 0;
                 if (!a.resigned_at) return 1; // Put teachers without resigned_at at the end
                 if (!b.resigned_at) return -1;
-                
+
                 const dateA = new Date(a.resigned_at);
                 const dateB = new Date(b.resigned_at);
-                
+
                 // Most recent resignations first (reverse chronological)
                 return dateB.getTime() - dateA.getTime();
             });
-            setTeachers(t)
-        }
+    }, [teachers]);
 
-        fetchData()
-    },[])
+    if (error) toast.error("Error fetching teachers: " + error);
 
-    
-
-    const resignedTeachers = teachers.filter(t => t.resigned === true);
+    if (loading) {
+        return (
+            <div className="w-full flex flex-col items-center justify-center shadow-lg dark:bg-black bg-white rounded-lg p-4">
+                <Skeleton className="h-6 w-48 mt-4 mb-4" />
+                <Skeleton className="h-10 w-full mb-2" />
+                <Skeleton className="h-10 w-full mb-2" />
+                <Skeleton className="h-10 w-full" />
+            </div>
+        )
+    }
 
     const TeacherRow = ({ teacher }: { teacher: Teacher }) => (
         <TableRow key={teacher.user_id}>
@@ -137,34 +136,5 @@ const handleReactivateTeacher = async (teacher: Teacher) => {
 
     } catch (error) {
         toast.error(`Failed to reactivate teacher: ${error}`);
-    }
-}
-
-
-
-async function getTeachers(token :string) {
-    const BASEURL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080";
-
-    const response = await fetch(`${BASEURL}/get-all-teachers-inc-resigned`, {
-        method: "GET",
-        headers: {
-            'Authorization': `Bearer ${token}`
-        }
-    });
-
-    if (!response.ok) {
-        toast.error("Error fetching teachers " + response.statusText);
-        return [];
-    }
-
-    const data = await response.json();
-    const teachers: Teacher[] = data.teachers;
-
-    if (teachers.length === 0) {
-        toast.error("No teachers found");
-        console.log("No teachers found");
-        return [];
-    } else {
-        return teachers;
     }
 }
