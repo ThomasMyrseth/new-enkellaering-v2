@@ -61,3 +61,38 @@ def token_required(f):
 
     return decorated
 
+
+TASKS_INVOKER_SA = os.getenv("TASKS_INVOKER_SA", "")
+SERVICE_URL = os.getenv("SERVICE_URL", "")
+
+
+def verify_cloud_tasks_oidc(f):
+    """Verifies the OIDC token Cloud Tasks attaches to its HTTP task requests."""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        from google.oauth2 import id_token
+        from google.auth.transport import requests as google_requests
+
+        auth_header = request.headers.get('Authorization', '')
+        parts = auth_header.split()
+        if len(parts) != 2 or parts[0].lower() != 'bearer':
+            logging.warning("Cloud Tasks OIDC token missing from request.")
+            return jsonify({'error': 'Unauthorized'}), 401
+
+        token = parts[1]
+        try:
+            claims = id_token.verify_oauth2_token(
+                token, google_requests.Request(), audience=SERVICE_URL
+            )
+        except Exception as e:
+            logging.warning(f"Invalid Cloud Tasks OIDC token: {e}")
+            return jsonify({'error': 'Unauthorized'}), 401
+
+        if claims.get('email') != TASKS_INVOKER_SA or not claims.get('email_verified'):
+            logging.warning(f"Unexpected Cloud Tasks OIDC token issuer: {claims.get('email')}")
+            return jsonify({'error': 'Unauthorized'}), 401
+
+        return f(*args, **kwargs)
+
+    return decorated
+

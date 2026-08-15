@@ -2,12 +2,12 @@ from flask import Blueprint, request, jsonify
 import logging
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
-from google.cloud import pubsub_v1
 import os
 import json
 from babel.dates import format_datetime
 
 from .config import token_required
+from .tasks_client import enqueue_email_task
 from db.gets import (
     get_teacher_help_config,
     get_active_help_sessions,
@@ -266,7 +266,7 @@ def complete_student(user_id, queue_id):
     try:
         update_queue_status(queue_id, 'completed')
 
-        # Publish completion email to pub/sub
+        # Enqueue completion email via Cloud Tasks
         try:
             # Get queue position data which includes teacher info
             position_data = get_queue_position(queue_id)
@@ -304,12 +304,9 @@ def complete_student(user_id, queue_id):
                 if position_data.get('teachers'):
                     teacher_name = f"{position_data['teachers'].get('firstname', '')} {position_data['teachers'].get('lastname', '')}".strip()
 
-                # Publish to pub/sub
+                # Enqueue via Cloud Tasks
                 project_id = os.getenv("GCP_PROJECT_ID")
                 if project_id:
-                    publisher = pubsub_v1.PublisherClient()
-                    topic_path = publisher.topic_path(project_id, "send-help-queue-completion-email")
-
                     message_data = {
                         "completion_type": "completed",
                         "student_name": position_data['student_name'],
@@ -320,15 +317,12 @@ def complete_student(user_id, queue_id):
                         "session_date": session_date_formatted
                     }
 
-                    message_json = json.dumps(message_data)
-                    message_bytes = message_json.encode("utf-8")
-
-                    publisher.publish(topic_path, message_bytes)
-                    logging.info(f"Published completion email for queue_id {queue_id}")
+                    enqueue_email_task("/tasks/send-help-queue-completion-email", message_data)
+                    logging.info(f"Enqueued completion email for queue_id {queue_id}")
                 else:
-                    logging.warning("GCP_PROJECT_ID not set, skipping pub/sub publish")
+                    logging.warning("GCP_PROJECT_ID not set, skipping Cloud Tasks enqueue")
         except Exception as e:
-            logging.error(f"Failed to publish completion email: {e}")
+            logging.error(f"Failed to enqueue completion email: {e}")
             # Don't fail the request if email fails
 
         return jsonify({"message": "Student fullført"}), 200
@@ -344,7 +338,7 @@ def mark_no_show(user_id, queue_id):
     try:
         update_queue_status(queue_id, 'no_show')
 
-        # Publish no-show email to pub/sub
+        # Enqueue no-show email via Cloud Tasks
         try:
             # Get queue position data which includes teacher info
             position_data = get_queue_position(queue_id)
@@ -371,12 +365,9 @@ def mark_no_show(user_id, queue_id):
                 if position_data.get('teachers'):
                     teacher_name = f"{position_data['teachers'].get('firstname', '')} {position_data['teachers'].get('lastname', '')}".strip()
 
-                # Publish to pub/sub
+                # Enqueue via Cloud Tasks
                 project_id = os.getenv("GCP_PROJECT_ID")
                 if project_id:
-                    publisher = pubsub_v1.PublisherClient()
-                    topic_path = publisher.topic_path(project_id, "send-help-queue-completion-email")
-
                     message_data = {
                         "completion_type": "no_show",
                         "student_name": position_data['student_name'],
@@ -387,15 +378,12 @@ def mark_no_show(user_id, queue_id):
                         "session_date": session_date_formatted
                     }
 
-                    message_json = json.dumps(message_data)
-                    message_bytes = message_json.encode("utf-8")
-
-                    publisher.publish(topic_path, message_bytes)
-                    logging.info(f"Published no-show email for queue_id {queue_id}")
+                    enqueue_email_task("/tasks/send-help-queue-completion-email", message_data)
+                    logging.info(f"Enqueued no-show email for queue_id {queue_id}")
                 else:
-                    logging.warning("GCP_PROJECT_ID not set, skipping pub/sub publish")
+                    logging.warning("GCP_PROJECT_ID not set, skipping Cloud Tasks enqueue")
         except Exception as e:
-            logging.error(f"Failed to publish no-show email: {e}")
+            logging.error(f"Failed to enqueue no-show email: {e}")
             # Don't fail the request if email fails
 
         return jsonify({"message": "Student markert som ikke møtt"}), 200

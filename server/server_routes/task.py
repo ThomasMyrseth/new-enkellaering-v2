@@ -3,17 +3,12 @@ import json
 import os
 import logging
 
-from google.cloud import pubsub_v1
-
 from .config import token_required
+from .tasks_client import enqueue_email_task
 from db.gets import is_admin
 from db.tasks import create_new_tasks, create_new_tasks_for_teachers, get_all_open_tasks, get_all_open_teacher_tasks, update_status_on_task, close_task
 
 task_bp = Blueprint('task', __name__)
-
-publisher = pubsub_v1.PublisherClient()
-GCP_PROJECT_ID = os.getenv('GCP_PROJECT_ID', 'no_project_id')
-TOPIC_NEW_TASKS_ADMIN = publisher.topic_path(GCP_PROJECT_ID, "send-new-tasks-admin-email")
 
 @task_bp.route('/inactive-students', methods=["POST"])
 def create_inactive_student_tasks():
@@ -27,13 +22,10 @@ def create_inactive_student_tasks():
                     "task_type": "student",
                     "names": created_names
                 }
-                publisher.publish(
-                    TOPIC_NEW_TASKS_ADMIN,
-                    json.dumps(message).encode("utf-8")
-                )
-                logging.info(f"Published new student tasks email for {len(created_names)} students")
+                enqueue_email_task("/tasks/send-new-tasks-admin-email", message)
+                logging.info(f"Enqueued new student tasks email for {len(created_names)} students")
             except Exception as e:
-                logging.error(f"Failed to publish new tasks email: {e}")
+                logging.error(f"Failed to enqueue new tasks email: {e}")
 
         return jsonify({"message": "Tasks created successfully", "count": len(created_names)}), 200
     except Exception as e:
@@ -55,13 +47,10 @@ def create_inactive_teacher_tasks():
                     "task_type": "teacher",
                     "names": created_names
                 }
-                publisher.publish(
-                    TOPIC_NEW_TASKS_ADMIN,
-                    json.dumps(message).encode("utf-8")
-                )
-                logging.info(f"Published new teacher tasks email for {len(created_names)} teachers")
+                enqueue_email_task("/tasks/send-new-tasks-admin-email", message)
+                logging.info(f"Enqueued new teacher tasks email for {len(created_names)} teachers")
             except Exception as e:
-                logging.error(f"Failed to publish new tasks email: {e}")
+                logging.error(f"Failed to enqueue new tasks email: {e}")
 
         return jsonify({"message": "Tasks created successfully", "count": len(created_names)}), 200
     except Exception as e:
