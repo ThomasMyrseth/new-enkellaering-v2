@@ -129,7 +129,7 @@ export function PreviousClassesForEachStudent() {
         return (<div key={index} className="bg-white dark:bg-black w-full p-4 rounded-lg mb-4">
             <Accordion type="single" collapsible className="w-full mt-4">
             <AccordionItem value="remaining-classes">
-                <StudentAccordionHeader student={s} myClasses={myClasses} myTeachers={myTeachers} />
+                <StudentAccordionHeader student={s} myClasses={myClasses} />
                 <AccordionContent>
 
                     {!myTeachers.length &&
