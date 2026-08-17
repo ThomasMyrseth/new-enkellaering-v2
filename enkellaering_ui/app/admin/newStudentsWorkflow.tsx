@@ -136,7 +136,6 @@ const NewStudentTable =( {newStudents, onDelete} : {newStudents : NewStudent[], 
                             <TableHead>Referansen er betalt</TableHead>
                             <TableHead>Ny elev har fullført oppstart</TableHead>
                             <TableHead>Kommentarer</TableHead>
-                            <TableHead>Lagre</TableHead>
                             <TableHead>Slett ny elev</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -173,31 +172,7 @@ function NewStudentRow({ ns, onDelete }: { ns: NewStudent, onDelete: (newStudent
 
 
 
-    const handleSetCalled = (value :string) => {
-        const isCalled = value === "Ja"; // Convert value to boolean
-        setHasCalled(isCalled)
-        setCalledAt(new Date())
-    }
-
-    const handleSetAnswered = (value :string) => {
-        const isAnswered = value === "Ja"; // Convert value to boolean
-        setHasAnswered(isAnswered)
-        setAnsweredAt(new Date())
-    }
-
-    const handleSetFinishedOnboarding = (value :string) => {
-        const isFinishedOnboarding = value === "Ja"; // Convert value to boolean
-        setHasFinishedOnboarding(isFinishedOnboarding)
-        setFinishedOnboardingAt(new Date())
-    }
-
-    const handleSetPaidReferee = (value :string) => {
-        const isPaidReferee = value === "Ja"; // Convert value to boolean
-        setPaidReferee(isPaidReferee)
-        setPaidRefereeAt(new Date())
-    }
-
-    const handleSaveClick = async () => {
+    const saveUpdates = async (overrides: Record<string, unknown> = {}) => {
         try {
             await apiFetch("/update-new-student", {
                 method: "POST",
@@ -215,12 +190,45 @@ function NewStudentRow({ ns, onDelete }: { ns: NewStudent, onDelete: (newStudent
                     "comments": comments || null,
                     "paid_referee": paidReferee,
                     "paid_referee_at": paidRefereeAt || null,
+                    ...overrides,
                 }
             })
             toast.success("Oppdateringer lagret")
         } catch (error) {
             toast.error(error instanceof ApiError ? error.message : "Error while saving updates to new student")
         }
+    }
+
+    const handleSetCalled = (value :string) => {
+        const isCalled = value === "Ja"; // Convert value to boolean
+        const newCalledAt = new Date()
+        setHasCalled(isCalled)
+        setCalledAt(newCalledAt)
+        saveUpdates({ has_called: isCalled, called_at: newCalledAt })
+    }
+
+    const handleSetAnswered = (value :string) => {
+        const isAnswered = value === "Ja"; // Convert value to boolean
+        const newAnsweredAt = new Date()
+        setHasAnswered(isAnswered)
+        setAnsweredAt(newAnsweredAt)
+        saveUpdates({ has_answered: isAnswered, answered_at: newAnsweredAt })
+    }
+
+    const handleSetFinishedOnboarding = (value :string) => {
+        const isFinishedOnboarding = value === "Ja"; // Convert value to boolean
+        const newFinishedOnboardingAt = new Date()
+        setHasFinishedOnboarding(isFinishedOnboarding)
+        setFinishedOnboardingAt(newFinishedOnboardingAt)
+        saveUpdates({ has_finished_onboarding: isFinishedOnboarding, finished_onboarding_at: newFinishedOnboardingAt })
+    }
+
+    const handleSetPaidReferee = (value :string) => {
+        const isPaidReferee = value === "Ja"; // Convert value to boolean
+        const newPaidRefereeAt = new Date()
+        setPaidReferee(isPaidReferee)
+        setPaidRefereeAt(newPaidRefereeAt)
+        saveUpdates({ paid_referee: isPaidReferee, paid_referee_at: newPaidRefereeAt })
     }
 
     const handleDelete = async () => {
@@ -301,13 +309,8 @@ function NewStudentRow({ ns, onDelete }: { ns: NewStudent, onDelete: (newStudent
         </TableCell>
 
         <TableCell className="min-w-96">
-            <Textarea placeholder="Noter ned viktig info om eleven" value={comments} onChange={(e) => setComments(e.target.value)} rows={6}/>
+            <Textarea placeholder="Noter ned viktig info om eleven" value={comments} onChange={(e) => setComments(e.target.value)} onBlur={() => saveUpdates()} rows={6}/>
         </TableCell>
-
-        <TableCell>
-            <Button variant="secondary" className="w-full" onClick={handleSaveClick}>Lagre</Button>
-        </TableCell>
-
 
         <TableCell>
             <AlertDialog>

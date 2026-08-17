@@ -2,7 +2,6 @@
 
 import { Copy } from 'lucide-react';
 
-import { AvailableSubject } from './types';
 import { TeacherStudent } from '@/types/teacher-student';
 
 import { DeleteClass } from '../min-side-laerer/deleteClass';
@@ -849,7 +848,6 @@ const PayTeacherPopover = ( {teacher, classes, teacherStudents} : {teacher: Teac
 
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from 'sonner';
-import availableSubjects from '../min-side-laerer/availableSubjects';
 
 const TeacherNotes = ({teacher} : {teacher : Teacher}) => {
     const [notes, setNotes] = useState<string>(teacher.notes)
@@ -859,15 +857,15 @@ const TeacherNotes = ({teacher} : {teacher : Teacher}) => {
     }
 
     return (<div className="flex flex-col my-10">
-        <Textarea  
-                rows={10} 
-                className="w-full mb-2 dark:bg-neutral-800" 
-                value={notes} 
-                onChange={(e) => handleAddNotes(e.target.value)} 
-                id="notes" 
+        <Textarea
+                rows={10}
+                className="w-full mb-2 dark:bg-neutral-800"
+                value={notes}
+                onChange={(e) => handleAddNotes(e.target.value)}
+                onBlur={() => saveNotes(notes, teacher.user_id)}
+                id="notes"
                 placeholder="Noter ned generell info om læreren (kun synlig for admin)"
         />
-        <Button variant="secondary" onClick={() => saveNotes(notes, teacher.user_id)} className="w-full">Lagre</Button>
     </div>)
 }
 
