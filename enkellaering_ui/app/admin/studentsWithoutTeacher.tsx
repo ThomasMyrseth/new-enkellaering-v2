@@ -298,15 +298,15 @@ const StudentNotes = ({student} : {student : Student}) => {
 
   return (
     <div className="flex flex-col my-10">
-      <Textarea  
-        rows={10} 
-        className="w-full mb-2 dark:bg-neutral-800" 
-        value={notes} 
-        onChange={(e) => handleAddNotes(e.target.value)} 
-        id="notes" 
+      <Textarea
+        rows={10}
+        className="w-full mb-2 dark:bg-neutral-800"
+        value={notes}
+        onChange={(e) => handleAddNotes(e.target.value)}
+        onBlur={() => saveNotes(notes, student.user_id)}
+        id="notes"
         placeholder="Noter ned generell info om eleven (kun synlig for admin)"
       />
-      <Button variant="secondary" onClick={() => {saveNotes(notes, student.user_id)}} className="w-full">Lagre</Button>
     </div>
   )
 }
