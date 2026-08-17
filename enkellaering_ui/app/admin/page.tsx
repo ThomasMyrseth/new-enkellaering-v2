@@ -14,7 +14,7 @@ import AnalyticsOverview from "./analyticsOverview";
 
 import { InactiveStudents } from "./inactiveStudents";
 import { ResignedTeachers } from "./resignedTeachers";
-import { StudentTaskWorkflow } from "./tasksWorkflow";
+import { StudentTaskWorkflow } from "./studentTasksWorkflow";
 import { TeacherTasksWorkflow } from "./teacherTasksWorkflow";
 import { HelpAdminPanel } from "./helpAdmin";
 import { toast } from "sonner";
