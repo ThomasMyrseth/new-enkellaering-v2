@@ -22,7 +22,7 @@ import {
     AlertDialogTrigger,
   } from "@/components/ui/alert-dialog"
   
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { NewStudent } from "./types";
 import { toast } from "sonner";
 import { apiFetch, ApiError } from "@/lib/api";
@@ -70,11 +70,29 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { LayoutGrid, TableIcon } from "lucide-react"
 
+type ViewMode = "table" | "cards"
+
+const NEW_STUDENTS_VIEW_MODE_STORAGE_KEY = "newStudentsWorkflow.viewMode"
 
 const NewStudentTable =( {newStudents, onDelete} : {newStudents : NewStudent[], onDelete: (newStudentId: string) => void})  => {
     const [hideCompleted, setHideCompleted] = useState<boolean>(true)
     const [onlyShowUnpaidReferals, setOnlyShowUnpaidReferrals] = useState<boolean>(false)
+    const [viewMode, setViewModeState] = useState<ViewMode>("table")
+
+    useEffect(() => {
+        const stored = localStorage.getItem(NEW_STUDENTS_VIEW_MODE_STORAGE_KEY)
+        if (stored === "table" || stored === "cards") {
+            setViewModeState(stored)
+        }
+    }, [])
+
+    const setViewMode = (mode: ViewMode) => {
+        setViewModeState(mode)
+        localStorage.setItem(NEW_STUDENTS_VIEW_MODE_STORAGE_KEY, mode)
+    }
 
     //order newStudents by created_at
     newStudents.sort((a, b) => {
@@ -100,7 +118,7 @@ const NewStudentTable =( {newStudents, onDelete} : {newStudents : NewStudent[], 
     }
 
     return (<div className="w-full max-w-full bg-white dark:bg-black rounded-sm shadow-lg flex flex-col items-center justify-center overflow-hidden">
-        <div className="flex flex-col space-y-2 items-center">
+        <div className="flex flex-col space-y-2 items-center w-full bg-stone-100 dark:bg-stone-900 rounded-md p-2">
             <div className="flex items-center space-x-2 m-4">
                 <Switch
                     id="hide-completed"
@@ -121,36 +139,69 @@ const NewStudentTable =( {newStudents, onDelete} : {newStudents : NewStudent[], 
                 />
                 <Label htmlFor="only-show-unpaid-referals">Vis kun elever som er referanser og som ikke er betalt</Label>
             </div>
+            <div className="flex items-center space-x-1 rounded-md border border-gray-200 dark:border-gray-800 p-1 mb-2">
+                <Button
+                    type="button"
+                    size="sm"
+                    variant={viewMode === "table" ? "secondary" : "ghost"}
+                    onClick={() => setViewMode("table")}
+                    className="gap-1"
+                >
+                    <TableIcon className="w-4 h-4" />
+                    Tabell
+                </Button>
+                <Button
+                    type="button"
+                    size="sm"
+                    variant={viewMode === "cards" ? "secondary" : "ghost"}
+                    onClick={() => setViewMode("cards")}
+                    className="gap-1"
+                >
+                    <LayoutGrid className="w-4 h-4" />
+                    Kort
+                </Button>
+            </div>
         </div>
 
-        <div className="overflow-x-auto w-full max-w-full">
-        <Table>
-                <TableCaption>Arbeidsoversikt for ny elev ({filteredStudents.length})</TableCaption>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Telefonnummer & dato opprettet</TableHead>
-                            <TableHead>Kilde</TableHead>
-                            <TableHead>Jeg har ringt</TableHead>
-                            <TableHead>Ny elev har svart</TableHead>
-                            <TableHead>Ny elev er en referanse</TableHead>
-                            <TableHead>Referansen er betalt</TableHead>
-                            <TableHead>Ny elev har fullført oppstart</TableHead>
-                            <TableHead>Kommentarer</TableHead>
-                            <TableHead>Slett ny elev</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody className="">
-                        {filteredStudents.map( ns => {
-                            return <NewStudentRow key={ns.new_student_id} ns={ns} onDelete={onDelete}/>
-                        })}
-                    </TableBody>
-        </Table>
-        </div>
+        {viewMode === "table" ? (
+            <div className="overflow-x-auto w-full max-w-full">
+            <Table>
+                    <TableCaption>Arbeidsoversikt for ny elev ({filteredStudents.length})</TableCaption>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Telefonnummer & dato opprettet</TableHead>
+                                <TableHead>Kilde</TableHead>
+                                <TableHead>Jeg har ringt</TableHead>
+                                <TableHead>Ny elev har svart</TableHead>
+                                <TableHead>Ny elev er en referanse</TableHead>
+                                <TableHead>Referansen er betalt</TableHead>
+                                <TableHead>Ny elev har fullført oppstart</TableHead>
+                                <TableHead>Kommentarer</TableHead>
+                                <TableHead>Slett ny elev</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody className="">
+                            {filteredStudents.map( ns => {
+                                return <NewStudentRow key={ns.new_student_id} ns={ns} onDelete={onDelete}/>
+                            })}
+                        </TableBody>
+            </Table>
+            </div>
+        ) : (
+            <div className="w-full max-w-full p-4 bg-stone-100 dark:bg-stone-900 rounded-md">
+                <p className="text-sm text-muted-foreground mb-4 text-center">Arbeidsoversikt for ny elev ({filteredStudents.length})</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
+                    {filteredStudents.map( ns => {
+                        return <NewStudentCard key={ns.new_student_id} ns={ns} onDelete={onDelete}/>
+                    })}
+                </div>
+            </div>
+        )}
     </div>)
 }
 
 
-function NewStudentRow({ ns, onDelete }: { ns: NewStudent, onDelete: (newStudentId: string) => void }) {
+function useNewStudentState(ns: NewStudent, onDelete: (newStudentId: string) => void) {
     const [hasCalled, setHasCalled] = useState<boolean>(ns.has_called)
     const [calledAt, setCalledAt] = useState<Date>(new Date(ns.called_at))
     const [hasAnswered, setHasAnswered] = useState<boolean>(ns.has_answered)
@@ -246,9 +297,39 @@ function NewStudentRow({ ns, onDelete }: { ns: NewStudent, onDelete: (newStudent
         }
     }
 
+    return {
+        hasCalled, hasAnswered, fromReferal, refereePhone, paidReferee, hasFinishedOnboarding, comments, setComments,
+        handleSetCalled, handleSetAnswered, handleSetFinishedOnboarding, handleSetPaidReferee, saveUpdates, handleDelete,
+    }
+}
+
+const DeleteNewStudentDialog = ({ onDelete }: { onDelete: () => void }) => (
+    <AlertDialog>
+        <AlertDialogTrigger asChild><Button variant="destructive">Slett ny elev</Button></AlertDialogTrigger>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+            <AlertDialogTitle>Er du sikker på at du vil slette den nye eleven?</AlertDialogTitle>
+            <AlertDialogDescription>
+                Dette kan ikke angres. Den nye eleven og all tilhørende data slettes permanent fra databasen.
+            </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+            <AlertDialogCancel>Kanseler</AlertDialogCancel>
+            <AlertDialogAction onClick={onDelete}>Continue</AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
+)
+
+function NewStudentRow({ ns, onDelete }: { ns: NewStudent, onDelete: (newStudentId: string) => void }) {
+    const {
+        hasCalled, hasAnswered, fromReferal, refereePhone, paidReferee, hasFinishedOnboarding, comments, setComments,
+        handleSetCalled, handleSetAnswered, handleSetFinishedOnboarding, handleSetPaidReferee, saveUpdates, handleDelete,
+    } = useNewStudentState(ns, onDelete)
+
     return(
     <TableRow className={`w-4/5 max-w-full ${ns.has_finished_onboarding ? "text-gray-400" : ""}`}>
-        <TableCell className="font-medium ">{ns.phone.slice(0, 3)} {ns.phone.slice(3, 5)} {ns.phone.slice(5, 10)} {ns.phone.slice(10, 13)} 
+        <TableCell className="font-medium ">{ns.phone.slice(0, 3)} {ns.phone.slice(3, 5)} {ns.phone.slice(5, 10)} {ns.phone.slice(10, 13)}
                 <br/>
                 {new Intl.DateTimeFormat("nb-NO", {
                     day: "2-digit",
@@ -313,22 +394,94 @@ function NewStudentRow({ ns, onDelete }: { ns: NewStudent, onDelete: (newStudent
         </TableCell>
 
         <TableCell>
-            <AlertDialog>
-            <AlertDialogTrigger asChild><Button variant="destructive">Slett ny elev</Button></AlertDialogTrigger>
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                <AlertDialogTitle>Er du sikker på at du vil slette den nye eleven?</AlertDialogTitle>
-                <AlertDialogDescription>
-                    Dette kan ikke angres. Den nye eleven og all tilhørende data slettes permanent fra databasen.
-                </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                <AlertDialogCancel>Kanseler</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete}>Continue</AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-            </AlertDialog>
+            <DeleteNewStudentDialog onDelete={handleDelete} />
         </TableCell>
     </TableRow>
+    )
+}
+
+function NewStudentCard({ ns, onDelete }: { ns: NewStudent, onDelete: (newStudentId: string) => void }) {
+    const {
+        hasCalled, hasAnswered, fromReferal, refereePhone, paidReferee, hasFinishedOnboarding, comments, setComments,
+        handleSetCalled, handleSetAnswered, handleSetFinishedOnboarding, handleSetPaidReferee, saveUpdates, handleDelete,
+    } = useNewStudentState(ns, onDelete)
+
+    return (
+        <Card className={`flex flex-col h-full w-full shadow-md ${ns.has_finished_onboarding ? "text-gray-400" : ""}`}>
+            <CardHeader>
+                <CardTitle className="text-base font-medium">
+                    {ns.phone.slice(0, 3)} {ns.phone.slice(3, 5)} {ns.phone.slice(5, 10)} {ns.phone.slice(10, 13)}
+                </CardTitle>
+                <div className="text-xs text-muted-foreground">
+                    {new Intl.DateTimeFormat("nb-NO", {
+                        day: "2-digit",
+                        month: "long",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        timeZone: "Europe/Oslo"
+                    }).format(new Date(ns.created_at))}
+                    {" "}
+                    ({Math.floor((Date.now() - new Date(ns.created_at).getTime()) / (1000 * 60 * 60 * 24))} dager siden)
+                </div>
+            </CardHeader>
+            <CardContent className="flex-grow space-y-4">
+                <div className="text-sm">
+                    <span className="font-semibold">Kilde:</span> {ns.meta?.source ?? "-"}
+                </div>
+
+                <div className="flex items-center justify-between gap-2">
+                    <Label className="text-sm font-semibold">Jeg har ringt:</Label>
+                    <RadioGroup onValueChange={handleSetCalled} defaultValue={ns.has_called? "Ja" : "Nei"} value={hasCalled? "Ja" : "Nei"} className="flex flex-row gap-3">
+                        <RadioGroupItem value="Ja" className="text-green-400"></RadioGroupItem>
+                        <RadioGroupItem value="Nei" className="text-red-400 "></RadioGroupItem>
+                    </RadioGroup>
+                </div>
+
+                <div className="flex items-center justify-between gap-2">
+                    <Label className="text-sm font-semibold">Ny elev har svart:</Label>
+                    <RadioGroup defaultValue={ns.has_answered? "Ja" : "Nei"} value={hasAnswered? "Ja" : "Nei"} onValueChange={handleSetAnswered} className="flex flex-row gap-3">
+                        <RadioGroupItem value="Ja" className="text-green-400"></RadioGroupItem>
+                        <RadioGroupItem value="Nei" className="text-red-400"></RadioGroupItem>
+                    </RadioGroup>
+                </div>
+
+                <div className="space-y-1">
+                    <Label className="text-sm font-semibold">Ny elev er en referanse:</Label>
+                    <div className="text-sm">
+                        {fromReferal ? (
+                            <span className="text-gray-400">Fra {ns.referee_name} <br/> tlf: {refereePhone}
+                            <br/> kontoNr: {ns.referee_account_number}
+                            </span>
+                        ) : (
+                            <span className="text-gray-400">Nei</span>
+                        )}
+                    </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-2">
+                    <Label className="text-sm font-semibold">Referansen er betalt:</Label>
+                    <RadioGroup defaultValue={ns.paid_referee? "Ja" : "Nei"} value={paidReferee? "Ja" : "Nei"} onValueChange={handleSetPaidReferee} className="flex flex-row gap-3">
+                        <RadioGroupItem value="Ja" className="text-green-400"></RadioGroupItem>
+                        <RadioGroupItem value="Nei" className="text-red-400"></RadioGroupItem>
+                    </RadioGroup>
+                </div>
+
+                <div className="flex items-center justify-between gap-2">
+                    <Label className="text-sm font-semibold">Ny elev har fullført oppstart:</Label>
+                    <RadioGroup defaultValue={ns.has_finished_onboarding? "Ja" : "Nei"} value={hasFinishedOnboarding? "Ja" : "Nei"} onValueChange={handleSetFinishedOnboarding} className="flex flex-row gap-3">
+                        <RadioGroupItem value="Ja" className="text-green-400"></RadioGroupItem>
+                        <RadioGroupItem value="Nei" className="text-red-400"></RadioGroupItem>
+                    </RadioGroup>
+                </div>
+
+                <div className="space-y-2">
+                    <Label className="text-sm font-semibold">Kommentarer:</Label>
+                    <Textarea placeholder="Noter ned viktig info om eleven" value={comments} onChange={(e) => setComments(e.target.value)} onBlur={() => saveUpdates()} rows={8}/>
+                </div>
+
+                <DeleteNewStudentDialog onDelete={handleDelete} />
+            </CardContent>
+        </Card>
     )
 }

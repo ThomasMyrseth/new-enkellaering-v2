@@ -101,7 +101,7 @@ export function ManualSubmitForm() {
                 <Label htmlFor="comments">Notater</Label>
                 <Textarea
                     id="comments"
-                    placeholder="Lim inn eller skriv notater om eleven"
+                    placeholder="Lim inn eller skriv notater om eleven. Disse havner under Notater på ny-elev oversikten"
                     value={comments}
                     onChange={(e) => setComments(e.target.value)}
                     rows={6}

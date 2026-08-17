@@ -89,8 +89,6 @@ export const InactiveStudents = () => {
     );
 
     return(<div className="w-full flex flex-col items-center justify-center shadow-lg dark:bg-black bg-white rounded-lg p-4">
-        <h3 className="pt-4">Inaktive elever ({inactiveStudents.length})</h3>
-        
         {inactiveStudents.length === 0 ? (
             <p className="text-gray-500 mt-4">Ingen inaktive elever funnet</p>
         ) : (

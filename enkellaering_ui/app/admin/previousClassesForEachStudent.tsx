@@ -74,6 +74,10 @@ export function PreviousClassesForEachStudent() {
         });
     }, [rawStudents]);
 
+    const activeStudentsCount = useMemo(() => {
+        return students.filter((s) => s.status === 'active').length;
+    }, [students]);
+
 
     if (loading) {
         return <p>Loading...</p>
@@ -97,8 +101,12 @@ export function PreviousClassesForEachStudent() {
 
 
     return (<div className="flex flex-col justify-center items-center w-full shadow-lg p-4 bg-white dark:bg-black rounded-lg">
-        <h1 className="text-xl">En oversikt over tidligere time for hver elev</h1>
-
+        <Accordion type="single" collapsible className="w-full">
+        <AccordionItem value="students-previous-classes">
+            <AccordionTrigger>
+                Aktive Elever ({activeStudentsCount})
+            </AccordionTrigger>
+            <AccordionContent>
         {students.map((s :Student, index) => {
 
             if (s.status !== 'active') {
@@ -215,6 +223,9 @@ export function PreviousClassesForEachStudent() {
             </Accordion>
         </div>)
         })}
+            </AccordionContent>
+        </AccordionItem>
+        </Accordion>
     </div>
   );
 }

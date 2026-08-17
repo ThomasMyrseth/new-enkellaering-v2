@@ -349,8 +349,12 @@ export function PreviousClassesForEachTeacher() {
           passFilterAvailableSubject={setFilterAvailableSubject}
           availableSubjects={availableSubjects.map(as => as.subject)}
         />
-        <h1 className="text-xl">Oversikt over tidligere timer for hver lærer</h1>
-
+        <Accordion type="single" collapsible className="w-full">
+        <AccordionItem value="teachers-previous-classes">
+            <AccordionTrigger>
+                Lærere ({filteredTeachers.length})
+            </AccordionTrigger>
+            <AccordionContent>
         {filteredTeachers.map((ct :classesJoinTeacher, index) => {
             const classes :Classes[] = ct.classes
             
@@ -672,6 +676,9 @@ export function PreviousClassesForEachTeacher() {
             </Accordion>
         </div>)
         })}
+            </AccordionContent>
+        </AccordionItem>
+        </Accordion>
     </div>
   );
 }

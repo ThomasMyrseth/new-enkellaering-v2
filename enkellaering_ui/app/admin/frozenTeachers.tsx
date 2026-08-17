@@ -90,8 +90,6 @@ export const FrozenTeachers = () => {
     );
 
     return(<div className="w-full flex flex-col items-center justify-center shadow-lg dark:bg-black bg-white rounded-lg p-4">
-        <h3 className="pt-4">Fryste lærere ({frozenTeachers.length})</h3>
-
         {frozenTeachers.length === 0 ? (
             <p className="text-gray-500 mt-4">Ingen fryste lærere funnet</p>
         ) : (

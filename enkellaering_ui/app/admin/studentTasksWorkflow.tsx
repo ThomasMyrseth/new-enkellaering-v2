@@ -10,6 +10,12 @@ import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+} from "@/components/ui/accordion"
 
 export function StudentTaskWorkflow() {
     const [tasksData, loading, error] = useTasks()
@@ -42,19 +48,27 @@ export function StudentTaskWorkflow() {
 
     return (
         <div className="w-full flex flex-col items-center justify-center shadow-lg dark:bg-black bg-white rounded-lg p-4">
-            <h3 className="text-2xl font-bold mb-6">Elevoppgaver ({tasks.length})</h3>
             {tasks.length === 0 ? (
                 <p className="text-gray-500">Ingen oppgaver funnet</p>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
-                    {tasks.map((task) => (
-                        <TaskCard
-                            key={task.id}
-                            task={task}
-                            onUpdate={() => setTasks((prev) => prev.filter((t) => t.id !== task.id))}
-                        />
-                    ))}
-                </div>
+                <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="student-tasks">
+                        <AccordionTrigger>
+                            Elevoppgaver ({tasks.length})
+                        </AccordionTrigger>
+                        <AccordionContent>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
+                                {tasks.map((task) => (
+                                    <TaskCard
+                                        key={task.id}
+                                        task={task}
+                                        onUpdate={() => setTasks((prev) => prev.filter((t) => t.id !== task.id))}
+                                    />
+                                ))}
+                            </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
             )}
         </div>
     )

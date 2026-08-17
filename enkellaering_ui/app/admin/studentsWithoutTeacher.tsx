@@ -63,6 +63,10 @@ export const StudentsWithoutAnyTeachers = ({token, BASEURL} : {token :string, BA
     })
   }, [teachersData])
 
+  const activeStudentsCount = useMemo(() => {
+    return students.filter((s) => s.status === 'active').length
+  }, [students])
+
   if (error) toast.error("Error fetching data: " + error)
 
   if (loading) {
@@ -107,8 +111,12 @@ export const StudentsWithoutAnyTeachers = ({token, BASEURL} : {token :string, BA
 
   return (
     <div className="flex flex-col justify-center items-center w-full shadow-lg p-4 bg-white dark:bg-black rounded-lg">
-      <h1 className="text-xl mb-4">Elever uten lærer, inaktive elever vises ikke her</h1>
-
+      <Accordion type="single" collapsible className="w-full">
+        <AccordionItem value="students-without-teacher">
+          <AccordionTrigger>
+            Elever uten lærer ({activeStudentsCount})
+          </AccordionTrigger>
+          <AccordionContent>
       {students.map((s: Student, index) => {
         if (s.status !== 'active') {
           return null
@@ -211,6 +219,9 @@ export const StudentsWithoutAnyTeachers = ({token, BASEURL} : {token :string, BA
           </div>
         )
       })}
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </div>
   )
 }

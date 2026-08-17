@@ -78,8 +78,6 @@ export const ResignedTeachers = () => {
     );
 
     return(<div className="w-full flex flex-col items-center justify-center shadow-lg dark:bg-black bg-white rounded-lg p-4">
-        <h3 className="pt-4">Pensjonerte lærere ({resignedTeachers.length})</h3>
-        
         {resignedTeachers.length === 0 ? (
             <p className="text-gray-500 mt-4">Ingen pensjonerte lærere funnet</p>
         ) : (

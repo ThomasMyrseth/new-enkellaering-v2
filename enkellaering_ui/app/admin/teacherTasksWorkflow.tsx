@@ -10,6 +10,12 @@ import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+} from "@/components/ui/accordion"
 
 async function updateTaskStatus(taskId: string | number, status: string) {
     return apiFetch<void>(`/task/${taskId}/status`, {
@@ -67,15 +73,23 @@ export function TeacherTasksWorkflow() {
 
     return (
         <div className="w-full flex flex-col items-center justify-center shadow-lg dark:bg-black bg-white rounded-lg p-4">
-            <h3 className="text-2xl font-bold mb-6">Læreroppgaver ({tasks.length})</h3>
             {tasks.length === 0 ? (
                 <p className="text-gray-500">Ingen læreroppgaver funnet</p>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
-                    {tasks.map((task) => (
-                        <TeacherTaskCard key={task.id} task={task} onUpdate={() => handleTaskCompleted(task.id)} />
-                    ))}
-                </div>
+                <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="teacher-tasks">
+                        <AccordionTrigger>
+                            Læreroppgaver ({tasks.length})
+                        </AccordionTrigger>
+                        <AccordionContent>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
+                                {tasks.map((task) => (
+                                    <TeacherTaskCard key={task.id} task={task} onUpdate={() => handleTaskCompleted(task.id)} />
+                                ))}
+                            </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
             )}
         </div>
     )
