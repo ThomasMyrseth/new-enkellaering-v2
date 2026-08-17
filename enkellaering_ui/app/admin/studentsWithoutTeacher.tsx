@@ -305,8 +305,8 @@ const StudentNotes = ({student} : {student : Student}) => {
         onChange={(e) => handleAddNotes(e.target.value)} 
         id="notes" 
         placeholder="Noter ned generell info om eleven (kun synlig for admin)"
+        onBlur={() => saveNotes(notes, student.user_id)}
       />
-      <Button variant="secondary" onClick={() => {saveNotes(notes, student.user_id)}} className="w-full">Lagre</Button>
     </div>
   )
 }
