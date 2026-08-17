@@ -109,24 +109,38 @@ def set_classes_to_paid(class_ids: list, admin_user_id: str):
     return True
 
 
-def set_student_to_inactive(student_user_id: str, admin_user_id: str):
-    """Set student to inactive (admin validated)"""
+def _set_student_status(student_user_id: str, admin_user_id: str, status: str):
+    """Set a student's status (admin validated)"""
     if not is_admin(admin_user_id):
         raise ValueError("User is not an admin")
 
     session = get_session()
-    session.execute(update(Student).where(Student.user_id == student_user_id).values(is_active=False))
+    session.execute(
+        update(Student)
+        .where(Student.user_id == student_user_id)
+        .values(status=status, status_changed_at=datetime.now(timezone.utc))
+    )
     session.commit()
+
+
+def set_student_to_inactive(student_user_id: str, admin_user_id: str):
+    """Set student to inactive (admin validated)"""
+    _set_student_status(student_user_id, admin_user_id, "inactive")
 
 
 def set_student_to_active(student_user_id: str, admin_user_id: str):
     """Set student to active (admin validated)"""
-    if not is_admin(admin_user_id):
-        raise ValueError("User is not an admin")
+    _set_student_status(student_user_id, admin_user_id, "active")
 
-    session = get_session()
-    session.execute(update(Student).where(Student.user_id == student_user_id).values(is_active=True))
-    session.commit()
+
+def freeze_student(student_user_id: str, admin_user_id: str):
+    """Temporarily freeze a student (admin validated) - not inactive, just paused"""
+    _set_student_status(student_user_id, admin_user_id, "frozen")
+
+
+def unfreeze_student(student_user_id: str, admin_user_id: str):
+    """Unfreeze a student (admin validated)"""
+    _set_student_status(student_user_id, admin_user_id, "active")
 
 
 def toggle_want_more_students(physical: bool, digital: bool, teacher_user_id: str):
@@ -254,26 +268,38 @@ def update_travel_payment(travel_payment: dict, admin_user_id: str):
     session.commit()
 
 
-def retireTeacher(teacherUserId: str, adminUserId: str):
-    """Retire a teacher (admin validated)"""
-    if not is_admin(adminUserId):
+def _set_teacher_status(teacher_user_id: str, admin_user_id: str, status: str):
+    """Set a teacher's status (admin validated)"""
+    if not is_admin(admin_user_id):
         raise ValueError("User is not an admin")
 
     session = get_session()
     session.execute(
-        update(Teacher).where(Teacher.user_id == teacherUserId).values(resigned=True, resigned_at=datetime.now(timezone.utc))
+        update(Teacher)
+        .where(Teacher.user_id == teacher_user_id)
+        .values(status=status, status_changed_at=datetime.now(timezone.utc))
     )
     session.commit()
 
 
+def retireTeacher(teacherUserId: str, adminUserId: str):
+    """Retire a teacher (admin validated)"""
+    _set_teacher_status(teacherUserId, adminUserId, "resigned")
+
+
 def reactivateTeacher(teacherUserId: str, adminUserId: str):
     """Reactivate a teacher (admin validated)"""
-    if not is_admin(adminUserId):
-        raise ValueError("User is not an admin")
+    _set_teacher_status(teacherUserId, adminUserId, "active")
 
-    session = get_session()
-    session.execute(update(Teacher).where(Teacher.user_id == teacherUserId).values(resigned=False))
-    session.commit()
+
+def freeze_teacher(teacher_user_id: str, admin_user_id: str):
+    """Temporarily freeze a teacher (admin validated) - not resigned, just paused"""
+    _set_teacher_status(teacher_user_id, admin_user_id, "frozen")
+
+
+def unfreeze_teacher(teacher_user_id: str, admin_user_id: str):
+    """Unfreeze a teacher (admin validated)"""
+    _set_teacher_status(teacher_user_id, admin_user_id, "active")
 
 
 # ============================================================================

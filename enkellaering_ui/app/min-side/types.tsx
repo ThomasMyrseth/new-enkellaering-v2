@@ -20,7 +20,7 @@ export type Student = {
     your_teacher: string
 
     est_hours_per_week :number
-    is_active :boolean
+    status : 'active' | 'inactive' | 'frozen'
     notes :string
 }
 
@@ -33,11 +33,11 @@ export type Teacher = {
     address: string;
     postal_code: string;
     hourly_pay: string;
-    resgined: boolean;
+    status: 'active' | 'resigned' | 'frozen';
     additional_comments: string | null;
     created_at: string;
     admin: boolean;
-    resigned_at: string | null;
+    status_changed_at: string | null;
 }
 
 export type Classes = {

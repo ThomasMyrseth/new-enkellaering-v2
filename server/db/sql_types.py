@@ -15,8 +15,8 @@ class Teacher:
     additional_comments: Optional[str] = None  # NULLABLE
     created_at: Optional[datetime] = field(default_factory=datetime.utcnow)  # NULLABLE, default CURRENT_TIMESTAMP()
     admin: Optional[bool] = False      # NULLABLE, default FALSE
-    resigned: bool = False
-    resigned_at: Optional[datetime] = None  # NULLABLE
+    status: str = "active"             # 'active', 'resigned', or 'frozen'
+    status_changed_at: Optional[datetime] = None  # NULLABLE
     wants_more_students: Optional[bool] = True  # NULLABLE, default TRUE
     location: Optional[str] = None     # NULLABLE; City the teacher resides in
     digital_tutouring: Optional[bool] = None  # NULLABLE; TRUE if the teacher can tutor digitally (must have an ipad)
@@ -41,7 +41,7 @@ class Students:
         has_physical_tutoring: bool,
         created_at: Optional[datetime] = None,
         additional_comments: Optional[str] = None,
-        is_active: Optional[bool] = None,
+        status: str = "active",
         est_hours_per_week: Optional[float] = None,
     ):
         self.user_id = user_id
@@ -58,7 +58,7 @@ class Students:
         self.has_physical_tutoring = has_physical_tutoring
         self.created_at = created_at or datetime.now()
         self.additional_comments = additional_comments or ""
-        self.is_active = is_active or True
+        self.status = status
 
 
 # CLASSES table
@@ -73,7 +73,7 @@ class Classes:
         ended_at: datetime,
         groupclass: bool,
         number_of_students: Optional[int] = None,
-        was_canselled :bool = False,
+        was_canselled: bool = False,
         comment: Optional[str] = None,
         paid_teacher: Optional[bool] = None,
         paid_teacher_at: Optional[str] = None,

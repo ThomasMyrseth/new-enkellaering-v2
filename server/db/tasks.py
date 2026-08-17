@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import func, select, update
+from sqlalchemy import func, or_, select, update
 
 from db.models import Classes, Student, Task, Teacher, TeacherStudent
 from db.session import get_session
@@ -85,7 +85,7 @@ def create_new_tasks(cutoff_days: int = 21) -> list[str]:
 
 
 def get_teachers_with_few_hours(cutoff_days: int = 14, min_hours: float = 4.0) -> list[dict]:
-    """Non-resigned teachers who have taught less than min_hours in the past cutoff_days days (includes 0-class teachers)"""
+    """Active teachers who have taught less than min_hours in the past cutoff_days days (includes 0-class teachers)"""
     session = get_session()
     threshold_date = datetime.now(timezone.utc) - timedelta(days=cutoff_days)
 
@@ -100,7 +100,7 @@ def get_teachers_with_few_hours(cutoff_days: int = 14, min_hours: float = 4.0) -
     stmt = (
         select(Teacher, func.coalesce(teacher_hours.c.hours, 0).label("total_hours"))
         .outerjoin(teacher_hours, teacher_hours.c.teacher_user_id == Teacher.user_id)
-        .where(Teacher.resigned.is_(False), func.coalesce(teacher_hours.c.hours, 0) < min_hours)
+        .where(Teacher.status == "active", func.coalesce(teacher_hours.c.hours, 0) < min_hours)
     )
     rows = session.execute(stmt).all()
     return [{"teacher": t.as_dict(), "total_hours": float(hours)} for t, hours in rows]
@@ -131,7 +131,11 @@ def get_all_open_teacher_tasks() -> list[dict]:
     stmt = (
         select(Task, Teacher)
         .outerjoin(Teacher, Teacher.user_id == Task.teacher)
-        .where(Task.completed.is_(False), Task.type == "followup_teacher")
+        .where(
+            Task.completed.is_(False),
+            Task.type == "followup_teacher",
+            Teacher.status == "active",
+        )
     )
     rows = session.execute(stmt).all()
     result = []
@@ -145,6 +149,7 @@ def get_all_open_teacher_tasks() -> list[dict]:
             "type": task.type,
             "completed": task.completed,
             "completed_at": task.completed_at,
+            "notes": task.notes,
             "teacher_data": teacher.as_dict() if teacher else None,
         }
         result.append(d)
@@ -200,6 +205,13 @@ def update_status_on_task(task_id: int, new_status: str) -> None:
     session.commit()
 
 
+def update_notes_on_task(task_id: int, notes: str) -> None:
+    """Update the admin notes on a task"""
+    session = get_session()
+    session.execute(update(Task).where(Task.id == task_id).values(notes=notes))
+    session.commit()
+
+
 def get_all_open_tasks() -> list[dict]:
     """
     All open tasks with embedded student and teacher data (mirrors the live
@@ -208,7 +220,7 @@ def get_all_open_tasks() -> list[dict]:
     """
     session = get_session()
     stmt = select(Task, Student).outerjoin(Student, Student.user_id == Task.student).where(
-        Task.completed.is_(False), Student.is_active.is_(True)
+        Task.completed.is_(False), Student.status == "active"
     )
     rows = session.execute(stmt).all()
 
@@ -228,7 +240,7 @@ def get_all_open_tasks() -> list[dict]:
             teachers = [
                 t.as_dict()
                 for t in session.scalars(
-                    select(Teacher).where(Teacher.user_id.in_(all_teacher_ids), Teacher.resigned.is_(False))
+                    select(Teacher).where(Teacher.user_id.in_(all_teacher_ids), Teacher.status == "active")
                 ).all()
             ]
 
@@ -242,6 +254,7 @@ def get_all_open_tasks() -> list[dict]:
                 "type": task.type,
                 "completed": task.completed,
                 "completed_at": task.completed_at,
+                "notes": task.notes,
                 "student_data": student.as_dict() if student else None,
                 "teachers_data": teachers,
             }

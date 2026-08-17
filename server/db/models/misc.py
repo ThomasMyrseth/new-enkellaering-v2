@@ -118,6 +118,7 @@ class Task(Base):
     # Live column not documented in the stale schema.sql dump — confirmed via
     # sqlacodegen reflection of the real database.
     teacher: Mapped[str | None] = mapped_column(Text)
+    notes: Mapped[str | None] = mapped_column(Text, comment="Admin-entered notes for this task")
 
     student_ref = relationship("Student", foreign_keys=[student])
     teacher_ref = relationship("Teacher", foreign_keys=[teacher])

@@ -41,7 +41,7 @@ export function YourStudent( {teacher, classes, students, teacherStudents, onCla
                 const fourWeeksAgo = new Date()
                 fourWeeksAgo.setDate(fourWeeksAgo.getDate()-28)
 
-                if (student.is_active===false) {
+                if (student.status !== 'active') {
                     return null;
                 }
 
@@ -134,7 +134,7 @@ type FullStudent = {
     additional_comments: string,
     your_teacher: string,
 
-    is_active :boolean,
+    status : 'active' | 'inactive' | 'frozen',
     est_hours_per_week :number
 }
 

@@ -12,7 +12,7 @@ import Link from "next/link";
 export function MyTeachers( {teachers} : {teachers :Teacher[]}) {
 
     const cards = teachers.map((t: Teacher, index: number) => { 
-        if (t.resigned===true) {
+        if (t.status === 'resigned' || t.status === 'frozen') {
             return <></>
         }
         return <TeacherCard teacher={t} key={index} />

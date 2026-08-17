@@ -1,7 +1,7 @@
 import { Student } from "../admin/types";
 
 export const IsActive = ( {student} : {student :Student} ) => {
-    if (student.is_active) {
+    if (student.status === 'active') {
         return null;
     }
 

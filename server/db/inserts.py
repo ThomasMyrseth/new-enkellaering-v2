@@ -44,11 +44,11 @@ def insert_teacher(teacher: Teacher):
             address=teacher.address,
             postal_code=teacher.postal_code,
             hourly_pay=teacher.hourly_pay,
-            resigned=teacher.resigned,
+            status=teacher.status,
             additional_comments=teacher.additional_comments,
             created_at=teacher.created_at,
             admin=teacher.admin,
-            resigned_at=teacher.resigned_at,
+            status_changed_at=teacher.status_changed_at,
             location=teacher.location,
             digital_tutouring=teacher.digital_tutouring,
             physical_tutouring=teacher.physical_tutouring,
@@ -76,7 +76,7 @@ def insert_student(student: Students):
             address=student.address,
             has_physical_tutoring=student.has_physical_tutoring,
             postal_code=student.postal_code,
-            is_active=student.is_active,
+            status=student.status,
         )
     )
     session.commit()

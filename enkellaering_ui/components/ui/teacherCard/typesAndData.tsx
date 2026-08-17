@@ -20,11 +20,11 @@ export type ExpandedTeacher = {
     postal_code: string;
     location :string;
     hourly_pay: string;
-    resigned: boolean;
+    status: 'active' | 'resigned' | 'frozen';
     additional_comments: string | null;
     created_at: string;
     admin: boolean;
-    resigned_at: string | null;
+    status_changed_at: string | null;
     wants_more_students :boolean;
     notes :string;
     about_me_text: string,

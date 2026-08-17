@@ -11,7 +11,7 @@ class Teacher(Base):
     __table_args__ = (
         PrimaryKeyConstraint("user_id", name="teachers_pkey"),
         Index("idx_teachers_name", "firstname", "lastname"),
-        Index("idx_teachers_resigned", "resigned", postgresql_where=text("(resigned = false)")),
+        Index("idx_teachers_status_active", "status", postgresql_where=text("(status = 'active'::text)")),
         {"comment": "Teacher profiles and account information"},
     )
 
@@ -26,8 +26,10 @@ class Teacher(Base):
     additional_comments: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime.datetime | None] = mapped_column(DateTime(timezone=True))
     admin: Mapped[bool | None] = mapped_column(Boolean, comment="TRUE/FALSE bool - indicates admin privileges")
-    resigned: Mapped[bool | None] = mapped_column(Boolean, comment="TRUE/FALSE bool - indicates if teacher has resigned")
-    resigned_at: Mapped[datetime.datetime | None] = mapped_column(DateTime(timezone=True))
+    status: Mapped[str] = mapped_column(
+        Text, server_default=text("'active'"), comment="'active', 'resigned', or 'frozen'"
+    )
+    status_changed_at: Mapped[datetime.datetime | None] = mapped_column(DateTime(timezone=True))
     location: Mapped[str | None] = mapped_column(Text)
     digital_tutouring: Mapped[bool | None] = mapped_column(Boolean, server_default=text("false"))
     physical_tutouring: Mapped[bool | None] = mapped_column(Boolean, server_default=text("false"))

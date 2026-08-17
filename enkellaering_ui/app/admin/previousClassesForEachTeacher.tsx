@@ -2,7 +2,6 @@
 
 import { Copy } from 'lucide-react';
 
-import { AvailableSubject } from './types';
 import { TeacherStudent } from '@/types/teacher-student';
 
 import { DeleteClass } from '../min-side-laerer/deleteClass';
@@ -25,6 +24,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { AVAILABLE_SUBJECTS } from "@/constants";
+import { RemoveTeacherDialog } from "./components/removeTeacherDialog";
+import { FreezeTeacher } from "./components/freezeTeacher";
 
 const ToggleFilterPreviousClasses = ({
   passFilterDigital,
@@ -348,8 +349,12 @@ export function PreviousClassesForEachTeacher() {
           passFilterAvailableSubject={setFilterAvailableSubject}
           availableSubjects={availableSubjects.map(as => as.subject)}
         />
-        <h1 className="text-xl">Oversikt over tidligere timer for hver lærer</h1>
-
+        <Accordion type="single" collapsible className="w-full">
+        <AccordionItem value="teachers-previous-classes">
+            <AccordionTrigger>
+                Lærere ({filteredTeachers.length})
+            </AccordionTrigger>
+            <AccordionContent>
         {filteredTeachers.map((ct :classesJoinTeacher, index) => {
             const classes :Classes[] = ct.classes
             
@@ -382,7 +387,7 @@ export function PreviousClassesForEachTeacher() {
 
             //go through all this teachers students and add up estimated hours per week
             students.map( (student :Student ) => {
-                if (student.your_teacher === ct.teacher.user_id && student.is_active) {
+                if (student.your_teacher === ct.teacher.user_id && student.status === 'active') {
                     estTotalHoursLastFourWeeks += student.est_hours_per_week;
                 }
             }) 
@@ -469,14 +474,14 @@ export function PreviousClassesForEachTeacher() {
                     </AccordionTrigger>
                     <AccordionContent>
 
-                        <p>
+                        <div>
                             Tlf: <span className='font-semibold'>{ct.teacher.phone}</span>
                             <br/>
                             Epost: <span className='font-semibold'>{ct.teacher.email}</span>
                             <br/>
                             Adresse: <span className='font-semibold'>{ct.teacher.address}, {ct.teacher.postal_code}</span>
                             <br/>
-                            Spesielle forhold: <span className='font-sembibold'>{ct.teacher.additional_comments? "" : ct.teacher.additional_comments }</span>
+                            Spesielle forhold: <span className='font-sembibold'>{ct.teacher.additional_comments ? ct.teacher.additional_comments : ""}</span>
                             <br/>
                             <div className="flex flex-wrap gap-2">
                                 {availableSubjects
@@ -490,8 +495,8 @@ export function PreviousClassesForEachTeacher() {
                                         </span>
                                 ))}
                             </div>
-                   
-                        </p>
+
+                        </div>
 
                         <TeacherNotes teacher={ct.teacher} />
 
@@ -509,7 +514,7 @@ export function PreviousClassesForEachTeacher() {
                                             }
 
                                             //skip inactive students
-                                            if (!student.is_active) {
+                                            if (student.status !== 'active') {
                                                 return null;
                                             }
 
@@ -522,34 +527,46 @@ export function PreviousClassesForEachTeacher() {
                                                     </p>
                                                 </AccordionTrigger>
                                                 <AccordionContent>
-                                                    <p>
-                                                        <h4 className="mb-1 font-semibold">Forelder</h4>
-                                                        {student.firstname_parent} {student.lastname_parent}
-                                                        <br/>
-                                                        Tlf: {student.phone_parent}
-                                                        <br/>
-                                                        Epost: {student.email_parent}
-                                                    </p>
-                                                    <br/>
-                                                    <p>
-                                                        <h4 className="mb-1 font-semibold">Elev</h4>
-                                                        {student.firstname_student} {student.lastname_student}
-                                                        <br/>
-                                                        Tlf: {student.phone_student}
-                                                    </p>
-                                                    <br/>
-                                                    <p>
-                                                        <h4 className="mb-1 font-semibold">Info</h4>
-                                                        Hovedfag: {student.main_subjects}
-                                                        <br/>
-                                                        Spesielle forhold: {student.additional_comments}
-                                                        <br/>
-                                                        Hjemmeadresse: {student.address}
-                                                        <br/>
-                                                        Postnummer: {student.postal_code}
-                                                        <br/>
-                                                        {`${student.has_physical_tutoring? 'fysisk undervisning' : 'digital undervisning'}`}
-                                                    </p>
+                                                    <div className="grid grid-cols-[1fr_auto] items-start gap-4">
+                                                        <div>
+                                                            <p>
+                                                                <h4 className="mb-1 font-semibold">Forelder</h4>
+                                                                {student.firstname_parent} {student.lastname_parent}
+                                                                <br/>
+                                                                Tlf: {student.phone_parent}
+                                                                <br/>
+                                                                Epost: {student.email_parent}
+                                                            </p>
+                                                            <br/>
+                                                            <p>
+                                                                <h4 className="mb-1 font-semibold">Elev</h4>
+                                                                {student.firstname_student} {student.lastname_student}
+                                                                <br/>
+                                                                Tlf: {student.phone_student}
+                                                            </p>
+                                                            <br/>
+                                                            <p>
+                                                                <h4 className="mb-1 font-semibold">Info</h4>
+                                                                Hovedfag: {student.main_subjects}
+                                                                <br/>
+                                                                Spesielle forhold: {student.additional_comments}
+                                                                <br/>
+                                                                Hjemmeadresse: {student.address}
+                                                                <br/>
+                                                                Postnummer: {student.postal_code}
+                                                                <br/>
+                                                                {`${student.has_physical_tutoring? 'fysisk undervisning' : 'digital undervisning'}`}
+                                                            </p>
+                                                        </div>
+                                                        <RemoveTeacherDialog
+                                                            student={student}
+                                                            teacher={ct.teacher}
+                                                            teacherStudent={teacherStudents.find(
+                                                                (ts: TeacherStudent) => ts.student?.user_id === student.user_id && ts.teacher?.user_id === ct.teacher.user_id
+                                                            )}
+                                                            triggerLabel="Rediger"
+                                                        />
+                                                    </div>
                                                 </AccordionContent>
                                             </AccordionItem>
                                             </>)
@@ -562,7 +579,10 @@ export function PreviousClassesForEachTeacher() {
 
                         <div className="flex flex-row w-full justify-between pt-2">
                             <PayTeacherPopover teacher={ct.teacher} classes={ct.classes} teacherStudents={teacherStudents}/>
-                            <RetireTeacher teacher={ct.teacher} />
+                            <div className="flex flex-row space-x-2">
+                                <FreezeTeacher teacher={ct.teacher} />
+                                <RetireTeacher teacher={ct.teacher} />
+                            </div>
                         </div>
 
                         <p className="my-4">
@@ -656,6 +676,9 @@ export function PreviousClassesForEachTeacher() {
             </Accordion>
         </div>)
         })}
+            </AccordionContent>
+        </AccordionItem>
+        </Accordion>
     </div>
   );
 }
@@ -849,7 +872,6 @@ const PayTeacherPopover = ( {teacher, classes, teacherStudents} : {teacher: Teac
 
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from 'sonner';
-import availableSubjects from '../min-side-laerer/availableSubjects';
 
 const TeacherNotes = ({teacher} : {teacher : Teacher}) => {
     const [notes, setNotes] = useState<string>(teacher.notes)
@@ -859,15 +881,15 @@ const TeacherNotes = ({teacher} : {teacher : Teacher}) => {
     }
 
     return (<div className="flex flex-col my-10">
-        <Textarea  
-                rows={10} 
-                className="w-full mb-2 dark:bg-neutral-800" 
-                value={notes} 
-                onChange={(e) => handleAddNotes(e.target.value)} 
-                id="notes" 
+        <Textarea
+                rows={10}
+                className="w-full mb-2 dark:bg-neutral-800"
+                value={notes}
+                onChange={(e) => handleAddNotes(e.target.value)}
+                onBlur={() => saveNotes(notes, teacher.user_id)}
+                id="notes"
                 placeholder="Noter ned generell info om læreren (kun synlig for admin)"
         />
-        <Button variant="secondary" onClick={() => saveNotes(notes, teacher.user_id)} className="w-full">Lagre</Button>
     </div>)
 }
 

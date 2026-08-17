@@ -22,12 +22,21 @@ import {
     AccordionTrigger,
 } from "@/components/ui/accordion"
 
-export const ResignedTeachers = () => {
+const formatFrozenSince = (statusChangedAt: string | null) => {
+    if (!statusChangedAt) return "Ukjent"
+
+    const changedAt = new Date(statusChangedAt)
+    const days = Math.max(0, Math.floor((Date.now() - changedAt.getTime()) / (1000 * 60 * 60 * 24)))
+
+    return `${changedAt.toLocaleDateString("no-NO")} (${days} ${days === 1 ? "dag" : "dager"})`
+}
+
+export const FrozenTeachers = () => {
     const [teachers, loading, error] = useTeachers(true)
 
-    const resignedTeachers = useMemo(() => {
+    const frozenTeachers = useMemo(() => {
         return teachers
-            .filter(t => t.status === 'resigned')
+            .filter(t => t.status === 'frozen')
             .sort((a: Teacher, b: Teacher) => {
                 // Handle null/undefined status_changed_at dates
                 if (!a.status_changed_at && !b.status_changed_at) return 0;
@@ -37,7 +46,7 @@ export const ResignedTeachers = () => {
                 const dateA = new Date(a.status_changed_at);
                 const dateB = new Date(b.status_changed_at);
 
-                // Most recent resignations first (reverse chronological)
+                // Most recently frozen first (reverse chronological)
                 return dateB.getTime() - dateA.getTime();
             });
     }, [teachers]);
@@ -70,21 +79,24 @@ export const ResignedTeachers = () => {
                 {teacher.address}, {teacher.postal_code}
             </TableCell>
             <TableCell>
-                <Button variant="secondary" className="w-full" onClick={() => handleReactivateTeacher(teacher)}>
-                    Reaktiver {teacher.firstname}
+                {formatFrozenSince(teacher.status_changed_at)}
+            </TableCell>
+            <TableCell>
+                <Button variant="secondary" className="w-full" onClick={() => handleUnfreezeTeacher(teacher)}>
+                    Tin {teacher.firstname}
                 </Button>
             </TableCell>
         </TableRow>
     );
 
     return(<div className="w-full flex flex-col items-center justify-center shadow-lg dark:bg-black bg-white rounded-lg p-4">
-        {resignedTeachers.length === 0 ? (
-            <p className="text-gray-500 mt-4">Ingen pensjonerte lærere funnet</p>
+        {frozenTeachers.length === 0 ? (
+            <p className="text-gray-500 mt-4">Ingen fryste lærere funnet</p>
         ) : (
             <Accordion type="single" collapsible className="w-full">
-                <AccordionItem value="resigned-teachers">
+                <AccordionItem value="frozen-teachers">
                     <AccordionTrigger>
-                        Pensjonerte lærere ({resignedTeachers.length})
+                        Fryste lærere ({frozenTeachers.length})
                     </AccordionTrigger>
                     <AccordionContent>
                         <Table>
@@ -94,11 +106,12 @@ export const ResignedTeachers = () => {
                                     <TableHead>Telefon</TableHead>
                                     <TableHead>E-post</TableHead>
                                     <TableHead>Adresse</TableHead>
+                                    <TableHead>Frosset siden</TableHead>
                                     <TableHead>Handlinger</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {resignedTeachers.map(teacher => (
+                                {frozenTeachers.map(teacher => (
                                     <TeacherRow key={teacher.user_id} teacher={teacher} />
                                 ))}
                             </TableBody>
@@ -110,12 +123,12 @@ export const ResignedTeachers = () => {
     </div>)
 }
 
-const handleReactivateTeacher = async (teacher: Teacher) => {
+const handleUnfreezeTeacher = async (teacher: Teacher) => {
     const token = localStorage.getItem('token')
     const BASEURL = process.env.NEXT_PUBLIC_BASE_URL;
 
     try {
-        const response = await fetch(`${BASEURL}/reactivate-teacher`, {
+        const response = await fetch(`${BASEURL}/unfreeze-teacher`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -130,9 +143,9 @@ const handleReactivateTeacher = async (teacher: Teacher) => {
             throw new Error(`Error: ${response.status} - ${response.statusText}`);
         }
 
-        toast.success(`${teacher.firstname} ${teacher.lastname} har blitt reaktivert`)
+        toast.success(`${teacher.firstname} ${teacher.lastname} har blitt tint`)
 
     } catch (error) {
-        toast.error(`Failed to reactivate teacher: ${error}`);
+        toast.error(`Failed to unfreeze teacher: ${error}`);
     }
 }

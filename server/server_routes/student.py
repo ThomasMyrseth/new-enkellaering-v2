@@ -10,6 +10,8 @@ from db.gets import (
 from db.alters import (
     set_student_to_inactive,
     set_student_to_active,
+    freeze_student,
+    unfreeze_student,
     update_student_notes
 )
 
@@ -43,7 +45,9 @@ def get_student(user_id):
 @token_required
 def get_all_students_route(user_id):
     try:
-        students = get_all_students(user_id)
+        has_teacher_param = request.args.get('has_teacher')
+        has_teacher = None if has_teacher_param is None else has_teacher_param.lower() == 'true'
+        students = get_all_students(user_id, has_teacher=has_teacher)
         return jsonify({"students": students}), 200
     except Exception as e:
         print("error getting all students:", e)
@@ -72,6 +76,32 @@ def set_student_to_active_route(user_id):
     try:
         set_student_to_active(student_user_id, user_id)
         return jsonify({"message": "Student set to active"}), 200
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
+
+
+@student_bp.route('/freeze-student', methods=["POST"])
+@token_required
+def freeze_student_route(user_id):
+    student_user_id = request.json.get('student_user_id')
+    if not student_user_id:
+        return jsonify({"message": "Missing student_user_id"}), 400
+    try:
+        freeze_student(student_user_id, user_id)
+        return jsonify({"message": "Student frozen"}), 200
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
+
+
+@student_bp.route('/unfreeze-student', methods=["POST"])
+@token_required
+def unfreeze_student_route(user_id):
+    student_user_id = request.json.get('student_user_id')
+    if not student_user_id:
+        return jsonify({"message": "Missing student_user_id"}), 400
+    try:
+        unfreeze_student(student_user_id, user_id)
+        return jsonify({"message": "Student unfrozen"}), 200
     except Exception as e:
         return jsonify({"message": str(e)}), 500
 

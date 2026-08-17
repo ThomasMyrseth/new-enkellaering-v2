@@ -146,7 +146,7 @@ function SelectStudent({ onStudentSelect, students} : {onStudentSelect: (user_id
                 onValueChange={handleValueChange} // Update state on change
             >
                 {students.map((student: Student, index: number) => {
-                    if (student.is_active===false) {
+                    if (student.status !== 'active') {
                         return null;
                     }
 
@@ -189,7 +189,7 @@ function SelectStudents({ onStudentSelect, students} : {onStudentSelect: (user_i
             <h3 className="pb-4">Hvem hadde du i dag?</h3>
             <div className="w-2/3 md:w-1/3 justify-start space-y-2">
             {students.map((student: Student, index: number) => {
-                if (!student.is_active) return null;
+                if (student.status !== 'active') return null;
 
                 const userId = student.user_id;
                 const isChecked = selectedStudentUserIds.includes(userId);

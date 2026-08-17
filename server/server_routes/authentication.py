@@ -70,7 +70,6 @@ def register():
             postal_code=postal_code,
             est_hours_per_week=est_hours_per_week,
             has_physical_tutoring=has_physical_tutoring,
-            is_active=True
         )
         insert_student(new_student)
 
@@ -129,10 +128,8 @@ def register_teacher():
             address=address,
             postal_code=postal_code,
             hourly_pay=hourly_pay,
-            resigned=False,
             created_at=created_at,
             admin=False,
-            resigned_at=None,
             additional_comments=additional_comments,
             location=location,
             physical_tutouring=physical,
