@@ -470,14 +470,14 @@ export function PreviousClassesForEachTeacher() {
                     </AccordionTrigger>
                     <AccordionContent>
 
-                        <p>
+                        <div>
                             Tlf: <span className='font-semibold'>{ct.teacher.phone}</span>
                             <br/>
                             Epost: <span className='font-semibold'>{ct.teacher.email}</span>
                             <br/>
                             Adresse: <span className='font-semibold'>{ct.teacher.address}, {ct.teacher.postal_code}</span>
                             <br/>
-                            Spesielle forhold: <span className='font-sembibold'>{ct.teacher.additional_comments? "" : ct.teacher.additional_comments }</span>
+                            Spesielle forhold: <span className='font-sembibold'>{ct.teacher.additional_comments ? ct.teacher.additional_comments : ""}</span>
                             <br/>
                             <div className="flex flex-wrap gap-2">
                                 {availableSubjects
@@ -491,8 +491,8 @@ export function PreviousClassesForEachTeacher() {
                                         </span>
                                 ))}
                             </div>
-                   
-                        </p>
+
+                        </div>
 
                         <TeacherNotes teacher={ct.teacher} />
 

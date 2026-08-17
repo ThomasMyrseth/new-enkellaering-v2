@@ -164,7 +164,7 @@ function NewStudentRow({ ns, onDelete }: { ns: NewStudent, onDelete: (newStudent
     
     const [hasFinishedOnboarding, setHasFinishedOnboarding] = useState<boolean>(ns.has_finished_onboarding)
     const [finishedOnboardingAt, setFinishedOnboardingAt] = useState<Date>(new Date(ns.finished_onboarding_at))
-    const [comments, setComments] = useState<string>(ns.comments)
+    const [comments, setComments] = useState<string>(ns.comments ?? "")
 
 
 
