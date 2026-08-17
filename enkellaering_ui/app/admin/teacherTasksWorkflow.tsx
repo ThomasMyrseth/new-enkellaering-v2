@@ -8,12 +8,20 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 
 async function updateTaskStatus(taskId: string | number, status: string) {
     return apiFetch<void>(`/task/${taskId}/status`, {
         method: "PUT",
         body: { status }
+    })
+}
+
+async function updateTaskNotes(taskId: string | number, notes: string) {
+    return apiFetch<void>(`/task/${taskId}/notes`, {
+        method: "PUT",
+        body: { notes }
     })
 }
 
@@ -75,6 +83,18 @@ export function TeacherTasksWorkflow() {
 
 function TeacherTaskCard({ task, onUpdate }: { task: Task, onUpdate: () => void }) {
     const [status, setStatus] = useState<string>(task.status)
+    const [notes, setNotes] = useState<string>(task.notes ?? "")
+
+    const handleNotesBlur = async () => {
+        try {
+            await updateTaskNotes(task.id, notes)
+
+            toast.success("Notat lagret")
+        } catch (error) {
+            console.error("Error updating notes:", error)
+            toast.error("Kunne ikke lagre notat")
+        }
+    }
 
     const handleStatusChange = async (newStatus: string) => {
         try {
@@ -147,6 +167,18 @@ function TeacherTaskCard({ task, onUpdate }: { task: Task, onUpdate: () => void 
                         <option value="ringt men ikke svar">🟡 Ringt men ikke svar</option>
                         <option value="ringt og fått svar">🟢 Ringt og fått svar</option>
                     </select>
+                </div>
+
+                <div className="space-y-2">
+                    <Label htmlFor={`notes-${task.id}`} className="text-sm font-semibold">Notater:</Label>
+                    <Textarea
+                        id={`notes-${task.id}`}
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        onBlur={handleNotesBlur}
+                        placeholder="Legg til notater..."
+                        className="w-full"
+                    />
                 </div>
             </CardContent>
             <CardFooter>

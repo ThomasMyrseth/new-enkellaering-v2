@@ -306,6 +306,7 @@ export type Task = {
     type: string;
     completed: boolean;
     completed_at: string | null;
+    notes: string | null;
     student_data?: Student;
     teachers_data?: Teacher[];
     teacher_data?: Teacher;

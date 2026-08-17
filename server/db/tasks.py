@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import func, select, update
+from sqlalchemy import func, or_, select, update
 
 from db.models import Classes, Student, Task, Teacher, TeacherStudent
 from db.session import get_session
@@ -131,7 +131,11 @@ def get_all_open_teacher_tasks() -> list[dict]:
     stmt = (
         select(Task, Teacher)
         .outerjoin(Teacher, Teacher.user_id == Task.teacher)
-        .where(Task.completed.is_(False), Task.type == "followup_teacher")
+        .where(
+            Task.completed.is_(False),
+            Task.type == "followup_teacher",
+            or_(Teacher.resigned.is_(False), Teacher.resigned.is_(None)),
+        )
     )
     rows = session.execute(stmt).all()
     result = []
@@ -145,6 +149,7 @@ def get_all_open_teacher_tasks() -> list[dict]:
             "type": task.type,
             "completed": task.completed,
             "completed_at": task.completed_at,
+            "notes": task.notes,
             "teacher_data": teacher.as_dict() if teacher else None,
         }
         result.append(d)
@@ -200,6 +205,13 @@ def update_status_on_task(task_id: int, new_status: str) -> None:
     session.commit()
 
 
+def update_notes_on_task(task_id: int, notes: str) -> None:
+    """Update the admin notes on a task"""
+    session = get_session()
+    session.execute(update(Task).where(Task.id == task_id).values(notes=notes))
+    session.commit()
+
+
 def get_all_open_tasks() -> list[dict]:
     """
     All open tasks with embedded student and teacher data (mirrors the live
@@ -242,6 +254,7 @@ def get_all_open_tasks() -> list[dict]:
                 "type": task.type,
                 "completed": task.completed,
                 "completed_at": task.completed_at,
+                "notes": task.notes,
                 "student_data": student.as_dict() if student else None,
                 "teachers_data": teachers,
             }

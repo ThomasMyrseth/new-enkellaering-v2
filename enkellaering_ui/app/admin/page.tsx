@@ -14,7 +14,7 @@ import AnalyticsOverview from "./analyticsOverview";
 
 import { InactiveStudents } from "./inactiveStudents";
 import { ResignedTeachers } from "./resignedTeachers";
-import { TasksWorkflow } from "./tasksWorkflow";
+import { StudentTaskWorkflow } from "./tasksWorkflow";
 import { TeacherTasksWorkflow } from "./teacherTasksWorkflow";
 import { HelpAdminPanel } from "./helpAdmin";
 import { toast } from "sonner";
@@ -65,7 +65,7 @@ export default function AdminPage() {
         <div className="w-full max-w-full p-4 space-y-10">
           <Link href="/admin/manual-submit"><Button variant="outline">Manuell registrering av ny elev</Button></Link>
           <AnalyticsOverview />
-          <TasksWorkflow />
+          <StudentTaskWorkflow />
           <TeacherTasksWorkflow />
           <StudentsWithoutAnyTeachers token={token} BASEURL={BASEURL} />
           <DailyRevenueChart />

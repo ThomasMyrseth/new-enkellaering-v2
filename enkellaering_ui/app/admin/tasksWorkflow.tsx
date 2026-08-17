@@ -8,9 +8,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 
-export function TasksWorkflow() {
+export function StudentTaskWorkflow() {
     const [tasksData, loading, error] = useTasks()
     const [tasks, setTasks] = useState<Task[]>([])
 
@@ -61,6 +62,21 @@ export function TasksWorkflow() {
 
 function TaskCard({ task, onUpdate }: { task: Task, onUpdate: () => void }) {
     const [status, setStatus] = useState<string>(task.status)
+    const [notes, setNotes] = useState<string>(task.notes ?? "")
+
+    const handleNotesBlur = async () => {
+        try {
+            await apiFetch(`/task/${task.id}/notes`, {
+                method: "PUT",
+                body: { notes }
+            })
+
+            toast.success("Notat lagret")
+        } catch (error) {
+            console.error("Error updating notes:", error)
+            toast.error("Kunne ikke lagre notat")
+        }
+    }
 
     const handleStatusChange = async (newStatus: string) => {
         try {
@@ -154,6 +170,18 @@ function TaskCard({ task, onUpdate }: { task: Task, onUpdate: () => void }) {
                         <option value="ringt men ikke svar">🟡 Ringt men ikke svar</option>
                         <option value="ringt og fått svar">🟢 Ringt og fått svar</option>
                     </select>
+                </div>
+
+                <div className="space-y-2">
+                    <Label htmlFor={`notes-${task.id}`} className="text-sm font-semibold">Notater:</Label>
+                    <Textarea
+                        id={`notes-${task.id}`}
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        onBlur={handleNotesBlur}
+                        placeholder="Legg til notater..."
+                        className="w-full"
+                    />
                 </div>
             </CardContent>
             <CardFooter>
