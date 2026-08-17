@@ -68,14 +68,14 @@ const handleUpdateTravelPay = async (travelPayToTeacher: number, travelPayFromSt
     }
 }
 
-export const RemoveTeacherDialog = ({ student, teacher, teacherStudent }: { student: Student, teacher: Teacher, teacherStudent?: TeacherStudent }) => {
+export const RemoveTeacherDialog = ({ student, teacher, teacherStudent, triggerLabel }: { student: Student, teacher: Teacher, teacherStudent?: TeacherStudent, triggerLabel?: string }) => {
     const [travelPayToTeacher, setTravelPayToTeacher] = useState<number>(teacherStudent?.relation.travel_pay_to_teacher || 0)
     const [travelPayFromStudent, setTravelPayFromStudent] = useState<number>(teacherStudent?.relation.travel_pay_from_student || 0)
 
     return (
         <AlertDialog>
             <AlertDialogTrigger asChild>
-                <Button variant="secondary">{teacher.firstname} {teacher.lastname}</Button>
+                <Button variant="secondary">{triggerLabel ?? `${teacher.firstname} ${teacher.lastname}`}</Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
                 <AlertDialogHeader>
@@ -101,7 +101,7 @@ export const RemoveTeacherDialog = ({ student, teacher, teacherStudent }: { stud
                         handleUpdateTravelPay(travelPayToTeacher, travelPayFromStudent, student.user_id, teacher.user_id)
                     }}>Lagre</Button>
                     <Button variant="destructive" onClick={() => handleRemoveTeacher(student, teacher)}>Fjern {teacher.firstname} fra {student.firstname_parent}</Button>
-                    <AlertDialogCancel>Exit</AlertDialogCancel>
+                    <AlertDialogCancel>Tilbake</AlertDialogCancel>
                 </AlertDialogContent>
             </AlertDialogContent>
         </AlertDialog>

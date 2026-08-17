@@ -24,6 +24,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { AVAILABLE_SUBJECTS } from "@/constants";
+import { RemoveTeacherDialog } from "./components/removeTeacherDialog";
 
 const ToggleFilterPreviousClasses = ({
   passFilterDigital,
@@ -521,34 +522,46 @@ export function PreviousClassesForEachTeacher() {
                                                     </p>
                                                 </AccordionTrigger>
                                                 <AccordionContent>
-                                                    <p>
-                                                        <h4 className="mb-1 font-semibold">Forelder</h4>
-                                                        {student.firstname_parent} {student.lastname_parent}
-                                                        <br/>
-                                                        Tlf: {student.phone_parent}
-                                                        <br/>
-                                                        Epost: {student.email_parent}
-                                                    </p>
-                                                    <br/>
-                                                    <p>
-                                                        <h4 className="mb-1 font-semibold">Elev</h4>
-                                                        {student.firstname_student} {student.lastname_student}
-                                                        <br/>
-                                                        Tlf: {student.phone_student}
-                                                    </p>
-                                                    <br/>
-                                                    <p>
-                                                        <h4 className="mb-1 font-semibold">Info</h4>
-                                                        Hovedfag: {student.main_subjects}
-                                                        <br/>
-                                                        Spesielle forhold: {student.additional_comments}
-                                                        <br/>
-                                                        Hjemmeadresse: {student.address}
-                                                        <br/>
-                                                        Postnummer: {student.postal_code}
-                                                        <br/>
-                                                        {`${student.has_physical_tutoring? 'fysisk undervisning' : 'digital undervisning'}`}
-                                                    </p>
+                                                    <div className="grid grid-cols-[1fr_auto] items-start gap-4">
+                                                        <div>
+                                                            <p>
+                                                                <h4 className="mb-1 font-semibold">Forelder</h4>
+                                                                {student.firstname_parent} {student.lastname_parent}
+                                                                <br/>
+                                                                Tlf: {student.phone_parent}
+                                                                <br/>
+                                                                Epost: {student.email_parent}
+                                                            </p>
+                                                            <br/>
+                                                            <p>
+                                                                <h4 className="mb-1 font-semibold">Elev</h4>
+                                                                {student.firstname_student} {student.lastname_student}
+                                                                <br/>
+                                                                Tlf: {student.phone_student}
+                                                            </p>
+                                                            <br/>
+                                                            <p>
+                                                                <h4 className="mb-1 font-semibold">Info</h4>
+                                                                Hovedfag: {student.main_subjects}
+                                                                <br/>
+                                                                Spesielle forhold: {student.additional_comments}
+                                                                <br/>
+                                                                Hjemmeadresse: {student.address}
+                                                                <br/>
+                                                                Postnummer: {student.postal_code}
+                                                                <br/>
+                                                                {`${student.has_physical_tutoring? 'fysisk undervisning' : 'digital undervisning'}`}
+                                                            </p>
+                                                        </div>
+                                                        <RemoveTeacherDialog
+                                                            student={student}
+                                                            teacher={ct.teacher}
+                                                            teacherStudent={teacherStudents.find(
+                                                                (ts: TeacherStudent) => ts.student?.user_id === student.user_id && ts.teacher?.user_id === ct.teacher.user_id
+                                                            )}
+                                                            triggerLabel="Rediger"
+                                                        />
+                                                    </div>
                                                 </AccordionContent>
                                             </AccordionItem>
                                             </>)
