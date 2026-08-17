@@ -2,6 +2,7 @@ import json
 import logging
 import re
 from datetime import datetime, timedelta, timezone
+from typing import Optional
 
 from sqlalchemy import Date, Time, and_, exists, func, or_, select
 
@@ -46,13 +47,30 @@ def get_all_teachers_inc_resigned():
     return [t.as_dict() for t in rows]
 
 
-def get_all_students(admin_user_id: str):
-    """Get all students (admin validated)"""
+def get_all_students(admin_user_id: str, has_teacher: Optional[bool] = None):
+    """Get all students (admin validated). If has_teacher is True, only include
+    students with an accepted, non-hidden relation to a non-resigned teacher.
+    If False, only include students without such a relation. If None, no filter."""
     if not is_admin(admin_user_id):
         raise ValueError("User is not an admin")
 
     session = get_session()
-    rows = session.scalars(select(Student)).all()
+
+    if has_teacher is None:
+        rows = session.scalars(select(Student)).all()
+    else:
+        has_teacher_subq = (
+            select(TeacherStudent.student_user_id)
+            .join(Teacher, Teacher.user_id == TeacherStudent.teacher_user_id)
+            .where(
+                TeacherStudent.teacher_accepted_student.is_(True),
+                or_(TeacherStudent.hidden.is_(False), TeacherStudent.hidden.is_(None)),
+                Teacher.resigned.is_(False),
+            )
+        )
+        condition = Student.user_id.in_(has_teacher_subq) if has_teacher else Student.user_id.not_in(has_teacher_subq)
+        rows = session.scalars(select(Student).where(condition)).all()
+
     return [s.as_dict() for s in rows]
 
 

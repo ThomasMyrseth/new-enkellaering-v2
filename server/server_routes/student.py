@@ -43,7 +43,9 @@ def get_student(user_id):
 @token_required
 def get_all_students_route(user_id):
     try:
-        students = get_all_students(user_id)
+        has_teacher_param = request.args.get('has_teacher')
+        has_teacher = None if has_teacher_param is None else has_teacher_param.lower() == 'true'
+        students = get_all_students(user_id, has_teacher=has_teacher)
         return jsonify({"students": students}), 200
     except Exception as e:
         print("error getting all students:", e)
