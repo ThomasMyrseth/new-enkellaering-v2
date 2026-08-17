@@ -96,7 +96,6 @@ export default function SignupForm() {
           postal_code: form["postal-code"].value,
           hourly_pay: "250",
           additional_comments: form["additional-comments"].value,
-          resigned: false,
           password: form["password"].value,
           admin: false,
           location: myCity,

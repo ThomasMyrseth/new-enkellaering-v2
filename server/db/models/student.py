@@ -10,7 +10,7 @@ class Student(Base):
     __tablename__ = "students"
     __table_args__ = (
         PrimaryKeyConstraint("user_id", name="students_pkey"),
-        Index("idx_students_active", "is_active", postgresql_where=text("(is_active = true)")),
+        Index("idx_students_status_active", "status", postgresql_where=text("(status = 'active'::text)")),
         Index("idx_students_email", "email_parent"),
         Index("idx_students_name", "firstname_student", "lastname_student"),
         {"comment": "Student profiles with parent and student information"},
@@ -31,8 +31,9 @@ class Student(Base):
     has_physical_tutoring: Mapped[bool | None] = mapped_column(Boolean)
     additional_comments: Mapped[str | None] = mapped_column(Text)
     est_hours_per_week: Mapped[float | None] = mapped_column(Double(53))
-    is_active: Mapped[bool | None] = mapped_column(
-        Boolean, comment="TRUE/FALSE bool - indicates if student account is active"
+    status: Mapped[str] = mapped_column(
+        Text, server_default=text("'active'"), comment="'active', 'inactive', or 'frozen'"
     )
+    status_changed_at: Mapped[datetime.datetime | None] = mapped_column(DateTime(timezone=True))
     notes: Mapped[str | None] = mapped_column(Text)
     discount: Mapped[float | None] = mapped_column(Double(53), server_default=text("'0'::double precision"))

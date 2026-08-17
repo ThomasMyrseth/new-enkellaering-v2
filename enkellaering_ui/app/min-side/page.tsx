@@ -38,7 +38,7 @@ export default function MinSideStudentPage() {
         )
     }
 
-    if (!student.is_active) {
+    if (student.status !== 'active') {
         return (
             <div className="min-h-screen bg-gradient-to-br w-full from-red-50 to-red-100 dark:from-red-950 dark:to-red-900 flex items-center justify-center p-4">
                 <div className="max-w-2xl w-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-red-200 dark:border-red-800 p-8">

@@ -14,6 +14,8 @@ import AnalyticsOverview from "./analyticsOverview";
 
 import { InactiveStudents } from "./inactiveStudents";
 import { ResignedTeachers } from "./resignedTeachers";
+import { FrozenStudents } from "./frozenStudents";
+import { FrozenTeachers } from "./frozenTeachers";
 import { StudentTaskWorkflow } from "./studentTasksWorkflow";
 import { TeacherTasksWorkflow } from "./teacherTasksWorkflow";
 import { HelpAdminPanel } from "./helpAdmin";
@@ -73,7 +75,9 @@ export default function AdminPage() {
           <PreviousClassesForEachStudent />
           <NewStudentsWorkflow />
           <InactiveStudents />
+          <FrozenStudents />
           <ResignedTeachers />
+          <FrozenTeachers />
           <Quiz/>
           <HelpAdminPanel token={token} />
 

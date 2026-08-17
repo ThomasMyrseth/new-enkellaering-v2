@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { AVAILABLE_SUBJECTS } from "@/constants";
 import { RemoveTeacherDialog } from "./components/removeTeacherDialog";
+import { FreezeTeacher } from "./components/freezeTeacher";
 
 const ToggleFilterPreviousClasses = ({
   passFilterDigital,
@@ -382,7 +383,7 @@ export function PreviousClassesForEachTeacher() {
 
             //go through all this teachers students and add up estimated hours per week
             students.map( (student :Student ) => {
-                if (student.your_teacher === ct.teacher.user_id && student.is_active) {
+                if (student.your_teacher === ct.teacher.user_id && student.status === 'active') {
                     estTotalHoursLastFourWeeks += student.est_hours_per_week;
                 }
             }) 
@@ -509,7 +510,7 @@ export function PreviousClassesForEachTeacher() {
                                             }
 
                                             //skip inactive students
-                                            if (!student.is_active) {
+                                            if (student.status !== 'active') {
                                                 return null;
                                             }
 
@@ -574,7 +575,10 @@ export function PreviousClassesForEachTeacher() {
 
                         <div className="flex flex-row w-full justify-between pt-2">
                             <PayTeacherPopover teacher={ct.teacher} classes={ct.classes} teacherStudents={teacherStudents}/>
-                            <RetireTeacher teacher={ct.teacher} />
+                            <div className="flex flex-row space-x-2">
+                                <FreezeTeacher teacher={ct.teacher} />
+                                <RetireTeacher teacher={ct.teacher} />
+                            </div>
                         </div>
 
                         <p className="my-4">

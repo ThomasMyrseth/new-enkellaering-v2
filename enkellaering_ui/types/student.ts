@@ -15,7 +15,8 @@ export type Student = {
     has_physical_tutoring: boolean | null;
     additional_comments: string | null;
     est_hours_per_week: number | null;
-    is_active: boolean | null;
+    status: 'active' | 'inactive' | 'frozen';
+    status_changed_at: string | null;
     notes: string | null;
     discount: number | null;
 };

@@ -20,7 +20,8 @@ export type Student = {
     your_teacher: string
 
     est_hours_per_week : number
-    is_active : boolean
+    status : 'active' | 'inactive' | 'frozen'
+    status_changed_at : string | null
     notes :string
     discount? :number
 }
@@ -35,11 +36,11 @@ export type Teacher = {
     postal_code: string;
     location :string;
     hourly_pay: string;
-    resigned: boolean;
+    status: 'active' | 'resigned' | 'frozen';
     additional_comments: string | null;
     created_at: string;
     admin: boolean;
-    resigned_at: string | null;
+    status_changed_at: string | null;
     wants_more_students :boolean;
     notes :string;
     digital_tutouring :boolean;
@@ -76,10 +77,10 @@ export type TeacherJoinStudent = {
     additional_comments: string;
     est_hours_per_week: number;
     your_teacher: string;
-    is_active: boolean;
+    status: 'active' | 'inactive' | 'frozen';
     wants_more_students: boolean;
     notes: string | null;
-  
+
     // Teacher info
     user_id: string; // teacher user id
     firstname: string;
@@ -92,8 +93,8 @@ export type TeacherJoinStudent = {
     additional_comments_1: string;
     created_at_1: string;
     admin: boolean;
-    resigned: boolean;
-    resigned_at: string | null;
+    teacher_status: 'active' | 'resigned' | 'frozen';
+    teacher_status_changed_at: string | null;
     wants_more_students_1: boolean | null;
     location: string;
     digital_tutouring: boolean | null;
@@ -157,12 +158,12 @@ export type ClassesJoinTeacher = {
     postal_code: string;
     location: string;
     hourly_pay: string;
-    resigned: boolean;
+    status: 'active' | 'resigned' | 'frozen';
     additional_comments: string | null;
     // Renamed teacher's creation date to avoid conflict with the class's created_at
     created_at_1: string;
     admin: boolean;
-    resigned_at: string | null;
+    status_changed_at: string | null;
     wants_more_students: boolean;
     notes?: string;
     digital_tutouring: boolean | null;
@@ -226,10 +227,10 @@ export type StudentsWithoutTeacher = {
     additional_comments: string;
     est_hours_per_week: number;
     your_teacher: string;
-    is_active: boolean;
+    status: 'active' | 'inactive' | 'frozen';
     wants_more_students: boolean | null;
     notes: string;
-  
+
     // Teacher info
     user_id_1: string;
     firstname: string;
@@ -242,8 +243,8 @@ export type StudentsWithoutTeacher = {
     additional_comments_1: string;
     created_at_2: string;
     admin: boolean;
-    resigned: boolean;
-    resigned_at: string | null;
+    teacher_status: 'active' | 'resigned' | 'frozen';
+    teacher_status_changed_at: string | null;
     wants_more_students_1: boolean;
     location: string | null;
     digital_tutouring: boolean | null;

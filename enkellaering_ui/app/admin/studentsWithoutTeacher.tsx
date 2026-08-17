@@ -110,7 +110,7 @@ export const StudentsWithoutAnyTeachers = ({token, BASEURL} : {token :string, BA
       <h1 className="text-xl mb-4">Elever uten lærer, inaktive elever vises ikke her</h1>
 
       {students.map((s: Student, index) => {
-        if (s.is_active === false) {
+        if (s.status !== 'active') {
           return null
         }
 

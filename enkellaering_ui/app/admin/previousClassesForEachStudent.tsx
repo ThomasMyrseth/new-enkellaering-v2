@@ -25,6 +25,7 @@ import { StudentNotes } from "./components/studentNotes"
 import { InvoiceStudentPopover } from "./components/invoiceStudentPopover"
 import { DiscountPopover } from "./components/discountPopover"
 import { SetStudentInactive } from "./components/setStudentInactive"
+import { FreezeStudent } from "./components/freezeStudent"
 import { ClassHistoryTable } from "./components/classHistoryTable"
 import { computeClassTotals } from "./components/calculations"
 import { apiFetch } from "@/lib/api"
@@ -79,7 +80,11 @@ export function PreviousClassesForEachStudent() {
     }
 
     const handleStudentSetInactive = (studentUserId: string) => {
-        setRawStudents(prev => prev.map(s => s.user_id === studentUserId ? { ...s, is_active: false } : s))
+        setRawStudents(prev => prev.map(s => s.user_id === studentUserId ? { ...s, status: 'inactive' } : s))
+    }
+
+    const handleStudentFrozen = (studentUserId: string) => {
+        setRawStudents(prev => prev.map(s => s.user_id === studentUserId ? { ...s, status: 'frozen' } : s))
     }
 
     const handleDiscountUpdated = (studentUserId: string, discount: number) => {
@@ -96,7 +101,7 @@ export function PreviousClassesForEachStudent() {
 
         {students.map((s :Student, index) => {
 
-            if (s.is_active===false) {
+            if (s.status !== 'active') {
                 return null;
             }
 
@@ -115,7 +120,7 @@ export function PreviousClassesForEachStudent() {
                 .filter((id): id is string => id != null);
 
             const myTeachers: Teacher[] = teachers.filter((t) =>
-                myTeacherUserIds.includes(t.user_id) && t.resigned === false
+                myTeacherUserIds.includes(t.user_id) && t.status === 'active'
             );
 
             const {
@@ -193,6 +198,7 @@ export function PreviousClassesForEachStudent() {
                     <InvoiceStudentPopover student={s} classes={myClasses} teacherStudents={teacherStudents}/>
                     <div className="flex flex-row space-x-2">
                         <DiscountPopover student={s} onDiscountUpdated={handleDiscountUpdated} />
+                        <FreezeStudent student={s} onFrozen={handleStudentFrozen} />
                         <SetStudentInactive student={s} onSetInactive={handleStudentSetInactive} />
                     </div>
                 </div>

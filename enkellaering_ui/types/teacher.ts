@@ -11,8 +11,8 @@ export type Teacher = {
     additional_comments: string | null;
     created_at: string | null;
     admin: boolean | null;
-    resigned: boolean | null;
-    resigned_at: string | null;
+    status: 'active' | 'resigned' | 'frozen';
+    status_changed_at: string | null;
     location: string | null;
     digital_tutouring: boolean | null;
     physical_tutouring: boolean | null;

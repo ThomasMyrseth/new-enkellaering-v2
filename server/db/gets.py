@@ -34,9 +34,9 @@ def is_admin(user_id: str) -> bool:
 
 
 def get_all_teachers():
-    """Get all active teachers (not resigned)"""
+    """Get all active teachers (status == 'active')"""
     session = get_session()
-    rows = session.scalars(select(Teacher).where(Teacher.resigned.is_(False))).all()
+    rows = session.scalars(select(Teacher).where(Teacher.status == "active")).all()
     return [t.as_dict() for t in rows]
 
 
@@ -49,7 +49,7 @@ def get_all_teachers_inc_resigned():
 
 def get_all_students(admin_user_id: str, has_teacher: Optional[bool] = None):
     """Get all students (admin validated). If has_teacher is True, only include
-    students with an accepted, non-hidden relation to a non-resigned teacher.
+    students with an accepted, non-hidden relation to an active teacher.
     If False, only include students without such a relation. If None, no filter."""
     if not is_admin(admin_user_id):
         raise ValueError("User is not an admin")
@@ -65,7 +65,7 @@ def get_all_students(admin_user_id: str, has_teacher: Optional[bool] = None):
             .where(
                 TeacherStudent.teacher_accepted_student.is_(True),
                 or_(TeacherStudent.hidden.is_(False), TeacherStudent.hidden.is_(None)),
-                Teacher.resigned.is_(False),
+                Teacher.status == "active",
             )
         )
         condition = Student.user_id.in_(has_teacher_subq) if has_teacher else Student.user_id.not_in(has_teacher_subq)
@@ -487,7 +487,7 @@ def get_students_with_few_classes(days: int):
         .join(earliest_ts_alias, earliest_ts_alias.c.student_user_id == Student.user_id)
         .join(Teacher, Teacher.user_id == earliest_ts_alias.c.teacher_user_id)
         .outerjoin(last_class_filtered, last_class_filtered.c.student_user_id == Student.user_id)
-        .where(Student.is_active.is_(True), Teacher.resigned.is_(False), ~has_recent_class)
+        .where(Student.status == "active", Teacher.status == "active", ~has_recent_class)
     )
 
     rows = session.execute(stmt).mappings().all()
@@ -515,14 +515,14 @@ def get_all_admins():
 
 
 def get_all_teachers_join_students():
-    """Get all teachers joined with students (accepted, non-hidden, non-resigned)"""
+    """Get all teachers joined with students (accepted, non-hidden, active teacher)"""
     session = get_session()
     stmt = (
         select(Student, TeacherStudent, Teacher)
         .join(TeacherStudent, TeacherStudent.student_user_id == Student.user_id)
         .join(Teacher, Teacher.user_id == TeacherStudent.teacher_user_id)
         .where(
-            or_(Teacher.resigned.is_(False), Teacher.resigned.is_(None)),
+            Teacher.status == "active",
             or_(TeacherStudent.teacher_accepted_student.is_(True), TeacherStudent.teacher_accepted_student.is_(None)),
             or_(TeacherStudent.hidden.is_(False), TeacherStudent.hidden.is_(None)),
         )
@@ -539,7 +539,7 @@ def get_all_teachers_join_students():
 
 
 def get_students_without_teacher():
-    """Get active students without an accepted, non-resigned teacher"""
+    """Get active students without an accepted, active teacher"""
     session = get_session()
     has_teacher = (
         select(TeacherStudent.student_user_id)
@@ -547,11 +547,11 @@ def get_students_without_teacher():
         .where(
             TeacherStudent.teacher_accepted_student.is_(True),
             or_(TeacherStudent.hidden.is_(False), TeacherStudent.hidden.is_(None)),
-            Teacher.resigned.is_(False),
+            Teacher.status == "active",
         )
     )
     rows = session.scalars(
-        select(Student).where(Student.user_id.not_in(has_teacher), Student.is_active.is_(True))
+        select(Student).where(Student.user_id.not_in(has_teacher), Student.status == "active")
     ).all()
     return [s.as_dict() for s in rows]
 
@@ -560,7 +560,7 @@ def get_teachers_without_about_me():
     """Get teachers without about_me text"""
     session = get_session()
     teachers = session.execute(
-        select(Teacher.user_id, Teacher.firstname, Teacher.lastname, Teacher.email).where(Teacher.resigned.is_(False))
+        select(Teacher.user_id, Teacher.firstname, Teacher.lastname, Teacher.email).where(Teacher.status == "active")
     ).all()
     about_me_user_ids = set(session.scalars(select(AboutMeText.user_id)).all())
 
@@ -571,7 +571,7 @@ def get_teachers_without_quizes():
     """Get teachers without quiz results"""
     session = get_session()
     teachers = session.execute(
-        select(Teacher.user_id, Teacher.firstname, Teacher.lastname, Teacher.email).where(Teacher.resigned.is_(False))
+        select(Teacher.user_id, Teacher.firstname, Teacher.lastname, Teacher.email).where(Teacher.status == "active")
     ).all()
     quiz_user_ids = set(session.scalars(select(QuizResult.user_id)).all())
 
@@ -605,9 +605,9 @@ def get_analytics_dashboard(admin_user_id: str):
 
     students = [
         dict(row._mapping)
-        for row in session.execute(select(Student.user_id, Student.is_active, Student.created_at)).all()
+        for row in session.execute(select(Student.user_id, Student.status, Student.created_at)).all()
     ]
-    teachers = [dict(row._mapping) for row in session.execute(select(Teacher.user_id, Teacher.resigned)).all()]
+    teachers = [dict(row._mapping) for row in session.execute(select(Teacher.user_id, Teacher.status)).all()]
     teacher_student_relations = [
         dict(row._mapping)
         for row in session.execute(
@@ -757,7 +757,7 @@ def get_analytics_dashboard(admin_user_id: str):
 
     for student in students:
         student_id = student["user_id"]
-        is_active = student.get("is_active", True)
+        is_active = student.get("status", "active") == "active"
         last_class = student_last_class.get(student_id)
 
         is_churned_for_ltv = not is_active or (not last_class or last_class < ninety_days_ago)
@@ -774,7 +774,7 @@ def get_analytics_dashboard(admin_user_id: str):
 
     active_students_count = len(active_students)
     churn_rate = (inactive_among_active / active_marked_students * 100) if active_marked_students > 0 else 0
-    active_teachers_count = sum(1 for t in teachers if not t.get("resigned", False))
+    active_teachers_count = sum(1 for t in teachers if t.get("status", "active") == "active")
     avg_hourly_margin = ((total_revenue_ytd - total_teacher_cost_ytd) / total_hours_ytd) if total_hours_ytd > 0 else 0
 
     total_ltv = sum(student_ltv.values())

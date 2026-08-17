@@ -202,7 +202,44 @@ def reactivate_teacher_route(user_id):
     except Exception as e:
         logging.exception(f"Failed to reactivate teacher {teacher_user_id}: {e}")
         return jsonify({"message": str(e)}), 500
-    
+
+
+from db.alters import freeze_teacher, unfreeze_teacher
+@teacher_bp.route('/freeze-teacher', methods=["POST"])
+@token_required
+def freeze_teacher_route(user_id):
+    data = request.get_json() or {}
+    teacher_user_id = data.get('teacher_user_id')
+    admin_user_id = user_id
+
+    if not teacher_user_id:
+        return jsonify({"message": "Missing teacher_user_id"}), 400
+
+    try:
+        freeze_teacher(teacher_user_id, admin_user_id)
+        return jsonify({"message": "Teacher frozen successfully"}), 200
+    except Exception as e:
+        logging.exception(f"Failed to freeze teacher {teacher_user_id}: {e}")
+        return jsonify({"message": str(e)}), 500
+
+
+@teacher_bp.route('/unfreeze-teacher', methods=["POST"])
+@token_required
+def unfreeze_teacher_route(user_id):
+    data = request.get_json() or {}
+    teacher_user_id = data.get('teacher_user_id')
+    admin_user_id = user_id
+
+    if not teacher_user_id:
+        return jsonify({"message": "Missing teacher_user_id"}), 400
+
+    try:
+        unfreeze_teacher(teacher_user_id, admin_user_id)
+        return jsonify({"message": "Teacher unfrozen successfully"}), 200
+    except Exception as e:
+        logging.exception(f"Failed to unfreeze teacher {teacher_user_id}: {e}")
+        return jsonify({"message": str(e)}), 500
+
 
 @teacher_bp.route('/get-all-available-subjects', methods=["GET"])
 def get_available_subjects_route():
