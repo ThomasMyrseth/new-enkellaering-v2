@@ -32,6 +32,7 @@ _ALTER_NEW_STUDENT_FIELDS = {
     "comments",
     "paid_referee",
     "paid_referee_at",
+    "meta",
 }
 assert _ALTER_NEW_STUDENT_FIELDS.issubset({c.name for c in NewStudent.__table__.columns})
 

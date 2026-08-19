@@ -38,7 +38,7 @@ export function NewStudentsWorkflow() {
 
     if (loading) {
         return (
-            <div className="overflow-x-auto w-full sm:max-w-screen-sm md:max-w-screen-md lg:max-w-screen-lg xl:max-w-screen-xl 2xl:max-w-screen-2xl">
+            <div className="overflow-x-auto w-full">
                 <Skeleton className="h-6 w-48 mt-4 mb-4" />
                 <Skeleton className="h-10 w-full mb-2" />
                 <Skeleton className="h-10 w-full mb-2" />
@@ -56,8 +56,41 @@ export function NewStudentsWorkflow() {
         setNewStudents(prev => prev.filter(s => s.new_student_id !== newStudentId))
     }
 
+    const handleSetGroup = async (newStudentId: string, group: string | null) => {
+        const ns = newStudents.find(s => s.new_student_id === newStudentId)
+        if (!ns) return
+
+        const newMeta = { ...(ns.meta ?? { source: "" }), group }
+        setNewStudents(prev => prev.map(s => s.new_student_id === newStudentId ? { ...s, meta: newMeta } : s))
+
+        try {
+            await apiFetch("/update-new-student", {
+                method: "POST",
+                body: {
+                    "new_student_id": ns.new_student_id,
+                    "phone": ns.phone,
+                    "has_called": ns.has_called,
+                    "called_at": ns.called_at || null,
+                    "has_answered": ns.has_answered,
+                    "answered_at": ns.answered_at || null,
+                    "from_referal": ns.from_referal,
+                    "referee_phone": ns.referee_phone || null,
+                    "has_finished_onboarding": ns.has_finished_onboarding,
+                    "finished_onboarding_at": ns.finished_onboarding_at || null,
+                    "comments": ns.comments || null,
+                    "paid_referee": ns.paid_referee,
+                    "paid_referee_at": ns.paid_referee_at || null,
+                    "meta": newMeta,
+                }
+            })
+            toast.success("Gruppe oppdatert")
+        } catch (error) {
+            toast.error(error instanceof ApiError ? error.message : "Error while updating group")
+        }
+    }
+
     return (<div className="overflow-x-auto w-full sm:max-w-screen-sm md:max-w-screen-md lg:max-w-screen-lg xl:max-w-screen-xl 2xl:max-w-screen-2xl">
-            <NewStudentTable newStudents={newStudents} onDelete={handleDeleteStudent}/>
+            <NewStudentTable newStudents={newStudents} onDelete={handleDeleteStudent} onSetGroup={handleSetGroup}/>
     </div>
     )
 
@@ -71,27 +104,83 @@ import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { LayoutGrid, TableIcon } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { LayoutGrid, TableIcon, Folder, Plus, Trash2, ChevronDown, ChevronRight } from "lucide-react"
 
-type ViewMode = "table" | "cards"
+type ViewMode = "table" | "cards" | "groups"
 
 const NEW_STUDENTS_VIEW_MODE_STORAGE_KEY = "newStudentsWorkflow.viewMode"
+const NEW_STUDENTS_CUSTOM_GROUPS_STORAGE_KEY = "newStudentsWorkflow.customGroups"
+const NEW_STUDENTS_GROUP_FILTER_STORAGE_KEY = "newStudentsWorkflow.groupFilter"
 
-const NewStudentTable =( {newStudents, onDelete} : {newStudents : NewStudent[], onDelete: (newStudentId: string) => void})  => {
+const NewStudentTable =( {newStudents, onDelete, onSetGroup} : {newStudents : NewStudent[], onDelete: (newStudentId: string) => void, onSetGroup: (newStudentId: string, group: string | null) => void})  => {
     const [hideCompleted, setHideCompleted] = useState<boolean>(true)
     const [onlyShowUnpaidReferals, setOnlyShowUnpaidReferrals] = useState<boolean>(false)
     const [viewMode, setViewModeState] = useState<ViewMode>("table")
+    const [customGroups, setCustomGroupsState] = useState<string[]>([])
+    const [groupFilter, setGroupFilterState] = useState<string>("all")
 
     useEffect(() => {
         const stored = localStorage.getItem(NEW_STUDENTS_VIEW_MODE_STORAGE_KEY)
-        if (stored === "table" || stored === "cards") {
+        if (stored === "table" || stored === "cards" || stored === "groups") {
             setViewModeState(stored)
         }
+
+        const storedCustomGroups = localStorage.getItem(NEW_STUDENTS_CUSTOM_GROUPS_STORAGE_KEY)
+        if (storedCustomGroups) {
+            try {
+                const parsed = JSON.parse(storedCustomGroups)
+                if (Array.isArray(parsed)) setCustomGroupsState(parsed)
+            } catch {
+                // ignore malformed storage
+            }
+        }
+
+        const storedGroupFilter = localStorage.getItem(NEW_STUDENTS_GROUP_FILTER_STORAGE_KEY)
+        if (storedGroupFilter) setGroupFilterState(storedGroupFilter)
     }, [])
 
     const setViewMode = (mode: ViewMode) => {
         setViewModeState(mode)
         localStorage.setItem(NEW_STUDENTS_VIEW_MODE_STORAGE_KEY, mode)
+    }
+
+    const setCustomGroups = (groups: string[]) => {
+        setCustomGroupsState(groups)
+        localStorage.setItem(NEW_STUDENTS_CUSTOM_GROUPS_STORAGE_KEY, JSON.stringify(groups))
+    }
+
+    const setGroupFilter = (value: string) => {
+        setGroupFilterState(value)
+        localStorage.setItem(NEW_STUDENTS_GROUP_FILTER_STORAGE_KEY, value)
+    }
+
+    const usedGroups = Array.from(new Set(
+        newStudents.map(ns => ns.meta?.group).filter((g): g is string => !!g)
+    )).sort()
+
+    useEffect(() => {
+        const stillCustom = customGroups.filter(g => !usedGroups.includes(g))
+        if (stillCustom.length !== customGroups.length) {
+            setCustomGroups(stillCustom)
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [newStudents])
+
+    const allGroups = Array.from(new Set([...usedGroups, ...customGroups])).sort()
+
+    const handleCreateGroup = (name: string) => {
+        const trimmed = name.trim()
+        if (!trimmed) return
+        if (allGroups.some(g => g.toLowerCase() === trimmed.toLowerCase())) {
+            toast.error("Gruppen finnes allerede")
+            return
+        }
+        setCustomGroups([...customGroups, trimmed])
+    }
+
+    const handleDeleteGroup = (name: string) => {
+        setCustomGroups(customGroups.filter(g => g !== name))
     }
 
     //order newStudents by created_at
@@ -117,6 +206,15 @@ const NewStudentTable =( {newStudents, onDelete} : {newStudents : NewStudent[], 
         filteredStudents = filteredStudents.filter(ns => !ns.has_finished_onboarding && ns.from_referal && !ns.paid_referee)
     }
 
+    // filteredStudents (above) excludes group filtering so the Grupper board always shows every group.
+    // groupFilteredStudents additionally narrows by the group dropdown, for the Tabell/Kort views.
+    let groupFilteredStudents = filteredStudents
+    if (groupFilter === "ungrouped") {
+        groupFilteredStudents = filteredStudents.filter(ns => !ns.meta?.group)
+    } else if (groupFilter !== "all") {
+        groupFilteredStudents = filteredStudents.filter(ns => ns.meta?.group === groupFilter)
+    }
+
     return (<div className="w-full max-w-full bg-white dark:bg-black rounded-sm shadow-lg flex flex-col items-center justify-center overflow-hidden">
         <div className="flex flex-col space-y-2 items-center w-full bg-stone-100 dark:bg-stone-900 rounded-md p-2">
             <div className="flex items-center space-x-2 m-4">
@@ -139,6 +237,21 @@ const NewStudentTable =( {newStudents, onDelete} : {newStudents : NewStudent[], 
                 />
                 <Label htmlFor="only-show-unpaid-referals">Vis kun elever som er referanser og som ikke er betalt</Label>
             </div>
+            {viewMode !== "groups" && (
+                <div className="flex items-center space-x-2 m-4">
+                    <Label htmlFor="group-filter">Filtrer på gruppe</Label>
+                    <select
+                        id="group-filter"
+                        value={groupFilter}
+                        onChange={(e) => setGroupFilter(e.target.value)}
+                        className="border border-gray-200 dark:border-gray-800 rounded-md px-2 py-1 text-sm bg-white dark:bg-black"
+                    >
+                        <option value="all">Alle</option>
+                        <option value="ungrouped">Ugruppert</option>
+                        {allGroups.map(g => <option key={g} value={g}>{g}</option>)}
+                    </select>
+                </div>
+            )}
             <div className="flex items-center space-x-1 rounded-md border border-gray-200 dark:border-gray-800 p-1 mb-2">
                 <Button
                     type="button"
@@ -160,17 +273,28 @@ const NewStudentTable =( {newStudents, onDelete} : {newStudents : NewStudent[], 
                     <LayoutGrid className="w-4 h-4" />
                     Kort
                 </Button>
+                <Button
+                    type="button"
+                    size="sm"
+                    variant={viewMode === "groups" ? "secondary" : "ghost"}
+                    onClick={() => setViewMode("groups")}
+                    className="gap-1"
+                >
+                    <Folder className="w-4 h-4" />
+                    Grupper
+                </Button>
             </div>
         </div>
 
         {viewMode === "table" ? (
             <div className="overflow-x-auto w-full max-w-full">
             <Table>
-                    <TableCaption>Arbeidsoversikt for ny elev ({filteredStudents.length})</TableCaption>
+                    <TableCaption>Arbeidsoversikt for ny elev ({groupFilteredStudents.length})</TableCaption>
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Telefonnummer & dato opprettet</TableHead>
                                 <TableHead>Kilde</TableHead>
+                                <TableHead>Gruppe</TableHead>
                                 <TableHead>Jeg har ringt</TableHead>
                                 <TableHead>Ny elev har svart</TableHead>
                                 <TableHead>Ny elev er en referanse</TableHead>
@@ -181,21 +305,30 @@ const NewStudentTable =( {newStudents, onDelete} : {newStudents : NewStudent[], 
                             </TableRow>
                         </TableHeader>
                         <TableBody className="">
-                            {filteredStudents.map( ns => {
+                            {groupFilteredStudents.map( ns => {
                                 return <NewStudentRow key={ns.new_student_id} ns={ns} onDelete={onDelete}/>
                             })}
                         </TableBody>
             </Table>
             </div>
-        ) : (
+        ) : viewMode === "cards" ? (
             <div className="w-full max-w-full p-4 bg-stone-100 dark:bg-stone-900 rounded-md">
-                <p className="text-sm text-muted-foreground mb-4 text-center">Arbeidsoversikt for ny elev ({filteredStudents.length})</p>
+                <p className="text-sm text-muted-foreground mb-4 text-center">Arbeidsoversikt for ny elev ({groupFilteredStudents.length})</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
-                    {filteredStudents.map( ns => {
+                    {groupFilteredStudents.map( ns => {
                         return <NewStudentCard key={ns.new_student_id} ns={ns} onDelete={onDelete}/>
                     })}
                 </div>
             </div>
+        ) : (
+            <GroupsBoard
+                students={filteredStudents}
+                allGroups={allGroups}
+                onSetGroup={onSetGroup}
+                onDelete={onDelete}
+                onCreateGroup={handleCreateGroup}
+                onDeleteGroup={handleDeleteGroup}
+            />
         )}
     </div>)
 }
@@ -347,6 +480,8 @@ function NewStudentRow({ ns, onDelete }: { ns: NewStudent, onDelete: (newStudent
 
         <TableCell className="">{ns.meta?.source ?? "-"}</TableCell>
 
+        <TableCell className="">{ns.meta?.group ?? "-"}</TableCell>
+
         <TableCell className="">
             <RadioGroup onValueChange={handleSetCalled} defaultValue={ns.has_called? "Ja" : "Nei"} value={hasCalled? "Ja" : "Nei"}>
                 <RadioGroupItem value="Ja" className="text-green-400"></RadioGroupItem>
@@ -483,5 +618,135 @@ function NewStudentCard({ ns, onDelete }: { ns: NewStudent, onDelete: (newStuden
                 <DeleteNewStudentDialog onDelete={handleDelete} />
             </CardContent>
         </Card>
+    )
+}
+
+const UNGROUPED_KEY = "__ungrouped__"
+
+function GroupsBoard({
+    students,
+    allGroups,
+    onSetGroup,
+    onCreateGroup,
+    onDeleteGroup,
+    onDelete,
+}: {
+    students: NewStudent[]
+    allGroups: string[]
+    onSetGroup: (newStudentId: string, group: string | null) => void
+    onCreateGroup: (name: string) => void
+    onDeleteGroup: (name: string) => void
+    onDelete: (newStudentId: string) => void
+}) {
+    const [newGroupName, setNewGroupName] = useState("")
+    const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
+
+    const toggleCollapsed = (key: string) => {
+        setCollapsed(prev => {
+            const next = new Set(prev)
+            if (next.has(key)) next.delete(key)
+            else next.add(key)
+            return next
+        })
+    }
+
+    const handleDrop = (e: React.DragEvent<HTMLDivElement>, group: string | null) => {
+        e.preventDefault()
+        const newStudentId = e.dataTransfer.getData("text/plain")
+        if (newStudentId) onSetGroup(newStudentId, group)
+    }
+
+    const columns: { key: string, title: string, group: string | null }[] = [
+        { key: UNGROUPED_KEY, title: "Ugruppert", group: null },
+        ...allGroups.map(g => ({ key: g, title: g, group: g })),
+    ]
+
+    return (
+        <div className="w-full max-w-full p-4 bg-stone-100 dark:bg-stone-900 rounded-md">
+            <div className="flex items-center gap-2 mb-4 justify-center">
+                <Input
+                    placeholder="Ny gruppe (f.eks. Digital)"
+                    value={newGroupName}
+                    onChange={(e) => setNewGroupName(e.target.value)}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                            onCreateGroup(newGroupName)
+                            setNewGroupName("")
+                        }
+                    }}
+                    className="max-w-xs"
+                />
+                <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => {
+                        onCreateGroup(newGroupName)
+                        setNewGroupName("")
+                    }}
+                    className="gap-1"
+                >
+                    <Plus className="w-4 h-4" />
+                    Ny gruppe
+                </Button>
+            </div>
+
+            <div className="flex flex-col gap-4 w-full">
+                {columns.map(col => {
+                    const studentsInColumn = students.filter(ns => (ns.meta?.group ?? null) === col.group)
+                    const canDelete = col.group !== null && studentsInColumn.length === 0
+                    const isCollapsed = collapsed.has(col.key)
+
+                    return (
+                        <div
+                            key={col.key}
+                            onDragOver={(e) => e.preventDefault()}
+                            onDrop={(e) => handleDrop(e, col.group)}
+                            className="w-full bg-white dark:bg-black rounded-md shadow-sm border border-gray-200 dark:border-gray-800 flex flex-col"
+                        >
+                            <div className="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-800">
+                                <button
+                                    type="button"
+                                    onClick={() => toggleCollapsed(col.key)}
+                                    className="flex items-center gap-1 font-semibold text-sm hover:opacity-70"
+                                >
+                                    {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                                    {col.title} ({studentsInColumn.length})
+                                </button>
+                                {col.group !== null && (
+                                    <Button
+                                        type="button"
+                                        size="icon"
+                                        variant="ghost"
+                                        disabled={!canDelete}
+                                        onClick={() => onDeleteGroup(col.group as string)}
+                                        title={canDelete ? "Slett gruppe" : "Flytt ut alle elever før du sletter gruppen"}
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                )}
+                            </div>
+                            {!isCollapsed && (
+                                <div
+                                    className="grid gap-3 p-3 min-h-24"
+                                    style={{ gridTemplateColumns: "repeat(auto-fill, minmax(18rem, 1fr))" }}
+                                >
+                                    {studentsInColumn.map(ns => (
+                                        <div
+                                            key={ns.new_student_id}
+                                            draggable
+                                            onDragStart={(e) => e.dataTransfer.setData("text/plain", ns.new_student_id)}
+                                            className="cursor-grab active:cursor-grabbing"
+                                        >
+                                            <NewStudentCard ns={ns} onDelete={onDelete} />
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )
+                })}
+            </div>
+        </div>
     )
 }

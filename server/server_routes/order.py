@@ -106,6 +106,7 @@ def update_new_student_workflow(user_id):
         "comments": data.get("comments"),
         "paid_referee": data.get("paid_referee"),
         "paid_referee_at": data.get("paid_referee_at"),
+        "meta": data.get("meta"),
     }
 
     # Clean the updates dictionary
@@ -170,6 +171,7 @@ def validate_new_student_data(data: dict) -> tuple[bool, str]:
         "comments": str,
         "paid_referee": bool,
         "paid_referee_at": str,
+        "meta": dict,
     }
 
     # Check required fields
