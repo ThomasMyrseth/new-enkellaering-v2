@@ -1,8 +1,11 @@
 import logging
+import unicodedata
 import uuid
 from datetime import datetime, timezone
 from typing import Optional
 from zoneinfo import ZoneInfo
+
+from werkzeug.utils import secure_filename
 
 from sqlalchemy import Time, and_, func, or_, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -328,10 +331,27 @@ def insertJobApplication(firstname: str, lastname: str, email: str, phone: str, 
     session.commit()
 
 
+_NORWEGIAN_TRANSLITERATIONS = str.maketrans({
+    "æ": "ae", "Æ": "AE",
+    "ø": "o", "Ø": "O",
+    "å": "aa", "Å": "AA",
+})
+
+
+def _slugify(value: str) -> str:
+    """ASCII-safe slug for use in a Supabase Storage key (e.g. 'Bjørn Åsen' -> 'Bjorn_AAsen')."""
+    transliterated = value.translate(_NORWEGIAN_TRANSLITERATIONS)
+    ascii_value = unicodedata.normalize("NFKD", transliterated).encode("ascii", "ignore").decode("ascii")
+    return secure_filename(ascii_value.replace(" ", "_")) or "_"
+
+
 def uploadRecumeToStorage(resume: bytes, filename: str, firstname: str, lastname: str, content_type: str):
     """Upload resume to Supabase Storage and return public URL (Storage stays on the Supabase SDK)"""
     bucket_name = "enkellaering-resumes"
-    destination_path = f"{firstname}_{lastname}/{filename}"
+    safe_firstname = _slugify(firstname)
+    safe_lastname = _slugify(lastname)
+    safe_filename = _slugify(filename)
+    destination_path = f"{safe_firstname}_{safe_lastname}_{uuid.uuid4().hex[:8]}/{safe_filename}"
 
     try:
         supabase.storage.from_(bucket_name).upload(

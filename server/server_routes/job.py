@@ -38,13 +38,13 @@ def uploadJobApplicationRoute():
             resume_file.mimetype
         )
     except Exception as e:
-        logging.error(f"Error uploading resume to bucket: {e}")
+        logging.exception(f"Error uploading resume to bucket: {e}")
         return jsonify({"error": "Failed to process application"}), 500
-    
+
     try:
         insertJobApplication(firstname, lastname, email, phone, public_url, grades, subject)
     except Exception as e:
-        logging.error(f"Error inserting job application into database: {e}")
+        logging.exception(f"Error inserting job application into database: {e}")
         return jsonify({"error": "Failed to save application"}), 500
 
     
@@ -73,7 +73,7 @@ def uploadJobApplicationRoute():
         response = resend.Emails.send(params)
         logging.info(f"Email to job aplicant sent successfully: {response}")
     except Exception as e:
-        logging.error(f"Error sending email to job applicant: {e}")
+        logging.exception(f"Error sending email to job applicant: {e}")
         return jsonify({"error": "Failed to send application"}), 500
 
     #get admin emails
@@ -81,7 +81,7 @@ def uploadJobApplicationRoute():
         admins = get_all_admins()
         admin_emails = [admin['email'] for admin in admins if 'email' in admin]
     except Exception as e:
-        logging.error(f"Error fetching admin emails: {e}")
+        logging.exception(f"Error fetching admin emails: {e}")
         return jsonify({"error": "Failed to notify admin"}), 500
 
     try:
@@ -109,7 +109,7 @@ def uploadJobApplicationRoute():
         response = resend.Emails.send(params)
         logging.info(f"Email to admin about job application sent successfully: {response}")
     except Exception as e:
-        logging.error(f"Error sending email to admin about job application: {e}")
+        logging.exception(f"Error sending email to admin about job application: {e}")
         return jsonify({"error": "Failed to notify admin"}), 500
 
     return jsonify({"message": "Application received"}), 200
