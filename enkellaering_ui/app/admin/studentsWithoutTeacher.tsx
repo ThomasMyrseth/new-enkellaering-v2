@@ -21,6 +21,7 @@ import { StudentNotes } from "./components/studentNotes"
 import { InvoiceStudentPopover } from "./components/invoiceStudentPopover"
 import { DiscountPopover } from "./components/discountPopover"
 import { SetStudentInactive } from "./components/setStudentInactive"
+import { FreezeStudent } from "./components/freezeStudent"
 import { ClassHistoryTable } from "./components/classHistoryTable"
 import { computeClassTotals } from "./components/calculations"
 
@@ -98,6 +99,10 @@ export const StudentsWithoutAnyTeachers = ({token, BASEURL} : {token :string, BA
   }
 
   const handleStudentSetInactive = (studentUserId: string) => {
+    setStudentsData(prev => prev.filter(s => s.user_id !== studentUserId))
+  }
+
+  const handleStudentFrozen = (studentUserId: string) => {
     setStudentsData(prev => prev.filter(s => s.user_id !== studentUserId))
   }
 
@@ -202,6 +207,7 @@ export const StudentsWithoutAnyTeachers = ({token, BASEURL} : {token :string, BA
                     <InvoiceStudentPopover student={s} classes={myClasses} teacherStudents={teacherStudents}/>
                     <div className="flex flex-row space-x-2">
                       <DiscountPopover student={s} onDiscountUpdated={handleDiscountUpdated} />
+                      <FreezeStudent student={s} onFrozen={handleStudentFrozen} />
                       <SetStudentInactive student={s} onSetInactive={handleStudentSetInactive} />
                     </div>
                   </div>
