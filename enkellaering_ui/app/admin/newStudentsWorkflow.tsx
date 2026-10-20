@@ -462,7 +462,7 @@ function NewStudentRow({ ns, onDelete }: { ns: NewStudent, onDelete: (newStudent
 
     return(
     <TableRow className={`w-4/5 max-w-full ${ns.has_finished_onboarding ? "text-gray-400" : ""}`}>
-        <TableCell className="font-medium ">{ns.phone.slice(0, 3)} {ns.phone.slice(3, 5)} {ns.phone.slice(5, 10)} {ns.phone.slice(10, 13)}
+        <TableCell className="font-medium ">{ns.phone}
                 <br/>
                 {new Intl.DateTimeFormat("nb-NO", {
                     day: "2-digit",
@@ -545,7 +545,7 @@ function NewStudentCard({ ns, onDelete }: { ns: NewStudent, onDelete: (newStuden
         <Card className={`flex flex-col h-full w-full shadow-md ${ns.has_finished_onboarding ? "text-gray-400" : ""}`}>
             <CardHeader>
                 <CardTitle className="text-base font-medium">
-                    {ns.phone.slice(0, 3)} {ns.phone.slice(3, 5)} {ns.phone.slice(5, 10)} {ns.phone.slice(10, 13)}
+                    {ns.phone}
                 </CardTitle>
                 <div className="text-xs text-muted-foreground">
                     {new Intl.DateTimeFormat("nb-NO", {
