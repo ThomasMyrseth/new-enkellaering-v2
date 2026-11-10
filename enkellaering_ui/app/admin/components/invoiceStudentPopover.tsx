@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/popover"
 import { Classes, Student } from "../types"
 import { TeacherStudent } from "@/types/teacher-student"
+import { studentHourlyRate } from "./calculations"
 
 const BASEURL = process.env.NEXT_PUBLIC_BASE_URL
 
@@ -28,7 +29,8 @@ export const InvoiceStudentPopover = ({ student, classes, teacherStudents }: { s
     const currentMonth: string = monthsInNorwegian[currentDate.getMonth()]
     const currentYear: number = currentDate.getFullYear()
 
-    let totalInvoiceAmmount = 0
+    let totalIndividual = 0
+    let totalGroup = 0
     let totalNumberOfHours = 0
     let totalTravelPay = 0
     const classIds: string[] = []
@@ -47,16 +49,17 @@ export const InvoiceStudentPopover = ({ student, classes, teacherStudents }: { s
 
         totalNumberOfHours += durationHours
 
-        let thisClass = durationHours * 540
-        if (c.groupclass) {
-            thisClass = durationHours * 350
-        }
+        let thisClass = durationHours * studentHourlyRate(c)
 
         if (student.discount) {
             thisClass = thisClass * (1 - student.discount)
         }
 
-        totalInvoiceAmmount += thisClass
+        if (c.groupclass) {
+            totalGroup += thisClass
+        } else {
+            totalIndividual += thisClass
+        }
 
         const ts = teacherStudents.find((ts: TeacherStudent) =>
             ts.student?.user_id === c.student_user_id &&
@@ -66,9 +69,11 @@ export const InvoiceStudentPopover = ({ student, classes, teacherStudents }: { s
         totalTravelPay += travelPayFromStudent
     })
 
-    totalInvoiceAmmount = Math.round(totalInvoiceAmmount * 10) / 10
+    totalIndividual = Math.round(totalIndividual * 10) / 10
+    totalGroup = Math.round(totalGroup * 10) / 10
     totalNumberOfHours = Math.round(totalNumberOfHours * 10) / 10
     totalTravelPay = Math.round(totalTravelPay * 10) / 10
+    const totalInvoiceAmmount = Math.round((totalIndividual + totalGroup + totalTravelPay) * 10) / 10
 
     const handleSetClassesToInvoiced = async () => {
         const res = await fetch(`${BASEURL}/set-classes-to-invoiced`, {
@@ -122,9 +127,13 @@ export const InvoiceStudentPopover = ({ student, classes, teacherStudents }: { s
                         <br/>
                         {student.discount ? `Rabatt: ${Math.round(student.discount * 100)}%` : ''}
                         <br/>
-                        Total {totalNumberOfHours} timer, {totalInvoiceAmmount + totalTravelPay} kroner, fordelt på {numberOfClassesToInvoice} ganger
+                        Total {totalNumberOfHours} timer, {totalInvoiceAmmount} kroner, fordelt på {numberOfClassesToInvoice} ganger
                         <br/>
                         Derav {totalTravelPay} kroner i reisetillegg
+                        <br/>
+                        Derav {totalIndividual} kr individuell undervisning
+                        <br/>
+                        Derav {totalGroup} kr gruppeundervisning
                     </p>
 
                     <div className="">

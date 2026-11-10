@@ -20,6 +20,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Student, ClassesJoinTeacher } from "../admin/types";
+import { studentHourlyRate } from "../admin/components/calculations";
 import { formatDateTime } from "@/lib/utils";
 import { useClassesForStudent } from "@/hooks/use-classes-for-student";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -56,14 +57,8 @@ export function PreviousClasses({student} : {student : Student}) {
             const totalDurationMillis: number = new Date(c.ended_at).getTime() - new Date(c.started_at).getTime();
             const durationHours = (new Date(c.ended_at).getTime() - new Date(c.started_at).getTime()) / (1000 * 60 * 60)
             if (!c.invoiced_student) {
-                let classPrice = 0;
-                if (c.groupclass) {
-                    classPrice = durationHours*350
-                }
-                else {
-                    classPrice = durationHours*540;
-                }
-                
+                let classPrice = durationHours * studentHourlyRate(c);
+
                 if (student.discount) {
                     classPrice = classPrice * (1 - student.discount);
                 }
@@ -128,11 +123,7 @@ export function PreviousClasses({student} : {student : Student}) {
                 const durationHours: number = Math.floor(totalDurationMillis / (1000 * 60 * 60)); // Whole hours
                 const durationMinutes: number = Math.round((totalDurationMillis % (1000 * 60 * 60)) / (1000 * 60)); // Remaining minutes
 
-                let amount: number = durationHours * 540 + (durationMinutes / 60) * 540; // Adding fractional hours
-
-                if (c.groupclass) {
-                    amount = durationHours * 350 + (durationMinutes / 60) * 350; // Adding fractional hours
-                }
+                let amount: number = (durationHours + durationMinutes / 60) * studentHourlyRate(c); // Adding fractional hours
 
                 let discountedAmount = amount;
                 if (student.discount) {
@@ -186,10 +177,7 @@ export function PreviousClasses({student} : {student : Student}) {
                     const durationHours: number = Math.floor(totalDurationMillis / (1000 * 60 * 60));
                     const durationMinutes: number = Math.round((totalDurationMillis % (1000 * 60 * 60)) / (1000 * 60));
 
-                    let amount: number = durationHours * 540 + (durationMinutes / 60) * 540; // Adding fractional hours
-                    if (c.groupclass) {
-                        amount = durationHours * 350 + (durationMinutes / 60) * 350; // Adding fractional hours
-                    }
+                    let amount: number = (durationHours + durationMinutes / 60) * studentHourlyRate(c); // Adding fractional hours
 
                     let discountedAmount = amount;
                     if (student.discount) {

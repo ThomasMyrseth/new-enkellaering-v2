@@ -146,7 +146,8 @@ export type ClassesJoinTeacher = {
     class_id: string;
     was_canselled: boolean;
     groupclass :boolean;
-    
+    number_of_students :number | null;
+
     // Fields from the Teacher table
     // Note: In your join result, "user_id" is the teacher id (same as teacher_user_id)
     user_id: string;

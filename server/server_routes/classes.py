@@ -100,7 +100,8 @@ def upload_new_class(user_id):
     comment = data.get("comment")
     was_canselled = data.get("was_canselled", False)
     groupclass = data.get('groupclass', False)
-    number_of_students = data.get('number_of_students')
+    # Derived from the rows we create, not client state: group pricing depends on it.
+    number_of_students = len(student_ids)
 
     if not (student_ids and started_at and ended_at):
         return jsonify({"message": "Missing required fields"}), 400

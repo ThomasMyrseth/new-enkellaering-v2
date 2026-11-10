@@ -18,6 +18,7 @@ import {
 
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
 import { Classes } from "./types";
+import { studentHourlyRate } from "./components/calculations";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useClasses } from "@/hooks/use-classes";
@@ -93,12 +94,7 @@ export function DailyRevenueChart() {
             const startedAtString = startedAtDate.toISOString().split("T")[0];
             if (startedAtString === thisDateString) {
                 const discount = c.students?.discount || 0
-                if (c.groupclass) {
-                    totalPaymentToday += calculatePayment(c, 350, discount)
-                }
-                else {
-                    totalPaymentToday += calculatePayment(c, 540, discount);
-                }
+                totalPaymentToday += calculatePayment(c, studentHourlyRate(c), discount)
             }
           });
 

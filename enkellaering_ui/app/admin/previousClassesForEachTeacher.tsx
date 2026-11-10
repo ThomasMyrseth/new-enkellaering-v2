@@ -235,6 +235,7 @@ import {
 } from "@/components/ui/accordion";
 
 import { Classes, Teacher, Student } from "./types";
+import { studentHourlyRate } from "./components/calculations";
 
 import { useEffect, useState } from "react"
 import React, { useRef } from "react";
@@ -403,10 +404,7 @@ export function PreviousClassesForEachTeacher() {
                 const endedAt: Date = new Date(c.ended_at);
                 const totalDurationMillis: number = endedAt.getTime() - startedAt.getTime();
 
-                let invoiceAmount: number = (totalDurationMillis / (1000 * 60 * 60)) * 540
-                if (c.groupclass) {
-                    invoiceAmount = (totalDurationMillis / (1000 * 60 * 60)) * 350
-                }
+                let invoiceAmount: number = (totalDurationMillis / (1000 * 60 * 60)) * studentHourlyRate(c)
                 invoiceAmount += Number(teacherStudent?.relation.travel_pay_from_student || 0)
 
                 let toTeacherAmmount :number = totalDurationMillis / (1000 * 60 * 60) * teacherHourlyPay
@@ -618,10 +616,7 @@ export function PreviousClassesForEachTeacher() {
                                 const durationHours: number = Math.floor(totalDurationMillis / (1000 * 60 * 60));
                                 const durationMinutes: number = Math.round((totalDurationMillis % (1000 * 60 * 60)) / (1000 * 60));
 
-                                let invoiceAmount: number = Math.round(totalDurationMillis / (1000 * 60 * 60) *540)
-                                if (c.groupclass) {
-                                    invoiceAmount = Math.round(totalDurationMillis / (1000 * 60 * 60) *350)
-                                }
+                                let invoiceAmount: number = Math.round(totalDurationMillis / (1000 * 60 * 60) * studentHourlyRate(c))
                                 invoiceAmount += Number(teacherStudents.find((ts: TeacherStudent) =>
                                     ts.student?.user_id === c.student_user_id &&
                                     ts.teacher?.user_id === c.teacher_user_id

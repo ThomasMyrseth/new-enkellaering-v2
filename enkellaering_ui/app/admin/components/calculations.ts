@@ -11,12 +11,17 @@ export function computeClassDuration(c: Classes) {
     return { startedAt, endedAt, totalDurationMillis, durationHours, durationMinutes, totalDurationHours }
 }
 
-export function computeClassInvoiceAmount(c: Classes, teacherStudents: TeacherStudent[]) {
-    const { totalDurationHours, durationHours } = computeClassDuration(c)
+// Group sessions bill at least 700 kr/hour total. A group row with 1 student
+// (e.g. twins sharing one account) pays the full 700. Legacy null = assume a real group.
+export function studentHourlyRate(c: Pick<Classes, "groupclass" | "number_of_students">) {
+    if (!c.groupclass) return 540
+    return (c.number_of_students ?? 2) < 2 ? 700 : 350
+}
 
-    let invoiceAmount = c.groupclass
-        ? Math.round(durationHours * 350)
-        : Math.round(totalDurationHours * 540)
+export function computeClassInvoiceAmount(c: Classes, teacherStudents: TeacherStudent[]) {
+    const { totalDurationHours } = computeClassDuration(c)
+
+    let invoiceAmount = Math.round(totalDurationHours * studentHourlyRate(c))
 
     const ts = teacherStudents.find((ts: TeacherStudent) =>
         ts.student?.user_id === c.student_user_id &&
@@ -37,7 +42,7 @@ export function computeClassTotals(myClasses: Classes[], teacherStudents: Teache
     myClasses.forEach((c: Classes) => {
         const { totalDurationHours } = computeClassDuration(c)
 
-        let invoiceAmount = totalDurationHours * (c.groupclass ? 350 : 540)
+        let invoiceAmount = totalDurationHours * studentHourlyRate(c)
 
         if (!c.invoiced_student) {
             totalUninvoicedHoursStudent += totalDurationHours

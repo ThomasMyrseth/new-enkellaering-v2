@@ -685,10 +685,12 @@ def get_analytics_dashboard(admin_user_id: str):
         duration_hours = (ended_at - started_at).total_seconds() / 3600
 
         is_group = cls.get("groupclass", False)
-        num_students = cls.get("number_of_students", 1) if is_group else 1
-        hourly_rate = 350 if is_group else 540
+        # Mirrors studentHourlyRate in the UI: group sessions bill at least 700 kr/hour total.
+        # Each row is one student, so revenue is per row (no * num_students).
+        num_students = cls.get("number_of_students") or 2
+        hourly_rate = (350 if num_students >= 2 else 700) if is_group else 540
 
-        base_revenue = duration_hours * hourly_rate * num_students
+        base_revenue = duration_hours * hourly_rate
 
         students_data = cls.get("students")
         discount = float(students_data.get("discount", 0) if students_data else 0)
