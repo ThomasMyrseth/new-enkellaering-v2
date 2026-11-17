@@ -2,7 +2,7 @@ import re
 import json
 import os
 from flask import Blueprint, request, jsonify
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import logging
 
 from .config import token_required
@@ -14,7 +14,8 @@ from db.gets import (
     get_teacher_by_user_id,
     get_student_by_user_id,
     get_new_orders,
-    get_teacher_student
+    get_teacher_student,
+    count_new_students_since
 )
 from db.inserts import (
     insert_new_student,
@@ -35,6 +36,9 @@ from db.deletes import (
 
 
 order_bp = Blueprint('order', __name__)
+
+# Busiest real hour so far had 6 leads; the 2026-11-16 bot sent ~3000 in 10 minutes.
+NEW_STUDENT_HOURLY_CAP = 20
 
 
 @order_bp.route('/get-new-students', methods=["GET"])
@@ -247,6 +251,12 @@ def submit_new_student_route():
 
     if not phone:
         return jsonify({"message": "Missing phone number"}), 400
+
+    # shortcut: one global cap shared by all instances via the DB; during an attack real leads also get 429. Upgrade to a captcha (e.g. Turnstile) if attacks repeat.
+    if count_new_students_since(datetime.now(timezone.utc) - timedelta(hours=1)) >= NEW_STUDENT_HOURLY_CAP:
+        logging.warning("submit-new-student global rate limit hit")
+        return jsonify({"message": "Too many requests, try again later"}), 429
+
     try:
         ns = {
             "new_student_id": str(uuid.uuid4()),

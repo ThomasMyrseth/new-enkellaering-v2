@@ -45,7 +45,11 @@ export default function NewStudentForm() {
             })
         })
 
-        if (!response.ok || !response) {
+        if (response.status === 429) {
+            setErrorMessage(true)
+            toast.error("Vi tror du er en robot. Ring oss på 47184744 om problemet vedvarer.")
+        }
+        else if (!response.ok || !response) {
             setErrorMessage(true)
             toast.error("En feil har skjedd. Venligst prøv igjen!")
         }

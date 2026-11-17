@@ -206,6 +206,12 @@ def get_new_student_by_phone(phone: str):
     return [n.as_dict() for n in rows]
 
 
+def count_new_students_since(since: datetime) -> int:
+    """Count new student leads created at or after `since`"""
+    session = get_session()
+    return session.scalar(select(func.count()).select_from(NewStudent).where(NewStudent.created_at >= since))
+
+
 def get_all_classes(admin_user_id: str):
     """Get all classes (admin validated), with student discount nested"""
     if not is_admin(admin_user_id):
